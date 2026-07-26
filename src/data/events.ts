@@ -360,7 +360,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '靠 CS四大 校友黑手党内推，空降大厂',
         condition: (s) => s.school === 'cmu',
-        effect: (s) => ({ health: s.health - 15, tc: 25, laid_off: false, cash: s.cash + 10, job_type: 'big_tech', message: '学长直接把你拉进了核心组，开启了高压生活。' }),
+        effect: (s) => ({ health: s.health - 15, tc: 25, laid_off: false, cash: s.cash + 10, job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: '学长直接把你拉进了核心组，开启了高压生活。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -375,7 +375,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '通过兄弟会内推，加入当地中型养老公司',
         condition: (s) => s.school === 'state',
-        effect: (s) => ({ tc: 15, laid_off: false, health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' }),
+        effect: (s) => ({ tc: 15, laid_off: false, health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -389,7 +389,7 @@ export const events: Record<string, GameEvent> = {
           if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30; // 疫情放水期
           return s.leetcode >= req 
-            ? { tc: s.year >= 2023 ? 25 : 22, laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', message: `上岸！${s.year}年大厂要求LeetCode>${req}，你顺利通过。` }
+            ? { tc: s.year >= 2023 ? 25 : 22, laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: `上岸！${s.year}年大厂要求LeetCode>${req}，你顺利通过。` }
             : { health: s.health - 10, message: `面试被挂了！${s.year}年市场要求LeetCode>${req}。` };
         },
         nextEventId: (s: GameState) => {
@@ -404,7 +404,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Meta (传说中的卷王之王) - (需要 LeetCode >= 60)',
         condition: (s) => s.leetcode >= 60,
-        effect: (s) => ({ tc: 35, laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
+        effect: (s) => ({ tc: 35, laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -412,7 +412,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '面试普通 Startup',
-        effect: (s) => ({ tc: 12, laid_off: false, health: s.health - 2, job_type: 'startup', message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' }),
+        effect: (s) => ({ tc: 12, laid_off: false, health: s.health - 2, job_type: 'startup', level: s.is_phd ? 'L4' : 'L3', message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -422,7 +422,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 TikTok (传说中的拿命换钱) - (需要 LeetCode >= 45)',
         condition: (s) => s.leetcode >= 45,
-        effect: (s) => ({ tc: s.year >= 2023 ? 35 : 25, laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' }),
+        effect: (s) => ({ tc: s.year >= 2023 ? 35 : 25, laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', level: s.is_phd ? 'L4' : 'L3', message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -431,7 +431,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Amazon (门槛较低，但入职即签生死状) - (需要 LeetCode >= 30)',
         condition: (s) => s.leetcode >= 30,
-        effect: (s) => ({ tc: 18, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' }),
+        effect: (s) => ({ tc: 18, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', level: s.is_phd ? 'L4' : 'L3', message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -440,7 +440,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 40)',
         condition: (s) => s.leetcode >= 40,
-        effect: (s) => ({ tc: s.year >= 2023 ? 55 : 20, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', message: '你披上了黑色皮衣！如果这是 2023 年，你的包裹因为股票暴涨将达到 55w 的恐怖数字！' }),
+        effect: (s) => ({ tc: s.year >= 2023 ? 55 : 20, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: s.is_phd ? 'L4' : 'L3', message: '你披上了黑色皮衣！如果这是 2023 年，你的包裹因为股票暴涨将达到 55w 的恐怖数字！' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -452,7 +452,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.18 + (s.leetcode >= 75 ? 0.27 : s.leetcode >= 50 ? 0.12 : 0) + (s.luck / 100) * 0.12;
           const pass = Math.random() < winRate;
           return pass 
-            ? { tc: 40, laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
+            ? { tc: 40, laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
             : { health: s.health - 10, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
@@ -716,9 +716,65 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🏢 疯狂加班 (消耗 1 精力) - 疯狂表现，争取加薪',
-        condition: (s) => s.ap > 0,
-        effect: (s) => ({ ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: '你天天在公司熬到半夜吃免费晚饭。Manager 对你的态度变好了，甚至给你微调了底薪。' }),
+        text: '🏢 疯狂加班与 Perf 冲刺 (消耗 1 精力) - 争取加薪与升职 (Promote)',
+        condition: (s) => s.ap > 0 && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        effect: (s) => {
+          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const pass = Math.random() < (0.35 + s.leetcode / 300);
+          if (curLevel === 'L3') {
+            return pass 
+              ? { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 5, level: 'L4', message: '🎉 恭喜！Perf 拿下 Strong Exceeds，成功从 L3 晋升至 L4！TC +$5w！' }
+              : { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: '你拼命熬夜写代码，但 Manager 饼画得飞起：“今年团队额度有限，明年一定升 L4。”' };
+          } else if (curLevel === 'L4') {
+            return pass 
+              ? { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 10, level: 'L5', message: '🎉 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5！TC +$10w！' }
+              : { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: 'Manager 嘴上夸你表现好，但升职委员会以“缺乏 Leadership”为由把你卡在了 L4。' };
+          } else if (curLevel === 'L5') {
+            return pass 
+              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 15, level: 'L6', message: '🚀 登顶！你跨越了硅谷码农最大天堑，成功晋升为 L6！TC +$15w！' }
+              : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 2, message: '升 L6 竞争极其残酷，跨组 Director 把你否决了，继续留守 L5。' };
+          } else if (curLevel === 'L6') {
+            return pass 
+              ? { ap: s.ap - 1, health: s.health - 30, tc: s.tc + 25, level: 'L7', message: '👑 硅谷传奇！你成功封神晋升为 L7！VP 亲自为你提薪！' }
+              : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 3, message: 'L7 席位太少，今年全部门只有一个人升上去了，你继续保持 L6。' };
+          } else if (curLevel === 'MTS') {
+            return pass 
+              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 20, level: 'L6', message: '🚀 前沿研究成果震撼发布！你从 MTS 破格提拔为 L6！TC +$20w！' }
+              : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 5, message: '你在实验室熬夜训大模型，研究进展顺利，奖金丰厚！' };
+          } else {
+            return { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 3, message: '你在公司疯狂加班，拿到满额绩效奖金！' };
+          }
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '🚀 刷题跳槽冲刺 (消耗 1 精力, 尝试跳槽升职级) - (需要 LeetCode >= 50)',
+        condition: (s) => s.ap > 0 && s.leetcode >= 50 && !!s.job_type && s.job_type !== 'unemployed',
+        effect: (s) => {
+          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
+          
+          if (isFromAI) {
+            return {
+              ap: s.ap - 1,
+              health: s.health - 10,
+              tc: Math.max(s.tc + 25, 65),
+              level: 'L6',
+              job_type: 'big_tech',
+              message: '🌟 顶级光环！你带着 OpenAI / AI 实验室背景跳槽大厂，对方直接送上 L6 包裹！TC 暴涨！'
+            };
+          }
+
+          if (curLevel === 'L3') {
+            return { ap: s.ap - 1, health: s.health - 10, tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，你跳槽斩获 L4 Offer，TC +$8w！' };
+          } else if (curLevel === 'L4') {
+            return { ap: s.ap - 1, health: s.health - 10, tc: s.tc + 12, level: 'L5', message: '跳槽成功！你成功拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5！' };
+          } else if (curLevel === 'L5') {
+            return { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 18, level: 'L6', message: '跳槽爆拉！凭借多年的系统架构积累与算法表现，你成功跳槽拿到 L6 包裹！' };
+          } else {
+            return { ap: s.ap - 1, health: s.health - 10, tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
+          }
+        },
         nextEventId: 'sv_daily_life',
       },
       {
@@ -1711,7 +1767,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.22 + (s.leetcode >= 80 ? 0.18 : 0.08) + (s.charm >= 15 ? 0.05 : 0);
           const win = Math.random() < winRate;
           return win
-            ? { tc: 80, cash: s.cash + 20, health: s.health - 20, visa: 'O1 (杰出人才)', job_type: 'ai_research', message: '震撼硅谷！你攻克了 AGI 前沿推理大模型面试，OpenAI 直接用 $80w 顶配包裹和 O1 签证把我聘为核心研究员！' }
+            ? { tc: 80, cash: s.cash + 20, health: s.health - 20, visa: 'O1 (杰出人才)', job_type: 'ai_research', level: 'MTS', message: '震撼硅谷！你攻克了 AGI 前沿推理大模型面试，OpenAI 直接用 $80w 顶配包裹和 O1 签证把我聘为核心研究员！' }
             : { health: s.health - 20, message: 'OpenAI 核心研究员面试太残酷了！不仅手撕 Triton 算子还深考系统对齐论文，你很遗憾没能拿到 Offer。好在顶级大厂抢着要你的 PhD 光环！' };
         },
         nextEventId: (s: GameState) => {
@@ -1722,7 +1778,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '去大厂当 Applied Scientist (应用科学家)',
-        effect: (s) => ({ tc: 45, cash: s.cash + 15, visa: 'O1 (杰出人才)', job_type: 'ai_research', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，生活相对安稳。' }),
+        effect: (s) => ({ tc: 45, cash: s.cash + 15, visa: 'O1 (杰出人才)', job_type: 'ai_research', level: 'L5', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，生活相对安稳。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';

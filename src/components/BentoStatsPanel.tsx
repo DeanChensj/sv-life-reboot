@@ -118,6 +118,14 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
           <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em]">签证状态</div>
           <div className="text-sm font-medium text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-full">{gameState.visa}</div>
         </div>
+
+        {/* Level */}
+        <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
+          <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em]">当前职级</div>
+          <div className="text-sm font-bold text-purple-300 bg-purple-500/10 px-3 py-1.5 rounded-full">
+            {gameState.level || (gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type ? '待业' : gameState.job_type === 'quant' ? 'Quant' : gameState.job_type === 'ai_research' ? 'MTS' : gameState.is_phd ? 'L4' : 'L3')}
+          </div>
+        </div>
       </div>
     </div>
   );

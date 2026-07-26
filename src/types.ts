@@ -21,6 +21,7 @@ export interface GameState {
   laid_off: boolean;
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia';
   company?: string;
+  level?: string;
   imageUrl?: string;
   has_housing: boolean;
   parents_helped_house?: boolean;

@@ -27,6 +27,8 @@ interface GameState {
   has_housing: boolean;
   status: 'playing' | 'game_over' | 'win';
   message: string;
+  ap: number;
+  max_ap: number;
 }
 
 interface Choice {
@@ -66,6 +68,9 @@ export const generateInitialState = (): GameState => {
     localStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, luck }));
   }
   
+  const ap = 3;
+  const max_ap = 3;
+  
   
   let bgMessage = '';
   if (cash > 60) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';
@@ -76,6 +81,8 @@ export const generateInitialState = (): GameState => {
   else if (charm <= 3) bgMessage += ' 长相平平无奇，是个实在人。';
 
   return {
+    ap,
+    max_ap,
     age: 18,
     cash,
     health: 100,
@@ -110,27 +117,27 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
-        effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 20, win_threshold: 400 }),
+        effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 20, win_threshold: 600 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ charm: s.charm + 10, cash: s.cash - 15, leetcode: Math.max(0, s.leetcode - 10), win_threshold: 300 }),
+        effect: (s) => ({ charm: s.charm + 50, cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，但天天蹦迪身体被彻底掏空。',
-        effect: (s) => ({ cash: s.cash + 40, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 600 }),
+        effect: (s) => ({ cash: s.cash + 40, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 1000 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，但日常总是笨手笨脚惹人嫌。',
-        effect: (s) => ({ luck: 100, leetcode: Math.max(0, s.leetcode - 10), charm: Math.max(0, s.charm - 2), win_threshold: 300 }),
+        effect: (s) => ({ luck: 100, leetcode: s.leetcode + 10, charm: s.charm + 10, win_threshold: 300 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
-        effect: (s) => ({ win_threshold: 200 }),
+        effect: (s) => ({ win_threshold: 500 }),
         nextEventId: 'choose_year',
       }
     ]
@@ -1172,9 +1179,9 @@ export const events: Record<string, GameEvent> = {
     choices: [
 
       {
-        text: '继续卷！目标 P8',
-        effect: (s) => ({ health: s.health - 40, cash: s.cash + 20, age: s.age + 3 }),
-        nextEventId: 'cn_burnout',
+        text: '拼命卷！打工攒钱 (攒 5 万美元)',
+        effect: (s) => ({ health: s.health - 25, cash: s.cash + 5, age: s.age + 1, message: '你扛着 996 的压力干了一年，拿命换来了 5 万存款。' }),
+        nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work',
       },
       {
         text: '拿着钱申请美国水硕 (逃离内卷)',
@@ -1198,14 +1205,25 @@ export const events: Record<string, GameEvent> = {
   },
   'cn_burnout': {
     id: 'cn_burnout',
-    title: '职场危机',
-    description: '你的身体撑不住了...',
+    title: '职场危机：ICU 警告',
+    description: '你的身体因为长期 996 亮起了红灯，拿着体检报告，你感到前所未有的恐惧。',
     choices: [
-
       {
-        text: '遗憾退场',
-        effect: (s) => ({ status: 'game_over', message: '身体是革命的本钱。因为过劳进了ICU，职业生涯提前结束。' }),
-        nextEventId: 'end',
+        text: '花钱治病保命 (花费 5 万美元)',
+        condition: (s) => s.cash >= 5,
+        effect: (s) => ({ cash: s.cash - 5, health: s.health + 40, message: '在医院躺了半个月，捡回一条命，但存款缩水了。' }),
+        nextEventId: 'cn_work'
+      },
+      {
+        text: '拿着钱申请美国水硕 (逃离内卷)',
+        condition: (s) => s.cash >= 15,
+        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', age: s.age, health: s.health + 20, message: '趁着还能走动，你赶紧跑路去了美国。' }),
+        nextEventId: 'us_master_year1'
+      },
+      {
+        text: '放弃治疗，遗憾退场',
+        effect: (s) => ({ status: 'game_over', message: '你错过了最佳治疗时间，身体彻底垮掉，人生提前画上了句号。' }),
+        nextEventId: 'end'
       }
     ]
   },

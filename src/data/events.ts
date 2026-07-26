@@ -128,15 +128,15 @@ export const events: Record<string, GameEvent> = {
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校的选择：',
     choices: [
       {
-        text: 'CMU 计算机本科 (四年总开销 30 万美元)',
+        text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
         condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 10, health: s.health - 5, housing_name: 'CMU 校内宿舍', message: '你坐上了飞往匹兹堡的航班。' }),
+        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 10, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: 'UC Berkeley 本科 (四年总开销 25 万美元)',
+        text: '理工强校大U (如 UIUC/UW/UMich) (四年总开销 25 万美元)',
         condition: (s) => s.cash >= 25,
-        effect: (s) => ({ cash: s.cash - 25, visa: 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: 'UCB 校内宿舍', message: '你带着对湾区的憧憬降落在 SFO。' }),
+        effect: (s) => ({ cash: s.cash - 25, visa: 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
@@ -346,7 +346,7 @@ export const events: Record<string, GameEvent> = {
             : { tc: 10, health: s.health - 30, message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
         },
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       }
@@ -358,16 +358,16 @@ export const events: Record<string, GameEvent> = {
     description: '你迎来了惨烈的面试季。不同年份的市场难度天差地别...',
     choices: [
       {
-        text: '靠 CMU 极客黑手党校友内推，空降大厂',
+        text: '靠 CS四大 校友黑手党内推，空降大厂',
         condition: (s) => s.school === 'cmu',
-        effect: (s) => ({ health: s.health - 30, tc: 25, laid_off: false, cash: s.cash + 10, message: '学长直接把你拉进了核心组，钱多但每天要干到凌晨 2 点。' }),
+        effect: (s) => ({ health: s.health - 15, tc: 25, laid_off: false, cash: s.cash + 10, job_type: 'big_tech', message: '学长直接把你拉进了核心组，开启了高压生活。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
       {
-        text: '跟着 Berkeley 教授去搞 Web3/AI 创业',
+        text: '跟着 理工大U 教授去搞 Web3/AI 创业',
         condition: (s) => s.school === 'ucb' && s.cash >= 5,
         effect: (s) => ({ cash: s.cash - 5, laid_off: false, message: '你加入了教授的局，虽然没拿到大厂包裹，但感觉马上就要改变世界了。' }),
         nextEventId: 'startup_work',
@@ -377,7 +377,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.school === 'state',
         effect: (s) => ({ tc: 15, laid_off: false, health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -397,16 +397,16 @@ export const events: Record<string, GameEvent> = {
           if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30;
           if (s.leetcode < req) return 'job_hunt_fail';
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
       {
         text: '加入 Meta (传说中的卷王之王) - (需要 LeetCode >= 60)',
         condition: (s) => s.leetcode >= 60,
-        effect: (s) => ({ tc: 35, laid_off: false, health: s.health - 20, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
+        effect: (s) => ({ tc: 35, laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -414,7 +414,35 @@ export const events: Record<string, GameEvent> = {
         text: '面试普通 Startup',
         effect: (s) => ({ tc: 12, laid_off: false, health: s.health - 2, job_type: 'startup', message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+        },
+      },
+
+      {
+        text: '加入 TikTok (传说中的拿命换钱) - (需要 LeetCode >= 45)',
+        condition: (s) => s.leetcode >= 45,
+        effect: (s) => ({ tc: s.year >= 2023 ? 35 : 25, laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' }),
+        nextEventId: (s: GameState) => {
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+        },
+      },
+      {
+        text: '加入 Amazon (门槛较低，但入职即签生死状) - (需要 LeetCode >= 30)',
+        condition: (s) => s.leetcode >= 30,
+        effect: (s) => ({ tc: 18, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' }),
+        nextEventId: (s: GameState) => {
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+        },
+      },
+      {
+        text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 40)',
+        condition: (s) => s.leetcode >= 40,
+        effect: (s) => ({ tc: s.year >= 2023 ? 55 : 20, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', message: '你披上了黑色皮衣！如果这是 2023 年，你的包裹因为股票暴涨将达到 55w 的恐怖数字！' }),
+        nextEventId: (s: GameState) => {
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -424,12 +452,12 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.18 + (s.leetcode >= 75 ? 0.27 : s.leetcode >= 50 ? 0.12 : 0) + (s.luck / 100) * 0.12;
           const pass = Math.random() < winRate;
           return pass 
-            ? { tc: 40, laid_off: false, cash: s.cash + 10, health: s.health - 30, job_type: 'quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
-            : { health: s.health - 15, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你遗憾落选...' };
+            ? { tc: 40, laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
+            : { health: s.health - 10, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 40) return 'job_hunt';
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       }
@@ -441,6 +469,23 @@ export const events: Record<string, GameEvent> = {
     description: '由于迟迟找不到理想工作，你面临着巨大的生存和身份压力...',
     choices: [
 
+      {
+        text: '去墨西哥 Tijuana 闯关重签签证 (高风险 Visa Run) - 消耗 $1w',
+        condition: (s) => s.cash >= 1 && (s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)'),
+        effect: (s) => {
+          const win = Math.random() > 0.15; // 85% success
+          return win
+            ? { cash: s.cash - 1, health: s.health - 15, leetcode: s.leetcode + 5, message: '心惊胆战地越过美墨边境，你奇迹般地拿到了新的签证 Stamp！争取到了宝贵的留美时间！' }
+            : { status: 'game_over', message: '在边境小黑屋被海关查出挂靠历史，直接吊销签证并被 5 年禁令限制入境！' };
+        },
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'job_hunt',
+      },
+      {
+        text: '不卷了！回大理/清迈做数字游民躺平',
+        condition: (s) => s.cash >= 5,
+        effect: (s) => ({ status: 'win', message: '你带着几万美元的积蓄去了大理。每天喝咖啡、看苍山洱海。虽然彻底脱离了硅谷的内卷，但你找到内心的平静！(躺平结局)' }),
+        nextEventId: 'end',
+      },
       {
         text: '被迫回国',
         effect: (s) => {
@@ -818,6 +863,20 @@ export const events: Record<string, GameEvent> = {
            const petCost = s.has_pet ? 0.8 : 0;
            const baseLiving = 4 + propertyTax + familyCost + petCost;
            const netIncome = (s.tc * 0.6) - s.rent - baseLiving;
+           
+           let healthDrain = 0;
+           let companyMsg = '';
+           if (!s.laid_off && s.job_type !== 'unemployed') {
+             if (s.job_type === 'tiktok') { healthDrain = 15; companyMsg = ' 字节的连轴转让你身心俱疲 (健康 -15)。'; }
+             else if (s.job_type === 'quant') { healthDrain = 12; companyMsg = ' 高频交易的每一秒都在燃烧你的生命 (健康 -12)。'; }
+             else if (s.company === 'meta') { healthDrain = 8; companyMsg = ' Meta 的 PSC 压力让你掉光了头发 (健康 -8)。'; }
+             else if (s.job_type === 'amazon') { healthDrain = 5; companyMsg = ' 亚麻的 PIP 文化让你每天提心吊胆 (健康 -5)。'; }
+             else if (s.job_type === 'startup') { healthDrain = 5; companyMsg = ' 创业公司的混乱让你心力交瘁 (健康 -5)。'; }
+             else if (s.job_type === 'big_tech') { healthDrain = -5; companyMsg = ' 养老厂的 WLB 让你养精蓄锐 (健康 +5)。'; }
+           }
+           
+           const newHealth = Math.max(0, s.health - healthDrain);
+           
            const gcMsg = s.visa === '绿卡' 
              ? '你已持有美国绿卡，工作生活不受约束。' 
              : nextGc >= 5 
@@ -828,8 +887,9 @@ export const events: Record<string, GameEvent> = {
               age: s.age + 1, 
               year: s.year + 1,
               gc_progress: nextGc, 
-              cash: s.cash + netIncome, 
-              message: `扣除税收、房租、加州房产税与基础家庭开支 ${baseLiving.toFixed(1)} 万后，你今年的税后净结余是 ${netIncome > 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}` 
+              cash: s.cash + netIncome,
+              health: newHealth,
+              message: `扣除税收、房租、加州房产税与基础家庭开支 ${baseLiving.toFixed(1)} 万后，你今年的税后净结余是 ${netIncome > 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}${companyMsg}` 
            };
         },
         nextEventId: (s) => {
@@ -847,28 +907,32 @@ export const events: Record<string, GameEvent> = {
              if (s.job_type === 'startup') return 'startup_crisis';
              if (s.job_type === 'ai_research') return 'ai_research_crisis';
              if (s.job_type === 'quant') return 'quant_stress';
+             
              const bigTechRand = Math.random();
-             if (bigTechRand < 0.33) return 'perf_review';
-             if (bigTechRand < 0.66) return 'layoff_rumor';
+             if (bigTechRand < 0.25) return 'perf_review';
+             if (bigTechRand < 0.50) return 'layoff_rumor';
+             if (bigTechRand < 0.75) return 'rto_wars';
              return 'friday_pip';
           }
           
           // 60% chance of LIFE event
           const lifeRand = Math.random();
-           if (lifeRand < 0.07) return s.is_married ? 'sv_daily_life' : 'dating_market';
-           if (lifeRand < 0.14) return (s.car && s.car !== 'none') ? 'car_broken' : 'sv_daily_life';
-           if (lifeRand < 0.21) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
-           if (lifeRand < 0.28) return 'dental_emergency';
-           if (lifeRand < 0.35) return 'crypto_scam';
-           if (lifeRand < 0.42) return 'blind_team_tea';
-           if (lifeRand < 0.49) return 'zoom_camera_off_leetcode';
-           if (lifeRand < 0.56) return 'boba_inflation';
-           if (lifeRand < 0.63) return 'rsu_vesting_crash';
+           if (lifeRand < 0.05) return s.is_married ? 'sv_daily_life' : 'dating_market';
+           if (lifeRand < 0.10) return (s.car && s.car !== 'none') ? 'car_broken' : 'sv_daily_life';
+           if (lifeRand < 0.15) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
+           if (lifeRand < 0.25) return 'overemployed';
+           if (lifeRand < 0.35) return 'pickleball_networking';
+           if (lifeRand < 0.40) return 'dental_emergency';
+           if (lifeRand < 0.45) return 'crypto_scam';
+           if (lifeRand < 0.50) return 'blind_team_tea';
+           if (lifeRand < 0.55) return 'zoom_camera_off_leetcode';
+           if (lifeRand < 0.60) return 'boba_inflation';
+           if (lifeRand < 0.65) return 'rsu_vesting_crash';
            if (lifeRand < 0.70) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'h1b_rfe_vs_parent_nag';
-           if (lifeRand < 0.77) return 'xhs_boba';
-           if (lifeRand < 0.84) return 'ai_wrapper_startup';
-           if (lifeRand < 0.88) return 'biohacking_party';
-           if (lifeRand < 0.94) return 'tahoe_ski_blizzard';
+           if (lifeRand < 0.75) return 'xhs_boba';
+           if (lifeRand < 0.80) return 'ai_wrapper_startup';
+           if (lifeRand < 0.85) return 'biohacking_party';
+           if (lifeRand < 0.90) return 'tahoe_ski_blizzard';
            return 'burning_man_invite';
         },
       }
@@ -1630,7 +1694,7 @@ export const events: Record<string, GameEvent> = {
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 45 && !s.job_type) return 'job_hunt';
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -1638,7 +1702,7 @@ export const events: Record<string, GameEvent> = {
         text: '去大厂当 Applied Scientist (应用科学家)',
         effect: (s) => ({ tc: 45, cash: s.cash + 15, visa: 'O1 (杰出人才)', job_type: 'ai_research', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，生活相对安稳。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       }
@@ -1823,5 +1887,85 @@ export const events: Record<string, GameEvent> = {
     description: '',
     choices: [
 ]
-  }
+  },
+
+  'rto_wars': {
+    id: 'rto_wars',
+    title: 'RTO (Return to Office) 查考勤大战',
+    description: 'CEO 突然宣布全员每周必须在办公室打卡 3 天，否则直接取消奖金甚至开除！你之前为了省房租偷偷搬到了便宜的外州/偏远地区，现在面临极大危机。',
+    choices: [
+      {
+        text: '老老实实搬回湾区租昂贵的公寓 (房租重置为 4w)',
+        effect: (s) => ({ rent: 4, health: s.health - 15, message: '你极不情愿地回到了湾区，每个月的房租让你心如刀割，但至少保住了工作。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '淘宝买物理点击器+找同事代刷工牌 (高风险)',
+        effect: (s) => {
+          const caught = Math.random() < 0.3;
+          return caught
+            ? { tc: 0, laid_off: true, health: s.health - 30, message: '你的代刷工牌行为被 HR 发现，直接以违纪名义当天开除！' }
+            : { cash: s.cash + 5, charm: s.charm + 2, message: '成功瞒天过海！你一边拿着加州的工资，一边享受着外州的低物价。' };
+        },
+        nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
+      },
+      {
+        text: '硬刚 Manager：“要么让我 Remote，要么我走人！”',
+        effect: (s) => {
+          const win = s.leetcode >= 70 && Math.random() < 0.5;
+          return win
+            ? { tc: s.tc + 2, charm: Math.min(25, s.charm + 5), message: '由于你是团队的核心骨干（High Performer），Manager 妥协了，给你申请了特殊的 Remote Exception！' }
+            : { tc: 0, laid_off: true, message: 'Manager 冷笑一声：“现在是买方市场，门在那边。” 你被解雇了。' };
+        },
+        nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
+      }
+    ]
+  },
+  'overemployed': {
+    id: 'overemployed',
+    title: 'OE (Overemployed) 诱惑：身兼数职',
+    description: '你在 Blind 上看到了一个神秘的 OE 社区。里面的人同时拿着 3 份全职远程工作的薪水（J1, J2, J3），年收入突破 100 万美元。你看着自己轻松的“养老厂”工作，有些心动。',
+    choices: [
+      {
+        text: '接下第二份全职工作 (J2)！赚双倍的钱！',
+        condition: (s) => s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia',
+        effect: (s) => {
+          const caught = Math.random() < 0.25;
+          return caught
+            ? { tc: 0, laid_off: true, health: Math.max(10, s.health - 40), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
+            : { cash: s.cash + s.tc, health: Math.max(10, s.health - 30), leetcode: s.leetcode + 5, message: '你用两台电脑同时开会，成功拿到了双倍工资！但是巨大的上下文切换让你精神分裂。' };
+        },
+        nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
+      },
+      {
+        text: '算了吧，安分守己',
+        effect: (s) => ({ health: Math.min(100, s.health + 5), message: '你拒绝了高危的诱惑，每天下午 3 点准时躺在沙发上看 Netflix，这就是 WLB。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'pickleball_networking': {
+    id: 'pickleball_networking',
+    title: 'Pickleball (匹克球) 社交局',
+    description: '最近湾区不流行高尔夫了，所有人都在打匹克球。你的朋友拉你去参加一个高端局，据说有很多投资人和大厂 Director。',
+    choices: [
+      {
+        text: '花 $1w 买全套顶级装备去混圈子',
+        condition: (s) => s.cash >= 1,
+        effect: (s) => {
+          const win = Math.random() > 0.5;
+          return win
+            ? { cash: s.cash - 1, tc: s.tc + 5, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司，总包大涨！' }
+            : { cash: s.cash - 1, health: Math.max(10, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '不去，宅在家打黑神话',
+        effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你拒绝了无效社交，在家又通关了一次二郎神，神清气爽。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+
 };

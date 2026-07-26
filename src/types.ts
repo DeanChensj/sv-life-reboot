@@ -19,7 +19,7 @@ export interface GameState {
   is_married: boolean;
   win_threshold: number;
   laid_off: boolean;
-  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed';
+  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia';
   imageUrl?: string;
   has_housing: boolean;
   parents_helped_house?: boolean;

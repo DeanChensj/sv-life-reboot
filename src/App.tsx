@@ -40,13 +40,21 @@ export default function App() {
     // Check if health drops <= 0
     if (newState.health <= 0 && newState.status === 'playing') {
       newState.status = 'game_over';
-      if (!effectResult.message) newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
+      if (!effectResult.message) {
+        newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
+      } else {
+        newState.message += ' 然而由于长期高压与过度劳累，你突发心梗，倒在了工位上...游戏结束。';
+      }
     }
 
     // Check if bankrupt
     if (newState.cash < -0.001 && newState.status === 'playing') {
       newState.status = 'game_over';
-      if (!effectResult.message) newState.message = '你破产了，无法支付账单，游戏结束！';
+      if (!effectResult.message) {
+        newState.message = '你破产了，无法支付账单，游戏结束！';
+      } else {
+        newState.message += ' 但由于你负债累累，资金链彻底断裂，游戏结束！';
+      }
     }
 
     // Check FIRE win
@@ -190,10 +198,15 @@ export default function App() {
                       // Precise badge extraction from text
                       const costMatch = choice.text.match(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/);
                       const reqMatch = choice.text.match(/\((?:需要|需|算法|高魅力|现金).*?\)/);
-                      const mainText = choice.text
+                      let mainText = choice.text
                         .replace(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/g, '')
                         .replace(/\((?:需要|需|算法|高魅力|现金).*?\)/g, '')
                         .trim();
+                      
+                      // Remove trailing dash if it was left behind after badge extraction
+                      if (mainText.endsWith('-')) {
+                        mainText = mainText.slice(0, -1).trim();
+                      }
                       
                       return (
                       <button

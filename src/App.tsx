@@ -597,8 +597,8 @@ export const events: Record<string, GameEvent> = {
             else if (s.charm >= 7) winRate = 0.6;
             const win = Math.random() < winRate;
             if (win) {
-              if (s.charm >= 18) {
-                 return { ap: s.ap - 1, cash: s.cash + 300, charm: s.charm + 10, status: 'win', message: '你的小红书粉丝突破 100 万！彻底掌握了流量密码，在湾区名利双收！' };
+              if (s.charm >= 20 && Math.random() < 0.05) {
+                 return { ap: s.ap - 1, cash: s.cash + 300, charm: s.charm + 10, status: 'win', message: '极小概率的奇迹！你的小红书粉丝突破 100 万！彻底掌握了流量密码，在湾区名利双收！' };
               }
               return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
             } else {

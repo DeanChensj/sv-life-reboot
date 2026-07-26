@@ -98,6 +98,32 @@ const midYearEventRouter = (s: GameState) => {
         lifeEvents.push('rsu_vesting_crash');
     }
 
+    // 1. Green Card Holders ONLY: japan_trip (免签自由行)
+    if (s.visa === '绿卡' && Math.random() < 0.20) {
+      return 'japan_trip';
+    }
+
+    // 2. Non-Green Card H1B/O1 Holders ONLY: h1b_visa_stamping_crisis (回国续签查水表)
+    if ((s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') && Math.random() < 0.15) {
+      return 'h1b_visa_stamping_crisis';
+    }
+
+    // 3. Luxury Car Owners ONLY: luxury_car_meet (豪车会跑山)
+    if ((s.car === 'porsche' || s.car === 'cybertruck') && Math.random() < 0.20) {
+      return 'luxury_car_meet';
+    }
+
+    // 4. Homeowners ONLY: house_warming_party (乔迁派对)
+    const isRealHome = s.has_housing && s.housing_name && !['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+    if (isRealHome && Math.random() < 0.20) {
+      return 'house_warming_party';
+    }
+
+    // 5. High Cash ($100w+) ONLY: startup_angel_investing (天使投资)
+    if (s.cash >= 100 && Math.random() < 0.20) {
+      return 'startup_angel_investing';
+    }
+
     // Only non-Green Card / non-US workers face visa checks
     if (s.visa !== '绿卡' && s.visa !== '无') {
         lifeEvents.push('visa_check');
@@ -106,6 +132,9 @@ const midYearEventRouter = (s: GameState) => {
     // Married or Dating folks can get breakup crisis!
     if (s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating') {
         lifeEvents.push('breakup_crisis');
+    } else {
+        // Single / Matched / Dating folks can play boardgame dating
+        lifeEvents.push('boardgame_dating');
     }
 
     // Non-married players (single / matched / dating) can trigger dating_market for relationship progression
@@ -129,27 +158,27 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
-        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 20, win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 20, health: s.health - 20, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
+        effect: (s) => ({ trait_title: '湾区海王', charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，但天天蹦迪身体被彻底掏空。',
-        effect: (s) => ({ cash: s.cash + 70, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 500 }),
+        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 70, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
-        effect: (s) => ({ luck: Math.min(99, Math.max(s.luck + 25, 68)), leetcode: s.leetcode + 10, charm: s.charm + 5, win_threshold: 300 }),
+        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 25, 68)), leetcode: s.leetcode + 10, charm: s.charm + 5, win_threshold: 300 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
-        effect: (s) => ({ win_threshold: 360 }),
+        effect: (s) => ({ trait_title: '小镇做题家', win_threshold: 360 }),
         nextEventId: 'choose_year',
       }
     ]
@@ -2303,6 +2332,136 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 40),
           message: '彻底关闭 Slack 和 Outlook 提醒！在海浪声中睡到了自然醒，Burnout 症状被完美治愈。'
         }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'japan_trip': {
+    id: 'japan_trip',
+    title: '【绿卡自由行】东京羽田/京都赏枫度假',
+    description: '彻底摆脱了 H1B 返美签 Stamp 审查与 AP 跑路纸的心理阴影，你拿到了美国绿卡，买了一张旧金山直飞东京羽田的头等舱机票！',
+    choices: [
+      {
+        text: '银座狂买 & 奢华怀石料理/米其林 (消耗 $1.5w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 1.5),
+          health: Math.min(100, s.health + 30),
+          charm: Math.min(25, s.charm + 5),
+          message: '你享受了最高规格的日式招待！品尝了顶配和牛与怀石料理，在银座彻底放空身心！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '富士山小木屋温泉私汤连泡 5 天 (消耗 $0.8w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.8),
+          health: Math.min(100, s.health + 40),
+          message: '望着富士山雪景泡温泉，热气腾腾中所有的湾区职场焦虑烟消云散！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'luxury_car_meet': {
+    id: 'luxury_car_meet',
+    title: '【湾区豪车车友会】Skyline Blvd 跑山',
+    description: '作为保时捷/Cybertruck 豪车车主，你受邀参加了湾区 35 号公路 (Skyline Blvd) 的周末豪车车友会。',
+    choices: [
+      {
+        text: '和 VC / 大厂 Director 交流豪车与独角兽投资',
+        effect: (s) => ({
+          tc: s.tc + 5,
+          charm: Math.min(25, s.charm + 3),
+          health: Math.min(100, s.health + 10),
+          message: '车友会里藏龙卧虎！你结识了一位科技基金合伙人，对方为你推荐了一个高薪岗位机会，TC 再次提升！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '下场 17-Mile 沿海公路体验极限跑山 (消耗 $0.5w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.5),
+          charm: Math.min(25, s.charm + 5),
+          health: Math.max(10, s.health - 5),
+          message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'house_warming_party': {
+    id: 'house_warming_party',
+    title: '【豪宅乔迁】湾区做题家 Housewarming BBQ',
+    description: '你买下了属于自己的湾区房产，周末在私人草坪庭院举行了乔迁露天烤肉派对 (Housewarming)。',
+    choices: [
+      {
+        text: '邀请同事与邻居来庭院做天幕 BBQ 派对 (消耗 $0.3w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.3),
+          charm: Math.min(25, s.charm + 4),
+          health: Math.min(100, s.health + 15),
+          message: '烤肉香气扑鼻，大家纷纷夸赞你的眼光与房产品质！社交圈口碑暴涨！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '拍摄全套 Home Decor 发小红书“湾区买房心得”',
+        effect: (s) => ({
+          charm: Math.min(25, s.charm + 5),
+          luck: Math.min(45, s.luck + 5),
+          message: '爆款文章收割了上千点赞！你成为了小红书湾区家居/房产圈的顶流 Blogger！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'startup_angel_investing': {
+    id: 'startup_angel_investing',
+    title: '【硅谷资本圈】天使投资人俱乐部',
+    description: '手握超过百万元流动现金的你，收到了硅谷华人天使投资俱乐部 (Bay Angels) 的秘密邀请。',
+    choices: [
+      {
+        text: '出资 $20w 成为 AI 独角兽 Seed 轮天使投资人 (高风险)',
+        effect: (s) => {
+          const win = Math.random() < 0.4;
+          return win 
+            ? { cash: s.cash + 100, message: '爆火升值！你投资的 AI 独角兽被巨头高价买断，天使轮获得 5 倍天价回报 (+$100w)！' }
+            : { cash: Math.max(0, s.cash - 20), health: s.health - 10, message: 'AI 大模型算力消耗太快，创业团队见底倒闭。你交了 20 万美元天使投资学费。' };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '观望不投，只去品尝顶级红酒与交流网络',
+        effect: (s) => ({
+          charm: Math.min(25, s.charm + 2),
+          health: Math.min(100, s.health + 5),
+          message: '你保持了理智，蹭到了昂贵的红酒并拓展了资本圈高管人脉。'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'h1b_visa_stamping_crisis': {
+    id: 'h1b_visa_stamping_crisis',
+    title: '【回国续签】H1B 221(g) 行政审查 Check 危机',
+    description: '你趁假期回国探亲顺便预约了美领馆 H1B 续签 Stamp。结果因为 CS/AI 敏感专业，签证官微笑着递给你一张黄单（221g Administrative Processing 行政审查）！',
+    choices: [
+      {
+        text: '在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
+        effect: (s) => ({
+          health: Math.max(10, s.health - 15),
+          message: '你白加黑倒时差工作了两周，终于等到了 Passport 带着 Stamp 寄回！成功惊险返美！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '联系公司法务开具紧急加急信 (Expedite Request)',
+        effect: (s) => {
+          const pass = Math.random() < 0.55;
+          return pass 
+            ? { health: Math.min(100, s.health + 5), message: '加急信生效！领事馆提早批复了你的 Visa Stamp，你顺利搭上返美航班！' }
+            : { health: s.health - 10, cash: Math.max(0, s.cash - 1), message: '领事馆回复“标准审查无法加急”，你被迫在加州时间深夜远程办公，精疲力竭。' };
+        },
         nextEventId: 'sv_daily_life'
       }
     ]

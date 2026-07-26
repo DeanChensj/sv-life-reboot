@@ -566,6 +566,28 @@ export const events: Record<string, GameEvent> = {
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
       {
+         text: '🚚 搬家/换租更好的湾区公寓 (消耗 1 精力) - 提升居住品质或退租省钱',
+         condition: (s) => s.ap > 0 && s.has_housing && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
+         effect: (s) => ({ ap: s.ap - 1, message: '你打开 Zillow 和 Redfin，准备在湾区重新选一套更符合当前身价的租房。' }),
+         nextEventId: 'change_rental',
+      },
+      {
+         text: '💰 应急变卖保时捷/赛博皮卡套现 (消耗 1 精力) - 快速回笼现金流防破产',
+         condition: (s) => s.ap > 0 && (s.car === 'porsche' || s.car === 'cybertruck'),
+         effect: (s) => {
+           const isPorsche = s.car === 'porsche';
+           const recoup = isPorsche ? 7 : 5;
+           return {
+             ap: s.ap - 1,
+             cash: s.cash + recoup,
+             car: isPorsche ? 'model_y' : 'none',
+             charm: Math.max(0, s.charm - (isPorsche ? 5 : 3)),
+             message: `你把昂贵的${isPorsche ? '保时捷' : '赛博皮卡'}卖给了车行，快速套现了 $${recoup}w 万美元应急现金！`
+           };
+         },
+         nextEventId: 'sv_daily_life',
+      },
+      {
          text: '🧗 周末去 Movement / Planet Granite 抱石馆抓 V5 难度墙 (消耗 1 精力, $0.01w) - 湾区最流行的码农技术社交',
          condition: (s) => s.ap > 0 && s.cash >= 0.01,
          effect: (s) => {
@@ -578,7 +600,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
          text: '🏡 参加湾区加价抢房大战 (购买买房置业, 消耗 1 精力) - (需现金 >= $28w)',
-         condition: (s) => s.ap > 0 && s.cash >= 28 && !s.has_housing,
+         condition: (s) => s.ap > 0 && s.cash >= 28 && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
          effect: (s) => ({ ap: s.ap - 1, message: '你拿着这些年攒下的首付本金与股票，精神抖擞地走向了 Open House 现场！' }),
          nextEventId: 'buy_house',
       },
@@ -1244,9 +1266,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '加入抢房大战 (正常买房)',
-        effect: (s) => ({ age: s.age + 1, visa: '绿卡', cash: s.cash + (s.tc * 0.6) - s.rent - 4 }),
-        nextEventId: 'buy_house',
+        text: '继续在 Open House 现场观望挑房 (回到日常行动)',
+        effect: (s) => ({ message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '搞副业炒股：梭哈英伟达 (NVDA)！',
@@ -1271,7 +1293,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '不再唯唯诺诺，开始在职场上重拳出击',
-        effect: (s) => ({ age: s.age + 1, visa: '绿卡', cash: s.cash + (s.tc * 0.6) - s.rent - 4 }),
+        effect: (s) => ({ visa: '绿卡', charm: Math.min(25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
         nextEventId: 'office_politics',
       },
       {
@@ -1314,23 +1336,23 @@ export const events: Record<string, GameEvent> = {
   },
   'house_slave': {
     id: 'house_slave',
-    title: '沉重的房贷',
-    description: '买房后，每个月的房贷压得你喘不过气来。你不敢生病，更不敢辞职。',
+    title: '沉重的房贷生活',
+    description: '通过父母举债六个钱包交齐首付买下 Sunnyvale 老破小后，每年固定房屋供税支出让手头极度紧绷。你决定怎么应对接下来的挑战？',
     choices: [
       {
-        text: '小心翼翼地继续打工还贷',
-        effect: (s) => ({ age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 4, health: s.health - 5 }),
-        nextEventId: (s) => s.cash >= s.win_threshold ? 'end' : 'house_slave',
+        text: '老老实实上班，咬牙扛住房贷（进入日常行动）',
+        effect: (s) => ({ rent: 2.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(10, s.health - 5), message: '你把心安在了加州木板老破小里，虽然房贷沉重，但每次看到属于自己的草坪，干劲又回来了！' }),
+        nextEventId: 'sv_daily_life',
       },
       {
-        text: '偷偷把次卧租给留学生赚点外快',
+        text: '把次卧与车库偷偷出租给转码留学生（每年回血 $1.5w 外快）',
         effect: (s) => {
-          const badTenant = Math.random() > 0.7;
+          const badTenant = Math.random() > 0.65;
           return badTenant
-            ? { age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 4, health: s.health - 15, message: '留学生是个极品，不仅弄坏了你的烤箱，还带人开派对吵得你彻夜难眠。' }
-            : { age: s.age + 1, cash: s.cash + 1.5 + (s.tc * 0.6) - s.rent - 4, message: '留学生很安静，按时交租，有效缓解了你的房贷压力。' };
+            ? { rent: 1.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(10, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金，但把你折腾得够呛。' }
+            : { rent: 0.8, has_housing: true, housing_name: 'Sunnyvale 老破小', cash: s.cash + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，把你的实际每年房贷净支出压到了底线！' };
         },
-        nextEventId: 'house_slave',
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '断供卖房！回归租房生活的自由',
@@ -1749,6 +1771,40 @@ export const events: Record<string, GameEvent> = {
         text: '去大厂食堂薅羊毛拿免费气泡水',
         effect: (s) => ({ health: s.health + 2, cash: s.cash + 0.1, message: '你拒绝被消费主义洗脑。周末假装去公司加班，从 Pantry 顺走了两罐 La Croix 气泡水和几包零食，完美解决下午茶。' }),
         nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'change_rental': {
+    id: 'change_rental',
+    title: '重新选择湾区租房',
+    description: '身价与年薪变了，是时候调整你的固定住房开支与居住体验了。',
+    choices: [
+      {
+        text: '豪华 1b1b (每年 4 万美元): 泳池健身房与全职门卫, 提振相亲社交',
+        condition: (s) => s.cash >= 4 || s.tc >= 18,
+        effect: (s) => ({ rent: 4, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 15), housing_name: 'San Jose 高级公寓', message: '你搬进了带无边泳池的高级公寓！生活质量飙升！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '和朋友合租 2b2b (每年 2 万美元): 性价比极高的湾区中产标准',
+        effect: (s) => ({ rent: 2, housing_name: 'Cupertino 2b2b合租', message: '你搬进了 Cupertino 经典的双主卧合租公寓，省钱又方便。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '挂壁大客厅隔间 (每年 1 万美元): 极致压低开销狂攒首付/防破产',
+        effect: (s) => ({ rent: 1, charm: Math.max(0, s.charm - 2), health: Math.max(10, s.health - 10), housing_name: '客厅屏风隔间', message: '你搬回了客厅屏风隔间，将每年固定的房租开销砍到了极致。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '🎒 终极挂壁：连夜退租！搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年)',
+        condition: (s) => !!(s.car && s.car !== 'none'),
+        effect: (s) => ({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, s.health - 15), message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '↩️ 算了，目前的房子住得挺好，不搬了',
+        effect: (s) => ({ message: '你打消了搬家念头。' }),
+        nextEventId: 'sv_daily_life'
       }
     ]
   },

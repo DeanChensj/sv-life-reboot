@@ -56,3 +56,13 @@ export interface GameEvent {
   choices: Choice[];
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  icon: string;
+  category: 'ending' | 'milestone' | 'wealth' | 'fun';
+  description: string;
+  hint: string;
+  unlockedAt?: string;
+}
+

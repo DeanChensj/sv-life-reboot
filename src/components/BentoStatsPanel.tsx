@@ -4,9 +4,10 @@ import type { GameState } from '../types';
 interface BentoStatsPanelProps {
   gameState: GameState;
   currentEventId: string;
+  onOpenCodex?: () => void;
 }
 
-export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId }) => {
+export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId, onOpenCodex }) => {
   // Fix AP Visibility: Hide only in onboarding screens or end game, show during active decision events
   const showAPBar = gameState.ap !== undefined && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId);
 
@@ -43,12 +44,26 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
             SIMULATOR ENGINE V2.0
           </span>
         </div>
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter text-zinc-100 mb-1">
-          硅谷模拟人生
-        </h1>
-        <p className="text-zinc-400 text-xs md:text-sm font-mono tracking-tight">
-          A survival & career guide to the Bay Area.
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter text-zinc-100 mb-1">
+              硅谷模拟人生
+            </h1>
+            <p className="text-zinc-400 text-xs md:text-sm font-mono tracking-tight">
+              A survival & career guide to the Bay Area.
+            </p>
+          </div>
+
+          {onOpenCodex && (
+            <button
+              onClick={onOpenCodex}
+              className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-300 border border-purple-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/10 active:scale-95 transition-all cursor-pointer shrink-0"
+            >
+              <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
+              <span>成就图鉴</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Bento Stats Panel Grid */}

@@ -5,6 +5,8 @@ import { BentoStatsPanel } from './components/BentoStatsPanel';
 import { CharacterProfileModal } from './components/CharacterProfileModal';
 import { YearEndStatementModal } from './components/YearEndStatementModal';
 import { WarReportModal } from './components/WarReportModal';
+import { AchievementCodexModal } from './components/AchievementCodexModal';
+import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
@@ -12,6 +14,19 @@ export default function App() {
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState<boolean>(false);
   const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
+  const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
+  const [achievementToast, setAchievementToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const newlyUnlocked = checkAndUnlockAchievements(gameState, currentEventId);
+    if (newlyUnlocked.length > 0) {
+      const ach = ACHIEVEMENTS.find(a => a.id === newlyUnlocked[0]);
+      if (ach) {
+        setAchievementToast(`[成就解锁] 恭喜获得隐藏成就：${ach.title}`);
+        setTimeout(() => setAchievementToast(null), 4500);
+      }
+    }
+  }, [gameState, currentEventId]);
 
   useEffect(() => {
     const cardEl = document.getElementById('event-decision-card');
@@ -224,6 +239,26 @@ export default function App() {
         />
       )}
 
+      {/* Achievement Codex Modal */}
+      {showAchievementCodex && (
+        <AchievementCodexModal
+          onClose={() => setShowAchievementCodex(false)}
+        />
+      )}
+
+      {/* Achievement Unlock Toast */}
+      {achievementToast && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-zinc-900/90 border border-purple-500/50 text-purple-200 px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 font-bold text-sm">
+          <span>{achievementToast}</span>
+          <button
+            onClick={() => setShowAchievementCodex(true)}
+            className="text-xs text-purple-300 hover:text-white underline font-mono cursor-pointer"
+          >
+            查看图鉴 ➔
+          </button>
+        </div>
+      )}
+
       {/* Mobile Sticky 2-Layer Mini-HUD Header */}
       <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-800/80 px-3 py-2 shadow-2xl flex flex-col gap-1.5 text-xs font-mono">
         {/* Layer 1: Year/Age, AP, Cash, TC, Drawer Toggle */}
@@ -268,7 +303,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Layer 2: Status Badges (Health, Level, Visa, Green Card) */}
+        {/* Layer 2: Status Badges (Health, Level, Visa, Green Card, Codex) */}
         <div className="flex items-center justify-between gap-1.5 w-full pt-1 border-t border-zinc-900/80">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             {/* Health Tag */}
@@ -295,13 +330,24 @@ export default function App() {
             </span>
           </div>
 
-          {/* Green Card Progress Tag (Mobile HUD) */}
-          {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && (
-            <span className="flex items-center gap-1.5 font-bold text-[10px] text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              GC: {gameState.visa === '绿卡' ? '100%' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}%`}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Achievement Codex Mobile Button */}
+            <button
+              onClick={() => setShowAchievementCodex(true)}
+              className="px-2 py-0.5 rounded-md bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <svg className="w-3 h-3 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
+              <span>图鉴</span>
+            </button>
+
+            {/* Green Card Progress Tag (Mobile HUD) */}
+            {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && (
+              <span className="flex items-center gap-1.5 font-bold text-[10px] text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                GC: {gameState.visa === '绿卡' ? '100%' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}%`}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -317,7 +363,7 @@ export default function App() {
               完成返回决策 ✕
             </button>
           </div>
-          <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} />
+          <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} />
         </div>
       )}
 
@@ -326,7 +372,7 @@ export default function App() {
           
           {/* Left Sticky Bento Panel (Desktop Only, Mobile uses sliding drawer) */}
           <div className="hidden lg:flex lg:col-span-5 flex-col sticky top-12">
-            <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} />
+            <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} />
           </div>
 
           {/* Right Column: Event Narrative & Decisions */}

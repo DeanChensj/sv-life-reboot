@@ -78,7 +78,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               >
                 <div>
                   <div className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">Tesla Model Y</div>
-                  <div className="text-xs text-zinc-500 mt-1">售价: $4w | 魅力 +4</div>
+                  <div className="text-xs text-zinc-500 mt-1">售价: $4w | 增加社交好感</div>
                 </div>
                 <div className="text-blue-400/50 text-xl font-black">Y</div>
               </button>
@@ -99,7 +99,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               >
                 <div>
                   <div className="font-bold text-zinc-200 group-hover:text-zinc-300 transition-colors">Tesla Cybertruck</div>
-                  <div className="text-xs text-zinc-500 mt-1">售价: $9w (支持旧车抵扣) | 魅力 +8，LeetCode +5</div>
+                  <div className="text-xs text-zinc-500 mt-1">售价: $9w (支持旧车抵扣) | LeetCode +5，极大幅增强气场</div>
                 </div>
                 <div className="text-zinc-500 text-xl font-black">CT</div>
               </button>
@@ -119,7 +119,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               >
                 <div>
                   <div className="font-bold text-zinc-200 group-hover:text-red-400 transition-colors">Porsche 911 / Taycan</div>
-                  <div className="text-xs text-zinc-500 mt-1">售价: $12w (支持旧车抵扣) | 魅力 +5，健康 +10</div>
+                  <div className="text-xs text-zinc-500 mt-1">售价: $12w (支持旧车抵扣) | 健康 +10，极大提升社交吸引力</div>
                 </div>
                 <div className="text-red-900/50 text-xl font-black">P</div>
               </button>
@@ -136,7 +136,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-pink-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-pink-400 transition-colors">医美与高端私教</div>
-                <div className="text-xs text-zinc-500 mt-1">花费: $3w | 健康 +20, 魅力 +2</div>
+                <div className="text-xs text-zinc-500 mt-1">花费: $3w | 健康 +20, 容光焕发</div>
               </button>
 
               <button
@@ -148,7 +148,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-purple-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
-                <div className="font-bold text-zinc-200 group-hover:text-purple-400 transition-colors">游艇高端局 (需魅力≥8)</div>
+                <div className="font-bold text-zinc-200 group-hover:text-purple-400 transition-colors">游艇高端局 (需要一定社交资质)</div>
                 <div className="text-xs text-zinc-500 mt-1">入场费: $5w | 高风险高回报：可能结识大佬涨 TC，也可能白扔钱扣健康。</div>
               </button>
             </div>

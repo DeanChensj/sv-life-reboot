@@ -595,10 +595,7 @@ export default function App() {
                         <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">LeetCode</div>
                         <div className="font-bold font-mono tabular-nums text-amber-300 text-base">{gameState.leetcode} 题</div>
                       </div>
-                      <div>
-                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">魅力指数</div>
-                        <div className="font-bold font-mono tabular-nums text-rose-300 text-base">{gameState.charm} pts</div>
-                      </div>
+                      {/* Charm stat removed to keep it a hidden attribute */}
                     </div>
                   </div>
 

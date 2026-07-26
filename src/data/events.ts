@@ -1247,7 +1247,7 @@ export const events: Record<string, GameEvent> = {
     description: '轰动部门！鉴于你在公司核心业务中的突出 Impact，晋升委员会 (Promo Committee) 官方批准了你的职级晋升！',
     choices: [
       {
-        text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗 (健康 +5, 魅力 +1)',
+        text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗 (健康 +5)',
         effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level} 的职级头衔，包裹与职场地位同步跃升！` }),
         nextEventId: 'sv_daily_life',
       }

@@ -22,6 +22,7 @@ export interface GameState {
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed';
   imageUrl?: string;
   has_housing: boolean;
+  parents_helped_house?: boolean;
   housing_name?: string;
   car?: 'none' | 'model_y' | 'porsche' | 'cybertruck';
   status: 'playing' | 'game_over' | 'win';

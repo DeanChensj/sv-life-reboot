@@ -18,6 +18,9 @@ interface GameState {
   school: string;
   is_phd: boolean;
   has_pet: boolean;
+  luck: number;
+  is_married: boolean;
+  win_threshold: number;
   laid_off: boolean;
   status: 'playing' | 'game_over' | 'win';
   message: string;
@@ -38,8 +41,8 @@ interface GameEvent {
 }
 
 // Initial State
-const generateInitialState = (): GameState => {
-  const cash = Math.floor(Math.random() * 80) + 10; // 10 到 90 万美元不等
+export const generateInitialState = (): GameState => {
+  const cash = Math.floor(Math.random() * 80) + 20; // 10 到 90 万美元不等
   const charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
   
   let bgMessage = '';
@@ -65,14 +68,51 @@ const generateInitialState = (): GameState => {
     school: '',
     is_phd: false,
     has_pet: false,
+    luck: 50,
+    is_married: false,
+    win_threshold: 1000,
     laid_off: false,
     status: 'playing',
     message: bgMessage,
+    eventLog: []
   };
 };
 
 // Events Engine
-const events: Record<string, GameEvent> = {
+export const events: Record<string, GameEvent> = {
+
+  'choose_trait': {
+    id: 'choose_trait',
+    title: '重新投胎 (选择天赋)',
+    description: '在转生到硅谷之前，上帝给了你一次选择天赋的机会。每个天赋都有独特的加成，也伴随着相应的代价。',
+    choices: [
+      {
+        text: '【卷王之王】初始 LeetCode +40，但初始健康 -20。',
+        effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 20, win_threshold: 400 }),
+        nextEventId: 'choose_year',
+      },
+      {
+        text: '【湾区海王】初始魅力 +10，但沉迷社交无心刷题 (初始现金 -15w，LeetCode -10)。',
+        effect: (s) => ({ charm: s.charm + 10, cash: s.cash - 15, leetcode: Math.max(0, s.leetcode - 10), win_threshold: 300 }),
+        nextEventId: 'choose_year',
+      },
+      {
+        text: '【家里有矿】家里赞助了首付 (初始现金 +40w)，但天天蹦迪身体被掏空 (健康 -20，LeetCode -30)。',
+        effect: (s) => ({ cash: s.cash + 40, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 600 }),
+        nextEventId: 'choose_year',
+      },
+      {
+        text: '【天选之子】运气爆表，但日常有些倒霉 (初始 LeetCode -10，魅力 -2)。',
+        effect: (s) => ({ luck: 100, leetcode: Math.max(0, s.leetcode - 10), charm: Math.max(0, s.charm - 2), win_threshold: 300 }),
+        nextEventId: 'choose_year',
+      },
+      {
+        text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
+        effect: (s) => ({ win_threshold: 200 }),
+        nextEventId: 'choose_year',
+      }
+    ]
+  },
   'choose_year': {
     id: 'choose_year',
     title: '选择你的时代 (难度选择)',
@@ -272,21 +312,21 @@ const events: Record<string, GameEvent> = {
         condition: (s) => s.school === 'state',
         effect: (s) => ({ tc: 15, health: s.health + 10, charm: s.charm + 2, message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' }),
         nextEventId: 'choose_housing',
-      },,
+      },
 
       {
         text: '面试 FLAG 大厂 (Google/Apple 等养老厂)',
         effect: (s) => {
           let req = 50;
-          if (s.year >= 2023) req = 80;
+          if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30; // 疫情放水期
           return s.leetcode >= req 
-            ? { tc: s.year >= 2023 ? 20 : 18, cash: s.cash + 5, health: s.health - 10, message: `上岸！${s.year}年大厂要求LeetCode>${req}，你顺利通过。` } 
-            : { health: s.health - 20, message: `面试被挂了！${s.year}年市场要求LeetCode>${req}。` };
+            ? { tc: s.year >= 2023 ? 25 : 22, cash: s.cash + 5, health: s.health - 5, message: `上岸！${s.year}年大厂要求LeetCode>${req}，你顺利通过。` } 
+            : { health: s.health - 10, message: `面试被挂了！${s.year}年市场要求LeetCode>${req}。` };
         },
         nextEventId: (s) => {
           let req = 50;
-          if (s.year >= 2023) req = 80;
+          if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30;
           return s.leetcode >= req ? 'choose_housing' : 'job_hunt_fail';
         },
@@ -294,12 +334,12 @@ const events: Record<string, GameEvent> = {
       {
         text: '加入 Meta (传说中的卷王之王)',
         condition: (s) => s.leetcode >= 60,
-        effect: (s) => ({ tc: 35, health: s.health - 40, cash: s.cash + 10, company: 'meta', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
+        effect: (s) => ({ tc: 35, health: s.health - 20, cash: s.cash + 10, company: 'meta', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
         nextEventId: 'choose_housing',
       },
       {
         text: '面试普通 Startup',
-        effect: (s) => ({ tc: 12, health: s.health - 5 }),
+        effect: (s) => ({ tc: 12, health: s.health - 2 }),
         nextEventId: 'startup_work',
       },
       {
@@ -371,7 +411,7 @@ const events: Record<string, GameEvent> = {
       {
         text: '老老实实祈祷 H1B 中签 (免费)',
         effect: (s) => {
-          let winRate = 0.2; // 20% win rate
+          let winRate = s.luck >= 80 ? 0.6 : 0.35; // 天选之子 50% 概率
           const win = Math.random() < winRate;
           return win 
             ? { visa: 'H1B (工签)', age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent, message: '人品爆发，今年H1B中签了！' }
@@ -383,7 +423,7 @@ const events: Record<string, GameEvent> = {
         text: '砸钱找最顶级的移民律师帮忙弄 O1 签证 (花费 2 万美元)',
         condition: (s) => s.cash >= 2,
         effect: (s) => {
-          const win = Math.random() > 0.4; // 60% chance for O1
+          const win = Math.random() > (s.luck >= 80 ? 0.1 : 0.3); // 天选之子 90% 概率
           return win
             ? { visa: 'H1B (工签)', age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 2, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证，效果等同于 H1B！' }
             : { age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 2, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，两万美元打了水漂。' };
@@ -434,7 +474,7 @@ const events: Record<string, GameEvent> = {
           
           const rand = Math.random();
           if (rand < 0.12) return 'perf_review';
-          if (rand < 0.24) return 'dating_market';
+          if (rand < 0.24) return s.is_married ? 'sv_daily_life' : 'dating_market';
           if (rand < 0.36) return 'car_broken';
           if (rand < 0.48) return 'visa_check';
           if (rand < 0.60) return 'layoff_rumor';
@@ -460,7 +500,7 @@ const events: Record<string, GameEvent> = {
           
           const rand = Math.random();
           if (rand < 0.12) return 'perf_review';
-          if (rand < 0.24) return 'dating_market';
+          if (rand < 0.24) return s.is_married ? 'sv_daily_life' : 'dating_market';
           if (rand < 0.36) return 'car_broken';
           if (rand < 0.48) return 'visa_check';
           if (rand < 0.60) return 'layoff_rumor';
@@ -474,7 +514,7 @@ const events: Record<string, GameEvent> = {
         condition: (s) => s.rent >= 2 && !s.has_pet,
         effect: (s) => ({ rent: s.rent + 1, charm: s.charm + 10, health: s.health + 30, has_pet: true, message: '你领养了毛孩子！虽然每年要多花不少钱，但在相亲软件上放宠物照片让你大受欢迎，疲惫的心也被彻底治愈了！' }),
         nextEventId: 'sv_daily_life'
-      },,
+      },
       {
         text: '受够了！不要身份了，裸辞 All in AI 创业！',
         condition: (s) => s.year >= 2022,
@@ -529,7 +569,7 @@ const events: Record<string, GameEvent> = {
       {
         text: '周末一天排满 3 个 Coffee Date (Santana Row 喝奶茶)',
         effect: (s) => s.charm >= 7 
-          ? { cash: s.cash + s.tc, health: s.health + 20, message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人一拍即合，组成双职工核心家庭，资产直接翻倍！' }
+          ? { cash: s.cash + s.tc, health: s.health + 20, is_married: true, message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人一拍即合，组成双职工核心家庭，资产直接翻倍！' }
           : { cash: s.cash - 0.2, health: s.health - 15, message: '连喝了三杯 Boba，对方一听你还没抽到 H1B 且没买房，默默地在吃完饭后选择了 AA。你不仅花了钱还受到了真实伤害。' },
         nextEventId: 'sv_daily_life',
       },
@@ -620,7 +660,7 @@ const events: Record<string, GameEvent> = {
       {
         text: '搞副业炒股：梭哈英伟达 (NVDA)！',
         effect: (s) => {
-          const win = Math.random() > 0.4; // 60% chance to win with NVDA
+          const win = Math.random() > (s.luck >= 80 ? 0.1 : 0.3); // 天选之子 90% 赚钱
           return win
             ? { cash: s.cash * 3, message: '皮衣黄刀法精准！英伟达市值突破天际，你直接财富自由了！', status: 'win' }
             : { cash: s.cash / 2, health: s.health - 20, message: '买在了高位... 股票腰斩，只能继续回去打工了。' };
@@ -654,9 +694,9 @@ const events: Record<string, GameEvent> = {
     choices: [
 
       {
-        text: 'All in 现金，加价 $50w 硬抢！(需现金 > 80w)',
-        condition: (s) => s.cash >= 80,
-        effect: (s) => ({ cash: s.cash - 80, health: s.health - 20, message: '恭喜！你成功抢到了房子，成为了光荣的湾区房奴。', status: 'win' }),
+        text: 'All in 现金，加价 $50w 硬抢！(需现金 > 60w)',
+        condition: (s) => s.cash >= 60,
+        effect: (s) => ({ cash: s.cash - 60, health: s.health - 20, message: '恭喜！你成功抢到了房子，成为了光荣的湾区房奴。', status: 'win' }),
         nextEventId: 'end',
       },
       {
@@ -706,18 +746,18 @@ const events: Record<string, GameEvent> = {
     description: '在 Meta，你不进则退。当上 Tech Lead Manager 后，手下管着 5 个人，每天被拉进无数个群，晚上 11 点还在回复印度总监的邮件。',
     choices: [
       {
-        text: '拼了！目标 L6，接管核心项目',
+        text: '继续卷升职 (冲击下一级别)',
         effect: (s) => {
           const win = Math.random() > 0.3; // 70% 成功率
           return win 
-            ? { tc: 60, cash: s.cash + 35, health: s.health - 50, message: '你干掉了同组的竞争对手，成功升到了 L6。包裹极大，但你的身体严重透支。' }
-            : { health: s.health - 30, message: '辛辛苦苦卷了一年，名额却被空降的 VP 亲信抢走了。' };
+            ? { tc: s.tc + 30, cash: s.cash + s.tc, health: s.health - 20, message: `你干掉了同组的竞争对手，成功拿到了顶格绩效并升职！当前 TC 达到 ${s.tc + 30}w，包裹极大，但你的身体严重透支。` }
+            : { health: s.health - 15, message: '辛辛苦苦卷了一年，名额却被空降的 VP 亲信抢走了。' };
         },
         nextEventId: (s) => s.health <= 0 ? 'end' : 'sv_daily_life',
       },
       {
-        text: '受不了了，降薪跳槽去 Google 养老',
-        effect: (s) => ({ tc: 20, health: s.health + 30, cash: s.cash + 10, message: '你受够了卷生卷死，跳槽到了 Google。虽然总包砍半，但是每天 3点半下班，你重新找回了生活的意义。' }),
+        text: '太累了，降薪跳槽去 Google/Apple 养老',
+        effect: (s) => ({ tc: Math.max(20, s.tc - 20), company: 'google', health: s.health + 40, message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹大幅缩水，但终于有了生活。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -932,7 +972,7 @@ const events: Record<string, GameEvent> = {
         text: '搏一搏，单车变摩托！投入 $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
-          const win = Math.random() > 0.85; // 15% chance to win
+          const win = Math.random() > (s.luck >= 80 ? 0.65 : 0.95); // 天选之子 35% 暴富，普通人 5%
           return win 
             ? { cash: s.cash + 100, status: 'win', message: '你买的土狗币居然真的上了币安！瞬间百倍收益，你看着余额里多出来的 $1M 陷入了沉思...' }
             : { cash: s.cash - 5, health: s.health - 15, message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都换成了毫无价值的空气币。' }
@@ -980,7 +1020,7 @@ const events: Record<string, GameEvent> = {
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
-  const [currentEventId, setCurrentEventId] = useState<string>('choose_year');
+  const [currentEventId, setCurrentEventId] = useState<string>('choose_trait');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -1017,6 +1057,12 @@ export default function App() {
       newState.message = '你破产了，无法支付账单，游戏结束！';
     }
 
+    // Check FIRE win
+    if (newState.cash >= newState.win_threshold && newState.status === 'playing') {
+      newState.status = 'win';
+      newState.message = `你的资产突破了 ${newState.win_threshold} 万美元！你正式达成了个人的 FIRE 目标（财务自由，提前退休）。你再也不需要看任何人的脸色，可以去做自己真正想做的事情了！`;
+    }
+
     setGameState(newState);
 
     // 2. Transition to next event
@@ -1030,7 +1076,7 @@ export default function App() {
 
   const resetGame = () => {
     setGameState(generateInitialState());
-    setCurrentEventId('choose_year');
+    setCurrentEventId('choose_trait');
   };
 
   return (

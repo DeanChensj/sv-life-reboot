@@ -614,47 +614,9 @@ export const events: Record<string, GameEvent> = {
     title: '湾区日常 (行动面板)',
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
+      // 1. 【今年限时机会】 (优先展示)
       {
-         text: '🚚 搬家/换租更好的湾区公寓 (消耗 1 精力) - 提升居住品质或退租省钱',
-         condition: (s) => s.ap > 0 && s.has_housing && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
-         effect: (s) => ({ ap: s.ap - 1, message: '你打开 Zillow 和 Redfin，准备在湾区重新选一套更符合当前身价的租房。' }),
-         nextEventId: 'change_rental',
-      },
-      {
-         text: '💰 应急变卖保时捷/赛博皮卡套现 (消耗 1 精力) - 快速回笼现金流防破产',
-         condition: (s) => s.ap > 0 && (s.car === 'porsche' || s.car === 'cybertruck'),
-         effect: (s) => {
-           const isPorsche = s.car === 'porsche';
-           const recoup = isPorsche ? 7 : 5;
-           return {
-             ap: s.ap - 1,
-             cash: s.cash + recoup,
-             car: isPorsche ? 'model_y' : 'none',
-             charm: Math.max(0, s.charm - (isPorsche ? 5 : 3)),
-             message: `你把昂贵的${isPorsche ? '保时捷' : '赛博皮卡'}卖给了车行，快速套现了 $${recoup}w 万美元应急现金！`
-           };
-         },
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '🧗 周末去 Movement / Planet Granite 抱石馆抓 V5 难度墙 (消耗 1 精力, $0.01w) - 湾区最流行的码农技术社交',
-         condition: (s) => s.ap > 0 && s.cash >= 0.01,
-         effect: (s) => {
-           const staffNetwork = Math.random() < 0.35;
-           return staffNetwork
-             ? { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 4), tc: s.tc + 4, message: '你在抱石馆脱掉镁粉手套抱岩壁，旁边一位穿着始祖鸟黑标的老哥向你攀谈，聊天才发现是隔壁组的 Staff Engineer！对方欣赏你的解题节奏，直通荐你去核心 AI 架构团队！' }
-             : { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 25), charm: Math.min(25, s.charm + 3), message: '虽然前臂小臂肌肉酸痛得拿不稳水杯，但你成功顶住了 V5 的黑点挂墙，心理压力一扫而空，神清气爽！' };
-         },
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '🏡 参加湾区加价抢房大战 (购买买房置业, 消耗 1 精力) - (需现金 >= $40w)',
-         condition: (s) => s.ap > 0 && s.cash >= 40 && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
-         effect: (s) => ({ ap: s.ap - 1, message: '你拿着这些年攒下的首付本金与股票，精神抖擞地走向了 Open House 现场！' }),
-         nextEventId: 'buy_house',
-      },
-       {
-        text: '🔥【今年限时机会】 Stanford 师兄拉你组队冲 AI Hackathon (消耗 1 精力, $0.5w)',
+        text: '【今年限时机会】 Stanford 师兄拉你组队冲 AI Hackathon (消耗 1 精力, $0.5w)',
         condition: (s) => s.ap > 0 && s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3),
         hideIfUnavailable: true,
         effect: (s) => {
@@ -666,7 +628,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🔥【今年限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场近距离见皮衣黄 (消耗 1 精力, $1.5w)',
+        text: '【今年限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场见皮衣黄 (消耗 1 精力, $1.5w)',
         condition: (s) => s.ap > 0 && s.cash >= 1.5 && (s.year % 6 === 1),
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -679,7 +641,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🔥【今年限时机会】 酒店拍卖破产 Web3 公司资产：超低价淘二手 Herman Miller 人体工学椅 (消耗 1 精力, $0.3w)',
+        text: '【今年限时机会】 拍卖淘二手 Herman Miller 人体工学椅 (消耗 1 精力, $0.3w)',
         condition: (s) => s.ap > 0 && s.cash >= 0.3 && (s.year % 6 === 2),
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -691,7 +653,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🔥【今年限时机会】 硅谷暴雨冲毁数据中心，连夜接单抗洪抢修服务器机房 (消耗 1 精力)',
+        text: '【今年限时机会】 硅谷暴雨连夜抢修服务器机房 (消耗 1 精力)',
         condition: (s) => s.ap > 0 && (s.year % 6 === 4),
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -704,7 +666,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🔥【今年限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (消耗 1 精力) - (需要 LeetCode >= 35)',
+        text: '【今年限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (消耗 1 精力) - (需 LeetCode >= 35)',
         condition: (s) => s.ap > 0 && s.leetcode >= 35 && (s.year % 6 === 5),
         hideIfUnavailable: true,
         effect: (s) => {
@@ -715,31 +677,33 @@ export const events: Record<string, GameEvent> = {
         },
         nextEventId: 'sv_daily_life',
       },
+
+      // 2. 【职业与技术】
       {
-        text: '🏢 疯狂加班与 Perf 冲刺 (消耗 1 精力) - 争取加薪与升职 (Promote)',
+        text: '【职业】疯狂加班与 Perf 冲刺 (争取加薪与升职, 消耗 1 精力)',
         condition: (s) => s.ap > 0 && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const pass = Math.random() < (0.35 + s.leetcode / 300);
           if (curLevel === 'L3') {
             return pass 
-              ? { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 5, level: 'L4', message: '🎉 恭喜！Perf 拿下 Strong Exceeds，成功从 L3 晋升至 L4！TC +$5w！' }
+              ? { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 5, level: 'L4', message: '恭喜！Perf 拿下 Strong Exceeds，成功从 L3 晋升至 L4！TC +$5w！' }
               : { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: '你拼命熬夜写代码，但 Manager 饼画得飞起：“今年团队额度有限，明年一定升 L4。”' };
           } else if (curLevel === 'L4') {
             return pass 
-              ? { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 10, level: 'L5', message: '🎉 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5！TC +$10w！' }
+              ? { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 10, level: 'L5', message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5！TC +$10w！' }
               : { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: 'Manager 嘴上夸你表现好，但升职委员会以“缺乏 Leadership”为由把你卡在了 L4。' };
           } else if (curLevel === 'L5') {
             return pass 
-              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 15, level: 'L6', message: '🚀 登顶！你跨越了硅谷码农最大天堑，成功晋升为 L6！TC +$15w！' }
+              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 15, level: 'L6', message: '登顶！你跨越了硅谷码农最大天堑，成功晋升为 L6！TC +$15w！' }
               : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 2, message: '升 L6 竞争极其残酷，跨组 Director 把你否决了，继续留守 L5。' };
           } else if (curLevel === 'L6') {
             return pass 
-              ? { ap: s.ap - 1, health: s.health - 30, tc: s.tc + 25, level: 'L7', message: '👑 硅谷传奇！你成功封神晋升为 L7！VP 亲自为你提薪！' }
+              ? { ap: s.ap - 1, health: s.health - 30, tc: s.tc + 25, level: 'L7', message: '硅谷传奇！你成功封神晋升为 L7！VP 亲自为你提薪！' }
               : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 3, message: 'L7 席位太少，今年全部门只有一个人升上去了，你继续保持 L6。' };
           } else if (curLevel === 'MTS') {
             return pass 
-              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 20, level: 'L6', message: '🚀 前沿研究成果震撼发布！你从 MTS 破格提拔为 L6！TC +$20w！' }
+              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 20, level: 'L6', message: '前沿研究成果震撼发布！你从 MTS 破格提拔为 L6！TC +$20w！' }
               : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 5, message: '你在实验室熬夜训大模型，研究进展顺利，奖金丰厚！' };
           } else {
             return { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 3, message: '你在公司疯狂加班，拿到满额绩效奖金！' };
@@ -748,7 +712,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🚀 刷题跳槽冲刺 (消耗 1 精力, 尝试跳槽升职级) - (需要 LeetCode >= 50)',
+        text: '【跳槽】刷题跳槽冲刺 (尝试跳槽升职级, 消耗 1 精力) - (需 LeetCode >= 50)',
         condition: (s) => s.ap > 0 && s.leetcode >= 50 && !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
@@ -761,7 +725,7 @@ export const events: Record<string, GameEvent> = {
               tc: Math.max(s.tc + 25, 65),
               level: 'L6',
               job_type: 'big_tech',
-              message: '🌟 顶级光环！你带着 OpenAI / AI 实验室背景跳槽大厂，对方直接送上 L6 包裹！TC 暴涨！'
+              message: '顶级光环！你带着 OpenAI / AI 实验室背景跳槽大厂，对方直接送上 L6 包裹！TC 暴涨！'
             };
           }
 
@@ -778,70 +742,43 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '💻 闭关刷题 (消耗 1 精力) - 备战跳槽',
+        text: '【技术】闭关刷题提升算法 (消耗 1 精力)',
         condition: (s) => s.ap > 0,
         effect: (s) => ({ ap: s.ap - 1, health: s.health - 10, leetcode: s.leetcode + 5, message: '你拒绝了所有社交，周末疯狂刷 LeetCode，算法能力精进了。' }),
         nextEventId: 'sv_daily_life',
       },
       {
-         text: '🚗 周末跑 Uber / 送外卖赚外快 (消耗 1 精力, 净赚 $300)',
-         condition: (s) => s.ap > 0 && s.cash <= 25 && !!(s.car && s.car !== 'none'),
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash + 0.03, health: s.health - 15, message: '手头太紧了，你周末开着破车去 DoorDash 送外卖，拉满两天赚了 $300 美金外快，累得腰酸背痛。' }),
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '🏋️ 医美与私教 (消耗 1 精力, 3 万美元) - 提升魅力和健康',
-         condition: (s) => s.ap > 0 && s.cash >= 3,
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 3, health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 2), message: '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！' }),
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '📱 经营小红书 (消耗 1 精力) - 卷“湾区精英”人设',
-         condition: (s) => s.ap > 0,
-         effect: (s) => {
-            let winRate = 0.2;
-            if (s.charm >= 12) winRate = 0.9;
-            else if (s.charm >= 7) winRate = 0.6;
-            const win = Math.random() < winRate;
-            if (win) {
-              if (s.charm >= 20 && Math.random() < 0.05) {
-                 return { ap: s.ap - 1, cash: s.cash + 48, charm: Math.min(25, s.charm + 5), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
-              }
-              return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
-            } else {
-              return { ap: s.ap - 1, cash: Math.max(0, s.cash - 3), health: s.health - 20, message: '疯狂买装备拍 OOTD 却没人看，倒贴钱还心累。' };
-            }
-         },
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '🤖 搞 AI 独立开发 (消耗 1 精力, $2w) - (需要 LeetCode >= 30)',
+         text: '【创业】搞 AI 独立开发 (消耗 1 精力, $2w) - (需 LeetCode >= 30)',
          condition: (s) => s.ap > 0 && s.cash >= 2 && s.leetcode >= 30,
          effect: (s) => {
-            const jackpot = Math.random() < (0.05 + s.luck / 500); // 5% to 25% chance
+            const jackpot = Math.random() < (0.05 + s.luck / 500);
             if (jackpot) return { ap: s.ap - 1, cash: s.cash + 32, leetcode: s.leetcode + 5, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
             return { ap: s.ap - 1, cash: s.cash - 2, leetcode: s.leetcode + 3, message: '你的产品上线后无人问津，几万美元的 API 费用和服务器费打了水漂，但你的技术变强了。' };
          },
          nextEventId: 'sv_daily_life'
       },
+
+      // 3. 【置业与资产】
       {
-         text: '🍸 参加高尔夫/游艇高端局 (消耗 1 精力, $5w) - (需要 魅力 >= 8)',
-         condition: (s) => s.ap > 0 && s.cash >= 5 && s.charm >= 8,
-         effect: (s) => {
-            const success = Math.random() > 0.5;
-            if (success) return { ap: s.ap - 1, cash: s.cash - 5, tc: s.tc + 5, charm: s.charm + 2, message: '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！' };
-            return { ap: s.ap - 1, cash: s.cash - 5, health: s.health - 10, message: '去派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。' };
-         },
-         nextEventId: 'sv_daily_life'
+         text: '【置业】参加湾区加价抢房大战 (购买房产, 消耗 1 精力) - (需现金 >= $40w)',
+         condition: (s) => s.ap > 0 && s.cash >= 40 && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
+         effect: (s) => ({ ap: s.ap - 1, message: '你拿着这些年攒下的首付本金与股票，精神抖擞地走向了 Open House 现场！' }),
+         nextEventId: 'buy_house',
       },
       {
-         text: '🚗 购买白色 Tesla Model Y (消耗 1 精力, $4w) - 湾区标准的民工街车',
+         text: '【置业】搬家/换租更好的湾区公寓 (消耗 1 精力)',
+         condition: (s) => s.ap > 0 && s.has_housing && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
+         effect: (s) => ({ ap: s.ap - 1, message: '你打开 Zillow 和 Redfin，准备在湾区重新选一套更符合当前身价的租房。' }),
+         nextEventId: 'change_rental',
+      },
+      {
+         text: '【购车】购买 Tesla Model Y (消耗 1 精力, $4w)',
          condition: (s) => s.ap > 0 && s.cash >= 4 && s.car !== 'model_y' && s.car !== 'porsche' && s.car !== 'cybertruck',
          effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 4, car: 'model_y', charm: s.charm + 4, message: '你提了一台最标准的白色 Model Y。去 Cupertino 买奶茶在停车场发现身旁停了 6 台一模一样的车，你按半天钥匙开错别人的车门。' }),
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '🏎️ 购买保时捷 Porsche Macan / Taycan (消耗 1 精力, 置换折抵后实付 $12w) - 破防相亲圈',
+         text: '【购车】购买保时捷 Porsche (消耗 1 精力, 实付 $12w)',
          condition: (s) => {
            const cost = s.car === 'cybertruck' ? 7 : s.car === 'model_y' ? 10 : 12;
            return s.ap > 0 && s.cash >= cost && s.car !== 'porsche';
@@ -862,7 +799,7 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '📐 购买赛博皮卡 Tesla Cybertruck (消耗 1 精力, 置换折抵后实付 $9w) - 科技硬核装逼',
+         text: '【购车】购买 Tesla Cybertruck (消耗 1 精力, 实付 $9w)',
          condition: (s) => {
            const cost = s.car === 'porsche' ? 3 : s.car === 'model_y' ? 7 : 9;
            return s.ap > 0 && s.cash >= cost && s.car !== 'cybertruck';
@@ -883,25 +820,97 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '❤️ 去 CMB 约会相亲 (消耗 1 精力)',
+         text: '【应急】出售座驾应急套现 (消耗 1 精力) - 快速回笼现金流防破产',
+         condition: (s) => s.ap > 0 && (s.car === 'porsche' || s.car === 'cybertruck'),
+         effect: (s) => {
+           const isPorsche = s.car === 'porsche';
+           const recoup = isPorsche ? 7 : 5;
+           return {
+             ap: s.ap - 1,
+             cash: s.cash + recoup,
+             car: isPorsche ? 'model_y' : 'none',
+             charm: Math.max(0, s.charm - (isPorsche ? 5 : 3)),
+             message: `你把昂贵的${isPorsche ? '保时捷' : '赛博皮卡'}卖给了车行，快速套现了 $${recoup}w 万美元应急现金！`
+           };
+         },
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '【省钱】挂壁退租睡车顶 (房租归零, 消耗 1 精力)',
+         condition: (s) => s.ap > 0 && s.cash < 10 && s.rent > 0,
+         effect: (s) => ({ ap: s.ap - 1, rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, s.health - 10), message: '你把睡袋、卡式炉塞进了车后备箱。虽然每天去 Planet Fitness 健身房洗澡极其硬核，但你成功将每年的房租固定消耗砍到了 $0！' }),
+         nextEventId: 'sv_daily_life',
+       },
+
+      // 4. 【社交与生活】
+      {
+         text: '【相亲】去 CMB 约会相亲 (消耗 1 精力)',
          condition: (s) => s.ap > 0 && !s.is_married,
          effect: (s) => ({ ap: s.ap - 1, message: '你去 Santana Row 喝了杯奶茶。' }),
          nextEventId: 'dating_market' 
       },
       {
-         text: '🏖️ 宅家躺平打游戏 (消耗 1 精力) - 恢复大量健康',
+         text: '【社交】参加游艇高端局 (消耗 1 精力, $5w) - (需魅力 >= 8)',
+         condition: (s) => s.ap > 0 && s.cash >= 5 && s.charm >= 8,
+         effect: (s) => {
+            const success = Math.random() > 0.5;
+            if (success) return { ap: s.ap - 1, cash: s.cash - 5, tc: s.tc + 5, charm: s.charm + 2, message: '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！' };
+            return { ap: s.ap - 1, cash: s.cash - 5, health: s.health - 10, message: '去派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。' };
+         },
+         nextEventId: 'sv_daily_life'
+      },
+      {
+         text: '【社交】去 Movement / Planet Granite 攀岩馆 (消耗 1 精力, $0.01w) - 湾区最流行的码农技术社交',
+         condition: (s) => s.ap > 0 && s.cash >= 0.01,
+         effect: (s) => {
+           const staffNetwork = Math.random() < 0.35;
+           return staffNetwork
+             ? { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 4), tc: s.tc + 4, message: '你在抱石馆脱掉镁粉手套抱岩壁，旁边一位穿着始祖鸟黑标的老哥向你攀谈，聊天才发现是隔壁组的 Staff Engineer！对方欣赏你的解题节奏，直通荐你去核心 AI 架构团队！' }
+             : { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 25), charm: Math.min(25, s.charm + 3), message: '虽然前臂小臂肌肉酸痛得拿不稳水杯，但你成功顶住了 V5 的黑点挂墙，心理压力一扫而空，神清气爽！' };
+         },
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '【形象】医美与私教 (消耗 1 精力, $3w) - 提升魅力和健康',
+         condition: (s) => s.ap > 0 && s.cash >= 3,
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 3, health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 2), message: '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！' }),
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '【副业】经营小红书 (消耗 1 精力) - 卷“湾区精英”人设',
+         condition: (s) => s.ap > 0,
+         effect: (s) => {
+            let winRate = 0.2;
+            if (s.charm >= 12) winRate = 0.9;
+            else if (s.charm >= 7) winRate = 0.6;
+            const win = Math.random() < winRate;
+            if (win) {
+              if (s.charm >= 20 && Math.random() < 0.05) {
+                 return { ap: s.ap - 1, cash: s.cash + 48, charm: Math.min(25, s.charm + 5), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
+              }
+              return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
+            } else {
+              return { ap: s.ap - 1, cash: Math.max(0, s.cash - 3), health: s.health - 20, message: '疯狂买装备拍 OOTD 却没人看，倒贴钱还心累。' };
+            }
+         },
+         nextEventId: 'sv_daily_life',
+       },
+       {
+          text: '【兼职】周末跑 Uber / 送外卖赚外快 (消耗 1 精力, 赚 $300)',
+          condition: (s) => s.ap > 0 && s.cash <= 25 && !!(s.car && s.car !== 'none'),
+          effect: (s) => ({ ap: s.ap - 1, cash: s.cash + 0.03, health: s.health - 15, message: '手头太紧了，你周末去 DoorDash 送外卖，拉满两天赚了 $300 美金外快，累得腰酸背痛。' }),
+          nextEventId: 'sv_daily_life',
+       },
+
+      // 5. 【休养与结算】 (永远固定在最底部)
+      {
+         text: '【休养】宅家躺平打游戏 (恢复大量健康, 消耗 1 精力)',
          condition: (s) => s.ap > 0,
          effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 30), message: '整个周末都在家打黑神话：悟空，什么代码都不想写，虽然没进步，但是感觉重新活了过来。' }),
          nextEventId: 'sv_daily_life',
-      },
+       },
       {
-         text: '🎒 挂壁求生：退租高额公寓，连夜搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年, 消耗 1 精力)',
-         condition: (s) => s.ap > 0 && s.cash < 10 && s.rent > 0,
-         effect: (s) => ({ ap: s.ap - 1, rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, s.health - 10), message: '你把睡袋、卡式炉塞进了车后备箱。虽然每天去 Planet Fitness 健身房洗澡极其硬核，但你成功将每年的房租固定消耗砍到了 $0！' }),
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '⏩ 放弃剩余精力，直接进入年底结算',
+         text: '结束本年行动，进入年底结算',
          condition: (s) => true,
          effect: (s) => ({ ap: 0 }),
          nextEventId: 'sv_year_end_settlement'

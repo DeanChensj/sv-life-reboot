@@ -5,13 +5,14 @@ interface BentoStatsPanelProps {
   gameState: GameState;
   currentEventId: string;
   onOpenCodex?: () => void;
+  onOpenShop?: () => void;
   onToggleSound?: () => void;
   isMuted?: boolean;
 }
 
-export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId, onOpenCodex, onToggleSound, isMuted }) => {
+export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId, onOpenCodex, onOpenShop, onToggleSound, isMuted }) => {
   // Fix AP Visibility: Show during active Bay Area daily life decision events, hide in onboarding or end screens
-  const showAPBar = gameState.ap !== undefined && !['choose_trait', 'choose_year', 'choose_school', 'us_undergrad_year1', 'us_undergrad_year3', 'cn_college_grad', 'cn_college_year3', 'cn_undergrad_grad', 'us_undergrad_grad', 'us_master_year1', 'us_master_grad', 'buy_house', 'change_rental', 'end'].includes(currentEventId);
+  const showAPBar = false; // AP system removed, replaced by Yearly Focus
 
   const displayLevel = gameState.level || (
     gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type 
@@ -81,6 +82,15 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
                 )}
               </button>
             )}
+            {onOpenShop && currentEventId === 'sv_daily_life' && (
+              <button
+                onClick={onOpenShop}
+                className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 border border-emerald-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer"
+              >
+                <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                <span>资产商城</span>
+              </button>
+            )}
             {onOpenCodex && (
               <button
                 onClick={onOpenCodex}
@@ -109,28 +119,7 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
           </div>
         </div>
         
-        {/* Action Points (AP) */}
-        {showAPBar && (
-          <div className="col-span-2 md:col-span-4 bg-zinc-900/90 border border-indigo-500/30 p-4 sm:p-5 rounded-2xl flex items-center gap-4 sm:gap-6 shadow-md backdrop-blur-xl">
-            <div className="flex-1">
-              <div className="text-indigo-300 text-[10px] sm:text-[10.5px] font-mono font-bold uppercase tracking-[0.18em] mb-2 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
-                本年精力 (Action Points)
-              </div>
-              <div className="flex gap-2">
-                {Array.from({ length: gameState.max_ap || 3 }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`h-2.5 sm:h-3 flex-1 rounded-full transition-all duration-300 ${i < gameState.ap ? 'bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.6)]' : 'bg-zinc-800/80'}`}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="text-xl sm:text-2xl font-extrabold font-mono tabular-nums tracking-tight text-indigo-400 whitespace-nowrap">
-              {gameState.ap} / {gameState.max_ap || 3}
-            </div>
-          </div>
-        )}
+        {/* Action Points removed - replaced by Yearly Focus system */}
 
         {/* Green Card Progress Bar (Visible only when employed, in queue, or holding Green Card) */}
         {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId) && (

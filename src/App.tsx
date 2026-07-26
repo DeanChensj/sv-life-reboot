@@ -6,6 +6,7 @@ import { CharacterProfileModal } from './components/CharacterProfileModal';
 import { YearEndStatementModal } from './components/YearEndStatementModal';
 import { WarReportModal } from './components/WarReportModal';
 import { AchievementCodexModal } from './components/AchievementCodexModal';
+import { ShopModal } from './components/ShopModal';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
 
@@ -16,6 +17,7 @@ export default function App() {
   const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
+  const [isShopOpen, setIsShopOpen] = useState<boolean>(false);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
 
@@ -325,7 +327,14 @@ export default function App() {
               完成返回决策 ✕
             </button>
           </div>
-          <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} onToggleSound={handleToggleSound} isMuted={isMuted} />
+          <BentoStatsPanel 
+            gameState={gameState} 
+            currentEventId={currentEventId} 
+            onOpenCodex={() => setShowAchievementCodex(true)} 
+            onOpenShop={() => setIsShopOpen(true)}
+            onToggleSound={handleToggleSound} 
+            isMuted={isMuted} 
+          />
         </div>
       )}
 
@@ -334,8 +343,52 @@ export default function App() {
           
           {/* Left Sticky Bento Panel (Desktop Only, Mobile uses sliding drawer) */}
           <div className="hidden lg:flex lg:col-span-5 flex-col sticky top-12">
-            <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} onToggleSound={handleToggleSound} isMuted={isMuted} />
+            <BentoStatsPanel 
+              gameState={gameState} 
+              currentEventId={currentEventId} 
+              onOpenCodex={() => setShowAchievementCodex(true)} 
+              onOpenShop={() => setIsShopOpen(true)}
+              onToggleSound={handleToggleSound} 
+              isMuted={isMuted} 
+            />
           </div>
+
+          {/* Modals */}
+          {isShopOpen && (
+            <ShopModal 
+              gameState={gameState}
+              onClose={() => setIsShopOpen(false)}
+              onTriggerEvent={(eventId) => {
+                setCurrentEventId(eventId);
+              }}
+              onBuy={(effect, msg) => {
+                setGameState(prev => {
+                  const newState = { ...prev, imageUrl: undefined, ...effect };
+                  // Apply clamping
+                  newState.health = Math.max(0, Math.min(100, newState.health));
+                  newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
+                  newState.charm = Math.max(0, Math.min(25, newState.charm));
+                  
+                  // Check game over
+                  if (newState.health <= 0 && newState.status === 'playing') {
+                    newState.status = 'game_over';
+                    newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
+                  } else if (newState.cash < -0.001 && newState.status === 'playing') {
+                    newState.status = 'game_over';
+                    newState.message = '你破产了，无法支付账单，游戏结束！';
+                  } else if (newState.cash >= newState.win_threshold && newState.status === 'playing') {
+                    newState.status = 'win';
+                    newState.message = `资产突破 ${newState.win_threshold}w！正式达成 FIRE 目标！`;
+                  } else {
+                    newState.message = msg;
+                  }
+                  return newState;
+                });
+                sound.play('coin');
+                setIsShopOpen(false);
+              }}
+            />
+          )}
 
           {/* Right Column: Event Narrative & Decisions */}
           <div className="col-span-1 lg:col-span-7 flex flex-col justify-center min-h-[65vh] lg:min-h-[80vh] lg:pl-8 xl:pl-16">

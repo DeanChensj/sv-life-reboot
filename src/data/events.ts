@@ -655,302 +655,115 @@ export const events: Record<string, GameEvent> = {
     title: '湾区日常 (行动面板)',
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
-      // 1. 【今年限时机会】 (优先展示)
+      // 1. 【今年限时机会】 (不消耗年度重心)
       {
-        text: '【今年限时机会】 Stanford 师兄拉你组队冲 AI Hackathon (消耗 1 精力, $0.5w)',
-        condition: (s) => s.ap > 0 && s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3),
+        text: '【限时机会】 Stanford 师兄拉你组队冲 AI Hackathon ($0.5w)',
+        condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && !s.message.includes('Hackathon'),
         hideIfUnavailable: true,
         effect: (s) => {
           const win = Math.random() < (0.35 + s.leetcode / 300);
           return win
-            ? { ap: s.ap - 1, cash: s.cash + 22, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $35w 支票支持你们继续研发！' }
-            : { ap: s.ap - 1, cash: s.cash - 0.5, health: s.health - 15, leetcode: s.leetcode + 8, message: '连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
+            ? { cash: s.cash + 22, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $35w 支票支持你们继续研发！' }
+            : { cash: s.cash - 0.5, health: s.health - 15, leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【今年限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场见皮衣黄 (消耗 1 精力, $1.5w)',
-        condition: (s) => s.ap > 0 && s.cash >= 1.5 && (s.year % 6 === 1),
+        text: '【限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场见皮衣黄 ($1.5w)',
+        condition: (s) => s.cash >= 1.5 && (s.year % 6 === 1) && !s.message.includes('GTC'),
         hideIfUnavailable: true,
         effect: (s) => ({
-          ap: s.ap - 1,
           cash: s.cash - 1.5,
           charm: Math.min(25, s.charm + 6),
           luck: Math.min(45, s.luck + 15),
-          message: '你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！玄学气运值大增，接下来的投资和求职将获得强运加持！'
+          message: '【参加 GTC】你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！玄学气运值大增，接下来的投资和求职将获得强运加持！'
         }),
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【今年限时机会】 拍卖淘二手 Herman Miller 人体工学椅 (消耗 1 精力, $0.3w)',
-        condition: (s) => s.ap > 0 && s.cash >= 0.3 && (s.year % 6 === 2),
-        hideIfUnavailable: true,
-        effect: (s) => ({
-          ap: s.ap - 1,
-          cash: s.cash - 0.3,
-          health: Math.min(100, s.health + 35),
-          message: '你花了原价二折淘到了一把全配 AERON 椅子。从此写代码腰也不酸了，每次在家里躺平休养的恢复效果提升！'
-        }),
-        nextEventId: 'sv_daily_life',
-      },
-      {
-        text: '【今年限时机会】 硅谷暴雨连夜抢修服务器机房 (消耗 1 精力)',
-        condition: (s) => s.ap > 0 && (s.year % 6 === 4),
-        hideIfUnavailable: true,
-        effect: (s) => ({
-          ap: s.ap - 1,
-          cash: s.cash + 15,
-          tc: s.tc + 3,
-          health: s.health - 20,
-          message: '你在风雨交加中把几百台核心算力服务器搬到了安全地带。VP 在全员信里点名表扬你，直接给了固定战术奖金与职级微调！'
-        }),
-        nextEventId: 'sv_daily_life',
-      },
-      {
-        text: '【今年限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (消耗 1 精力) - (需 LeetCode >= 35)',
-        condition: (s) => s.ap > 0 && s.leetcode >= 35 && (s.year % 6 === 5),
+        text: '【限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (需 LeetCode >= 35)',
+        condition: (s) => s.leetcode >= 35 && (s.year % 6 === 5) && !s.message.includes('漏洞'),
         hideIfUnavailable: true,
         effect: (s) => {
           const success = Math.random() < 0.25;
           return success
-            ? { ap: s.ap - 1, cash: s.cash + 8, leetcode: s.leetcode + 5, message: '安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
-            : { ap: s.ap - 1, health: s.health - 10, message: '安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
+            ? { cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
+            : { health: s.health - 10, message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
         },
         nextEventId: 'sv_daily_life',
       },
 
-      // 2. 【职业与技术】
+      // 2. 【年度重心】(点击后直接进入年底结算或对应事件流)
       {
-        text: '【职业】疯狂加班与 Perf 冲刺 (争取加薪与升职, 消耗 1 精力)',
-        condition: (s) => s.ap > 0 && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        text: '【年度重心：疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age || (s.is_phd ? 24 : 22);
           const yearsInGrade = s.age - lastPromoAge;
           
-          // Multi-dimensional dynamic promo odds (LeetCode skill + Charm management + Luck randomness)
           const baseWinRate = 0.15 + (s.leetcode / 300) + (s.charm * 0.02) + (s.luck * 0.001);
           const pass = Math.random() < Math.min(0.7, baseWinRate);
 
           if (curLevel === 'L3') {
-            if (s.leetcode < 30) {
-              return { ap: s.ap - 1, health: Math.max(10, s.health - 10), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (需 LeetCode≥30)，建议多提升技术硬实力。' };
-            }
-            if (yearsInGrade >= 1 && pass) {
-              return { ap: s.ap - 1, health: Math.max(10, s.health - 15), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '🎉 恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
-            }
+            if (s.leetcode < 30) return { health: Math.max(10, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
+            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '🎉 恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
           } else if (curLevel === 'L4') {
-            if (s.leetcode < 50) {
-              return { ap: s.ap - 1, health: Math.max(10, s.health - 12), tc: s.tc + 1.0, message: '晋升委员会 (Promo Committee) 认为你的技术深度还不到 Senior 级别 (需 LeetCode/系统设计≥50)。' };
-            }
-            if (yearsInGrade >= 1 && pass) {
-              return { ap: s.ap - 1, health: Math.max(10, s.health - 20), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '🎉 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior 资深工程师！总包调薪 +$6.5w！' };
-            }
+            if (s.leetcode < 50) return { health: Math.max(10, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
+            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '🎉 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
           } else if (curLevel === 'L5 (Senior)') {
-            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) {
-              return { ap: s.ap - 1, health: Math.max(10, s.health - 25), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '🎉 奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！总包暴涨 +$15w！' };
-            }
+            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '🎉 奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
-
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
-          return { ap: s.ap - 1, health: Math.max(10, s.health - 10), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
+          return { health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
-        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
+        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_year_end_settlement'),
       },
       {
-        text: '【跳槽】刷题跳槽冲刺 (尝试跳槽升职级, 消耗 1 精力) - (需 LeetCode >= 50)',
-        condition: (s) => s.ap > 0 && s.leetcode >= 50 && !!s.job_type && s.job_type !== 'unemployed',
+        text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => {
+          if (s.leetcode < 50) {
+            return { health: s.health - 20, leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
+          }
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
           
-          if (isFromAI) {
-            return {
-              ap: s.ap - 1,
-              health: s.health - 10,
-              tc: Math.max(s.tc + 25, 65),
-              level: 'L6',
-              job_type: 'big_tech',
-              message: '顶级光环！你带着 OpenAI / AI 实验室背景跳槽大厂，对方直接送上 L6 包裹！TC 暴涨！'
-            };
-          }
-
-          if (curLevel === 'L3') {
-            return { ap: s.ap - 1, health: s.health - 10, tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，你跳槽斩获 L4 Offer，TC +$8w！' };
-          } else if (curLevel === 'L4') {
-            return { ap: s.ap - 1, health: s.health - 10, tc: s.tc + 12, level: 'L5', message: '跳槽成功！你成功拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5！' };
-          } else if (curLevel === 'L5') {
-            return { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 18, level: 'L6', message: '跳槽爆拉！凭借多年的系统架构积累与算法表现，你成功跳槽拿到 L6 包裹！' };
-          } else {
-            return { ap: s.ap - 1, health: s.health - 10, tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
-          }
+          if (isFromAI) return { health: s.health - 25, tc: Math.max(s.tc + 25, 65), level: 'L6', job_type: 'big_tech', message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 包裹！TC 暴涨！' };
+          if (curLevel === 'L3') return { health: s.health - 25, tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
+          if (curLevel === 'L4') return { health: s.health - 25, tc: s.tc + 12, level: 'L5', message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5！' };
+          if (curLevel === 'L5') return { health: s.health - 30, tc: s.tc + 18, level: 'L6', message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 包裹！' };
+          return { health: s.health - 20, tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【技术】闭关刷题提升算法 (消耗 1 精力)',
-        condition: (s) => s.ap > 0,
-        effect: (s) => ({ ap: s.ap - 1, health: s.health - 10, leetcode: s.leetcode + 5, message: '你拒绝了所有社交，周末疯狂刷 LeetCode，算法能力精进了。' }),
-        nextEventId: 'sv_daily_life',
+        text: '【年度重心：拓展副业】经营小红书与独立开发',
+        condition: (s) => true,
+        effect: (s) => {
+          if (s.leetcode >= 40 && Math.random() < (0.05 + s.luck / 500)) {
+            return { cash: s.cash + 35, leetcode: s.leetcode + 5, health: s.health - 15, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
+          }
+          let winRate = s.charm >= 12 ? 0.9 : (s.charm >= 7 ? 0.6 : 0.2);
+          if (Math.random() < winRate) {
+            if (s.charm >= 20 && Math.random() < 0.05) return { cash: s.cash + 48, charm: Math.min(25, s.charm + 5), health: s.health - 10, message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
+            return { cash: s.cash + 8, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
+          }
+          return { cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
+        },
+        nextEventId: 'sv_year_end_settlement',
       },
       {
-         text: '【创业】搞 AI 独立开发 (消耗 1 精力, $2w) - (需 LeetCode >= 30)',
-         condition: (s) => s.ap > 0 && s.cash >= 2 && s.leetcode >= 30,
-         effect: (s) => {
-            const jackpot = Math.random() < (0.05 + s.luck / 500);
-            if (jackpot) return { ap: s.ap - 1, cash: s.cash + 32, leetcode: s.leetcode + 5, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
-            return { ap: s.ap - 1, cash: s.cash - 2, leetcode: s.leetcode + 3, message: '你的产品上线后无人问津，几万美元的 API 费用和服务器费打了水漂，但你的技术变强了。' };
-         },
-         nextEventId: 'sv_daily_life'
-      },
-
-      // 3. 【置业与资产】
-      {
-         text: '【置业】参加湾区加价抢房大战 (购买房产, 消耗 1 精力) - (需现金 >= $40w)',
-         condition: (s) => s.ap > 0 && s.cash >= 40 && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
-         effect: (s) => ({ ap: s.ap - 1, message: '你拿着这些年攒下的首付本金与股票，精神抖擞地走向了 Open House 现场！' }),
-         nextEventId: 'buy_house',
+        text: '【年度重心：活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
+        condition: (s) => true,
+        effect: (s) => ({ health: s.health - 10, charm: Math.min(25, s.charm + 3), message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。' }),
+        nextEventId: (s) => !s.is_married ? 'dating_market' : 'sv_year_end_settlement' 
       },
       {
-         text: '【置业】搬家/换租更好的湾区公寓 (消耗 1 精力)',
-         condition: (s) => s.ap > 0 && s.has_housing && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
-         effect: (s) => ({ ap: s.ap - 1, message: '你打开 Zillow 和 Redfin，准备在湾区重新选一套更符合当前身价的租房。' }),
-         nextEventId: 'change_rental',
-      },
-      {
-         text: '【购车】购买 Tesla Model Y (消耗 1 精力, $4w)',
-         condition: (s) => s.ap > 0 && s.cash >= 4 && s.car !== 'model_y' && s.car !== 'porsche' && s.car !== 'cybertruck',
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 4, car: 'model_y', charm: s.charm + 4, message: '你提了一台最标准的白色 Model Y。去 Cupertino 买奶茶在停车场发现身旁停了 6 台一模一样的车，你按半天钥匙开错别人的车门。' }),
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '【购车】购买保时捷 Porsche (消耗 1 精力, 实付 $12w)',
-         condition: (s) => {
-           const cost = s.car === 'cybertruck' ? 7 : s.car === 'model_y' ? 10 : 12;
-           return s.ap > 0 && s.cash >= cost && s.car !== 'porsche';
-         },
-         effect: (s) => {
-           const tradeInCredit = s.car === 'cybertruck' ? 5 : s.car === 'model_y' ? 2 : 0;
-           const actualCost = 12 - tradeInCredit;
-           const tradeMsg = tradeInCredit > 0 ? `将旧车二手置换抵扣了 $${tradeInCredit}w 现金后，` : '';
-           return {
-             ap: s.ap - 1,
-             cash: s.cash - actualCost,
-             car: 'porsche',
-             charm: Math.min(25, s.charm + 5),
-             health: s.health + 10,
-             message: `你${tradeMsg}开上了全新保时捷！那一刻你感觉自己脱离了普通码农范畴，CMB 约会匹配率与游艇局待遇飙升！`
-           };
-         },
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '【购车】购买 Tesla Cybertruck (消耗 1 精力, 实付 $9w)',
-         condition: (s) => {
-           const cost = s.car === 'porsche' ? 3 : s.car === 'model_y' ? 7 : 9;
-           return s.ap > 0 && s.cash >= cost && s.car !== 'cybertruck';
-         },
-         effect: (s) => {
-           const tradeInCredit = s.car === 'porsche' ? 6 : s.car === 'model_y' ? 2 : 0;
-           const actualCost = 9 - tradeInCredit;
-           const tradeMsg = tradeInCredit > 0 ? `把旧车送到车行置换抵扣了 $${tradeInCredit}w 现金残值，` : '';
-           return {
-             ap: s.ap - 1,
-             cash: s.cash - actualCost,
-             car: 'cybertruck',
-          imageUrl: 'images/cybertruck.jpg',
-             charm: Math.min(25, s.charm + 8),
-             leetcode: s.leetcode + 5,
-             message: `你${tradeMsg}换上了多边形赛博皮卡！开在 237 公路上所有人都以为你是 Hayes Valley 刚拿到 A 轮融资的硬核 AI Founder！`
-           };
-         },
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '【应急】出售座驾应急套现 (消耗 1 精力) - 快速回笼现金流防破产',
-         condition: (s) => s.ap > 0 && (s.car === 'porsche' || s.car === 'cybertruck'),
-         effect: (s) => {
-           const isPorsche = s.car === 'porsche';
-           const recoup = isPorsche ? 7 : 5;
-           return {
-             ap: s.ap - 1,
-             cash: s.cash + recoup,
-             car: isPorsche ? 'model_y' : 'none',
-             charm: Math.max(0, s.charm - (isPorsche ? 5 : 3)),
-             message: `你把昂贵的${isPorsche ? '保时捷' : '赛博皮卡'}卖给了车行，快速套现了 $${recoup}w 万美元应急现金！`
-           };
-         },
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '【省钱】挂壁退租睡车顶 (房租归零, 消耗 1 精力)',
-         condition: (s) => s.ap > 0 && s.cash < 10 && s.rent > 0,
-         effect: (s) => ({ ap: s.ap - 1, rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, s.health - 10), message: '你把睡袋、卡式炉塞进了车后备箱。虽然每天去 Planet Fitness 健身房洗澡极其硬核，但你成功将每年的房租固定消耗砍到了 $0！' }),
-         nextEventId: 'sv_daily_life',
-       },
-
-      // 4. 【社交与生活】
-      {
-         text: '【相亲】去 CMB 约会相亲 (消耗 1 精力)',
-         condition: (s) => s.ap > 0 && !s.is_married,
-         effect: (s) => ({ ap: s.ap - 1, message: '你去 Santana Row 喝了杯奶茶。' }),
-         nextEventId: 'dating_market' 
-      },
-      {
-         text: '【社交】参加游艇高端局 (消耗 1 精力, $5w) - (需魅力 >= 8)',
-         condition: (s) => s.ap > 0 && s.cash >= 5 && s.charm >= 8,
-         effect: (s) => {
-            const success = Math.random() > 0.5;
-            if (success) return { ap: s.ap - 1, cash: s.cash - 5, tc: s.tc + 5, charm: s.charm + 2, message: '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！' };
-            return { ap: s.ap - 1, cash: s.cash - 5, health: s.health - 10, message: '去派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。' };
-         },
-         nextEventId: 'sv_daily_life'
-      },
-
-      {
-         text: '【形象】医美与私教 (消耗 1 精力, $3w) - 提升魅力和健康',
-         condition: (s) => s.ap > 0 && s.cash >= 3,
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 3, health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 2), message: '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！' }),
-         nextEventId: 'sv_daily_life',
-      },
-      {
-         text: '【副业】经营小红书 (消耗 1 精力) - 卷“湾区精英”人设',
-         condition: (s) => s.ap > 0,
-         effect: (s) => {
-            let winRate = 0.2;
-            if (s.charm >= 12) winRate = 0.9;
-            else if (s.charm >= 7) winRate = 0.6;
-            const win = Math.random() < winRate;
-            if (win) {
-              if (s.charm >= 20 && Math.random() < 0.05) {
-                 return { ap: s.ap - 1, cash: s.cash + 48, charm: Math.min(25, s.charm + 5), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
-              }
-              return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
-            } else {
-              return { ap: s.ap - 1, cash: Math.max(0, s.cash - 3), health: s.health - 20, message: '疯狂买装备拍 OOTD 却没人看，倒贴钱还心累。' };
-            }
-         },
-         nextEventId: 'sv_daily_life',
-       },
-       {
-          text: '【兼职】周末跑 Uber / 送外卖赚外快 (消耗 1 精力, 赚 $300)',
-          condition: (s) => s.ap > 0 && s.cash <= 25 && !!(s.car && s.car !== 'none'),
-          effect: (s) => ({ ap: s.ap - 1, cash: s.cash + 0.03, health: s.health - 15, message: '手头太紧了，你周末去 DoorDash 送外卖，拉满两天赚了 $300 美金外快，累得腰酸背痛。' }),
-          nextEventId: 'sv_daily_life',
-       },
-
-      // 5. 【休养与结算】 (永远固定在最底部)
-      {
-         text: '【休养】宅家躺平打游戏 (恢复大量健康, 消耗 1 精力)',
-         condition: (s) => s.ap > 0,
-         effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 30), message: '整个周末都在家打黑神话：悟空，什么代码都不想写，虽然没进步，但是感觉重新活了过来。' }),
-         nextEventId: 'sv_daily_life',
-       },
-      {
-         text: '结束本年行动，进入年底结算',
-         condition: (s) => true,
-         effect: (s) => ({ ap: 0 }),
-         nextEventId: 'sv_year_end_settlement'
+        text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
+        condition: (s) => true,
+        effect: (s) => ({ health: Math.min(100, s.health + 45), message: '这一年你彻底躺平，除了上班摸鱼外，回家就是打黑神话悟空。什么职场焦虑都没了，感觉重新活了过来！' }),
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },

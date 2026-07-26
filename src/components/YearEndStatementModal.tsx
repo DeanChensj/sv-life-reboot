@@ -7,20 +7,26 @@ interface YearEndStatementModalProps {
 }
 
 export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ gameState, onContinue }) => {
-  const salaryIncome = gameState.tc > 0 ? (gameState.tc * 0.7).toFixed(1) : '0.0';
-  const rsuIncome = gameState.tc > 0 ? (gameState.tc * 0.3).toFixed(1) : '0.0';
+  const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '');
   
+  const preTaxTC = gameState.tc > 0 ? gameState.tc : 0;
+  const taxAmountNum = preTaxTC * 0.35;
+  const postTaxIncomeNum = preTaxTC * 0.65;
+  const taxAmount = taxAmountNum.toFixed(1);
+  const postTaxIncome = postTaxIncomeNum.toFixed(1);
+
   // Expenses matched with App.tsx handleYearEndContinue
-  const housingExpenseNum = gameState.has_housing ? 2.0 : (gameState.rent || 4.0);
+  const housingExpenseNum = isHomeowner 
+    ? (gameState.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0)
+    : (gameState.rent || 4.0);
   const housingExpense = housingExpenseNum.toFixed(1);
   const carExpenseNum = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
   const carExpense = carExpenseNum.toFixed(1);
   const livingExpenseNum = 3.0;
   const livingExpense = livingExpenseNum.toFixed(1);
 
-  const totalIncome = gameState.tc > 0 ? gameState.tc : 0;
   const totalExpense = housingExpenseNum + carExpenseNum + livingExpenseNum;
-  const estNetChange = (totalIncome - totalExpense).toFixed(1);
+  const estNetChange = (postTaxIncomeNum - totalExpense).toFixed(1);
   const isNetPositive = parseFloat(estNetChange) >= 0;
 
   return (
@@ -47,7 +53,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
         {/* Net Cash Banner */}
         <div className={`p-4 rounded-2xl border mb-6 flex justify-between items-center ${isNetPositive ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'}`}>
           <div>
-            <div className="text-xs font-mono uppercase tracking-wider opacity-80">本年度预估现金净变动</div>
+            <div className="text-xs font-mono uppercase tracking-wider opacity-80">税后预估净现金收益</div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums mt-0.5">
               {isNetPositive ? `+$${estNetChange}w` : `-$${Math.abs(parseFloat(estNetChange)).toFixed(1)}w`}
             </div>
@@ -63,25 +69,25 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
           <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
             <span className="text-zinc-400 flex items-center gap-2.5">
               <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-              基础薪资收入 (Base Salary)
+              年度总包 TC (含 Base + RSU)
             </span>
-            <span className="font-bold text-emerald-400 tabular-nums">+${salaryIncome}w</span>
+            <span className="font-bold text-emerald-400 tabular-nums">+${preTaxTC.toFixed(1)}w</span>
           </div>
 
-          {gameState.tc > 0 && (
+          {preTaxTC > 0 && (
             <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
               <span className="text-zinc-400 flex items-center gap-2.5">
-                <svg className="w-4 h-4 text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                RSU 股票解禁归属
+                <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                联邦与加州综合所得税 (~35%)
               </span>
-              <span className="font-bold text-indigo-300 tabular-nums">+${rsuIncome}w</span>
+              <span className="font-bold text-rose-400 tabular-nums">-${taxAmount}w</span>
             </div>
           )}
 
           <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
             <span className="text-zinc-400 flex items-center gap-2.5">
               <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              {gameState.has_housing ? '自购房产物业税/HOA' : '租房房租'}
+              {isHomeowner ? `自购房产维保/HOA/物业税 (${gameState.housing_name})` : `租房房租 (${gameState.housing_name || '租房'})`}
             </span>
             <span className="font-bold text-rose-400 tabular-nums">-${housingExpense}w</span>
           </div>

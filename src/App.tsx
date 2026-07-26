@@ -98,11 +98,17 @@ export default function App() {
   };
 
   const handleYearEndContinue = () => {
-    const rentCost = gameState.has_housing ? 2.0 : (gameState.rent || 4.0);
+    const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '');
+    const rentCost = isHomeowner 
+      ? (gameState.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0)
+      : (gameState.rent || 4.0);
     const carCost = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
     const livingCost = 3.0;
-    const totalIncome = gameState.tc > 0 ? gameState.tc : 0;
-    const netChange = totalIncome - rentCost - carCost - livingCost;
+
+    // Silicon Valley Federal + CA Income Tax (~35%)
+    const preTaxTC = gameState.tc > 0 ? gameState.tc : 0;
+    const postTaxIncome = preTaxTC * 0.65; 
+    const netChange = postTaxIncome - rentCost - carCost - livingCost;
     const newCash = gameState.cash + netChange;
 
     if (newCash < -0.001) {
@@ -110,7 +116,7 @@ export default function App() {
         ...prev,
         cash: newCash,
         status: 'game_over',
-        message: '年底结算扣除房租与生活账单后你的现金流彻底断裂，游戏结束！'
+        message: '年底结算扣除联邦与加州所得税、房租/房贷与生活账单后你的现金流彻底断裂，游戏结束！'
       }));
       setCurrentEventId('end');
     } else {

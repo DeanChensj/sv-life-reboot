@@ -44,8 +44,20 @@ interface GameEvent {
 
 // Initial State
 export const generateInitialState = (): GameState => {
-  const cash = Math.floor(Math.random() * 80) + 20; // 10 到 90 万美元不等
-  const charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
+  const cached = localStorage.getItem('sv_life_initial_seed');
+  let cash, charm, luck;
+  if (cached) {
+    const parsed = JSON.parse(cached);
+    cash = parsed.cash;
+    charm = parsed.charm;
+    luck = parsed.luck;
+  } else {
+    cash = Math.floor(Math.random() * 80) + 20; // 10 到 90 万美元不等
+    charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
+    luck = Math.floor(Math.random() * 100);
+    localStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, luck }));
+  }
+  
   
   let bgMessage = '';
   if (cash > 60) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';
@@ -70,7 +82,7 @@ export const generateInitialState = (): GameState => {
     school: '',
     is_phd: false,
     has_pet: false,
-    luck: 50,
+    luck,
     is_married: false,
     win_threshold: 1000,
     laid_off: false,
@@ -1210,6 +1222,7 @@ export default function App() {
   };
 
   const resetGame = () => {
+    localStorage.removeItem('sv_life_initial_seed');
     setGameState(generateInitialState());
     setCurrentEventId('choose_trait');
   };

@@ -74,7 +74,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
-        effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 20, win_threshold: 600 }),
+        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 20, win_threshold: 600 }),
         nextEventId: 'choose_year',
       },
       {
@@ -130,7 +130,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
         condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 10, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
+        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
@@ -170,7 +170,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '加入 ACM 算法集训队',
-        effect: (s) => ({ leetcode: s.leetcode + 25, health: s.health - 15, age: s.age + 2, message: '天天刷题，虽然头发掉了一些，但算法突飞猛进。' }),
+        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 15, age: s.age + 2, message: '天天刷题，虽然头发掉了一些，但算法突飞猛进。' }),
         nextEventId: 'cn_college_year3',
       }
     ]
@@ -268,7 +268,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '泡在图书馆死磕 GPA 和算法',
-        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 5, age: s.age + 2, message: '每天和电脑作伴，头发掉了不少，但代码能力突飞猛进。' }),
+        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 5, age: s.age + 2, message: '每天和电脑作伴，头发掉了不少，但代码能力突飞猛进。' }),
         nextEventId: 'us_undergrad_year3',
       },
       {
@@ -286,7 +286,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '海投 500 份简历，疯狂刷 LeetCode',
-        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 10, age: s.age + 2, message: '你拿到了硅谷大厂的实习 Offer，为全职铺平了道路！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 8, health: s.health - 10, age: s.age + 2, message: '你拿到了硅谷大厂的实习 Offer，为全职铺平了道路！' }),
         nextEventId: 'us_undergrad_grad',
       },
       {
@@ -303,7 +303,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '翘课刷题！(力扣大军)',
-        effect: (s) => ({ leetcode: s.leetcode + 25, health: s.health - 15, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能写出红黑树的翻转。' }),
+        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 15, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能写出红黑树的翻转。' }),
         nextEventId: 'us_master_grad',
       },
       {
@@ -327,7 +327,7 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '海投简历，疯狂刷题',
-        effect: (s) => ({ health: s.health - 10, leetcode: s.leetcode + 30 }),
+        effect: (s) => ({ health: s.health - 10, leetcode: s.leetcode + 12 }),
         nextEventId: 'job_hunt',
       },
       {

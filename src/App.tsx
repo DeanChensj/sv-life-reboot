@@ -53,7 +53,14 @@ export const generateInitialState = (): GameState => {
     charm = parsed.charm;
     luck = parsed.luck;
   } else {
-    cash = Math.floor(Math.random() * 80) + 20; // 10 到 90 万美元不等
+    const randCash = Math.random();
+    if (randCash < 0.6) {
+      cash = Math.floor(Math.random() * 8) + 2; // 2 - 10 万美元 (普通家庭)
+    } else if (randCash < 0.9) {
+      cash = Math.floor(Math.random() * 15) + 10; // 10 - 25 万美元 (小康中产)
+    } else {
+      cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
+    }
     charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
     luck = Math.floor(Math.random() * 100);
     localStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, luck }));
@@ -151,29 +158,28 @@ export const events: Record<string, GameEvent> = {
       }
     ]
   },
-'choose_school': {
+  'choose_school': {
     id: 'choose_school',
     title: '第一步：人生十字路口',
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校的选择：',
     choices: [
-
       {
         text: 'CMU 计算机本科 (四年总开销 30 万美元)',
         condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age + 4, leetcode: s.leetcode + 40, health: s.health - 20, message: '你在匹兹堡经过四年的魔鬼训练，你的编程能力冠绝全场，但因为长期熬夜，健康大幅下降。' }),
-        nextEventId: 'us_undergrad_grad',
+        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 10, health: s.health - 5, message: '你坐上了飞往匹兹堡的航班。' }),
+        nextEventId: 'us_undergrad_year1',
       },
       {
         text: 'UC Berkeley 本科 (四年总开销 25 万美元)',
         condition: (s) => s.cash >= 25,
-        effect: (s) => ({ cash: s.cash - 25, visa: 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age + 4, leetcode: s.leetcode + 25, health: s.health - 10, message: '每天在 Telegraph 街防抢劫的同时学 EECS，练就了强大的抗压心理素质。' }),
-        nextEventId: 'us_undergrad_grad',
+        effect: (s) => ({ cash: s.cash - 25, visa: 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, message: '你带着对湾区的憧憬降落在 SFO。' }),
+        nextEventId: 'us_undergrad_year1',
       },
       {
         text: '美国普通公立大学 (四年总开销 15 万美元)',
         condition: (s) => s.cash >= 15,
-        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age + 4, charm: s.charm + 2, leetcode: s.leetcode + 5, message: '你度过了愉快的四年，参加了各种派对，享受了多元文化，但代码没写几行。' }),
-        nextEventId: 'us_undergrad_grad',
+        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + 2, message: '你飞往美国，准备开启无忧无虑的本科生活。' }),
+        nextEventId: 'us_undergrad_year1',
       },
       {
         text: '在国内读本科 (四年总开销 2 万美元)',
@@ -244,8 +250,9 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '申请大U硕士 (刷题进厂预备役 / 避避风头)',
-        effect: (s) => ({ cash: s.cash - 10, age: s.age + 2, leetcode: s.leetcode + 10, message: '你决定去读个硕士提升一下学历。' }),
-        nextEventId: 'us_master_grad',
+        condition: (s) => s.cash >= 10,
+        effect: (s) => ({ cash: s.cash - 10, age: s.age, message: '你决定去读个硕士提升一下学历。' }),
+        nextEventId: 'us_master_year1',
       }
     ]
   },
@@ -263,13 +270,75 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '申请美国水硕 (为了留在湾区！)',
-        effect: (s) => ({ cash: s.cash - 10, visa: 'F1 (学生)', age: s.age + 2 }),
-        nextEventId: 'us_master_grad',
+        condition: (s) => s.cash >= 10,
+        effect: (s) => ({ cash: s.cash - 10, visa: 'F1 (学生)', age: s.age }),
+        nextEventId: 'us_master_year1',
       },
       {
         text: '在国内大厂卷 (提前体验福报)',
         effect: (s) => ({ cash: s.cash + 10, health: s.health - 20, tc: 5, age: s.age + 3 }),
         nextEventId: 'cn_work',
+      }
+    ]
+  },
+  'us_undergrad_year1': {
+    id: 'us_undergrad_year1',
+    title: '美本前两年：适应期',
+    description: '刚来美国，你对一切都很新奇。你决定怎么度过最初的两年？',
+    choices: [
+      {
+        text: '加入兄弟会/姐妹会 (Frat/Sorority Party)',
+        effect: (s) => ({ cash: s.cash - 2, charm: s.charm + 10, health: s.health - 10, age: s.age + 2, message: '每周喝到断片，但在啤酒乒乓桌上认识了一堆富二代朋友。' }),
+        nextEventId: 'us_undergrad_year3',
+      },
+      {
+        text: '泡在图书馆死磕 GPA 和算法',
+        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 5, age: s.age + 2, message: '每天和电脑作伴，头发掉了不少，但代码能力突飞猛进。' }),
+        nextEventId: 'us_undergrad_year3',
+      },
+      {
+        text: '买辆二手车，周末去一号公路自驾游',
+        effect: (s) => ({ cash: s.cash - 3, health: s.health + 10, charm: s.charm + 5, age: s.age + 2, message: '花了不少钱，但见识了加州的美景，心胸开阔。' }),
+        nextEventId: 'us_undergrad_year3',
+      }
+    ]
+  },
+  'us_undergrad_year3': {
+    id: 'us_undergrad_year3',
+    title: '美本大三：实习焦虑',
+    description: '转眼到了大三，周围的中国同学都在疯狂找暑期实习 (Summer Intern)。你打算怎么办？',
+    choices: [
+      {
+        text: '海投 500 份简历，疯狂刷 LeetCode',
+        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 10, age: s.age + 2, message: '你拿到了硅谷大厂的实习 Offer，为全职铺平了道路！' }),
+        nextEventId: 'us_undergrad_grad',
+      },
+      {
+        text: '躺平，在加州阳光下享受最后的青春',
+        effect: (s) => ({ health: s.health + 10, charm: s.charm + 5, age: s.age + 2, message: '没有实习经历，但你度过了人生中最无忧无虑的一个夏天。' }),
+        nextEventId: 'us_undergrad_grad',
+      }
+    ]
+  },
+  'us_master_year1': {
+    id: 'us_master_year1',
+    title: '美硕生活：内卷倒计时',
+    description: '时间紧迫！美硕只有短短一年半到两年。你一边要应付繁重的课业，一边又要准备残酷的秋招。',
+    choices: [
+      {
+        text: '翘课刷题！(力扣大军)',
+        effect: (s) => ({ leetcode: s.leetcode + 25, health: s.health - 15, age: s.age + 2, message: 'GPA 擦边过，但你闭着眼睛都能写出红黑树的翻转。' }),
+        nextEventId: 'us_master_grad',
+      },
+      {
+        text: '疯狂赶 Due，力保全 A (4.0 GPA)',
+        effect: (s) => ({ leetcode: s.leetcode + 5, health: s.health - 10, age: s.age + 2, message: '你拿到了 4.0 的完美绩点！但是一去面试发现大厂根本不在乎成绩，只考算法。' }),
+        nextEventId: 'us_master_grad',
+      },
+      {
+        text: '去硅谷大厂活动混脸熟要内推',
+        effect: (s) => ({ cash: s.cash - 1, charm: s.charm + 10, age: s.age + 2, message: '你加了 50 个大厂学长学姐的 LinkedIn，虽然花了不少钱请客喝咖啡，但拿到了不少内推机会。' }),
+        nextEventId: 'us_master_grad',
       }
     ]
   },
@@ -1070,8 +1139,9 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '拿着钱申请美国水硕 (逃离内卷)',
-        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', age: s.age + 2 }),
-        nextEventId: 'us_master_grad',
+        condition: (s) => s.cash >= 15,
+        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', age: s.age }),
+        nextEventId: 'us_master_year1',
       },
       {
         text: '跳槽加入一家叫“字节跳动”的初创公司',
@@ -1167,19 +1237,36 @@ export const events: Record<string, GameEvent> = {
     description: '你拿着每年 3 万美元的 stipend，看着去湾区打工的本科同学已经换了保时捷。你的老板极度 push，凌晨两点还在群里圈你改 Paper。',
     choices: [
       {
-        text: '熬！硬发顶会 (耗时 5 年，极度摧残身心)',
+        text: '熬！硬发顶会 (耗时 2 年)',
         effect: (s) => {
-          const pass = Math.random() > 0.4;
+          const pass = Math.random() > 0.3;
           return pass 
-            ? { age: s.age + 5, health: s.health - 40, leetcode: s.leetcode + 50, is_phd: true, message: '五年寒窗，发了两篇顶会，终于拿到了 PhD 学位！虽然头上剩不了几根头发，但你现在是货真价实的 AI 专家。' }
-            : { age: s.age + 2, health: s.health - 20, message: '论文被拒了无数次，老板还不让毕业，你陷入了深深的自我怀疑。' };
+            ? { age: s.age + 2, health: s.health - 15, leetcode: s.leetcode + 20, message: '两年的昼夜颠倒，你的论文终于有了一些突破性的进展，老板决定带你去夏威夷参加顶级学术会议！' }
+            : { age: s.age + 2, health: s.health - 20, message: '论文被拒了无数次，实验数据全崩，你陷入了深深的自我怀疑。' };
         },
-        nextEventId: (s) => s.is_phd ? 'phd_job_hunt' : 'phd_life'
+        nextEventId: (s) => (s.message.includes('夏威夷') ? 'phd_conference' : 'phd_life')
       },
       {
         text: '老板太坑了，我要 Master Out (拿个硕士跑路求职)',
         effect: (s) => ({ age: s.age + 2, health: s.health + 10, message: '你及时止损，认清了自己不适合做学术，拿着硕士学位重回求职大军。' }),
         nextEventId: 'job_hunt'
+      }
+    ]
+  },
+  'phd_conference': {
+    id: 'phd_conference',
+    title: '夏威夷学术顶会 (CVPR/NeurIPS)',
+    description: '你在夏威夷的会场做完了 Poster 展示。接下来几天，你打算怎么安排？',
+    choices: [
+      {
+        text: '疯狂 Network，结识学术大牛 (耗时 3 年顺利毕业)',
+        effect: (s) => ({ charm: s.charm + 5, age: s.age + 3, health: s.health - 10, is_phd: true, leetcode: s.leetcode + 20, message: '你成功给几位学术大佬留下了深刻印象。回到学校后，你顺利完成了 Defense，拿到了沉甸甸的 PhD 学位！' }),
+        nextEventId: 'phd_job_hunt'
+      },
+      {
+        text: '去海滩冲浪放飞自我 (引起老板不满，延毕 1 年)',
+        effect: (s) => ({ health: s.health + 20, charm: s.charm + 5, age: s.age + 4, is_phd: true, leetcode: s.leetcode + 10, message: '你在海滩上玩疯了，没参加老板组织的组会。老板很生气，多留了你一年才放你毕业。' }),
+        nextEventId: 'phd_job_hunt'
       }
     ]
   },

@@ -49,6 +49,7 @@ export const generateInitialState = (): GameState => {
     has_pet: false,
     luck,
     is_married: false,
+    relationship_status: 'single',
     win_threshold: 1000,
     laid_off: false,
     has_housing: false,
@@ -102,10 +103,13 @@ const midYearEventRouter = (s: GameState) => {
         lifeEvents.push('visa_check');
     }
 
-    // Married folks can get breakup crisis (divorce)! Single folks get dating market.
-    if (s.is_married) {
+    // Married or Dating folks can get breakup crisis!
+    if (s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating') {
         lifeEvents.push('breakup_crisis');
-    } else if (Math.random() < 0.35) {
+    }
+
+    // Non-married players (single / matched / dating) can trigger dating_market for relationship progression
+    if (!s.is_married && s.relationship_status !== 'married' && Math.random() < 0.35) {
         return 'dating_market';
     }
 
@@ -694,6 +698,20 @@ export const events: Record<string, GameEvent> = {
     description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
     choices: [
       {
+        text: '【杰出人才自救】凭硬核算法功力/PhD 学位直接申请 O1 签证 (需算法>=60或PhD)',
+        reqBadge: '算法>=60或PhD',
+        condition: (s) => s.leetcode >= 60 || s.is_phd,
+        effect: (s) => ({ visa: 'O1 (杰出人才)', health: Math.max(10, s.health - 10), message: '凭硬核算法实力与发表的技术论文，移民局批复了你的 O1 杰出人才签证！成功自救！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $50w)',
+        reqBadge: '现金>=50w',
+        condition: (s) => s.cash >= 50,
+        effect: (s) => ({ visa: '绿卡', cash: s.cash - 50, message: '凭雄厚资金实力，加急办妥了 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
         text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国)',
         effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你外派加拿大一年后凭 L1 签证顺利调回湾区总部！' }),
         nextEventId: 'sv_daily_life',
@@ -1215,22 +1233,30 @@ export const events: Record<string, GameEvent> = {
     description: '又到了公司一年一度的 PSC 绩效考核时间，大家都开始疯狂抢 Project Impact 争夺升职名额。',
     choices: [
       {
-        text: '【稳扎稳打】加班抢项目 Impact (争取 L4/L5 普升)',
+        text: '【稳扎稳打】加班抢项目 Impact (争取 L4 / L5 升职)',
+        condition: (s) => {
+          const cur = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          return cur === 'L3' || cur === 'L4';
+        },
         effect: (s) => {
           const win = Math.random() < 0.45;
-          const isL3 = (s.level || 'L3') === 'L3';
+          const cur = s.level || (s.is_phd ? 'L4' : 'L3');
+          const isL3 = cur === 'L3';
           const tcIncrease = isL3 ? 3.5 : 6.5;
           const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
             ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: `🎉 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
             : { health: Math.max(10, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
-        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
+        nextEventId: (s) => ((s.message || '').includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
       },
       {
-        text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L6 专属高门槛)',
-        condition: (s) => (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30),
-        reqBadge: '需 解题/系统设计≥70 & 健康≥40 & 当前TC≥30w',
+        text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L5 升 L6 专属高门槛)',
+        condition: (s) => {
+          const cur = s.level || (s.is_phd ? 'L4' : 'L3');
+          return (cur === 'L5 (Senior)' || cur === 'L5') && s.leetcode >= 70 && s.health >= 40 && s.tc >= 30;
+        },
+        reqBadge: '需 当前职级为L5 & 算法≥70 & 健康≥40 & TC≥30w',
         costBadge: '消耗健康与极高精力',
         effect: (s) => {
           const winRate = 0.15 + (s.leetcode / 100) * 0.15; // 15% - 30% hard chance
@@ -1239,7 +1265,7 @@ export const events: Record<string, GameEvent> = {
             ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), last_promo_age: s.age, message: '🎉 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
             : { health: Math.max(10, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
         },
-        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
+        nextEventId: (s) => ((s.message || '').includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
       },
       {
         text: '准点下班，躺平拿 Meets (保重身体)',
@@ -1262,31 +1288,69 @@ export const events: Record<string, GameEvent> = {
   },
   'dating_market': {
     id: 'dating_market',
-    title: '湾区婚恋市场 (CMB)',
-    description: '家里疯狂催婚，你下载了 Coffee Meets Bagel (CMB) 并充值了高级会员，开始在湾区相亲市场上碰运气。',
+    title: '湾区婚恋交友 (CMB & 情感发展)',
+    description: '湾区高压生活下，你打开了 Coffee Meets Bagel (CMB) 与朋友圈，开启属于你的情感阶段探索。',
     imageUrl: 'images/boba_date.jpg',
     choices: [
       {
-        text: '周末一天排满 3 个 Coffee Date (Santana Row 喝奶茶)',
+        text: '【初识匹配】周末 Santana Row 喝奶茶 Coffee Date (单身 / 寻求 Match)',
+        condition: (s) => !s.relationship_status || s.relationship_status === 'single',
         effect: (s) => {
-          const winRate = 0.05 + (s.charm * 0.02) + (s.luck * 0.002);
+          const winRate = 0.35 + (s.charm * 0.02) + (s.luck * 0.002);
           const pass = Math.random() < winRate;
           return pass 
-            ? { cash: s.cash + 15, health: Math.min(100, s.health + 15), is_married: true, imageUrl: 'images/boba_date.jpg', message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人经历了一年半的约会后顺利领证，组成了双职工核心家庭。不仅两人存款合并，你还获得了长久的情感支持！' }
-            : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, imageUrl: 'images/boba_date.jpg', message: '连喝了三杯 Boba，对方一听你还没抽到 H1B 且没买房，默默地在吃完饭后选择了 AA。你不仅花了钱还受到了真实伤害。' };
+            ? { relationship_status: 'matched', charm: Math.min(25, s.charm + 2), imageUrl: 'images/boba_date.jpg', message: '【CMB 匹配成功 (Matched)】因为主页挂了滑雪和宠物照片，你成功匹配到了一位大厂同行！双方加了微信，聊得非常投机，进入互称 Matched 的匹配阶段！' }
+            : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, imageUrl: 'images/boba_date.jpg', message: '连喝了三杯 Boba，对方一听你还没买房且身份未定，默默选择了 AA。你不仅花了钱还受到了真实伤害。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '砸钱展示实力：米其林三星开局，保时捷接送 (高成功率，消耗 $0.5w)',
-        condition: (s) => s.cash >= 10 && (s.car === 'porsche' || s.car === 'cybertruck' || s.cash >= 30),
+        text: '【情感升温】邀请匹配对象 (Matched) 一起去 Lake Tahoe 滑雪 (升温至 Dating)',
+        condition: (s) => s.relationship_status === 'matched',
+        reqBadge: '阶段：Matched 匹配中',
         effect: (s) => {
-          const winRate = 0.4 + (s.charm * 0.02);
+          const pass = Math.random() < 0.65;
+          return pass
+            ? { relationship_status: 'dating', charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '【正式确立恋爱关系 (Dating)】Tahoe 的雪景与小木屋篝火让两人的感情迅速升温！你们正式官宣成为湾区甜甜蜜蜜的恋爱情侣 (Dating)！' }
+            : { relationship_status: 'single', health: s.health - 10, message: '滑雪途中因为路线分配和谁洗碗产生了严重分歧，氛围降到冰点。回到湾区后双方互删退回单身。' };
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【走进婚姻】与恋爱伴侣 (Dating) 在 Santa Clara 法院登记领证 (领证结婚)',
+        condition: (s) => s.relationship_status === 'dating',
+        reqBadge: '阶段：Dating 热恋中',
+        effect: (s) => ({
+          relationship_status: 'married',
+          is_married: true,
+          cash: s.cash + 20,
+          message: '【领证结婚 (Married)】恭喜！你们在 Santa Clara 县法院正式登记结婚！两人合并了存款与工资 (+$20w 现金)，正式晋升为湾区神仙双职工家庭！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【豪车米其林开局】直奔米其林，豪车接送 (直接跨越至 Dating 热恋)',
+        reqBadge: '豪车/高现金加成',
+        condition: (s) => (s.cash >= 10 && (s.car === 'porsche' || s.car === 'cybertruck' || s.cash >= 30)) && (s.relationship_status === 'single' || !s.relationship_status),
+        effect: (s) => {
+          const hasLuxuryCar = s.car === 'porsche' || s.car === 'cybertruck';
+          const winRate = (hasLuxuryCar ? 0.75 : 0.45) + (s.charm * 0.02);
           const pass = Math.random() < winRate;
           return pass
-            ? { cash: s.cash + 20, health: Math.min(100, s.health + 15), is_married: true, message: '在钞能力与高价值展示的双重加持下，对方迅速沦陷！两人闪婚并合并了资产，你成为了湾区双职工家庭的主力军。' }
+            ? { relationship_status: 'dating', cash: s.cash - 0.5, charm: Math.min(25, s.charm + 4), health: Math.min(100, s.health + 15), message: '【快速进入热恋 (Dating)】在豪华座驾与米其林的双重加持下，对方对你极其满意！两人跳过漫长拉扯，直接官宣确立了恋爱情侣关系 (Dating)！' }
             : { cash: s.cash - 0.5, health: s.health - 10, message: '你花了重金请吃米其林，结果发现对方只是来蹭饭打卡的“湾区海王/海后”。你成为了提款机，心痛不已！' };
         },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【婚姻维系】与伴侣 (Married) 享受双职工家庭生活 (已婚)',
+        condition: (s) => s.relationship_status === 'married' || s.is_married,
+        reqBadge: '阶段：Married 已婚',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 20),
+          cash: s.cash + 5,
+          message: '你们关闭了工作提醒，享受了惬意的家庭时光。双职工互相扶持，家庭财务与身心状态稳步上升！'
+        }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -1380,6 +1444,13 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
       },
       {
+        text: '【钞能力自救】全额出资办理 EB-5 投资移民绿卡 (花费 $40w)',
+        reqBadge: '现金>=40w',
+        condition: (s) => s.cash >= 40,
+        effect: (s) => ({ visa: '绿卡', cash: s.cash - 40, message: '在绝境中你果断出资办妥 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
         text: '紧急闪婚领证 (靠公民/绿卡对象救急)',
         effect: (s) => {
           const fake = Math.random() > 0.8;
@@ -1390,12 +1461,14 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : 'post_green_card',
       },
       {
-        text: '接受外派温哥华/多伦多 L1 办公室 (离开硅谷离境)',
+        text: '接受外派温哥华/多伦多 L1 办公室 (曲线救国)',
+        costBadge: '免费外派',
         effect: (s) => ({
-          status: 'game_over',
-          message: '三年 H1B 均未抽中。你站在 SFO 机场准备登机外派温哥华 L1 办公室，看着加州湾区的夕阳，硅谷梦碎。'
+          visa: 'L1 (外派)',
+          l1_relocated: true,
+          message: '你转到了温哥华分公司，凭 L1 签证曲线救国保住了工作！一年后顺利申请调回湾区 Headquarters！'
         }),
-        nextEventId: 'end',
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -1781,14 +1854,26 @@ export const events: Record<string, GameEvent> = {
     description: '你的 Startup 最近融资不太顺利，账上的钱只够发 3 个月工资了。',
     choices: [
       {
-        text: '相信老板的 PPT，自愿降薪换取更多期权',
+        text: '相信老板的 PPT，自愿降薪换取更多期权 (15% 概率获得天价收购)',
         effect: (s) => {
-          const win = Math.random() < 0.12;
+          const win = Math.random() < 0.15;
           return win 
-            ? { cash: s.cash + 180, message: '奇迹发生！公司靠新一轮概念起死回生，最终被大厂并购，你的期权兑现！' }
+            ? { cash: s.cash + 400, status: 'win', message: '🎉 奇迹爆发！公司被大厂以 $20 亿美金天价收购，你的期权直接兑现 $400w！直接实现财务自由 (FIRE) 爆破通关！' }
             : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
         },
-        nextEventId: (s) => 'job_hunt',
+        nextEventId: (s: GameState) => s.status === 'win' ? 'end' : 'job_hunt',
+      },
+      {
+        text: '【带资领投】自己掏 $10w 领投公司 Seed 轮自救',
+        reqBadge: '现金>=10w',
+        condition: (s) => s.cash >= 10,
+        effect: (s) => {
+          const win = Math.random() < 0.4;
+          return win
+            ? { cash: s.cash + 120, tc: s.tc + 20, message: '你带资入组！公司靠你的资金撑到了 A 轮融资并估值大暴涨，你的 TC 与期权收益双双爆表！' }
+            : { cash: s.cash - 10, tc: 0, laid_off: true, health: s.health - 20, message: '砸进去的 $10w 没能挽救寒冬，公司还是倒闭了...你不仅没了工作还心痛不已。' };
+        },
+        nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : 'sv_daily_life',
       },
       {
         text: '偷偷骑驴找马，准备跑路',
@@ -1805,9 +1890,9 @@ export const events: Record<string, GameEvent> = {
       {
         text: '抢占先机，连夜写 Paper 冲击顶会！',
         effect: (s) => {
-          const win = Math.random() > 0.5;
+          const win = Math.random() < (0.55 + s.leetcode / 300);
           return win 
-            ? { tc: s.tc + 10, cash: s.cash, charm: s.charm + 3, health: s.health - 20, message: '你的 Paper 被 NeurIPS 接收了！并且在推特上引起了轰动，公司立刻给你发了 Retention Bonus！' }
+            ? { tc: s.tc + 25, cash: s.cash + 30, visa: 'O1 (杰出人才)', charm: Math.min(25, s.charm + 4), health: s.health - 20, message: '🌟 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus 并协助加急批复了 O1 签证！' }
             : { health: s.health - 25, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
         },
         nextEventId: 'sv_daily_life',
@@ -1825,18 +1910,18 @@ export const events: Record<string, GameEvent> = {
     description: '最近股市剧烈波动，你的量化策略出现了巨大的 Drawdown (回撤)。',
     choices: [
       {
-        text: '顶着高压，手动干预策略并加大杠杆！',
+        text: '顶着高压，手动干预策略并加大杠杆！(45% 概率获得 $250w 巨额 Bonus)',
         effect: (s) => {
-          const win = Math.random() > 0.6;
+          const win = Math.random() < 0.45;
           return win 
-            ? { cash: s.cash + 100, health: s.health - 25, message: '你赌对了！这波 V 型反转让你帮公司赚了上千万，年底直接发了巨额 Bonus！' }
-            : { cash: s.cash - 20, health: s.health - 30, message: '你的手动干预导致策略彻底崩溃，亏损加剧。年终奖被砍没了，还被老板痛骂一顿。' };
+            ? { cash: s.cash + 250, health: s.health - 25, message: '🚀 华尔街之狼！这波疯狂杠杆让你单月帮基金出海捕捞暴赚！老板亲手为你颁发了 $250w 美金的年终 Bonus 巨额支票！' }
+            : { cash: Math.max(0, s.cash - 15), health: s.health - 30, laid_off: true, message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : 'sv_daily_life',
       },
       {
-        text: '相信数学，不干预策略',
-        effect: (s) => ({ health: s.health - 10, cash: s.cash, message: '虽然每天看着回撤心惊肉跳，但你还是忍住了干预的冲动。最终策略慢慢回本了。' }),
+        text: '相信数学，不干预策略 (求稳退守)',
+        effect: (s) => ({ health: s.health - 10, cash: s.cash + 15, message: '虽然每天看着回撤心惊肉跳，但你还是忍住了干预的冲动。最终策略慢慢回本，年底拿到了小额 Bonus。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -2015,6 +2100,18 @@ export const events: Record<string, GameEvent> = {
     description: '最近湾区不流行高尔夫了，所有人都在打匹克球。你的朋友拉你去参加一个高端局，据说有很多投资人和大厂 Director。',
     choices: [
       {
+        text: '【开 Cybertruck/保时捷轰鸣进场】载着顶级装备轰动全场 (需豪车)',
+        reqBadge: '豪车轰鸣加成',
+        condition: (s) => s.car === 'cybertruck' || s.car === 'porsche',
+        effect: (s) => ({
+          tc: s.tc + 6,
+          charm: Math.min(25, s.charm + 5),
+          health: Math.min(100, s.health + 15),
+          message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
         text: '花 $1w 买全套顶级装备去混圈子',
         condition: (s) => s.cash >= 1,
         effect: (s) => {
@@ -2040,7 +2137,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '和平分手，资产平分',
-        effect: (s) => ({ cash: s.cash / 2, is_married: false, health: Math.max(10, s.health - 20), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
+        effect: (s) => ({ cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 20), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -2049,8 +2146,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.5;
           return win
-            ? { cash: (s.cash - 10) * 0.9, is_married: false, health: Math.max(10, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
-            : { cash: (s.cash - 10) * 0.3, is_married: false, health: Math.max(10, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 70% 的资产，你直接崩溃了！' };
+            ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
+            : { cash: (s.cash - 10) * 0.3, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 70% 的资产，你直接崩溃了！' };
         },
         nextEventId: 'sv_daily_life'
       },
@@ -2060,7 +2157,7 @@ export const events: Record<string, GameEvent> = {
           const win = s.charm >= 10 && Math.random() > 0.5;
           return win
             ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
-            : { cash: s.cash / 2, is_married: false, health: Math.max(10, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
+            : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
         },
         nextEventId: 'sv_daily_life'
       }
@@ -2080,9 +2177,9 @@ export const events: Record<string, GameEvent> = {
       {
         text: '装小白疯狂给人递水，主打情绪价值',
         effect: (s) => {
-          const win = Math.random() > 0.6;
+          const win = Math.random() > 0.5;
           return win
-            ? { charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), is_married: true, cash: s.cash + 10, message: '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们迅速确定关系并闪婚了！' }
+            ? { charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
             : { charm: Math.min(25, s.charm + 1), health: s.health + 5, cash: Math.max(0, s.cash - 0.2), message: '你跑前跑后伺候大家，当了一整天的“沸羊羊”，虽然交了几个普通朋友，但并没有人看上你。' };
         },
         nextEventId: 'sv_daily_life'

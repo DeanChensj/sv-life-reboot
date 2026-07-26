@@ -1,4 +1,5 @@
 export type VisaStatus = '无' | 'F1 (学生)' | 'OPT (实习)' | 'H1B (工签)' | 'O1 (杰出人才)' | '绿卡' | 'Day 1 CPT' | 'L1 (外派)';
+export type RelationshipStatus = 'single' | 'matched' | 'dating' | 'married';
 
 export interface GameState {
   age: number;
@@ -17,6 +18,7 @@ export interface GameState {
   has_pet: boolean;
   luck: number;
   is_married: boolean;
+  relationship_status?: RelationshipStatus;
   win_threshold: number;
   laid_off: boolean;
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia';

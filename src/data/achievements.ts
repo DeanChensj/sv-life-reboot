@@ -106,12 +106,13 @@ export function unlockAchievement(id: string): boolean {
 
 export function checkAndUnlockAchievements(state: GameState, currentEventId: string): string[] {
   const newlyUnlocked: string[] = [];
+  const msg = state.message || '';
 
   if (state.job_type === 'ai_research' && state.status === 'win' && state.cash >= 350) {
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');
   }
 
-  if (state.message.includes('币圈') || state.message.includes('Crypto') || (state.cash >= 300 && currentEventId === 'crypto_scam')) {
+  if (msg.includes('币圈') || msg.includes('Crypto') || (state.cash >= 300 && currentEventId === 'crypto_scam')) {
     if (unlockAchievement('crypto_whale')) newlyUnlocked.push('crypto_whale');
   }
 
@@ -123,7 +124,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('bay_area_landlord')) newlyUnlocked.push('bay_area_landlord');
   }
 
-  if (state.is_married && (state.message.includes('双职工') || currentEventId === 'dating_market')) {
+  if (state.is_married && (msg.includes('双职工') || currentEventId === 'dating_market')) {
     if (unlockAchievement('boba_power_couple')) newlyUnlocked.push('boba_power_couple');
   }
 
@@ -135,7 +136,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('nvidia_nasdaq_god')) newlyUnlocked.push('nvidia_nasdaq_god');
   }
 
-  if ((state.health < 30 || state.message.includes('ICU') || state.message.includes('猝死') || state.message.includes('过劳猝死')) && state.status === 'win') {
+  if ((state.health < 30 || msg.includes('ICU') || msg.includes('猝死') || msg.includes('过劳猝死')) && state.status === 'win') {
     if (unlockAchievement('icu_resurrection')) newlyUnlocked.push('icu_resurrection');
   }
 

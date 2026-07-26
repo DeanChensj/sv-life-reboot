@@ -181,6 +181,27 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
           </div>
         </div>
 
+        <div className="col-span-2 md:col-span-4 bg-zinc-900/90 border border-zinc-800/80 p-4 sm:p-5 rounded-2xl flex justify-between items-center backdrop-blur-xl">
+          <div className="text-zinc-500 text-[10px] sm:text-[10.5px] font-mono uppercase tracking-[0.15em]">感情状态</div>
+          <div className={`text-xs font-bold px-3 py-1 rounded-full border ${
+            gameState.relationship_status === 'married' || gameState.is_married
+              ? 'text-pink-300 bg-pink-500/10 border-pink-500/20'
+              : gameState.relationship_status === 'dating'
+                ? 'text-rose-300 bg-rose-500/10 border-rose-500/20'
+                : gameState.relationship_status === 'matched'
+                  ? 'text-purple-300 bg-purple-500/10 border-purple-500/20'
+                  : 'text-zinc-400 bg-zinc-800/50 border-zinc-700/50'
+          }`}>
+            {gameState.relationship_status === 'married' || gameState.is_married
+              ? '已婚双职工'
+              : gameState.relationship_status === 'dating'
+                ? '热恋中'
+                : gameState.relationship_status === 'matched'
+                  ? '相亲匹配中'
+                  : '单身'}
+          </div>
+        </div>
+
         {/* Combined Assets & Lifestyle */}
         <div className="col-span-2 md:col-span-4 bg-zinc-900/90 border border-zinc-800/80 p-4 sm:p-5 rounded-2xl flex flex-col gap-2.5 backdrop-blur-xl">
           <div className="text-zinc-400 text-[10px] sm:text-[10.5px] font-mono uppercase tracking-[0.18em]">名下资产与不动产</div>

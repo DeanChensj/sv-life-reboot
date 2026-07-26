@@ -505,94 +505,126 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8 font-sans flex justify-center">
-      <div className="max-w-2xl w-full">
-        {/* Header / Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-2 mt-4">
-            硅谷模拟人生 (MVP)
-          </h1>
-          <p className="text-slate-400">体验真实的湾区留学生与码农生存指南</p>
-        </div>
-
-        {/* Status Panel */}
-        <div className="bg-slate-800 rounded-xl p-4 mb-6 shadow-lg border border-slate-700 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-sm">当前年份</span>
-            <span className="text-xl font-semibold text-white">{gameState.year} 年</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-sm">年龄</span>
-            <span className="text-xl font-semibold">{gameState.age} 岁</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-sm">现金资产</span>
-            <span className="text-xl font-semibold text-emerald-400">${gameState.cash.toFixed(1)} 万</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-sm">当前 TC (总包)</span>
-            <span className="text-xl font-semibold text-blue-400">${gameState.tc.toFixed(1)} 万</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-sm">健康/发量</span>
-            <div className="w-full bg-slate-700 rounded-full h-2.5 mt-2 overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${gameState.health > 50 ? 'bg-green-500' : gameState.health > 20 ? 'bg-yellow-500' : 'bg-red-500'}`} 
-                style={{ width: `${Math.max(0, gameState.health)}%` }}></div>
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-sm">LeetCode 熟练度</span>
-            <span className="text-xl font-semibold text-purple-400">{gameState.leetcode}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-sm">签证状态</span>
-            <span className="text-xl font-semibold text-amber-400">{gameState.visa}</span>
-          </div>
-        </div>
-
-        {/* Message Banner */}
-        {gameState.message && (
-          <div className="bg-blue-900/40 border border-blue-500/50 text-blue-100 p-4 rounded-lg mb-6 shadow-inner text-center font-medium animate-pulse">
-            💡 {gameState.message}
-          </div>
-        )}
-
-        {/* Event Card */}
-        <div className="bg-slate-800 rounded-xl p-6 shadow-xl border border-slate-700 transition-all duration-300">
-          {gameState.status === 'playing' && currentEvent ? (
-            <>
-              <h2 className="text-2xl font-bold mb-4 text-white">{currentEvent.title}</h2>
-              <p className="text-slate-300 mb-8 text-lg leading-relaxed">{currentEvent.description}</p>
-              
-              <div className="flex flex-col space-y-3">
-                {currentEvent.choices.map((choice, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleChoice(choice)}
-                    className="w-full text-left px-6 py-4 rounded-lg bg-slate-700 hover:bg-slate-600 transition-all duration-200 border border-slate-600 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-lg shadow-sm"
-                  >
-                    {choice.text}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <h2 className={`text-5xl font-bold mb-6 ${gameState.status === 'win' ? 'text-emerald-400' : 'text-red-400'}`}>
-                {gameState.status === 'win' ? '🎉 通关成功！' : '💀 游戏结束'}
-              </h2>
-              <p className="text-xl text-slate-300 mb-10 leading-relaxed max-w-md mx-auto">
-                {gameState.status === 'win' ? '你成功在硅谷生存下来，实现了自己的目标！' : gameState.message}
+    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+      <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
+          
+          {/* Left Column: Sticky Status Panel */}
+          <div className="lg:col-span-5 lg:sticky lg:top-12 flex flex-col">
+            {/* Header / Title */}
+            <div className="mb-10">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-zinc-100 mb-3">
+                硅谷模拟人生
+              </h1>
+              <p className="text-zinc-400 text-lg">
+                A survival guide to the Bay Area.
               </p>
-              <button
-                onClick={resetGame}
-                className="px-10 py-4 rounded-full bg-blue-600 hover:bg-blue-500 transition-colors duration-200 font-bold text-xl shadow-lg shadow-blue-900/50"
-              >
-                再次重开人生
-              </button>
             </div>
-          )}
+
+            {/* Bento Stats Panel */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Cash & TC */}
+              <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="relative z-10">
+                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">现金资产 (Cash)</div>
+                  <div className="text-4xl font-bold tracking-tight text-emerald-400">${gameState.cash.toFixed(1)}w</div>
+                </div>
+                <div className="text-right relative z-10">
+                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">当前总包 (TC)</div>
+                  <div className="text-2xl font-semibold tracking-tight text-zinc-200">${gameState.tc.toFixed(1)}w</div>
+                </div>
+              </div>
+              
+              {/* Health */}
+              <div className="col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
+                <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-2">健康状态</div>
+                <div className="flex items-end gap-1">
+                  <span className="text-3xl font-bold tracking-tight text-zinc-100">{Math.max(0, gameState.health)}</span>
+                </div>
+                <div className="w-full bg-zinc-950 rounded-full h-1.5 mt-3 overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-500 ${gameState.health > 50 ? 'bg-emerald-500' : gameState.health > 20 ? 'bg-amber-500' : 'bg-red-500'}`} 
+                    style={{ width: `${Math.max(0, gameState.health)}%` }}></div>
+                </div>
+              </div>
+
+              {/* LeetCode & Year */}
+              <div className="col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col justify-between">
+                <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">LeetCode</div>
+                <div className="text-3xl font-bold tracking-tight text-zinc-100">{gameState.leetcode}</div>
+              </div>
+              
+              {/* Timeline */}
+              <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
+                <div>
+                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">当前年份</div>
+                  <div className="text-xl font-medium text-zinc-300">{gameState.year}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">年龄</div>
+                  <div className="text-xl font-medium text-zinc-300">{gameState.age} 岁</div>
+                </div>
+              </div>
+
+              {/* Visa */}
+              <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
+                <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em]">签证状态</div>
+                <div className="text-sm font-medium text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-full">{gameState.visa}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Event Narrative */}
+          <div className="lg:col-span-7 flex flex-col justify-center min-h-[60vh] lg:min-h-[80vh] lg:pl-8 xl:pl-16">
+            
+            {/* Message Banner */}
+            {gameState.message && (
+              <div className="border-l-2 border-emerald-500 bg-emerald-500/10 text-emerald-300 px-5 py-4 rounded-r-lg mb-8 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+                {gameState.message}
+              </div>
+            )}
+
+            {/* Event Card */}
+            <div className="bg-zinc-900/40 rounded-3xl p-8 md:p-12 border border-zinc-800 backdrop-blur-md transition-all duration-300 shadow-2xl">
+              {gameState.status === 'playing' && currentEvent ? (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-6">{currentEvent.title}</h2>
+                  <p className="text-zinc-400 mb-10 text-lg md:text-xl leading-relaxed">{currentEvent.description}</p>
+                  
+                  <div className="flex flex-col space-y-4">
+                    {currentEvent.choices.map((choice, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleChoice(choice)}
+                        className="group w-full text-left px-6 py-5 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      >
+                        <span className="text-zinc-300 font-medium group-hover:text-emerald-400 transition-colors text-lg">
+                          {choice.text}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+               ) : (
+                <div className="text-center py-16">
+                  <h2 className={`text-5xl md:text-6xl font-bold tracking-tight mb-6 ${gameState.status === 'win' ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {gameState.status === 'win' ? '通关成功' : '游戏结束'}
+                  </h2>
+                  <p className="text-xl text-zinc-400 mb-12 leading-relaxed max-w-md mx-auto">
+                    {gameState.status === 'win' ? '你成功在硅谷生存下来，实现了自己的目标！' : gameState.message}
+                  </p>
+                  <button
+                    onClick={resetGame}
+                    className="px-10 py-5 rounded-full bg-zinc-100 text-zinc-950 hover:bg-white transition-colors duration-200 font-bold text-xl active:scale-[0.98]"
+                  >
+                    再次重开人生
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

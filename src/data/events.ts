@@ -533,6 +533,17 @@ export const events: Record<string, GameEvent> = {
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
       {
+         text: '🧗 周末去 Movement / Planet Granite 抱石馆抓 V5 难度墙 (消耗 1 精力, $0.1w) - 湾区最流行的码农技术社交',
+         condition: (s) => s.ap > 0 && s.cash >= 0.1,
+         effect: (s) => {
+           const staffNetwork = Math.random() < 0.35;
+           return staffNetwork
+             ? { ap: s.ap - 1, cash: s.cash - 0.1, health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 4), tc: s.tc + 4, message: '你在抱石馆脱掉镁粉手套抱岩壁，旁边一位穿着始祖鸟黑标的老哥向你攀谈，聊天才发现是隔壁组的 Staff Engineer！对方欣赏你的解题节奏，直通荐你去核心 AI 架构团队！' }
+             : { ap: s.ap - 1, cash: s.cash - 0.1, health: Math.min(100, s.health + 25), charm: Math.min(25, s.charm + 3), message: '虽然前臂小臂肌肉酸痛得拿不稳水杯，但你成功顶住了 V5 的黑点挂墙，心理压力一扫而空，神清气爽！' };
+         },
+         nextEventId: 'sv_daily_life',
+      },
+      {
         text: '🔥【今年限时机会】 Stanford 师兄拉你组队冲 AI Hackathon (消耗 1 精力, $0.5w)',
         condition: (s) => s.ap > 0 && s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3),
         effect: (s) => {
@@ -1226,26 +1237,32 @@ export const events: Record<string, GameEvent> = {
   },
   'buy_house': {
     id: 'buy_house',
-    title: '宇宙中心抢房大战',
-    description: '你看中了一套 Sunnyvale 的老破小“学区房”，标价 $200w。Open House 现场挤满了带着支票簿的印度和中国码农，空气中弥漫着疯狂加价的硝烟。',
+    title: '宇宙中心加价抢房大乱斗',
+    description: '湾区房地产 Open House 现场挤满了手里攥着支票簿的华裔和印度裔工程总监。中介微笑着告诉你：“已经收到了 14 个 No-Contingency 全现金 Offer，你准备加价多少？”',
     choices: [
-
       {
-        text: 'All in 现金，加价 $50w 硬抢！(需现金 >= 60w)',
-        condition: (s) => s.cash >= 60,
-        effect: (s) => ({ cash: s.cash - 60, rent: 1, has_housing: true, health: s.health + 10, imageUrl: 'images/house.jpg', message: '恭喜！你成功抢到了 Sunnyvale 的房子！每年固定房租大幅降低为微薄的持有成本。' }),
+        text: '🏠 抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
+        condition: (s) => s.cash >= 45,
+        effect: (s) => ({ cash: s.cash - 45, rent: 1.5, has_housing: true, health: s.health + 10, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '向国内父母求助（掏空六个钱包）',
-        condition: (s) => s.cash < 80,
-        effect: (s) => ({ cash: s.cash + 80, health: s.health - 20, message: '父母卖掉了老家的房子给你凑齐了首付，你背上了沉重的心理包袱和巨额房贷。' }),
+        text: '🏢 买 North San Jose 现代挑高高密度 Townhouse (首付 $28w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
+        condition: (s) => s.cash >= 28,
+        effect: (s) => ({ cash: s.cash - 28, rent: 2.5, has_housing: true, charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '🏫 攻下 Fremont Mission San Jose 9分顶配学区房 (首付 $65w, 年负担 $4.5w) - 卷二代的终极战场',
+        condition: (s) => s.cash >= 65,
+        effect: (s) => ({ cash: s.cash - 65, rent: 4.5, has_housing: true, charm: Math.min(25, s.charm + 4), luck: s.luck + 10, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
+        condition: (s) => s.cash < 45,
+        effect: (s) => ({ cash: s.cash + 50, health: s.health - 15, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
         nextEventId: 'house_slave',
-      },
-      {
-        text: '太卷了，我去东湾买新房',
-        effect: (s) => ({ visa: '绿卡', cash: s.cash - 40, health: s.health + 10, message: '你搬到了偏远但宽敞的新房，每天通勤 2 小时，在 880 上堵到怀疑人生。' }),
-        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -1283,6 +1300,34 @@ export const events: Record<string, GameEvent> = {
       }
     ]
   },
+    'tahoe_ski_blizzard': {
+    id: 'tahoe_ski_blizzard',
+    title: '【冬日浩劫】 Tahoe 暴雪警报与 I-80 公路 9 小时生死大堵车',
+    description: '周五下午 3:15，Slack 上的 #skiing 频道与微信群全炸了：“Tahoe 今晚开大雪，明早 Pow 天雪质爆满！”你急忙合上电脑，把滑雪板扣进车顶箱狂飙出门。然而刚到 Truckee，I-80 公路突然由于暴雪启动了 Chain Control (强制雪链停摆检查)，成千上万台 Tesla 和斯巴鲁卡在雪堆里动弹不得。',
+    choices: [
+      {
+        text: '硬着头皮睡后备箱！启动特斯拉营地模式把暖气拉满硬扛',
+        effect: (s) => ({
+          health: Math.max(15, s.health - 10),
+          cash: Math.max(0, s.cash - 0.2),
+          luck: Math.min(45, s.luck + 6),
+          message: '你在后备箱睡袋里吃着打折冷蛋白棒堵了整整 9 个小时。第二天早晨 7:30 铲雪车终于打通道路，你抢到了 Heavenly 缆车头把梯，在大草海滑到了无痕绝美头粉！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '识时务者为俊杰！果断掉头在 Sacramento 找快捷酒店吃自热火锅',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.4),
+          health: Math.min(100, s.health + 15),
+          charm: s.charm + 1,
+          message: '你看着微信群同学在雪里冻得瑟瑟发抖求援救援车，自己在大床房里吃着海底捞自热火锅打黑神话，完成了最明智标准的湾区反向避险骚操作。'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+
   'meta_tlm': {
     id: 'meta_tlm',
     title: 'Meta TLM 卷王之王',

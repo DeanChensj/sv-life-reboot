@@ -588,7 +588,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < (0.35 + s.leetcode / 300);
           return win
-            ? { ap: s.ap - 1, cash: s.cash + 35, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $35w 支票支持你们继续研发！' }
+            ? { ap: s.ap - 1, cash: s.cash + 22, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $35w 支票支持你们继续研发！' }
             : { ap: s.ap - 1, cash: s.cash - 0.5, health: s.health - 15, leetcode: s.leetcode + 8, message: '连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
         },
         nextEventId: 'sv_daily_life',
@@ -673,7 +673,7 @@ export const events: Record<string, GameEvent> = {
             const win = Math.random() < winRate;
             if (win) {
               if (s.charm >= 20 && Math.random() < 0.05) {
-                 return { ap: s.ap - 1, cash: s.cash + 80, charm: Math.min(25, s.charm + 5), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
+                 return { ap: s.ap - 1, cash: s.cash + 48, charm: Math.min(25, s.charm + 5), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
               }
               return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
             } else {
@@ -687,7 +687,7 @@ export const events: Record<string, GameEvent> = {
          condition: (s) => s.ap > 0 && s.cash >= 2 && s.leetcode >= 30,
          effect: (s) => {
             const jackpot = Math.random() < (0.05 + s.luck / 500); // 5% to 25% chance
-            if (jackpot) return { ap: s.ap - 1, cash: s.cash + 50, leetcode: s.leetcode + 5, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
+            if (jackpot) return { ap: s.ap - 1, cash: s.cash + 32, leetcode: s.leetcode + 5, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
             return { ap: s.ap - 1, cash: s.cash - 2, leetcode: s.leetcode + 3, message: '你的产品上线后无人问津，几万美元的 API 费用和服务器费打了水漂，但你的技术变强了。' };
          },
          nextEventId: 'sv_daily_life'
@@ -785,7 +785,13 @@ export const events: Record<string, GameEvent> = {
         text: '结算并迎接新的一年',
         effect: (s) => {
            const nextGc = s.visa === '绿卡' ? s.gc_progress : s.gc_progress + 1;
-           const netIncome = (s.tc * 0.6) - s.rent - 4;
+           // 加州边际所得税 40% + 房产税/物业费/家庭生活成本动算
+           const propertyTax = (s.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name))
+             ? (s.housing_name === 'Atherton 顶级豪宅' ? 3.5 : 1.5) : 0;
+           const familyCost = s.is_married ? 2.5 : 0;
+           const petCost = s.has_pet ? 0.8 : 0;
+           const baseLiving = 4 + propertyTax + familyCost + petCost;
+           const netIncome = (s.tc * 0.6) - s.rent - baseLiving;
            const gcMsg = s.visa === '绿卡' 
              ? '你已持有美国绿卡，工作生活不受约束。' 
              : nextGc >= 5 
@@ -796,7 +802,7 @@ export const events: Record<string, GameEvent> = {
               age: s.age + 1, 
               gc_progress: nextGc, 
               cash: s.cash + netIncome, 
-              message: `扣除房租和每年 4 万的生活费后，你今年的税后结余是 ${Math.max(0, netIncome).toFixed(1)} 万美元。${gcMsg}` 
+              message: `扣除税收、房租、加州房产税与基础家庭开支 ${baseLiving.toFixed(1)} 万后，你今年的税后净结余是 ${netIncome > 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}` 
            };
         },
         nextEventId: (s) => {

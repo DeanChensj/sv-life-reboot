@@ -707,20 +707,20 @@ export const events: Record<string, GameEvent> = {
           
           // 60% chance of LIFE event
           const lifeRand = Math.random();
-          if (lifeRand < 0.14) return s.is_married ? 'sv_daily_life' : 'dating_market';
-          if (lifeRand < 0.24) return 'car_broken';
-          if (lifeRand < 0.36) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
-          if (lifeRand < 0.48) return 'dental_emergency';
-          if (lifeRand < 0.60) return 'crypto_scam';
-          if (lifeRand < 0.08) return 'blind_team_tea';
-          if (lifeRand < 0.16) return 'zoom_camera_off_leetcode';
-          if (lifeRand < 0.24) return 'boba_inflation';
-          if (lifeRand < 0.32) return 'rsu_vesting_crash';
-          if (lifeRand < 0.40) return 'h1b_rfe_vs_parent_nag';
-          if (lifeRand < 0.50) return 'xhs_boba'; // <--- Connected missing xhs_boba event!
-          if (lifeRand < 0.80) return 'ai_wrapper_startup';
-          if (lifeRand < 0.90) return 'biohacking_party';
-          return 'burning_man_invite';
+           if (lifeRand < 0.07) return s.is_married ? 'sv_daily_life' : 'dating_market';
+           if (lifeRand < 0.14) return 'car_broken';
+           if (lifeRand < 0.21) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
+           if (lifeRand < 0.28) return 'dental_emergency';
+           if (lifeRand < 0.35) return 'crypto_scam';
+           if (lifeRand < 0.42) return 'blind_team_tea';
+           if (lifeRand < 0.49) return 'zoom_camera_off_leetcode';
+           if (lifeRand < 0.56) return 'boba_inflation';
+           if (lifeRand < 0.63) return 'rsu_vesting_crash';
+           if (lifeRand < 0.70) return 'h1b_rfe_vs_parent_nag';
+           if (lifeRand < 0.77) return 'xhs_boba';
+           if (lifeRand < 0.84) return 'ai_wrapper_startup';
+           if (lifeRand < 0.92) return 'biohacking_party';
+           return 'burning_man_invite';
         },
       }
     ]

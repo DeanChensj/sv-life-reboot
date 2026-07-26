@@ -744,7 +744,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场见皮衣黄 ($1.5w)',
-        condition: (s) => s.cash >= 1.5 && (s.year % 6 === 1) && !s.message.includes('GTC'),
+        condition: (s) => s.cash >= 1.5 && (s.year % 6 === 1) && !(s.message || '').includes('GTC'),
         hideIfUnavailable: true,
         effect: (s) => ({
           cash: s.cash - 1.5,
@@ -756,7 +756,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (需 LeetCode >= 35)',
-        condition: (s) => s.leetcode >= 35 && (s.year % 6 === 5) && !s.message.includes('漏洞'),
+        condition: (s) => s.leetcode >= 35 && (s.year % 6 === 5) && !(s.message || '').includes('漏洞'),
         hideIfUnavailable: true,
         effect: (s) => {
           const success = Math.random() < 0.25;
@@ -791,7 +791,7 @@ export const events: Record<string, GameEvent> = {
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
           return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
-        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => ((s.message || '').includes('🎉') ? 'promo_celebration' : midYearEventRouter(s)),
       },
       {
         text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
@@ -860,9 +860,9 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
            const nextGc = s.visa === '绿卡' ? s.gc_progress : s.gc_progress + 1;
            const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || '');
-           const housingExpense = isHomeowner 
-             ? (s.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0)
-             : (s.rent || 4.0);
+           const housingExpense = s.rent !== undefined 
+             ? s.rent 
+             : (isHomeowner ? (s.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0) : 4.0);
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
            const livingExpense = 3.0;
            const totalExpense = housingExpense + carExpense + livingExpense;
@@ -1745,7 +1745,7 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash + 150, message: '奇迹发生！公司靠稳扎稳打被大厂收购了，你的期权兑现了大笔现金！' }
             : { cash: Math.max(0, s.cash - 5), health: s.health - 15, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸。' };
         },
-        nextEventId: (s) => s.message.includes('收购') ? 'sv_daily_life' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
+        nextEventId: (s) => (s.message || '').includes('收购') ? 'sv_daily_life' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
       },
       {
         text: '立刻 Pivot (转型) 做 AI / 大模型套壳',
@@ -1758,7 +1758,7 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash + 300, visa: '绿卡', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
             : { cash: Math.max(0, s.cash - 10), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...' };
         },
-        nextEventId: (s) => s.message.includes('绿卡') ? 'sv_daily_life' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
+        nextEventId: (s) => (s.message || '').includes('绿卡') ? 'sv_daily_life' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
       }
     ]
   },
@@ -1789,7 +1789,7 @@ export const events: Record<string, GameEvent> = {
             ? { age: s.age + 2, health: s.health - 15, leetcode: s.leetcode + 20, message: '两年的昼夜颠倒，你的论文终于有了一些突破性的进展，老板决定带你去夏威夷参加顶级学术会议！' }
             : { age: s.age + 2, health: s.health - 20, message: '论文被拒了无数次，实验数据全崩，你陷入了深深的自我怀疑。' };
         },
-        nextEventId: (s) => (s.message.includes('夏威夷') ? 'phd_conference' : 'phd_life')
+        nextEventId: (s) => ((s.message || '').includes('夏威夷') ? 'phd_conference' : 'phd_life')
       },
       {
         text: '老板太坑了，我要 Master Out (拿个硕士跑路求职)',

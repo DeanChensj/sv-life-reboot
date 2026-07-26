@@ -16,9 +16,9 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   const postTaxIncome = postTaxIncomeNum.toFixed(1);
 
   // Expenses matched with App.tsx handleYearEndContinue
-  const housingExpenseNum = isHomeowner 
-    ? (gameState.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0)
-    : (gameState.rent || 4.0);
+  const housingExpenseNum = gameState.rent !== undefined 
+    ? gameState.rent 
+    : (isHomeowner ? (gameState.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0) : 4.0);
   const housingExpense = housingExpenseNum.toFixed(1);
   const carExpenseNum = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
   const carExpense = carExpenseNum.toFixed(1);

@@ -8,8 +8,8 @@ interface CharacterProfileModalProps {
 
 export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ gameState, onConfirm }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xl animate-in fade-in duration-300">
-      <div className="relative w-full max-w-md bg-zinc-900/95 border border-zinc-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden backdrop-blur-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-950/85 backdrop-blur-2xl animate-in fade-in duration-300 overflow-y-auto">
+      <div className="relative w-full max-w-md bg-zinc-900/95 border border-zinc-700/80 rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden backdrop-blur-2xl max-h-[90vh] overflow-y-auto">
         {/* Decorative Background Ambient Lights */}
         <div className="absolute top-0 right-0 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-56 h-56 bg-indigo-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />

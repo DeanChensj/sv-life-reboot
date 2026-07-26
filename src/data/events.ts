@@ -2,26 +2,19 @@ import type { GameState, GameEvent } from '../types';
 
 // Initial State
 export const generateInitialState = (): GameState => {
-  const cached = localStorage.getItem('sv_life_initial_seed');
+  localStorage.removeItem('sv_life_initial_seed');
+
   let cash, charm, luck;
-  if (cached) {
-    const parsed = JSON.parse(cached);
-    cash = parsed.cash;
-    charm = parsed.charm;
-    luck = parsed.luck;
+  const randCash = Math.random();
+  if (randCash < 0.6) {
+    cash = Math.floor(Math.random() * 8) + 2; // 2 - 10 万美元 (普通家庭)
+  } else if (randCash < 0.9) {
+    cash = Math.floor(Math.random() * 15) + 10; // 10 - 25 万美元 (小康中产)
   } else {
-    const randCash = Math.random();
-    if (randCash < 0.6) {
-      cash = Math.floor(Math.random() * 8) + 2; // 2 - 10 万美元 (普通家庭)
-    } else if (randCash < 0.9) {
-      cash = Math.floor(Math.random() * 15) + 10; // 10 - 25 万美元 (小康中产)
-    } else {
-      cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
-    }
-    charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
-    luck = Math.floor(Math.random() * 100);
-    localStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, luck }));
+    cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
   }
+  charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
+  luck = Math.floor(Math.random() * 100);
   
   const ap = 3;
   const max_ap = 3;
@@ -602,7 +595,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.35 + (s.luck / 100) * 0.35;
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, gc_progress: s.gc_progress + 15, message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
+            ? { visa: 'H1B (工签)', cash: s.cash, gc_progress: Math.min(5, (s.gc_progress || 0) + 1), message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
             : { cash: s.cash, health: s.health - 20, message: '很遗憾，第三年 H1B 依然未中签！好在公司 HR 允许你选择外派加拿大或挂靠 Day 1 CPT。' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'h1b_fallback_options',

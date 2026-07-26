@@ -120,18 +120,63 @@ export default function App() {
       }));
       setCurrentEventId('end');
     } else {
-      setGameState((prev) => ({
-        ...prev,
-        ap: prev.max_ap || 3,
-        year: prev.year + 1,
-        age: prev.age + 1,
-        cash: newCash
-      }));
-      setCurrentEventId('sv_daily_life');
+      // H1B Lottery & Visa Status Check
+      const currentVisa = gameState.visa || '无';
+      let newVisa = currentVisa;
+      let newH1bAttempts = gameState.h1b_attempts || 0;
+      let h1bMsg = '';
+
+      const isOptOrStudent = currentVisa.includes('OPT') || currentVisa.includes('F1');
+      if (isOptOrStudent && !gameState.laid_off && gameState.job_type && gameState.job_type !== 'unemployed') {
+        newH1bAttempts += 1;
+        const winRate = 0.35 + (gameState.luck / 100) * 0.3;
+        const win = Math.random() < winRate;
+        if (win) {
+          newVisa = 'H1B (工签)';
+          h1bMsg = ` 🎉 人品大爆发！在第 ${newH1bAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
+        } else {
+          if (newH1bAttempts === 1) {
+            h1bMsg = ' 💔 第一年 H1B 未中签！已开启 STEM OPT 2 年延期，明年还有抽签机会！';
+          } else if (newH1bAttempts === 2) {
+            h1bMsg = ' 💔 第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，压力山大！';
+          } else {
+            h1bMsg = ' 💥 警告：三年 H1B 抽签均未能中签！身份即将在今年到期，面临离境危机！';
+          }
+        }
+      }
+
+      // GC Progress increment if working on H1B or Green Card track
+      const nextGc = (newVisa === '绿卡' || newVisa === 'H1B (工签)') 
+        ? Math.min(5, (gameState.gc_progress || 0) + 1) 
+        : (gameState.gc_progress || 0);
+
+      const updatedState: GameState = {
+        ...gameState,
+        ap: gameState.max_ap || 3,
+        year: gameState.year + 1,
+        age: gameState.age + 1,
+        cash: newCash,
+        visa: newVisa,
+        h1b_attempts: newH1bAttempts,
+        gc_progress: nextGc,
+        message: h1bMsg || gameState.message
+      };
+
+      // Transition to next event: Crisis if OPT expired after 3 tries, post_green_card if 5 yrs queue, else daily life
+      let nextId = 'sv_daily_life';
+      if (isOptOrStudent && newH1bAttempts >= 3 && newVisa !== 'H1B (工签)') {
+        nextId = 'h1b_final_crisis';
+      } else if (nextGc >= 5 && newVisa !== '绿卡' && newVisa !== '无') {
+        nextId = 'post_green_card';
+      }
+
+      setGameState(updatedState);
+      setCurrentEventId(nextId);
     }
   };
 
   const getImgSrc = (url: string) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
     const base = import.meta.env.BASE_URL || '/';
     const cleanBase = base.endsWith('/') ? base : `${base}/`;
     const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
@@ -165,37 +210,44 @@ export default function App() {
       )}
 
       {/* Mobile Sticky Mini-HUD Header */}
-      <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 px-3 py-2.5 shadow-2xl flex items-center justify-between gap-2 text-xs font-mono">
-        <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5">
-          {/* Age Tag */}
+      <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-800/80 px-3.5 py-2.5 shadow-2xl flex items-center justify-between gap-2.5 text-xs font-mono">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {/* Age & Year Tag */}
           <span className="flex items-center gap-1 font-bold text-[11px] text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-md shrink-0 border border-zinc-800">
             <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            {gameState.age}岁
+            {gameState.year}年·{gameState.age}岁
           </span>
 
           {/* Cash Tag */}
-          <span className="flex items-center gap-1 font-bold text-emerald-400 shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+          <span className="flex items-center gap-1 font-black text-emerald-400 shrink-0 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 tabular-nums">
             <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            {gameState.cash.toFixed(1)}w
+            ${gameState.cash.toFixed(1)}w
           </span>
 
           {/* TC Tag */}
-          <span className="flex items-center gap-1 text-zinc-400 shrink-0 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800">
-            <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-            <span className="text-zinc-500 text-[10px]">TC</span>
-            <strong className="text-zinc-200 font-bold">{gameState.tc}w</strong>
+          <span className="flex items-center gap-1 text-zinc-300 shrink-0 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800 tabular-nums">
+            <span className="text-zinc-500 text-[10px] uppercase font-bold">TC</span>
+            <strong className="text-zinc-200 font-bold">${gameState.tc}w</strong>
           </span>
 
           {/* Action Points (AP) Tag */}
           {gameState.ap !== undefined && (
-            <span className="flex items-center gap-1 font-bold text-indigo-300 shrink-0 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.25)]">
+            <span className="flex items-center gap-1 font-extrabold text-indigo-300 shrink-0 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.25)] tabular-nums">
               <svg className="w-3 h-3 text-indigo-400 fill-indigo-400/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              {gameState.ap}/{gameState.max_ap || 3}
+              AP {gameState.ap}/{gameState.max_ap || 3}
+            </span>
+          )}
+
+          {/* Green Card Progress Tag (Mobile HUD) */}
+          {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && (
+            <span className="flex items-center gap-1.5 font-bold text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              GC: {gameState.visa === '绿卡' ? '100%' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}%`}
             </span>
           )}
 
           {/* Health Tag */}
-          <span className="flex items-center gap-1 font-bold text-rose-400 shrink-0 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20">
+          <span className="flex items-center gap-1 font-bold text-rose-400 shrink-0 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 tabular-nums">
             <svg className="w-3 h-3 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             {Math.max(0, gameState.health)}
           </span>
@@ -211,12 +263,13 @@ export default function App() {
             {gameState.visa}
           </span>
         </div>
+
         <button
           onClick={() => setIsMobileStatsOpen(!isMobileStatsOpen)}
-          className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all active:scale-95 ${
+          className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold border transition-all duration-200 active:scale-95 cursor-pointer ${
             isMobileStatsOpen 
               ? 'bg-emerald-500 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20' 
-              : 'bg-zinc-800 hover:bg-zinc-700 text-emerald-300 border-zinc-700/70'
+              : 'bg-zinc-800/90 hover:bg-zinc-700 text-emerald-300 border-zinc-700/80'
           }`}
         >
           {isMobileStatsOpen ? '收起 ▲' : '全量属性 ▼'}

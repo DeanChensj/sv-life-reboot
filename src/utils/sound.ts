@@ -6,25 +6,32 @@ class SoundManager {
 
   constructor() {
     // Load mute preference from localStorage if available
-    const savedMute = localStorage.getItem('sv_sound_muted');
-    if (savedMute !== null) {
-      this.isMuted = savedMute === 'true';
+    if (typeof localStorage !== 'undefined') {
+      const savedMute = localStorage.getItem('sv_sound_muted');
+      if (savedMute !== null) {
+        this.isMuted = savedMute === 'true';
+      }
     }
   }
 
   private initCtx() {
+    if (typeof window === 'undefined') return;
     if (!this.audioCtx) {
       const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      this.audioCtx = new AudioCtxClass();
+      if (AudioCtxClass) {
+        this.audioCtx = new AudioCtxClass();
+      }
     }
-    if (this.audioCtx.state === 'suspended') {
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
   }
 
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
-    localStorage.setItem('sv_sound_muted', String(this.isMuted));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sv_sound_muted', String(this.isMuted));
+    }
     if (!this.isMuted) {
       this.play('click');
     }

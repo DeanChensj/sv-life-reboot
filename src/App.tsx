@@ -1784,7 +1784,7 @@ export default function App() {
                       const isAvailable = !choice.condition || choice.condition(gameState);
                       
                       // Precise badge extraction from text
-                      const costMatch = choice.text.match(/\((消耗|花费|每年|\$|成本).*?\)/);
+                      const costMatch = choice.text.match(/\((?:消耗|花费|每年|\$|成本).*?\)/);
                       const reqMatch = choice.text.match(/ - (.*)/) || choice.text.match(/\((需要|需|算法|高魅力|现金).*?\)/);
                       const mainText = choice.text
                         .replace(/\(.*?\)/g, '')
@@ -1810,12 +1810,12 @@ export default function App() {
                         <div className="flex flex-wrap gap-2 items-center">
                           {costMatch && (
                              <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
-                               {costMatch[1]}
+                                {costMatch[0].slice(1, -1)}
                              </span>
                           )}
                           {reqMatch && (
                              <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-amber-500/20 text-amber-300 border border-amber-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
-                               {reqMatch[1]}
+                                {reqMatch[1] || reqMatch[0].slice(1, -1)}
                              </span>
                           )}
                           {!isAvailable && (
@@ -1831,8 +1831,8 @@ export default function App() {
                ) : (
                 <div className="py-8 animate-in fade-in duration-500">
                   <div className="text-center mb-8">
-                    <span className={`text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border ${gameState.status === 'win' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                      {gameState.status === 'win' ? '🎉 FIRE 财务自由通关' : '💀 硅谷生存中断'}
+                    <span className={`text-xs font-mono font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full border ${gameState.status === 'win' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                      {gameState.status === 'win' ? 'STATUS: FIRE ACHIEVED' : 'STATUS: SURVIVAL TERMINATED'}
                     </span>
                     <h2 className={`text-4xl md:text-5xl font-extrabold tracking-tight mt-4 mb-3 ${gameState.status === 'win' ? 'text-emerald-400' : 'text-red-400'}`}>
                       {gameState.status === 'win' ? '人生巅峰：财务自由！' : '硅谷生存结语'}
@@ -1844,15 +1844,15 @@ export default function App() {
 
                   {/* Bento Medals & Stats Card */}
                   <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden shadow-2xl">
-                    <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-4 flex items-center justify-between">
-                      <span>🏆 你的硅谷生涯获得勋章 (Persona Medals)</span>
-                      <span>{gameState.year} 年 | {gameState.age} 岁</span>
+                    <div className="text-xs font-mono font-medium uppercase tracking-[0.15em] text-zinc-500 mb-4 flex items-center justify-between">
+                      <span>[ACHIEVED_MEDALS] 生涯荣誉里程碑</span>
+                      <span className="tabular-nums">{gameState.year} 年 | {gameState.age} 岁</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                       {gameState.leetcode >= 60 && (
                         <div className="bg-zinc-900/90 border border-amber-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">💻</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 uppercase">ALG</span>
                           <div>
                             <div className="font-bold text-amber-300 text-sm">【做题神仙】</div>
                             <div className="text-xs text-zinc-400">LeetCode 算法真经通关，随时手撕 Hard 题</div>
@@ -1861,7 +1861,7 @@ export default function App() {
                       )}
                       {gameState.charm >= 18 && (
                         <div className="bg-zinc-900/90 border border-rose-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">💃</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20 uppercase">SOC</span>
                           <div>
                             <div className="font-bold text-rose-300 text-sm">【南湾顶流名流】</div>
                             <div className="text-xs text-zinc-400">魅力值爆表，Santana Row 相亲收割机</div>
@@ -1870,7 +1870,7 @@ export default function App() {
                       )}
                       {gameState.cash >= 300 && (
                         <div className="bg-zinc-900/90 border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">💰</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 uppercase">EST</span>
                           <div>
                             <div className="font-bold text-emerald-300 text-sm">【Atherton 征服者】</div>
                             <div className="text-xs text-zinc-400">积攒重金，成功跨越硅谷阶级门槛</div>
@@ -1879,7 +1879,7 @@ export default function App() {
                       )}
                       {gameState.car === 'cybertruck' && (
                         <div className="bg-zinc-900/90 border border-cyan-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">📐</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase">RAW</span>
                           <div>
                             <div className="font-bold text-cyan-300 text-sm">【赛博朋克硬核族】</div>
                             <div className="text-xs text-zinc-400">驾驶多边形皮卡征服 237 号公路</div>
@@ -1888,7 +1888,7 @@ export default function App() {
                       )}
                       {gameState.car === 'porsche' && (
                         <div className="bg-zinc-900/90 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">🏎️</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase">LUX</span>
                           <div>
                             <div className="font-bold text-purple-300 text-sm">【脱离民工车鄙视链】</div>
                             <div className="text-xs text-zinc-400">告别街车 Model Y，开上保时捷震撼全场</div>
@@ -1897,7 +1897,7 @@ export default function App() {
                       )}
                       {gameState.visa === '绿卡' && (
                         <div className="bg-zinc-900/90 border border-blue-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">🇺🇸</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 uppercase">PR</span>
                           <div>
                             <div className="font-bold text-blue-300 text-sm">【上岸自由身】</div>
                             <div className="text-xs text-zinc-400">彻底甩开 USCIS 抽签与 H1B 签证枷锁</div>
@@ -1906,7 +1906,7 @@ export default function App() {
                       )}
                       {gameState.status === 'game_over' && gameState.health <= 0 && (
                         <div className="bg-zinc-900/90 border border-red-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">💀</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-red-500/10 text-red-300 border border-red-500/20 uppercase">OOF</span>
                           <div>
                             <div className="font-bold text-red-300 text-sm">【荣誉 Burnout 社畜】</div>
                             <div className="text-xs text-zinc-400">牺牲自我健康，照亮公司季度 OKR 交付</div>
@@ -1915,7 +1915,7 @@ export default function App() {
                       )}
                       {gameState.status === 'game_over' && gameState.cash <= 0 && (
                         <div className="bg-zinc-900/90 border border-orange-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="text-2xl">💸</span>
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-orange-500/10 text-orange-300 border border-orange-500/20 uppercase">RIP</span>
                           <div>
                             <div className="font-bold text-orange-300 text-sm">【湾区月光大慈善家】</div>
                             <div className="text-xs text-zinc-400">把高额总包全额上交给了房东与 $13 奶茶</div>
@@ -1927,20 +1927,20 @@ export default function App() {
                     {/* Stats Summary Table */}
                     <div className="grid grid-cols-4 gap-2 bg-zinc-900/60 p-4 rounded-2xl text-center text-xs">
                       <div>
-                        <div className="text-zinc-500 mb-1">最终现金</div>
-                        <div className="font-bold text-emerald-400 text-base">${gameState.cash.toFixed(1)}w</div>
+                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">最终现金</div>
+                        <div className="font-bold font-mono tabular-nums text-emerald-400 text-base">${gameState.cash.toFixed(1)}w</div>
                       </div>
                       <div>
-                        <div className="text-zinc-500 mb-1">峰值总包</div>
-                        <div className="font-bold text-zinc-200 text-base">${gameState.tc}w</div>
+                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">峰值总包</div>
+                        <div className="font-bold font-mono tabular-nums text-zinc-100 text-base">${gameState.tc}w</div>
                       </div>
                       <div>
-                        <div className="text-zinc-500 mb-1">LeetCode</div>
-                        <div className="font-bold text-zinc-200 text-base">{gameState.leetcode} 题</div>
+                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">LeetCode</div>
+                        <div className="font-bold font-mono tabular-nums text-amber-300 text-base">{gameState.leetcode} 题</div>
                       </div>
                       <div>
-                        <div className="text-zinc-500 mb-1">魅力指数</div>
-                        <div className="font-bold text-rose-300 text-base">{gameState.charm} pts</div>
+                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">魅力指数</div>
+                        <div className="font-bold font-mono tabular-nums text-rose-300 text-base">{gameState.charm} pts</div>
                       </div>
                     </div>
                   </div>
@@ -1948,19 +1948,19 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
                       onClick={() => {
-                        const summaryText = `【硅谷模拟人生】我的生涯结语：\n${gameState.status === 'win' ? '🎉 成功实现 FIRE 财务自由通关！' : '💀 遗憾挂彩中断生存。'}\n最终资产: $${gameState.cash.toFixed(1)}万 | 年龄: ${gameState.age}岁 | 力扣: ${gameState.leetcode}题\n结语: ${gameState.message}\n来挑战你的硅谷人生！`;
+                        const summaryText = `[硅谷模拟人生] 生涯结语：\n${gameState.status === 'win' ? '成功实现 FIRE 财务自由通关！' : '遗憾挂彩中断生存。'}\n最终资产: $${gameState.cash.toFixed(1)}万 | 年龄: ${gameState.age}岁 | 力扣: ${gameState.leetcode}题\n结语: ${gameState.message}\n来挑战你的硅谷人生！`;
                         navigator.clipboard.writeText(summaryText);
                         alert('已复制你的硅谷人生小红书/朋友圈分享文案！');
                       }}
                       className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.98]"
                     >
-                      📋 复制我的战绩（发小红书/朋友圈）
+                      复制我的战绩（发小红书/朋友圈）
                     </button>
                     <button
                       onClick={resetGame}
                       className="px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-base transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20"
                     >
-                      🔄 再次重开人生
+                      再次重开人生
                     </button>
                   </div>
                 </div>

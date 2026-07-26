@@ -5,9 +5,11 @@ interface BentoStatsPanelProps {
   gameState: GameState;
   currentEventId: string;
   onOpenCodex?: () => void;
+  onToggleSound?: () => void;
+  isMuted?: boolean;
 }
 
-export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId, onOpenCodex }) => {
+export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId, onOpenCodex, onToggleSound, isMuted }) => {
   // Fix AP Visibility: Show during active Bay Area daily life decision events, hide in onboarding or end screens
   const showAPBar = gameState.ap !== undefined && !['choose_trait', 'choose_year', 'choose_school', 'us_undergrad_year1', 'us_undergrad_year3', 'cn_college_grad', 'cn_college_year3', 'cn_undergrad_grad', 'us_undergrad_grad', 'us_master_year1', 'us_master_grad', 'buy_house', 'change_rental', 'end'].includes(currentEventId);
 
@@ -54,15 +56,41 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
             </p>
           </div>
 
-          {onOpenCodex && (
-            <button
-              onClick={onOpenCodex}
-              className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-300 border border-purple-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/10 active:scale-95 transition-all cursor-pointer shrink-0"
-            >
-              <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
-              <span>成就图鉴</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {onToggleSound && (
+              <button
+                onClick={onToggleSound}
+                title={isMuted ? '开启音效' : '静音'}
+                className={`p-2.5 rounded-2xl border font-mono font-bold text-xs flex items-center justify-center active:scale-95 transition-all cursor-pointer ${
+                  isMuted 
+                    ? 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-500 border-zinc-800/80' 
+                    : 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/30 shadow-md shadow-indigo-500/10'
+                }`}
+              >
+                {isMuted ? (
+                  <svg className="w-4 h-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                )}
+              </button>
+            )}
+            {onOpenCodex && (
+              <button
+                onClick={onOpenCodex}
+                className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-300 border border-purple-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/10 active:scale-95 transition-all cursor-pointer"
+              >
+                <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
+                <span>成就图鉴</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import { YearEndStatementModal } from './components/YearEndStatementModal';
 import { WarReportModal } from './components/WarReportModal';
 import { AchievementCodexModal } from './components/AchievementCodexModal';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
+import { sound } from './utils/sound';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
@@ -16,12 +17,18 @@ export default function App() {
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
+
+  const handleToggleSound = () => {
+    setIsMuted(sound.toggleMute());
+  };
 
   useEffect(() => {
     const newlyUnlocked = checkAndUnlockAchievements(gameState, currentEventId);
     if (newlyUnlocked.length > 0) {
       const ach = ACHIEVEMENTS.find(a => a.id === newlyUnlocked[0]);
       if (ach) {
+        sound.play('achievement');
         setAchievementToast(`[成就解锁] 恭喜获得隐藏成就：${ach.title}`);
         setTimeout(() => setAchievementToast(null), 4500);
       }
@@ -81,6 +88,19 @@ export default function App() {
     if (newState.cash >= newState.win_threshold && newState.status === 'playing') {
       newState.status = 'win';
       newState.message = `你的资产突破了 ${newState.win_threshold} 万美元！你正式达成了个人的 FIRE 目标（财务自由，提前退休）。你再也不需要看任何人的脸色，可以去做自己真正想做的事情了！`;
+    }
+
+    // Sound FX logic
+    if (newState.status === 'win') {
+      sound.play('win');
+    } else if (newState.status === 'game_over') {
+      sound.play('gameover');
+    } else if ((effectResult.cash && effectResult.cash > gameState.cash) || (effectResult.tc && effectResult.tc > gameState.tc)) {
+      sound.play('coin');
+    } else if (newState.laid_off || newState.health < 30 || (newState.message && (newState.message.includes('没抽中') || newState.message.includes('裁员') || newState.message.includes('警报')))) {
+      sound.play('alert');
+    } else {
+      sound.play('click');
     }
 
     setGameState(newState);
@@ -249,6 +269,30 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Sound Toggle Mobile Button */}
+            <button
+              onClick={handleToggleSound}
+              className={`p-1 rounded-md border text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center ${
+                isMuted
+                  ? 'bg-zinc-900 text-zinc-500 border-zinc-800'
+                  : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+              }`}
+              title={isMuted ? '开启音效' : '静音'}
+            >
+              {isMuted ? (
+                <svg className="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <line x1="23" y1="9" x2="17" y2="15"></line>
+                  <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+              )}
+            </button>
+
             {/* Achievement Codex Mobile Button */}
             <button
               onClick={() => setShowAchievementCodex(true)}
@@ -281,7 +325,7 @@ export default function App() {
               完成返回决策 ✕
             </button>
           </div>
-          <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} />
+          <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} onToggleSound={handleToggleSound} isMuted={isMuted} />
         </div>
       )}
 
@@ -290,7 +334,7 @@ export default function App() {
           
           {/* Left Sticky Bento Panel (Desktop Only, Mobile uses sliding drawer) */}
           <div className="hidden lg:flex lg:col-span-5 flex-col sticky top-12">
-            <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} />
+            <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} onOpenCodex={() => setShowAchievementCodex(true)} onToggleSound={handleToggleSound} isMuted={isMuted} />
           </div>
 
           {/* Right Column: Event Narrative & Decisions */}
@@ -309,12 +353,11 @@ export default function App() {
                 <>
                   <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-6">{currentEvent.title}</h2>
                   
-                  {gameState.imageUrl && (
+                  {(gameState.imageUrl || currentEvent.imageUrl) && (
                     <img 
-                      src={getImgSrc(gameState.imageUrl)} 
+                      src={getImgSrc(gameState.imageUrl || currentEvent.imageUrl || '')} 
                       alt="Event Scene" 
                       className="w-full h-48 md:h-72 object-cover rounded-2xl mb-8 shadow-2xl border border-zinc-700/50 transition-all duration-500 ease-out"
-                      style={{ imageRendering: 'pixelated' }}
                     />
                   )}
 
@@ -390,9 +433,17 @@ export default function App() {
                     <h2 className={`text-4xl md:text-5xl font-extrabold tracking-tight mt-4 mb-3 ${gameState.status === 'win' ? 'text-emerald-400' : 'text-red-400'}`}>
                       {gameState.status === 'win' ? '人生巅峰：财务自由！' : '硅谷生存结语'}
                     </h2>
-                    <p className="text-zinc-300 text-lg max-w-xl mx-auto leading-relaxed">
+                    <p className="text-zinc-300 text-lg max-w-xl mx-auto leading-relaxed mb-6">
                       {gameState.message}
                     </p>
+
+                    {gameState.imageUrl && (
+                      <img 
+                        src={getImgSrc(gameState.imageUrl)} 
+                        alt="Ending Scene" 
+                        className="w-full h-52 md:h-72 object-cover rounded-2xl mb-6 shadow-2xl border border-zinc-700/50"
+                      />
+                    )}
                   </div>
 
                   {/* Enhanced Bento Medals & Metallic Stats Card */}

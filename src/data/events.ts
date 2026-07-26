@@ -121,11 +121,12 @@ export const events: Record<string, GameEvent> = {
     id: 'choose_school',
     title: '第一步：人生十字路口',
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校的选择：',
+    imageUrl: 'images/stanford_graduation.jpg',
     choices: [
       {
         text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
         condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
+        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', imageUrl: 'images/stanford_graduation.jpg', message: '你步入了世界计算机最高学府。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
@@ -483,7 +484,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '不卷了！回大理/清迈做数字游民躺平',
         condition: (s) => s.cash >= 5,
-        effect: (s) => ({ status: 'win', message: '你带着几万美元的积蓄去了大理。每天喝咖啡、看苍山洱海。虽然彻底脱离了硅谷的内卷，但你找到内心的平静！(躺平结局)' }),
+        effect: (s) => ({ status: 'win', imageUrl: 'images/dali_relax.jpg', message: '你带着几万美元的积蓄去了大理。每天喝咖啡、看苍山洱海。虽然彻底脱离了硅谷的内卷，但你找到内心的平静！(躺平结局)' }),
         nextEventId: 'end',
       },
       {
@@ -537,6 +538,7 @@ export const events: Record<string, GameEvent> = {
     id: 'big_tech_work',
     title: '开启打工生涯',
     description: '你正式开启了职场生涯，成为了光荣的湾区码农。接下来要面临第一道坎：H1B 抽签。',
+    imageUrl: 'images/h1b_lottery_win.jpg',
     choices: [
       {
         text: '老老实实祈祷 H1B 中签 (免费)',
@@ -544,7 +546,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.25 + (s.luck / 100) * 0.4; // 幸运值越高越容易中签 (25% - 65%)
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, message: '人品爆发，今年H1B中签了！' }
+            ? { visa: 'H1B (工签)', cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，今年H1B中签了！' }
             : { cash: s.cash, health: s.health - 10, message: '今年 H1B 没抽中！只能指望明年...' };
         },
         nextEventId: (s) => (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'big_tech_work_no_h1b',
@@ -577,6 +579,7 @@ export const events: Record<string, GameEvent> = {
     id: 'big_tech_work_no_h1b',
     title: 'H1B 焦虑 (第二年抽签)',
     description: '前第一年未抽中，好在申请了 STEM OPT 两年延期，这是你第二年的抽签机会...',
+    imageUrl: 'images/visa_denied.jpg',
     choices: [
       {
         text: '参与第二轮 H1B 抽签！',
@@ -855,6 +858,7 @@ export const events: Record<string, GameEvent> = {
              ap: s.ap - 1,
              cash: s.cash - actualCost,
              car: 'cybertruck',
+          imageUrl: 'images/cybertruck.jpg',
              charm: Math.min(25, s.charm + 8),
              leetcode: s.leetcode + 5,
              message: `你${tradeMsg}换上了多边形赛博皮卡！开在 237 公路上所有人都以为你是 Hayes Valley 刚拿到 A 轮融资的硬核 AI Founder！`
@@ -1211,6 +1215,7 @@ export const events: Record<string, GameEvent> = {
     id: 'ai_wrapper_startup',
     title: 'Hayes Valley 的 AGI 革命',
     description: '在 Hayes Valley 的咖啡馆，一个穿着 Patagonia 背心的 Founder 凑过来。他宣称自己正在做“颠覆人类的 AGI”，但你发现他的产品只是个调 OpenAI API 的壳子。他邀请你加入当 CTO，开价 0 薪水 + 10% 期权（四年 Vesting），并让你立刻修一个 prompt injection 的 bug。',
+    imageUrl: 'images/ai_startup.jpg',
     choices: [
       {
         text: 'All in! 辞职加入，这波必成独角兽',
@@ -1439,6 +1444,7 @@ export const events: Record<string, GameEvent> = {
     id: 'dating_market',
     title: '湾区婚恋市场 (CMB)',
     description: '家里疯狂催婚，你下载了 Coffee Meets Bagel (CMB) 并充值了高级会员，开始在湾区相亲市场上碰运气。',
+    imageUrl: 'images/boba_date.jpg',
     choices: [
       {
         text: '周末一天排满 3 个 Coffee Date (Santana Row 喝奶茶)',
@@ -1627,6 +1633,7 @@ export const events: Record<string, GameEvent> = {
     id: 'buy_house',
     title: '宇宙中心加价抢房大乱斗',
     description: '湾区房地产 Open House 现场挤满了手里攥着支票簿的华裔和印度裔工程总监。中介微笑着告诉你：“已经收到了 14 个 No-Contingency 全现金 Offer，你准备加价多少？”',
+    imageUrl: 'images/house.jpg',
     choices: [
       {
         text: '🏠 抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
@@ -1762,6 +1769,7 @@ export const events: Record<string, GameEvent> = {
     id: 'layoff_hit',
     title: '不幸被裁',
     description: '你还是被裁了，H1B 只有 60 天 grace period。',
+    imageUrl: 'images/layoff_box.jpg',
     choices: [
 
       {
@@ -1831,6 +1839,7 @@ export const events: Record<string, GameEvent> = {
     id: 'startup_work',
     title: '初创公司风云',
     description: '你进入了/创办了一家 Startup，每天一个人干三个人的活。现在的风向变了，关于公司的方向：',
+    imageUrl: 'images/ai_startup.jpg',
     choices: [
 
       {
@@ -1853,8 +1862,8 @@ export const events: Record<string, GameEvent> = {
           }
           const win = Math.random() < 0.18;
           return win 
-            ? { cash: s.cash + 300, visa: '绿卡', message: '踩中 AI 风口！拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
-            : { cash: Math.max(0, s.cash - 10), health: s.health - 25, message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...' };
+            ? { cash: s.cash + 300, visa: '绿卡', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
+            : { cash: Math.max(0, s.cash - 10), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...' };
         },
         nextEventId: (s) => s.message.includes('绿卡') ? 'sv_daily_life' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
       }

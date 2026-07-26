@@ -216,13 +216,7 @@ export default function App() {
               {gameState.year}年·{gameState.age}岁
             </span>
 
-            {/* Action Points (AP) Tag */}
-            {gameState.ap !== undefined && (
-              <span className="flex items-center gap-1 font-extrabold text-indigo-300 shrink-0 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.25)] tabular-nums">
-                <svg className="w-3 h-3 text-indigo-400 fill-indigo-400/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 10 11 22 21 10 12 10 13 2"/></svg>
-                AP {gameState.ap}/{gameState.max_ap || 3}
-              </span>
-            )}
+
 
             {/* Cash Tag */}
             <span className="flex items-center gap-1 font-black text-emerald-400 shrink-0 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 tabular-nums">

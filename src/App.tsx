@@ -501,7 +501,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '老老实实祈祷 H1B 中签 (免费)',
         effect: (s) => {
-          let winRate = s.luck >= 80 ? 0.6 : 0.35; // 天选之子 50% 概率
+          const winRate = 0.25 + (s.luck / 100) * 0.4; // 幸运值越高越容易中签 (25% - 65%)
           const win = Math.random() < winRate;
           return win 
             ? { visa: 'H1B (工签)', cash: s.cash, message: '人品爆发，今年H1B中签了！' }
@@ -513,7 +513,8 @@ export const events: Record<string, GameEvent> = {
         text: '砸钱找最顶级的移民律师帮忙弄 O1 签证 (花费 2 万美元)',
         condition: (s) => s.cash >= 2,
         effect: (s) => {
-          const win = Math.random() > (s.luck >= 80 ? 0.1 : 0.3); // 天选之子 90% 概率
+          const winRate = 0.6 + (s.luck / 100) * 0.35; // O1 成功率 60% - 95%
+          const win = Math.random() < winRate;
           return win
             ? { visa: 'H1B (工签)', cash: s.cash - 2, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证，效果等同于 H1B！' }
             : { cash: s.cash - 2, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，两万美元打了水漂。' };
@@ -541,7 +542,8 @@ export const events: Record<string, GameEvent> = {
       {
         text: '继续抽！',
         effect: (s) => {
-          const win = Math.random() > 0.7; // 30% 海底捞 
+          const winRate = 0.15 + (s.luck / 100) * 0.3; // 海底捞概率 15% - 45%
+          const win = Math.random() < winRate;
           return win 
             ? { visa: 'H1B (工签)', cash: s.cash, message: '谢天谢地，海底捞中签了！' }
             : { cash: s.cash, status: 'game_over', message: 'H1B 彻底没抽中，被迫 Relocate 到加拿大，游戏结束。' };
@@ -858,7 +860,8 @@ export const events: Record<string, GameEvent> = {
         text: '此时不博何时博？加杠杆抄底！(需现金 > 30w)',
         condition: (s) => s.cash >= 30,
         effect: (s) => {
-           const win = Math.random() > 0.6; // 40% 抄底成功
+           const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%
+           const win = Math.random() < winRate;
            return win 
              ? { tc: Math.floor(s.tc * 0.8), cash: s.cash + 50, message: '虽然工资跌了，但你成功抄到底部，反弹吃满，大赚一笔！' }
              : { tc: Math.floor(s.tc * 0.8), cash: s.cash - 25, health: s.health - 30, message: '抄底抄在半山腰，现金和工资惨遭双杀，痛不欲生。' };
@@ -1391,7 +1394,8 @@ export const events: Record<string, GameEvent> = {
         text: '搏一搏，单车变摩托！投入 $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
-          const win = Math.random() > (s.luck >= 80 ? 0.65 : 0.95); // 天选之子 35% 暴富，普通人 5%
+          const winRate = 0.01 + (s.luck / 100) * 0.3; // 土狗币暴富概率 1% - 31%
+          const win = Math.random() < winRate;
           return win 
             ? { cash: s.cash + 100, status: 'win', message: '你买的土狗币居然真的上了币安！瞬间百倍收益，你看着余额里多出来的 $1M 陷入了沉思...' }
             : { cash: s.cash - 5, health: s.health - 15, imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都换成了毫无价值的空气币。' }

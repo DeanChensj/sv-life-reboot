@@ -593,8 +593,8 @@ export const events: Record<string, GameEvent> = {
   },
   'big_tech_work_no_h1b_final': {
     id: 'big_tech_work_no_h1b_final',
-    title: 'H1B 绝境 (最后一年抽签)',
-    description: 'STEM OPT 最后一年的死刑注定！如果今年再没中，就要被公司被迫打包 Relocate 到温哥华/多伦多或者遣返回国了...',
+    title: 'H1B 绝境 (最后一年抽签与拯救对策)',
+    description: 'STEM OPT 最后一年来临！如果今年未抽中，你必须从以下拯救策略中做出抉择：',
     choices: [
       {
         text: '赌上所有气运，进行这辈子最后一次 H1B 抽签！',
@@ -602,10 +602,48 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.35 + (s.luck / 100) * 0.35;
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, message: '奇迹发生！在最后一年绝境中神奇海底捞中签！' }
-            : { cash: s.cash, status: 'game_over', message: '三年 H1B 均未抽中。你站在 SFO 机场，被公司强行外派温哥华 L1 办公室离境，硅谷梦碎。' };
+            ? { visa: 'H1B (工签)', cash: s.cash, gc_progress: s.gc_progress + 15, message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
+            : { cash: s.cash, health: s.health - 20, message: '很遗憾，第三年 H1B 依然未中签！好在公司 HR 允许你选择外派加拿大或挂靠 Day 1 CPT。' };
         },
-        nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'end',
+        nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'h1b_fallback_options',
+      },
+      {
+        text: '【公司外派】申请 Relocate 到温哥华/多伦多 Office (L1 签证曲线救国)',
+        costBadge: '免费外派',
+        effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你转到了温哥华分公司，以 L1 身份工作。一年后公司把你调回了湾区 Headquarters，成功保住硅谷高薪！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【学校挂靠】紧急注册 Day 1 CPT 大学 (消耗 $1.5w)',
+        costBadge: '花费 $1.5w',
+        condition: (s) => s.cash >= 1.5,
+        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '你成功挂靠了 Day 1 CPT，虽然边上班边写作业极其辛苦，但你成功留在湾区继续工作！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【杰出人才】凭借算法功力与技术影响力，申办 O1 签证 (需算法>=50或PhD)',
+        reqBadge: '算法>=50或PhD',
+        condition: (s) => s.leetcode >= 50 || s.is_phd,
+        effect: (s) => ({ visa: 'O1 (杰出人才)', cash: s.cash - 4, message: '凭硬核算法与发表的硬核技术文章，移民局批复了你的 O1 杰出人才签证！彻底甩开抽签束缚！' }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'h1b_fallback_options': {
+    id: 'h1b_fallback_options',
+    title: 'H1B 拯救绝境对策',
+    description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
+    choices: [
+      {
+        text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国)',
+        effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你外派加拿大一年后凭 L1 签证顺利调回湾区总部！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
+        condition: (s) => s.cash >= 1.5,
+        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
+        nextEventId: 'sv_daily_life',
       }
     ]
   },

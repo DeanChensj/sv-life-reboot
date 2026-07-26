@@ -6,17 +6,9 @@ interface BentoStatsPanelProps {
   currentEventId: string;
 }
 
-const AP_VISIBLE_EVENTS = new Set([
-  'sv_daily_life', 'sv_year_end_settlement', 'dating_market', 'biohacking_party',
-  'crypto_scam', 'ai_wrapper_startup', 'burning_man_invite', 'stock_crash',
-  'car_broken', 'dental_emergency', 'post_green_card', 'layoff_rumor',
-  'perf_review', 'friday_pip', 'visa_check', 'blind_team_tea',
-  'zoom_camera_off_leetcode', 'boba_inflation', 'rsu_vesting_crash',
-  'h1b_rfe_vs_parent_nag', 'xhs_boba', 'startup_crisis', 'ai_research_crisis', 'quant_stress'
-]);
-
 export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId }) => {
-  const showAPBar = gameState.ap !== undefined && AP_VISIBLE_EVENTS.has(currentEventId);
+  // Fix AP Visibility: Hide only in onboarding screens or end game, show during active decision events
+  const showAPBar = gameState.ap !== undefined && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId);
 
   const displayLevel = gameState.level || (
     gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type 
@@ -34,12 +26,12 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
   const displayCar = gameState.car === 'porsche' 
     ? '保时捷 Porsche' 
     : gameState.car === 'cybertruck' 
-      ? '赛博皮卡' 
+      ? '赛博皮卡 Cybertruck' 
       : gameState.car === 'model_y' 
         ? 'Tesla Model Y' 
         : null;
 
-  const displayHousing = gameState.housing_name || (gameState.has_housing ? '湾区租房' : '国内老家 / 未购房');
+  const displayHousing = gameState.housing_name || (gameState.has_housing ? '湾区自购房产' : '国内老家 / 未购房');
 
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col">
@@ -56,7 +48,7 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
       {/* Bento Stats Panel Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* Cash & TC */}
-        <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-4 sm:p-5 rounded-2xl flex justify-between items-center relative overflow-hidden">
+        <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-4 sm:p-5 rounded-2xl flex justify-between items-center relative overflow-hidden shadow-lg">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
           <div className="relative z-10">
             <div className="text-zinc-400 text-[10px] sm:text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-1">现金资产 (Cash)</div>
@@ -70,9 +62,12 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
         
         {/* Action Points (AP) */}
         {showAPBar && (
-          <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-4 sm:p-5 rounded-2xl flex items-center gap-4 sm:gap-6">
+          <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-indigo-500/20 p-4 sm:p-5 rounded-2xl flex items-center gap-4 sm:gap-6 shadow-md">
             <div className="flex-1">
-              <div className="text-zinc-400 text-[10px] sm:text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-2">本年剩余精力 (AP)</div>
+              <div className="text-zinc-400 text-[10px] sm:text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-2 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+                本年精力 (Action Points)
+              </div>
               <div className="flex gap-2">
                 {Array.from({ length: gameState.max_ap || 3 }).map((_, i) => (
                   <div 
@@ -84,6 +79,27 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
             </div>
             <div className="text-xl sm:text-2xl font-extrabold font-mono tabular-nums tracking-tight text-indigo-400 whitespace-nowrap">
               {gameState.ap} / {gameState.max_ap || 3}
+            </div>
+          </div>
+        )}
+
+        {/* Green Card Progress Bar (Visible whenever gc_progress > 0 or in Green Card track) */}
+        {(gameState.gc_progress > 0 || gameState.visa === '绿卡' || gameState.visa === 'H1B (工签)') && (
+          <div className="col-span-2 md:col-span-4 bg-zinc-900/95 border border-emerald-500/30 p-4 sm:p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-md">
+            <div className="flex justify-between items-center mb-1.5">
+              <div className="text-emerald-400 text-[10px] sm:text-[10.5px] font-mono font-bold uppercase tracking-[0.15em] flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                绿卡排期与 PERM 进度 (GC Progress)
+              </div>
+              <div className="text-xs font-mono font-extrabold text-emerald-300 tabular-nums">
+                {gameState.visa === '绿卡' ? '100% (已获绿卡)' : `${Math.min(100, Math.max(0, gameState.gc_progress))}%`}
+              </div>
+            </div>
+            <div className="w-full bg-zinc-950 rounded-full h-2 overflow-hidden border border-emerald-500/20">
+              <div 
+                className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-300 transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
+                style={{ width: `${gameState.visa === '绿卡' ? 100 : Math.min(100, Math.max(0, gameState.gc_progress))}%` }}
+              />
             </div>
           </div>
         )}
@@ -124,15 +140,15 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
         </div>
 
         {/* Combined Assets & Lifestyle */}
-        <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div className="text-zinc-500 text-[10px] sm:text-[10.5px] font-mono uppercase tracking-[0.1em] shrink-0">名下资产</div>
-          <div className="flex flex-wrap gap-1.5 justify-start sm:justify-end w-full sm:w-auto">
-            <span className="text-xs font-semibold text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 truncate max-w-[220px]" title={displayHousing}>
-              {displayHousing}
+        <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-4 sm:p-5 rounded-2xl flex flex-col gap-2.5">
+          <div className="text-zinc-400 text-[10px] sm:text-[10.5px] font-mono uppercase tracking-[0.1em]">名下资产与固定资产</div>
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-semibold text-emerald-300 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 flex items-center gap-1.5">
+              <span>🏠</span> {displayHousing}
             </span>
             {hasCar && displayCar && (
-              <span className="text-xs font-semibold text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
-                {displayCar}
+              <span className="text-xs font-semibold text-indigo-300 bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-500/20 flex items-center gap-1.5">
+                <span>🏎️</span> {displayCar}
               </span>
             )}
           </div>
@@ -153,3 +169,4 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
     </div>
   );
 };
+

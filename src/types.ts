@@ -1,4 +1,4 @@
-export type VisaStatus = '无' | 'F1 (学生)' | 'OPT (实习)' | 'H1B (工签)' | 'O1 (杰出人才)' | '绿卡';
+export type VisaStatus = '无' | 'F1 (学生)' | 'OPT (实习)' | 'H1B (工签)' | 'O1 (杰出人才)' | '绿卡' | 'Day 1 CPT' | 'L1 (外派)';
 
 export interface GameState {
   age: number;
@@ -10,7 +10,7 @@ export interface GameState {
   rent: number; // 万美元
   charm: number; // 颜值 1-10 (隐藏)
   year: number; // 当前年份
-  gc_progress: number; // 绿卡进度
+  gc_progress: number; // 绿卡进度 0-100
   has_us_degree: boolean;
   school: string;
   is_phd: boolean;
@@ -32,10 +32,16 @@ export interface GameState {
   message: string;
   ap: number;
   max_ap: number;
+  trait_title?: string;
+  trait_desc?: string;
+  cpt_used?: boolean;
+  l1_relocated?: boolean;
 }
 
 export interface Choice {
   text: string;
+  costBadge?: string;
+  reqBadge?: string;
   effect: (state: GameState) => Partial<GameState>;
   nextEventId: string | ((state: GameState) => string);
   condition?: (state: GameState) => boolean;
@@ -48,3 +54,4 @@ export interface GameEvent {
   description: string;
   choices: Choice[];
 }
+

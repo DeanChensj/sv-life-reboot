@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react';
 import type { GameState, Choice } from './types';
 import { generateInitialState, events } from './data/events';
 import { BentoStatsPanel } from './components/BentoStatsPanel';
+import { CharacterProfileModal } from './components/CharacterProfileModal';
+import { YearEndStatementModal } from './components/YearEndStatementModal';
+import { WarReportModal } from './components/WarReportModal';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
   const [currentEventId, setCurrentEventId] = useState<string>('choose_trait');
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState<boolean>(false);
+  const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
+  const [showWarReport, setShowWarReport] = useState<boolean>(false);
 
   useEffect(() => {
     const cardEl = document.getElementById('event-decision-card');
@@ -71,6 +76,12 @@ export default function App() {
       setCurrentEventId('end');
     } else {
       let nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
+      
+      // Trigger Character Pass Modal after school selection
+      if (currentEventId === 'choose_school') {
+        setShowCharacterPass(true);
+      }
+
       if (nextId === 'sv_daily_life' && newState.ap <= 0) {
         nextId = 'sv_year_end_settlement';
       }
@@ -82,10 +93,71 @@ export default function App() {
     localStorage.removeItem('sv_life_initial_seed');
     setGameState(generateInitialState());
     setCurrentEventId('choose_trait');
+    setShowCharacterPass(false);
+    setShowWarReport(false);
+  };
+
+  const handleYearEndContinue = () => {
+    const rentCost = gameState.has_housing ? 2.0 : (gameState.rent || 4.0);
+    const carCost = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
+    const livingCost = 3.0;
+    const totalIncome = gameState.tc > 0 ? gameState.tc : 0;
+    const netChange = totalIncome - rentCost - carCost - livingCost;
+    const newCash = gameState.cash + netChange;
+
+    if (newCash < -0.001) {
+      setGameState((prev) => ({
+        ...prev,
+        cash: newCash,
+        status: 'game_over',
+        message: '年底结算扣除房租与生活账单后你的现金流彻底断裂，游戏结束！'
+      }));
+      setCurrentEventId('end');
+    } else {
+      setGameState((prev) => ({
+        ...prev,
+        ap: prev.max_ap || 3,
+        year: prev.year + 1,
+        age: prev.age + 1,
+        cash: newCash
+      }));
+      setCurrentEventId('sv_daily_life');
+    }
+  };
+
+  const getImgSrc = (url: string) => {
+    const base = import.meta.env.BASE_URL || '/';
+    const cleanBase = base.endsWith('/') ? base : `${base}/`;
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    return `${cleanBase}${cleanUrl}`;
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+      {/* Character Creation Pass Modal */}
+      {showCharacterPass && (
+        <CharacterProfileModal
+          gameState={gameState}
+          onConfirm={() => setShowCharacterPass(false)}
+        />
+      )}
+
+      {/* Year End Settlement Modal */}
+      {currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing' && (
+        <YearEndStatementModal
+          gameState={gameState}
+          onContinue={handleYearEndContinue}
+        />
+      )}
+
+      {/* War Report Canvas Modal */}
+      {showWarReport && (
+        <WarReportModal
+          gameState={gameState}
+          onClose={() => setShowWarReport(false)}
+        />
+      )}
+
       {/* Mobile Sticky Mini-HUD Header */}
       <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 px-3 py-2.5 shadow-2xl flex items-center justify-between gap-2 text-xs font-mono">
         <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5">
@@ -187,7 +259,7 @@ export default function App() {
                   
                   {gameState.imageUrl && (
                     <img 
-                      src={`${import.meta.env.BASE_URL}${gameState.imageUrl}`} 
+                      src={getImgSrc(gameState.imageUrl)} 
                       alt="Event Scene" 
                       className="w-full h-48 md:h-72 object-cover rounded-2xl mb-8 shadow-2xl border border-zinc-700/50 transition-all duration-500 ease-out"
                       style={{ imageRendering: 'pixelated' }}
@@ -208,15 +280,15 @@ export default function App() {
                       .map((choice, idx) => {
                       const isAvailable = !choice.condition || choice.condition(gameState);
                       
-                      // Precise badge extraction from text
-                      const costMatch = choice.text.match(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/);
-                      const reqMatch = choice.text.match(/\((?:需要|需|算法|高魅力|现金).*?\)/);
+                      // Precise badge extraction (prioritize Choice.costBadge / Choice.reqBadge if defined)
+                      const costMatch = choice.costBadge || choice.text.match(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/)?.[0]?.slice(1, -1);
+                      const reqMatch = choice.reqBadge || choice.text.match(/\((?:需要|需|算法|高魅力|现金).*?\)/)?.[0]?.slice(1, -1);
+                      
                       let mainText = choice.text
                         .replace(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/g, '')
                         .replace(/\((?:需要|需|算法|高魅力|现金).*?\)/g, '')
                         .trim();
                       
-                      // Remove trailing dash if it was left behind after badge extraction
                       if (mainText.endsWith('-')) {
                         mainText = mainText.slice(0, -1).trim();
                       }
@@ -226,7 +298,7 @@ export default function App() {
                         key={idx}
                         onClick={() => isAvailable && handleChoice(choice)}
                         disabled={!isAvailable}
-                        className={`group w-full text-left px-6 py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+                        className={`group w-full text-left px-6 py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer ${
                           isAvailable 
                             ? 'bg-zinc-900 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 active:scale-[0.98]' 
                             : 'bg-zinc-950/50 border-zinc-800/50 opacity-50 cursor-not-allowed'
@@ -239,12 +311,12 @@ export default function App() {
                         <div className="flex flex-wrap gap-2 items-center">
                           {costMatch && (
                              <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
-                                {costMatch[0].slice(1, -1)}
+                                {costMatch}
                              </span>
                           )}
                           {reqMatch && (
                              <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-amber-500/20 text-amber-300 border border-amber-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
-                                {reqMatch[1] || reqMatch[0].slice(1, -1)}
+                                {reqMatch}
                              </span>
                           )}
                           {!isAvailable && (
@@ -271,65 +343,77 @@ export default function App() {
                     </p>
                   </div>
 
-                  {/* Bento Medals & Stats Card */}
+                  {/* Enhanced Bento Medals & Metallic Stats Card */}
                   <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden shadow-2xl">
                     <div className="text-xs font-mono font-medium uppercase tracking-[0.15em] text-zinc-500 mb-4 flex items-center justify-between">
-                      <span>[ACHIEVED_MEDALS] 生涯荣誉里程碑</span>
+                      <span>[ACHIEVED_MEDALS] 生涯荣誉里程碑与 SSR 勋章</span>
                       <span className="tabular-nums">{gameState.year} 年 | {gameState.age} 岁</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-6">
                       {gameState.leetcode >= 60 && (
-                        <div className="bg-zinc-900/90 border border-amber-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 uppercase">ALG</span>
+                        <div className="bg-gradient-to-r from-amber-500/15 via-zinc-900 to-zinc-900 border border-amber-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
+                          <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-amber-400 text-zinc-950 shadow-md uppercase tracking-wider">SSR</span>
                           <div>
-                            <div className="font-bold text-amber-300 text-sm">【做题神仙】</div>
-                            <div className="text-xs text-zinc-400">LeetCode 算法真经通关，随时手撕 Hard 题</div>
+                            <div className="font-bold text-amber-300 text-sm flex items-center gap-1.5">
+                              <span>👑</span> 【做题神仙】
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">LeetCode 算法真经通关，随时手撕 Hard 题</div>
                           </div>
                         </div>
                       )}
                       {gameState.charm >= 18 && (
-                        <div className="bg-zinc-900/90 border border-rose-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20 uppercase">SOC</span>
+                        <div className="bg-gradient-to-r from-rose-500/15 via-zinc-900 to-zinc-900 border border-rose-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(244,63,94,0.15)]">
+                          <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-rose-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>
-                            <div className="font-bold text-rose-300 text-sm">【南湾顶流名流】</div>
-                            <div className="text-xs text-zinc-400">魅力值爆表，Santana Row 相亲收割机</div>
+                            <div className="font-bold text-rose-300 text-sm flex items-center gap-1.5">
+                              <span>💖</span> 【南湾顶流名流】
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">魅力值爆表，Santana Row 相亲收割机</div>
                           </div>
                         </div>
                       )}
                       {(gameState.cash >= 300 || ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')) && (
-                        <div className="bg-zinc-900/90 border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 uppercase">EST</span>
+                        <div className="bg-gradient-to-r from-emerald-500/15 via-zinc-900 to-zinc-900 border border-emerald-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                          <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-400 text-zinc-950 shadow-md uppercase tracking-wider">SSR</span>
                           <div>
-                            <div className="font-bold text-emerald-300 text-sm">【Atherton 征服者】</div>
-                            <div className="text-xs text-zinc-400">积攒重金，成功跨越硅谷阶级门槛</div>
+                            <div className="font-bold text-emerald-300 text-sm flex items-center gap-1.5">
+                              <span>🏰</span> 【Atherton 征服者】
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">积攒重金，成功跨越硅谷阶级门槛</div>
                           </div>
                         </div>
                       )}
                       {gameState.car === 'cybertruck' && (
-                        <div className="bg-zinc-900/90 border border-cyan-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase">RAW</span>
+                        <div className="bg-gradient-to-r from-cyan-500/15 via-zinc-900 to-zinc-900 border border-cyan-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(34,211,238,0.15)]">
+                          <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-cyan-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>
-                            <div className="font-bold text-cyan-300 text-sm">【赛博朋克硬核族】</div>
-                            <div className="text-xs text-zinc-400">驾驶多边形皮卡征服 237 号公路</div>
+                            <div className="font-bold text-cyan-300 text-sm flex items-center gap-1.5">
+                              <span>⚡</span> 【赛博朋克硬核族】
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">驾驶多边形皮卡征服 237 号公路</div>
                           </div>
                         </div>
                       )}
                       {gameState.car === 'porsche' && (
-                        <div className="bg-zinc-900/90 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase">LUX</span>
+                        <div className="bg-gradient-to-r from-purple-500/15 via-zinc-900 to-zinc-900 border border-purple-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(192,132,252,0.15)]">
+                          <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-purple-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>
-                            <div className="font-bold text-purple-300 text-sm">【脱离民工车鄙视链】</div>
-                            <div className="text-xs text-zinc-400">告别街车 Model Y，开上保时捷震撼全场</div>
+                            <div className="font-bold text-purple-300 text-sm flex items-center gap-1.5">
+                              <span>🏎️</span> 【脱离民工车鄙视链】
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">告别街车 Model Y，开上保时捷震撼全场</div>
                           </div>
                         </div>
                       )}
                       {gameState.visa === '绿卡' && (
-                        <div className="bg-zinc-900/90 border border-blue-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 uppercase">PR</span>
+                        <div className="bg-gradient-to-r from-blue-500/15 via-zinc-900 to-zinc-900 border border-blue-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(96,165,250,0.15)]">
+                          <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-blue-400 text-zinc-950 shadow-md uppercase tracking-wider">SSR</span>
                           <div>
-                            <div className="font-bold text-blue-300 text-sm">【上岸自由身】</div>
-                            <div className="text-xs text-zinc-400">彻底甩开 USCIS 抽签与 H1B 签证枷锁</div>
+                            <div className="font-bold text-blue-300 text-sm flex items-center gap-1.5">
+                              <span>🗽</span> 【上岸自由身】
+                            </div>
+                            <div className="text-xs text-zinc-400 mt-0.5">彻底甩开 USCIS 抽签与 H1B 签证枷锁</div>
                           </div>
                         </div>
                       )}
@@ -348,33 +432,6 @@ export default function App() {
                           <div>
                             <div className="font-bold text-orange-300 text-sm">【湾区月光大慈善家】</div>
                             <div className="text-xs text-zinc-400">把高额总包全额上交给了房东与 $13 奶茶</div>
-                          </div>
-                        </div>
-                      )}
-                      {gameState.status === 'game_over' && (gameState.message.includes('遣返') || gameState.message.includes('失业期') || gameState.message.includes('OPT') || gameState.message.includes('终身禁入') || gameState.message.includes('加拿大') || gameState.message.includes('抽中')) && (
-                        <div className="bg-zinc-900/90 border border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase">ICE</span>
-                          <div>
-                            <div className="font-bold text-indigo-300 text-sm">【身份终结者】</div>
-                            <div className="text-xs text-zinc-400">拜倒在 USCIS 签证铁拳与绿卡排期的大山之下</div>
-                          </div>
-                        </div>
-                      )}
-                      {gameState.status === 'game_over' && (gameState.message.includes('Raj') || gameState.message.includes('抢功') || gameState.message.includes('排挤') || gameState.message.includes('被裁') || gameState.message.includes('开除') || gameState.message.includes('PIP')) && (
-                        <div className="bg-zinc-900/90 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase">POL</span>
-                          <div>
-                            <div className="font-bold text-purple-300 text-sm">【职场斗争牺牲品】</div>
-                            <div className="text-xs text-zinc-400">不敌高强度向上管理与大佬办公室政治陷陷阱</div>
-                          </div>
-                        </div>
-                      )}
-                      {gameState.status === 'game_over' && (gameState.message.includes('创业') || gameState.message.includes('烧钱') || gameState.message.includes('跑路') || gameState.message.includes('清零') || gameState.message.includes('倒闭') || gameState.message.includes('废纸') || gameState.message.includes('回到国内')) && (
-                        <div className="bg-zinc-900/90 border border-yellow-500/30 p-4 rounded-2xl flex items-center gap-3">
-                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 uppercase">FOMO</span>
-                          <div>
-                            <div className="font-bold text-yellow-300 text-sm">【赛博大饼吞噬者】</div>
-                            <div className="text-xs text-zinc-400">坚信风口大佬 PPT，最终把积蓄变为了赛博泡沫</div>
                           </div>
                         </div>
                       )}
@@ -403,18 +460,14 @@ export default function App() {
 
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
-                      onClick={() => {
-                        const summaryText = `[硅谷模拟人生] 生涯结语：\n${gameState.status === 'win' ? '成功实现 FIRE 财务自由通关！' : '遗憾挂彩中断生存。'}\n最终资产: $${gameState.cash.toFixed(1)}万 | 年龄: ${gameState.age}岁 | 力扣: ${gameState.leetcode}题\n结语: ${gameState.message}\n来挑战你的硅谷人生！`;
-                        navigator.clipboard.writeText(summaryText);
-                        alert('已复制你的硅谷人生小红书/朋友圈分享文案！');
-                      }}
-                      className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.98]"
+                      onClick={() => setShowWarReport(true)}
+                      className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-bold text-base transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2"
                     >
-                      复制我的战绩（发小红书/朋友圈）
+                      <span>📸 生成炫彩战报海报（朋友圈/小红书）</span>
                     </button>
                     <button
                       onClick={resetGame}
-                      className="px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-base transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20"
+                      className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.98] cursor-pointer"
                     >
                       再次重开人生
                     </button>
@@ -429,3 +482,4 @@ export default function App() {
     </div>
   );
 }
+

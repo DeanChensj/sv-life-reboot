@@ -559,8 +559,65 @@ export const events: Record<string, GameEvent> = {
   'sv_daily_life': {
     id: 'sv_daily_life',
     title: '湾区日常 (行动面板)',
-    description: '又是新的一年。在等绿卡排期的日子里，你该如何分配今年的精力？',
+    description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
+      {
+        text: '🔥【今年限时机会】 Stanford 师兄拉你组队冲 AI Hackathon (消耗 1 精力, $0.5w)',
+        condition: (s) => s.ap > 0 && s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3),
+        effect: (s) => {
+          const win = Math.random() < (0.35 + s.leetcode / 300);
+          return win
+            ? { ap: s.ap - 1, cash: s.cash + 35, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $35w 支票支持你们继续研发！' }
+            : { ap: s.ap - 1, cash: s.cash - 0.5, health: s.health - 15, leetcode: s.leetcode + 8, message: '连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '🔥【今年限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场近距离见皮衣黄 (消耗 1 精力, $1.5w)',
+        condition: (s) => s.ap > 0 && s.cash >= 1.5 && (s.year % 6 === 1),
+        effect: (s) => ({
+          ap: s.ap - 1,
+          cash: s.cash - 1.5,
+          charm: Math.min(25, s.charm + 6),
+          luck: Math.min(45, s.luck + 15),
+          message: '你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！玄学气运值大增，接下来的投资和求职将获得强运加持！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '🔥【今年限时机会】 酒店拍卖破产 Web3 公司资产：超低价淘二手 Herman Miller 人体工学椅 (消耗 1 精力, $0.3w)',
+        condition: (s) => s.ap > 0 && s.cash >= 0.3 && (s.year % 6 === 2),
+        effect: (s) => ({
+          ap: s.ap - 1,
+          cash: s.cash - 0.3,
+          health: Math.min(100, s.health + 35),
+          message: '你花了原价二折淘到了一把全配 AERON 椅子。从此写代码腰也不酸了，每次在家里躺平休养的恢复效果永久提升！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '🔥【今年限时机会】 硅谷暴雨冲毁数据中心，连夜接单抗洪抢修服务器机房 (消耗 1 精力)',
+        condition: (s) => s.ap > 0 && (s.year % 6 === 4),
+        effect: (s) => ({
+          ap: s.ap - 1,
+          cash: s.cash + 15,
+          tc: s.tc + 3,
+          health: s.health - 20,
+          message: '你在风雨交加中把几百台核心算力服务器搬到了安全地带。VP 在全员信里点名表扬你，直接给了固定战术奖金与职级微调！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '🔥【今年限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (消耗 1 精力) - (需要 LeetCode >= 35)',
+        condition: (s) => s.ap > 0 && s.leetcode >= 35 && (s.year % 6 === 5),
+        effect: (s) => {
+          const success = Math.random() < 0.65;
+          return success
+            ? { ap: s.ap - 1, cash: s.cash + 25, leetcode: s.leetcode + 5, message: '安全部门确认了你提交的高危提权漏洞！直接向你的账户汇入了 $25w 漏洞赏金！' }
+            : { ap: s.ap - 1, health: s.health - 10, message: '安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
+        },
+        nextEventId: 'sv_daily_life',
+      },
       {
         text: '🏢 疯狂加班 (消耗 1 精力) - 疯狂表现，争取加薪',
         condition: (s) => s.ap > 0,

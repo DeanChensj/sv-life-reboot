@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // Types
-type VisaStatus = '无' | 'F1 (学生)' | 'OPT (实习)' | 'H1B (工签)' | '绿卡';
+type VisaStatus = '无' | 'F1 (学生)' | 'OPT (实习)' | 'H1B (工签)' | 'O1 (杰出人才)' | '绿卡';
 
 interface GameState {
   age: number;
@@ -73,8 +73,7 @@ export const generateInitialState = (): GameState => {
     win_threshold: 1000,
     laid_off: false,
     status: 'playing',
-    message: bgMessage,
-    eventLog: []
+    message: bgMessage
   };
 };
 
@@ -484,6 +483,34 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
+        text: '运营小红书，卷“湾区精英”人设 (健身/滑雪/探店/OOTD)',
+        effect: (s) => {
+           const win = (s.charm >= 7 || Math.random() > 0.6);
+           if (win) {
+             if (s.charm >= 15) {
+                return { cash: s.cash + 300, charm: s.charm + 10, status: 'win', message: '你的小红书粉丝突破 100 万！你毅然辞去代码工作，全职接商单带货、开 MCN 机构，彻底掌握了流量密码，在湾区名利双收，惊艳了所有人！' };
+             }
+             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + 10, charm: s.charm + 3, health: s.health + 5, message: '你穿始祖鸟、打卡米其林、在 Equinox 健身，小红书涨粉 5 万！接到了几笔软广赞助，并成功打造了高颜值精英人设！' };
+           } else {
+             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 8, health: s.health - 10, message: '你为了拍滑雪和攀岩 OOTD 疯狂刷卡买装备，结果笔记根本没人看。不仅倒贴钱，还陷入了严重的容貌和同辈焦虑。' };
+           }
+        },
+        nextEventId: (s) => {
+          if (s.status === 'win') return 'end';
+          if (s.gc_progress >= 5) return 'post_green_card';
+          
+          const rand = Math.random();
+          if (rand < 0.12) return 'perf_review';
+          if (rand < 0.24) return s.is_married ? 'sv_daily_life' : 'dating_market';
+          if (rand < 0.36) return 'car_broken';
+          if (rand < 0.48) return 'visa_check';
+          if (rand < 0.60) return 'layoff_rumor';
+          if (rand < 0.72) return 'dental_emergency';
+          if (rand < 0.85) return 'crypto_scam';
+          return 'xhs_boba';
+        },
+      },
+      {
         text: '周末去体验湾区三俗 (滑雪/攀岩/桌游) 拓展圈子',
         effect: (s) => {
           const rand = Math.random();
@@ -552,7 +579,7 @@ export const events: Record<string, GameEvent> = {
             ? { health: s.health - 20, tc: s.tc + 5, cash: s.cash + (s.tc * 0.6) - s.rent, message: '卷赢了！你拿到了 Exceeds Expectations，涨薪 5 万美元！' }
             : { health: s.health - 20, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
-        nextEventId: (s) => (s.company === 'meta' && s.tc >= 50) ? 'meta_tlm' : 'sv_daily_life',
+        nextEventId: (s) => s.tc >= 50 ? 'meta_tlm' : 'sv_daily_life',
       },
       {
         text: '准点下班，躺平拿 Meets',

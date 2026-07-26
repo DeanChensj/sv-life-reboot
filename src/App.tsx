@@ -565,10 +565,22 @@ export const events: Record<string, GameEvent> = {
     description: '又是新的一年。在等绿卡排期的日子里，你该如何分配今年的精力？',
     choices: [
       {
-        text: '💻 疯狂加班 (消耗 1 精力) - 讨好 Manager',
+        text: '🏢 疯狂加班 (消耗 1 精力) - 疯狂表现，争取加薪',
         condition: (s) => s.ap > 0,
-        effect: (s) => ({ ap: s.ap - 1, health: s.health - 10, leetcode: s.leetcode + 2, message: '天天在公司吃免费晚饭，希望年底能有个好绩效。' }),
+        effect: (s) => ({ ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: '你天天在公司熬到半夜吃免费晚饭。Manager 对你的态度变好了，甚至给你微调了底薪。' }),
         nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '💻 闭关刷题 (消耗 1 精力) - 备战跳槽',
+        condition: (s) => s.ap > 0,
+        effect: (s) => ({ ap: s.ap - 1, health: s.health - 10, leetcode: s.leetcode + 5, message: '你拒绝了所有社交，周末疯狂刷 LeetCode，算法能力精进了。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '🚗 周末跑 Uber / 送外卖赚外快 (消耗 1 精力)',
+         condition: (s) => s.ap > 0 && s.cash <= 15,
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash + 2, health: s.health - 20, message: '手头太紧了，你周末开车去送外卖，虽然赚了点辛苦钱，但累得腰酸背痛。' }),
+         nextEventId: 'sv_daily_life',
       },
       {
          text: '🏋️ 医美与私教 (消耗 1 精力, 3 万美元) - 提升魅力和健康',
@@ -577,7 +589,7 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '📱 做小红书网红 (消耗 1 精力) - 卷“湾区精英”人设',
+         text: '📱 经营小红书 (消耗 1 精力) - 卷“湾区精英”人设',
          condition: (s) => s.ap > 0,
          effect: (s) => {
             let winRate = 0.2;
@@ -590,10 +602,30 @@ export const events: Record<string, GameEvent> = {
               }
               return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
             } else {
-              return { ap: s.ap - 1, cash: s.cash - 5, health: s.health - 20, message: '疯狂买装备拍 OOTD 却没人看，倒贴钱还心累。' };
+              return { ap: s.ap - 1, cash: s.cash - 3, health: s.health - 20, message: '疯狂买装备拍 OOTD 却没人看，倒贴钱还心累。' };
             }
          },
          nextEventId: (s) => s.status === 'win' ? 'end' : 'sv_daily_life',
+      },
+      {
+         text: '🤖 搞 AI 独立开发 (消耗 1 精力, 2万美元) - 需要高强算法',
+         condition: (s) => s.ap > 0 && s.cash >= 2 && s.leetcode >= 30,
+         effect: (s) => {
+            const jackpot = Math.random() < (0.05 + s.luck / 500); // 5% to 25% chance
+            if (jackpot) return { ap: s.ap - 1, cash: s.cash + 50, leetcode: s.leetcode + 5, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
+            return { ap: s.ap - 1, cash: s.cash - 2, leetcode: s.leetcode + 3, message: '你的产品上线后无人问津，几万美元的 API 费用和服务器费打了水漂，但你的技术变强了。' };
+         },
+         nextEventId: 'sv_daily_life'
+      },
+      {
+         text: '🍸 参加高尔夫/游艇高端局 (消耗 1 精力, 5万美元) - 需要高魅力',
+         condition: (s) => s.ap > 0 && s.cash >= 5 && s.charm >= 8,
+         effect: (s) => {
+            const success = Math.random() > 0.5;
+            if (success) return { ap: s.ap - 1, cash: s.cash - 5, tc: s.tc + 5, charm: s.charm + 2, message: '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！' };
+            return { ap: s.ap - 1, cash: s.cash - 5, health: s.health - 10, message: '去派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。' };
+         },
+         nextEventId: 'sv_daily_life'
       },
       {
          text: '❤️ 去 CMB 约会相亲 (消耗 1 精力)',
@@ -602,15 +634,15 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'dating_market' 
       },
       {
-         text: '🏖️ 躺平休息 (消耗 1 精力) - 恢复健康',
+         text: '🏖️ 宅家躺平打游戏 (消耗 1 精力) - 恢复大量健康',
          condition: (s) => s.ap > 0,
-         effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 30), message: '去了一趟优胜美地，或者在家躺了两天，感觉重新活了过来。' }),
+         effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 40), message: '整个周末都在家打黑神话：悟空，什么代码都不想写，虽然没进步，但是感觉重新活了过来。' }),
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '⏩ 精力已耗尽。进入年底结算',
-         condition: (s) => s.ap <= 0,
-         effect: (s) => ({}),
+         text: '⏩ 放弃剩余精力，直接进入年底结算',
+         condition: (s) => true,
+         effect: (s) => ({ ap: 0 }),
          nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -737,10 +769,21 @@ export const events: Record<string, GameEvent> = {
     description: '在 Atherton 的一个豪宅派对上，主人戴着三个智能指环，宣称自己把生物钟逆转到了 18 岁。他递给你一杯绿色的不明液体，说是他独家研发的“细胞级抗衰老矩阵精华”，只要 $500 一杯。',
     choices: [
       {
-        text: '买！为了活到 AGI 降临的那一天！',
+        text: '花 50 万美元报名“长寿换血抗衰老”年度会员 (永久 +1 精力上限)',
+        effect: (s) => ({ 
+          cash: s.cash - 50, 
+          max_ap: (s.max_ap || 3) + 1,
+          health: 100,
+          message: '你花了 50 万美元。每个月都会有私人医生上门给你注射定制干细胞。你的身体仿佛回到了 18 岁，每年能做更多的事情了！'
+        }),
+        nextEventId: 'sv_daily_life',
+        condition: (s) => s.cash >= 50
+      },
+      {
+        text: '买！一杯“细胞级精华” ($500) 尝尝鲜',
         effect: (s) => ({ 
           cash: s.cash - 0.05, 
-          health: s.health + 5,
+          health: Math.min(100, s.health + 5),
           message: '你花了 $500 喝下这杯用香菜和不知名粉末榨的汁。别说，第二天在办公室写代码确实不困了。'
         }),
         nextEventId: 'sv_daily_life',
@@ -933,7 +976,13 @@ export const events: Record<string, GameEvent> = {
     choices: [
 
       {
-        text: '加入抢房大战 (买房)',
+        text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万)',
+        condition: (s) => s.cash >= 300,
+        effect: (s) => ({ cash: s.cash - 300, has_housing: true, charm: s.charm + 50, health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
+        nextEventId: 'post_green_card',
+      },
+      {
+        text: '加入抢房大战 (正常买房)',
         effect: (s) => ({ age: s.age + 1, visa: '绿卡', cash: s.cash + (s.tc * 0.6) - s.rent - 4 }),
         nextEventId: 'buy_house',
       },
@@ -1494,8 +1543,8 @@ export default function App() {
                 </div>
               </div>
               
-              {/* Action Points (AP) */}
-              {gameState.ap !== undefined && (
+              {/* Action Points (AP) - Only shown if AP has been unlocked by entering the work loop */}
+              {gameState.ap !== undefined && (currentEventId === 'sv_daily_life' || currentEventId === 'sv_year_end_settlement' || currentEventId === 'dating_market' || currentEventId === 'biohacking_party' || currentEventId === 'crypto_scam' || currentEventId === 'ai_wrapper_startup' || currentEventId === 'burning_man_invite' || currentEventId === 'stock_crash' || currentEventId === 'car_broken' || currentEventId === 'dental_emergency' || currentEventId === 'post_green_card' || currentEventId === 'layoff_rumor' || currentEventId === 'perf_review' || currentEventId === 'friday_pip' || currentEventId === 'visa_check') && (
               <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex items-center gap-6">
                 <div className="flex-1">
                   <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-2">本年剩余精力 (AP)</div>
@@ -1581,17 +1630,49 @@ export default function App() {
                   <p className="text-zinc-400 mb-10 text-lg md:text-xl leading-relaxed">{currentEvent.description}</p>
                   
                   <div className="flex flex-col space-y-4">
-                    {currentEvent.choices.filter(c => !c.condition || c.condition(gameState)).map((choice, idx) => (
+                    {currentEvent.choices.map((choice, idx) => {
+                      const isAvailable = !choice.condition || choice.condition(gameState);
+                      
+                      // Quick and dirty regex to extract costs and requirements from text for badges
+                      // e.g. "🤖 搞 AI 独立开发 (消耗 1 精力, 2万美元) - 需要高强算法"
+                      const costMatch = choice.text.match(/\((.*?)\)/);
+                      const reqMatch = choice.text.match(/ - (.*)/);
+                      const mainText = choice.text.replace(/\(.*?\)/, '').replace(/ - .*/, '').trim();
+                      
+                      return (
                       <button
                         key={idx}
-                        onClick={() => handleChoice(choice)}
-                        className="group w-full text-left px-6 py-5 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        onClick={() => isAvailable && handleChoice(choice)}
+                        disabled={!isAvailable}
+                        className={`group w-full text-left px-6 py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+                          isAvailable 
+                            ? 'bg-zinc-900 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 active:scale-[0.98]' 
+                            : 'bg-zinc-950/50 border-zinc-800/50 opacity-50 cursor-not-allowed'
+                        }`}
                       >
-                        <span className="text-zinc-300 font-medium group-hover:text-emerald-400 transition-colors text-lg">
-                          {choice.text}
+                        <span className={`font-medium text-lg transition-colors ${isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'}`}>
+                          {mainText}
                         </span>
+                        
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {costMatch && (
+                             <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
+                               {costMatch[1]}
+                             </span>
+                          )}
+                          {reqMatch && (
+                             <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-amber-500/20 text-amber-300 border border-amber-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
+                               {reqMatch[1]}
+                             </span>
+                          )}
+                          {!isAvailable && (
+                            <span className="text-xs px-2.5 py-1 rounded-md font-bold tracking-wide bg-red-500/10 text-red-400 border border-red-500/20">
+                              条件未满足
+                            </span>
+                          )}
+                        </div>
                       </button>
-                    ))}
+                    )})}
                   </div>
                 </>
                ) : (

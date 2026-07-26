@@ -186,6 +186,10 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentEventId]);
+
   const getImgSrc = (url: string) => {
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     const base = import.meta.env.BASE_URL || '/';

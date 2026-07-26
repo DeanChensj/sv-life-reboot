@@ -1037,43 +1037,55 @@ export const events: Record<string, GameEvent> = {
           
           const rand = Math.random();
           
-          // 5% chance of Macro Economic Crisis
-          if (rand < 0.05) return 'stock_crash';
+          // 6% chance of Macro Economic Crisis
+          if (rand < 0.06) return 'stock_crash';
           
-          // 35% chance of WORK related event based on job type
-          if (rand >= 0.05 && rand < 0.4) {
+          // 40% chance of WORK & CAREER event
+          if (rand >= 0.06 && rand < 0.46) {
              if (s.job_type === 'unemployed' || s.laid_off) return 'job_hunt';
              if (s.job_type === 'startup') return 'startup_crisis';
              if (s.job_type === 'ai_research') return 'ai_research_crisis';
              if (s.job_type === 'quant') return 'quant_stress';
              
              const bigTechRand = Math.random();
-             if (bigTechRand < 0.25) return 'perf_review';
-             if (bigTechRand < 0.50) return 'layoff_rumor';
+             if (bigTechRand < 0.30) return 'perf_review';
+             if (bigTechRand < 0.55) return 'layoff_rumor';
              if (bigTechRand < 0.75) return 'rto_wars';
              return 'friday_pip';
           }
           
-          // 60% chance of LIFE event
-          const lifeRand = Math.random();
-           if (lifeRand < 0.03) return s.is_married ? 'breakup_crisis' : 'boardgame_dating';
-           if (lifeRand < 0.06) return s.is_married ? 'sv_daily_life' : 'dating_market';
-           if (lifeRand < 0.10) return (s.car && s.car !== 'none') ? 'car_broken' : 'sv_daily_life';
-           if (lifeRand < 0.15) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
-           if (lifeRand < 0.25) return 'overemployed';
-           if (lifeRand < 0.35) return 'pickleball_networking';
-           if (lifeRand < 0.40) return 'dental_emergency';
-           if (lifeRand < 0.45) return 'crypto_scam';
-           if (lifeRand < 0.50) return 'blind_team_tea';
-           if (lifeRand < 0.55) return 'zoom_camera_off_leetcode';
-           if (lifeRand < 0.60) return 'boba_inflation';
-           if (lifeRand < 0.65) return 'rsu_vesting_crash';
-           if (lifeRand < 0.70) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'h1b_rfe_vs_parent_nag';
-           if (lifeRand < 0.75) return 'xhs_boba';
-           if (lifeRand < 0.80) return 'ai_wrapper_startup';
-           if (lifeRand < 0.85) return 'biohacking_party';
-           if (lifeRand < 0.90) return 'tahoe_ski_blizzard';
-           return 'burning_man_invite';
+          // 34% chance of LIFE & BAY AREA SOCIAL event (Total ~80% Event Trigger Rate)
+          if (rand >= 0.46 && rand < 0.80) {
+            const lifeEvents = [
+              'overemployed',
+              'pickleball_networking',
+              'dental_emergency',
+              'crypto_scam',
+              'blind_team_tea',
+              'zoom_camera_off_leetcode',
+              'boba_inflation',
+              'rsu_vesting_crash',
+              'xhs_boba',
+              'ai_wrapper_startup',
+              'biohacking_party',
+              'tahoe_ski_blizzard',
+              'burning_man_invite'
+            ];
+
+            if (!s.is_married && Math.random() < 0.35) {
+              return 'dating_market';
+            }
+
+            if (s.car && s.car !== 'none' && Math.random() < 0.25) {
+              return 'car_broken';
+            }
+
+            const chosenLifeEvent = lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
+            return chosenLifeEvent || 'sv_daily_life';
+          }
+
+          // 20% chance of Quiet Routine Year
+          return 'sv_daily_life';
         },
       }
     ]

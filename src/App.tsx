@@ -561,49 +561,74 @@ export const events: Record<string, GameEvent> = {
   },
   'sv_daily_life': {
     id: 'sv_daily_life',
-    title: 'H1B 挂壁日常',
-    description: '时间过得飞快，一转眼又是一年。在等绿卡排期的日子里，你每天都在经历硅谷的魔幻日常。除了按部就班，你也可以选择铤而走险。',
+    title: '湾区日常 (行动面板)',
+    description: '又是新的一年。在等绿卡排期的日子里，你该如何分配今年的精力？',
     choices: [
-
       {
-        text: '老老实实搬砖，开启新的一年',
-        effect: (s) => ({ age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 4, message: `这一年你努力工作，扣除房租和每年 4 万的生活费后，税后结余 ${Math.max(0, (s.tc * 0.6) - s.rent - 4).toFixed(1)} 万美元。距离拿到绿卡还差 ${5 - (s.gc_progress + 1)} 年。` }),
-                nextEventId: (s) => {
-          if (s.status === 'win') return 'end';
-          if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
-          
-          const rand = Math.random();
-          
-          // 5% chance of Macro Economic Crisis
-          if (rand < 0.05) return 'stock_crash';
-          
-          // 35% chance of WORK related event based on job type
-          if (rand >= 0.05 && rand < 0.4) {
-             if (s.job_type === 'startup') return 'startup_crisis';
-             if (s.job_type === 'ai_research') return 'ai_research_crisis';
-             if (s.job_type === 'quant') return 'quant_stress';
-             const bigTechRand = Math.random();
-             if (bigTechRand < 0.33) return 'perf_review';
-             if (bigTechRand < 0.66) return 'layoff_rumor';
-             return 'friday_pip'; // big_tech default
-          }
-          
-          // 60% chance of LIFE event
-          const lifeRand = Math.random();
-          if (lifeRand < 0.15) return s.is_married ? 'sv_daily_life' : 'dating_market';
-          if (lifeRand < 0.25) return 'car_broken';
-          if (lifeRand < 0.4) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
-          if (lifeRand < 0.55) return 'dental_emergency';
-          if (lifeRand < 0.7) return 'crypto_scam';
-          if (lifeRand < 0.8) return 'ai_wrapper_startup';
-          if (lifeRand < 0.9) return 'biohacking_party';
-          return 'burning_man_invite';
-        },
+        text: '💻 疯狂加班 (消耗 1 精力) - 讨好 Manager',
+        condition: (s) => s.ap > 0,
+        effect: (s) => ({ ap: s.ap - 1, health: s.health - 10, leetcode: s.leetcode + 2, message: '天天在公司吃免费晚饭，希望年底能有个好绩效。' }),
+        nextEventId: 'sv_daily_life',
       },
       {
-        text: '花重金自我提升 (医美、私教、心理咨询) (需花费 3 万美元)',
-        condition: (s) => s.cash >= 3,
-        effect: (s) => ({ age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 3 + (s.tc * 0.6) - s.rent - 4, charm: s.charm + 3, health: Math.min(100, s.health + 20), message: '你花大价钱请了硅谷最贵的私教，又做全脸热玛吉。你的颜值和健康度大幅飙升，走在 Santana Row 上回头率极高！距离拿到绿卡还差 ' + (5 - (s.gc_progress + 1)) + ' 年。' }),
+         text: '🏋️ 医美与私教 (消耗 1 精力, 3 万美元) - 提升魅力和健康',
+         condition: (s) => s.ap > 0 && s.cash >= 3,
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 3, health: Math.min(100, s.health + 20), charm: s.charm + 3, message: '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！' }),
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '📱 做小红书网红 (消耗 1 精力) - 卷“湾区精英”人设',
+         condition: (s) => s.ap > 0,
+         effect: (s) => {
+            let winRate = 0.2;
+            if (s.charm >= 12) winRate = 0.9;
+            else if (s.charm >= 7) winRate = 0.6;
+            const win = Math.random() < winRate;
+            if (win) {
+              if (s.charm >= 18) {
+                 return { ap: s.ap - 1, cash: s.cash + 300, charm: s.charm + 10, status: 'win', message: '你的小红书粉丝突破 100 万！彻底掌握了流量密码，在湾区名利双收！' };
+              }
+              return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
+            } else {
+              return { ap: s.ap - 1, cash: s.cash - 5, health: s.health - 20, message: '疯狂买装备拍 OOTD 却没人看，倒贴钱还心累。' };
+            }
+         },
+         nextEventId: (s) => s.status === 'win' ? 'end' : 'sv_daily_life',
+      },
+      {
+         text: '❤️ 去 CMB 约会相亲 (消耗 1 精力)',
+         condition: (s) => s.ap > 0 && !s.is_married,
+         effect: (s) => ({ ap: s.ap - 1, message: '你去 Santana Row 喝了杯奶茶。' }),
+         nextEventId: 'dating_market' 
+      },
+      {
+         text: '🏖️ 躺平休息 (消耗 1 精力) - 恢复健康',
+         condition: (s) => s.ap > 0,
+         effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 30), message: '去了一趟优胜美地，或者在家躺了两天，感觉重新活了过来。' }),
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '⏩ 精力已耗尽。进入年底结算',
+         condition: (s) => s.ap <= 0,
+         effect: (s) => ({}),
+         nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+  'sv_year_end_settlement': {
+    id: 'sv_year_end_settlement',
+    title: '年底结算',
+    description: '今年的精力已耗尽，系统正在为你结算工资、扣除房租，并计算绿卡排期...',
+    choices: [
+      {
+        text: '结算并迎接新的一年',
+        effect: (s) => ({ 
+           ap: s.max_ap !== undefined ? s.max_ap : 3, 
+           age: s.age + 1, 
+           gc_progress: s.gc_progress + 1, 
+           cash: s.cash + (s.tc * 0.6) - s.rent - 4, 
+           message: `扣除房租和每年 4 万的生活费后，你今年的税后结余是 ${Math.max(0, (s.tc * 0.6) - s.rent - 4).toFixed(1)} 万美元。距离拿到绿卡还差 ${5 - (s.gc_progress + 1)} 年。` 
+        }),
         nextEventId: (s) => {
           if (s.status === 'win') return 'end';
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
@@ -635,126 +660,6 @@ export const events: Record<string, GameEvent> = {
           if (lifeRand < 0.9) return 'biohacking_party';
           return 'burning_man_invite';
         },
-      },
-      {
-        text: '周末兼职运营小红书，卷“湾区精英”人设 (高体力消耗)',
-        effect: (s) => {
-           let winRate = 0.2;
-           if (s.charm >= 12) winRate = 0.9;
-           else if (s.charm >= 7) winRate = 0.6;
-           const win = Math.random() < winRate;
-           
-           if (win) {
-             if (s.charm >= 18) {
-                return { cash: s.cash + 300 + (s.tc * 0.6) - s.rent - 4, charm: s.charm + 10, status: 'win', message: '你的小红书粉丝突破 100 万！你毅然辞去代码工作，全职接商单带货、开 MCN 机构，彻底掌握了流量密码，在湾区名利双收，惊艳了所有人！' };
-             }
-             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + 5 + (s.tc * 0.6) - s.rent - 4, charm: s.charm + 2, health: s.health - 15, message: '你周末不休息，去拍 OOTD、剪视频，终于涨粉了几万！接到了几笔软广赞助，但身体非常疲惫。' };
-           } else {
-             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 5 + (s.tc * 0.6) - s.rent - 4, health: s.health - 20, message: '你为了拍 OOTD 疯狂买装备，熬夜剪视频，结果根本没人看。不仅倒贴钱，还陷入了严重的容貌焦虑，身心俱疲。' };
-           }
-        },
-                nextEventId: (s) => {
-          if (s.status === 'win') return 'end';
-          if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
-          
-          const rand = Math.random();
-          
-          // 5% chance of Macro Economic Crisis
-          if (rand < 0.05) return 'stock_crash';
-          
-          // 35% chance of WORK related event based on job type
-          if (rand >= 0.05 && rand < 0.4) {
-             if (s.job_type === 'startup') return 'startup_crisis';
-             if (s.job_type === 'ai_research') return 'ai_research_crisis';
-             if (s.job_type === 'quant') return 'quant_stress';
-             const bigTechRand = Math.random();
-             if (bigTechRand < 0.33) return 'perf_review';
-             if (bigTechRand < 0.66) return 'layoff_rumor';
-             return 'friday_pip'; // big_tech default
-          }
-          
-          // 60% chance of LIFE event
-          const lifeRand = Math.random();
-          if (lifeRand < 0.15) return s.is_married ? 'sv_daily_life' : 'dating_market';
-          if (lifeRand < 0.25) return 'car_broken';
-          if (lifeRand < 0.4) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
-          if (lifeRand < 0.55) return 'dental_emergency';
-          if (lifeRand < 0.7) return 'crypto_scam';
-          if (lifeRand < 0.8) return 'ai_wrapper_startup';
-          if (lifeRand < 0.9) return 'biohacking_party';
-          return 'burning_man_invite';
-        },
-      },
-      {
-        text: '周末去体验湾区三俗 (滑雪/攀岩/桌游) 拓展圈子',
-        effect: (s) => {
-          const rand = Math.random();
-          if (rand < 0.1) {
-            return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 10 + (s.tc * 0.6) - s.rent - 4, health: s.health - 30, message: '周末去 Tahoe 滑雪，为了装杯飞大跳台摔断了腿。叫了一次救护车，扣除保险后依然收到了 $10k 的天价医疗账单。' };
-          }
-          if (rand < 0.3) {
-            return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 4, charm: s.charm + 10, health: s.health + 20, message: '在狼人杀局上认识了心动嘉宾，你们一起去了优胜美地 Hiking，成功脱单！生活焕发了新生！' };
-          }
-          return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 1 + (s.tc * 0.6) - s.rent - 4, health: s.health + 5, charm: s.charm + 1, message: '花了不少门票钱和油钱，局上全是单身男码农，什么浪漫的事都没发生，你只是变成了更强壮的单身狗。' };
-        },
-                nextEventId: (s) => {
-          if (s.status === 'win') return 'end';
-          if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
-          
-          const rand = Math.random();
-          
-          // 5% chance of Macro Economic Crisis
-          if (rand < 0.05) return 'stock_crash';
-          
-          // 35% chance of WORK related event based on job type
-          if (rand >= 0.05 && rand < 0.4) {
-             if (s.job_type === 'startup') return 'startup_crisis';
-             if (s.job_type === 'ai_research') return 'ai_research_crisis';
-             if (s.job_type === 'quant') return 'quant_stress';
-             const bigTechRand = Math.random();
-             if (bigTechRand < 0.33) return 'perf_review';
-             if (bigTechRand < 0.66) return 'layoff_rumor';
-             return 'friday_pip'; // big_tech default
-          }
-          
-          // 60% chance of LIFE event
-          const lifeRand = Math.random();
-          if (lifeRand < 0.15) return s.is_married ? 'sv_daily_life' : 'dating_market';
-          if (lifeRand < 0.25) return 'car_broken';
-          if (lifeRand < 0.4) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
-          if (lifeRand < 0.55) return 'dental_emergency';
-          if (lifeRand < 0.7) return 'crypto_scam';
-          if (lifeRand < 0.8) return 'ai_wrapper_startup';
-          if (lifeRand < 0.9) return 'biohacking_party';
-          return 'burning_man_invite';
-        },
-      },
-      {
-        text: '太孤独了，领养一只宠物 (每年房租/开销增加 1w)',
-        condition: (s) => s.rent >= 2 && !s.has_pet,
-        effect: (s) => ({ rent: s.rent + 1, charm: s.charm + 3, health: s.health + 30, has_pet: true, message: '你领养了毛孩子！虽然每年要多花不少钱，但在相亲软件上放宠物照片让你大受欢迎，疲惫的心也被彻底治愈了！' }),
-        nextEventId: 'sv_daily_life'
-      },
-      {
-        text: '受够了！不要身份了，裸辞 All in AI 创业！',
-        condition: (s) => s.year >= 2022,
-        effect: (s) => {
-           if (s.leetcode >= 80) {
-             return { cash: s.cash + 1000, visa: 'O1 (杰出人才)', status: 'win', message: '你凭借硬核的底层技术拿到了顶级风投，顺便搞定了 O1 签证！公司估值过亿，你提前跳出了打工人的宿命！' };
-           }
-           return { cash: s.cash - 20, status: 'game_over', message: '辞职后立刻失去了 H1B 身份，而你的套壳项目根本拉不到风投。60天后你被无情遣返，功亏一篑。' };
-        },
-        nextEventId: 'end'
-      },
-      {
-        text: '打工太慢了，拿所有积蓄去炒期权/末日 Call！',
-        effect: (s) => {
-           const win = Math.random() > 0.95; // 极低概率暴富
-           return win 
-            ? { cash: s.cash * 10, status: 'win', message: '奇迹降临！你买的期权一夜之间翻了十倍！你第二天直接把辞职信甩在 Manager 脸上，财富自由了！' }
-            : { cash: 0, health: s.health - 50, message: '爆仓了...你多年的积蓄一秒清零，精神崩溃。你只能在旧金山的街头流浪。', status: 'game_over' }
-        },
-        nextEventId: 'end'
       }
     ]
   },
@@ -1589,6 +1494,26 @@ export default function App() {
                 </div>
               </div>
               
+              {/* Action Points (AP) */}
+              {gameState.ap !== undefined && (
+              <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex items-center gap-6">
+                <div className="flex-1">
+                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-2">本年剩余精力 (AP)</div>
+                  <div className="flex gap-2">
+                    {Array.from({ length: gameState.max_ap || 3 }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`h-3 flex-1 rounded-full transition-all duration-300 ${i < gameState.ap ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-zinc-800'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="text-2xl font-bold tracking-tight text-indigo-400 whitespace-nowrap">
+                  {gameState.ap} / {gameState.max_ap || 3}
+                </div>
+              </div>
+              )}
+
               {/* Health */}
               <div className="col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
                 <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-2">健康状态</div>

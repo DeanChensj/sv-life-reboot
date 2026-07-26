@@ -364,7 +364,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '找ICC挂靠 (保底策略)',
-        effect: (s) => ({ cash: s.cash - 1, tc: 6 }),
+        effect: (s) => ({ cash: s.cash - 1, tc: 6, job_type: 'unemployed' }),
         nextEventId: 'icc_work',
       },
       {
@@ -511,7 +511,7 @@ export const events: Record<string, GameEvent> = {
             ? { visa: 'H1B (工签)', cash: s.cash, message: '人品爆发，今年H1B中签了！' }
             : { cash: s.cash, health: s.health - 10, message: '今年 H1B 没抽中！只能指望明年...' };
         },
-        nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b',
+        nextEventId: (s) => (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'big_tech_work_no_h1b',
       },
       {
         text: '砸钱找最顶级的移民律师帮忙弄 O1 签证 (花费 2 万美元)',
@@ -520,10 +520,10 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.6 + (s.luck / 100) * 0.35; // O1 成功率 60% - 95%
           const win = Math.random() < winRate;
           return win
-            ? { visa: 'H1B (工签)', cash: s.cash - 2, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证，效果等同于 H1B！' }
+            ? { visa: 'O1 (杰出人才)', cash: s.cash - 2, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
             : { cash: s.cash - 2, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，两万美元打了水漂。' };
         },
-        nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b',
+        nextEventId: (s) => (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'big_tech_work_no_h1b',
       },
       {
         text: '和美国公民闪婚拿绿卡 (高风险)',
@@ -539,18 +539,35 @@ export const events: Record<string, GameEvent> = {
   },
   'big_tech_work_no_h1b': {
     id: 'big_tech_work_no_h1b',
-    title: 'H1B 焦虑',
-    description: 'OPT 还有时间，继续抽签吧...',
+    title: 'H1B 焦虑 (第二年抽签)',
+    description: '前第一年未抽中，好在申请了 STEM OPT 两年延期，这是你第二年的抽签机会...',
     choices: [
-
       {
-        text: '继续抽！',
+        text: '参与第二轮 H1B 抽签！',
         effect: (s) => {
-          const winRate = 0.15 + (s.luck / 100) * 0.3; // 海底捞概率 15% - 45%
+          const winRate = 0.3 + (s.luck / 100) * 0.3;
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, message: '谢天谢地，海底捞中签了！' }
-            : { cash: s.cash, status: 'game_over', message: 'H1B 彻底没抽中，被迫 Relocate 到加拿大，游戏结束。' };
+            ? { visa: 'H1B (工签)', cash: s.cash, message: '第二年抽签人品爆发，终于中签了！' }
+            : { cash: s.cash, health: s.health - 15, message: '第二年还是没抽中...只剩最后一年 STEM OPT 机会了！' };
+        },
+        nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b_final',
+      }
+    ]
+  },
+  'big_tech_work_no_h1b_final': {
+    id: 'big_tech_work_no_h1b_final',
+    title: 'H1B 绝境 (最后一年抽签)',
+    description: 'STEM OPT 最后一年的死刑注定！如果今年再没中，就要被公司被迫打包 Relocate 到温哥华/多伦多或者遣返回国了...',
+    choices: [
+      {
+        text: '赌上所有气运，进行这辈子最后一次 H1B 抽签！',
+        effect: (s) => {
+          const winRate = 0.35 + (s.luck / 100) * 0.35;
+          const win = Math.random() < winRate;
+          return win 
+            ? { visa: 'H1B (工签)', cash: s.cash, message: '奇迹发生！在最后一年绝境中神奇海底捞中签！' }
+            : { cash: s.cash, status: 'game_over', message: '三年 H1B 均未抽中。你站在 SFO 机场，被公司强行外派温哥华 L1 办公室离境，硅谷梦碎。' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'end',
       }
@@ -709,6 +726,12 @@ export const events: Record<string, GameEvent> = {
          text: '🏖️ 宅家躺平打游戏 (消耗 1 精力) - 恢复大量健康',
          condition: (s) => s.ap > 0,
          effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 30), message: '整个周末都在家打黑神话：悟空，什么代码都不想写，虽然没进步，但是感觉重新活了过来。' }),
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '🎒 挂壁求生：退租高额公寓，连夜搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年, 消耗 1 精力)',
+         condition: (s) => s.ap > 0 && s.cash < 10 && s.rent > 0,
+         effect: (s) => ({ ap: s.ap - 1, rent: 0, health: Math.max(10, s.health - 10), message: '你把睡袋、卡式炉塞进了车后备箱。虽然每天去 Planet Fitness 健身房洗澡极其硬核，但你成功将每年的房租固定消耗砍到了 $0！' }),
          nextEventId: 'sv_daily_life',
       },
       {
@@ -947,6 +970,17 @@ export const events: Record<string, GameEvent> = {
           message: '你选择了 quiet quitting，拿着两个月遣散费每天去海边散步刷题，心情大好。'
         }),
         nextEventId: 'job_hunt'
+      },
+      {
+        text: '🤝 启动 60 天 H1B Grace Period 紧急挂靠：找外包公司办理 H1B Transfer (消耗 $2w)',
+        condition: (s) => s.cash >= 2 && s.visa !== '绿卡',
+        effect: (s) => ({
+          cash: s.cash - 2,
+          tc: Math.max(10, Math.floor(s.tc * 0.55)),
+          health: s.health - 15,
+          message: '外包中介急用低薪码农，连夜为你开具了紧急 Offer 办理了 H1B Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
+        }),
+        nextEventId: 'sv_daily_life'
       }
     ]
   },
@@ -956,15 +990,15 @@ export const events: Record<string, GameEvent> = {
     description: '在 Atherton 的一个豪宅派对上，主人戴着三个智能指环，宣称自己把生物钟逆转到了 18 岁。他递给你一杯绿色的不明液体，说是他独家研发的“细胞级抗衰老矩阵精华”，只要 $500 一杯。',
     choices: [
       {
-        text: '报名“长寿换血抗衰老”年度会员 (消耗 $50w) - (永久 +1 精力上限)',
+        text: '报名“长寿换血抗衰老”年度会员 (消耗 $50w) - (永久 +1 精力上限，最大上限 5 AP)',
         effect: (s) => ({ 
           cash: s.cash - 50, 
-          max_ap: (s.max_ap || 3) + 1,
+          max_ap: Math.min(5, (s.max_ap || 3) + 1),
           health: 100,
-          message: '你花了 50 万美元。每个月都会有私人医生上门给你注射定制干细胞。你的身体仿佛回到了 18 岁，每年能做更多的事情了！'
+          message: '你花了 50 万美元。每个月都会有私人医生上门给你注射定制干细胞。你的身体仿佛回到了 18 岁，精力极其充沛！'
         }),
         nextEventId: 'sv_daily_life',
-        condition: (s) => s.cash >= 50
+        condition: (s) => s.cash >= 50 && (s.max_ap || 3) < 5
       },
       {
         text: '买！一杯“细胞级精华” ($500) 尝尝鲜',
@@ -1844,9 +1878,9 @@ export default function App() {
                       const costMatch = choice.text.match(/\((?:消耗|花费|每年|\$|成本).*?\)/);
                       const reqMatch = choice.text.match(/ - (.*)/) || choice.text.match(/\((需要|需|算法|高魅力|现金).*?\)/);
                       const mainText = choice.text
-                        .replace(/\(.*?\)/g, '')
-                        .replace(/ - .*/, '')
-                        // preserve Chinese colons in dialogue quotes
+                        .replace(/\((?:消耗|花费|每年|\$|成本).*?\)/g, '')
+                        .replace(/\((?:需要|需|算法|高魅力|现金).*?\)/g, '')
+                        .replace(/ - (?:消耗|花费|每年|\$|成本|需要|需).*?$/, '')
                         .trim();
                       
                       return (
@@ -1925,7 +1959,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {gameState.cash >= 300 && (
+                      {(gameState.cash >= 300 || gameState.has_housing) && (
                         <div className="bg-zinc-900/90 border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3">
                           <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 uppercase">EST</span>
                           <div>
@@ -1979,7 +2013,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {gameState.status === 'game_over' && (gameState.message.includes('遣返') || gameState.message.includes('失业期') || gameState.message.includes('OPT') || gameState.message.includes('终身禁入')) && (
+                      {gameState.status === 'game_over' && (gameState.message.includes('遣返') || gameState.message.includes('失业期') || gameState.message.includes('OPT') || gameState.message.includes('终身禁入') || gameState.message.includes('加拿大') || gameState.message.includes('抽中')) && (
                         <div className="bg-zinc-900/90 border border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3">
                           <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase">ICE</span>
                           <div>
@@ -1988,7 +2022,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {gameState.status === 'game_over' && (gameState.message.includes('Raj') || gameState.message.includes('抢功') || gameState.message.includes('排挤') || gameState.message.includes('被裁')) && (
+                      {gameState.status === 'game_over' && (gameState.message.includes('Raj') || gameState.message.includes('抢功') || gameState.message.includes('排挤') || gameState.message.includes('被裁') || gameState.message.includes('开除') || gameState.message.includes('PIP')) && (
                         <div className="bg-zinc-900/90 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3">
                           <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase">POL</span>
                           <div>
@@ -1997,7 +2031,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {gameState.status === 'game_over' && (gameState.message.includes('创业') || gameState.message.includes('烧钱') || gameState.message.includes('跑路') || gameState.message.includes('清零')) && (
+                      {gameState.status === 'game_over' && (gameState.message.includes('创业') || gameState.message.includes('烧钱') || gameState.message.includes('跑路') || gameState.message.includes('清零') || gameState.message.includes('倒闭') || gameState.message.includes('废纸') || gameState.message.includes('回到国内')) && (
                         <div className="bg-zinc-900/90 border border-yellow-500/30 p-4 rounded-2xl flex items-center gap-3">
                           <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 uppercase">FOMO</span>
                           <div>

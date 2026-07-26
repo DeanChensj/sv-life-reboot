@@ -251,9 +251,9 @@ export const events: Record<string, GameEvent> = {
       {
         text: '直接找工作 (开始受苦)',
         effect: (s) => s.year === 2020 
-          ? { message: '疫情爆发！各大公司全面冻结招聘，应届生根本找不到工作！你只能被迫继续读书。', health: s.health - 10 }
+          ? { message: '疫情爆发！各大公司全面冻结招聘，应届生根本找不到工作！你只能被迫继续留在学校延长毕业一年。', health: s.health - 10, year: s.year + 1, age: s.age + 1 }
           : { visa: 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' },
-        nextEventId: (s) => s.year === 2020 ? 'us_undergrad_grad' : 'job_hunt',
+        nextEventId: (s) => (s.year === 2020 && s.year <= 2020) ? 'us_undergrad_grad' : 'job_hunt',
       },
       {
         text: '申请大U硕士 (刷题进厂预备役 / 避避风头)',
@@ -649,13 +649,22 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '结算并迎接新的一年',
-        effect: (s) => ({ 
-           ap: s.max_ap !== undefined ? s.max_ap : 3, 
-           age: s.age + 1, 
-           gc_progress: s.gc_progress + 1, 
-           cash: s.cash + (s.tc * 0.6) - s.rent - 4, 
-           message: `扣除房租和每年 4 万的生活费后，你今年的税后结余是 ${Math.max(0, (s.tc * 0.6) - s.rent - 4).toFixed(1)} 万美元。距离拿到绿卡还差 ${5 - (s.gc_progress + 1)} 年。` 
-        }),
+        effect: (s) => {
+           const nextGc = s.visa === '绿卡' ? s.gc_progress : s.gc_progress + 1;
+           const netIncome = (s.tc * 0.6) - s.rent - 4;
+           const gcMsg = s.visa === '绿卡' 
+             ? '你已持有美国绿卡，工作生活不受约束。' 
+             : nextGc >= 5 
+               ? '你的绿卡排期终于到了！' 
+               : `距离拿到绿卡还差 ${Math.max(0, 5 - nextGc)} 年。`;
+           return { 
+              ap: s.max_ap !== undefined ? s.max_ap : 3, 
+              age: s.age + 1, 
+              gc_progress: nextGc, 
+              cash: s.cash + netIncome, 
+              message: `扣除房租和每年 4 万的生活费后，你今年的税后结余是 ${Math.max(0, netIncome).toFixed(1)} 万美元。${gcMsg}` 
+           };
+        },
         nextEventId: (s) => {
           if (s.status === 'win') return 'end';
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
@@ -678,13 +687,14 @@ export const events: Record<string, GameEvent> = {
           
           // 60% chance of LIFE event
           const lifeRand = Math.random();
-          if (lifeRand < 0.15) return s.is_married ? 'sv_daily_life' : 'dating_market';
-          if (lifeRand < 0.25) return 'car_broken';
-          if (lifeRand < 0.4) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
-          if (lifeRand < 0.55) return 'dental_emergency';
-          if (lifeRand < 0.7) return 'crypto_scam';
-          if (lifeRand < 0.8) return 'ai_wrapper_startup';
-          if (lifeRand < 0.9) return 'biohacking_party';
+          if (lifeRand < 0.14) return s.is_married ? 'sv_daily_life' : 'dating_market';
+          if (lifeRand < 0.24) return 'car_broken';
+          if (lifeRand < 0.36) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
+          if (lifeRand < 0.48) return 'dental_emergency';
+          if (lifeRand < 0.60) return 'crypto_scam';
+          if (lifeRand < 0.70) return 'xhs_boba'; // <--- Connected missing xhs_boba event!
+          if (lifeRand < 0.80) return 'ai_wrapper_startup';
+          if (lifeRand < 0.90) return 'biohacking_party';
           return 'burning_man_invite';
         },
       }
@@ -915,7 +925,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() > 0.7;
           return win 
             ? { charm: s.charm + 2, cash: s.cash, message: '你像叶问一样一打十，从黑帮手里夺回了电脑，成为了湾区传说！' }
-            : { health: s.health - 30, cash: s.cash - 5 + s.tc, message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };
+            : { health: s.health - 30, cash: Math.max(0, s.cash - 0.5), message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };
         },
         nextEventId: 'sv_daily_life',
       }
@@ -1046,7 +1056,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '小心翼翼地继续打工还贷',
         effect: (s) => ({ age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 4, health: s.health - 5 }),
-        nextEventId: (s) => s.cash > 150 ? 'end' : 'house_slave',
+        nextEventId: (s) => s.cash >= s.win_threshold ? 'end' : 'house_slave',
       },
       {
         text: '偷偷把次卧租给留学生赚点外快',
@@ -1057,6 +1067,12 @@ export const events: Record<string, GameEvent> = {
             : { age: s.age + 1, cash: s.cash + 1.5 + (s.tc * 0.6) - s.rent - 4, message: '留学生很安静，按时交租，有效缓解了你的房贷压力。' };
         },
         nextEventId: 'house_slave',
+      },
+      {
+        text: '断供卖房！回归租房生活的自由',
+        condition: (s) => s.cash < 50,
+        effect: (s) => ({ cash: s.cash + 35, has_housing: false, rent: 4, health: s.health + 10, message: '你最终无力支付房贷被迫卖房。虽砸了首付，但你卸下了沉重包袱，重新拿回流动资金。' }),
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '感觉人生一眼望到头，卖房去创业！(要求 100 万现金)',
@@ -1470,17 +1486,18 @@ export default function App() {
     // Clamp stats
     newState.health = Math.max(0, Math.min(100, newState.health));
     newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
+    newState.charm = Math.max(0, Math.min(25, newState.charm));
 
     // Check if health drops <= 0
     if (newState.health <= 0 && newState.status === 'playing') {
       newState.status = 'game_over';
-      newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
+      if (!effectResult.message) newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
     }
 
     // Check if bankrupt
     if (newState.cash < 0 && newState.status === 'playing') {
       newState.status = 'game_over';
-      newState.message = '你破产了，无法支付账单，游戏结束！';
+      if (!effectResult.message) newState.message = '你破产了，无法支付账单，游戏结束！';
     }
 
     // Check FIRE win
@@ -1495,7 +1512,10 @@ export default function App() {
     if (newState.status !== 'playing') {
       setCurrentEventId('end');
     } else {
-      const nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
+      let nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
+      if (nextId === 'sv_daily_life' && newState.ap <= 0) {
+        nextId = 'sv_year_end_settlement';
+      }
       setCurrentEventId(nextId);
     }
   };
@@ -1512,7 +1532,7 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
           
           {/* Left Column: Sticky Status Panel */}
-          <div className="lg:col-span-5 order-last lg:order-none lg:sticky lg:top-12 flex flex-col">
+          <div className="lg:col-span-5 order-first lg:order-none lg:sticky lg:top-12 flex flex-col mb-6 lg:mb-0">
             {/* Header / Title */}
             <div className="mb-10">
               <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-zinc-100 mb-3">
@@ -1628,11 +1648,14 @@ export default function App() {
                     {currentEvent.choices.map((choice, idx) => {
                       const isAvailable = !choice.condition || choice.condition(gameState);
                       
-                      // Quick and dirty regex to extract costs and requirements from text for badges
-                      // e.g. "🤖 搞 AI 独立开发 (消耗 1 精力, 2万美元) - 需要高强算法"
-                      const costMatch = choice.text.match(/\((.*?)\)/);
-                      const reqMatch = choice.text.match(/ - (.*)/);
-                      const mainText = choice.text.replace(/\(.*?\)/, '').replace(/ - .*/, '').trim();
+                      // Precise badge extraction from text
+                      const costMatch = choice.text.match(/\((消耗|花费|每年|\$|成本).*?\)/);
+                      const reqMatch = choice.text.match(/ - (.*)/) || choice.text.match(/\((需要|需|算法|高魅力|现金).*?\)/);
+                      const mainText = choice.text
+                        .replace(/\(.*?\)/g, '')
+                        .replace(/ - .*/, '')
+                        .replace(/[:：]\s*.*$/, '')
+                        .trim();
                       
                       return (
                       <button

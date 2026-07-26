@@ -513,23 +513,23 @@ export const events: Record<string, GameEvent> = {
         text: '领养一只布偶猫/金毛 (每年额外花费 1w)',
         condition: (s) => s.rent >= 2, // Needs at least a 2b2b to have space
         effect: (s) => ({ rent: s.rent + 1, charm: s.charm + 10, health: s.health + 30, has_housing: true, housing_name: s.housing_name || 'San Jose 公寓', has_pet: true, message: '你领养了毛孩子！虽然每年要多花不少钱买猫粮/狗粮和看兽医，但每次下班回家看到它，你的疲惫都一扫而空，而且在相亲软件上放宠物照片让你大受欢迎！' }),
-        nextEventId: 'big_tech_work'
+        nextEventId: 'sv_daily_life'
       },
 
       {
         text: '豪华 1b1b (每年 4 万美元): 环境好，心情愉悦',
         effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: 'San Jose 高级公寓', message: '你租下了带有池高级公寓，生活质量极高，相亲市场竞争力上升。' }),
-        nextEventId: 'big_tech_work'
+        nextEventId: 'sv_daily_life'
       },
       {
         text: '和朋友合租 2b2b (每年 2 万美元): 性价比高',
         effect: (s) => ({ rent: 2, has_housing: true, housing_name: 'Cupertino 2b2b合租', message: '你和朋友合租，偶尔会因为抢厕所和洗碗吵架，但省下了不少钱。' }),
-        nextEventId: 'big_tech_work'
+        nextEventId: 'sv_daily_life'
       },
       {
         text: '挂壁大客厅 (每年 1 万美元): 终极省钱',
         effect: (s) => ({ rent: 1, charm: s.charm - 2, health: s.health - 15, has_housing: true, housing_name: '客厅屏风隔间', message: '你睡在客厅，用帘子隔开。每天被室友做饭吵醒，毫无隐私，连相亲都不敢带人回家。' }),
-        nextEventId: 'big_tech_work'
+        nextEventId: 'sv_daily_life'
       }
     ]
   },
@@ -943,18 +943,46 @@ export const events: Record<string, GameEvent> = {
              : nextGc >= 5 
                ? '你的绿卡排期终于到了！' 
                : `距离拿到绿卡还差 ${Math.max(0, 5 - nextGc)} 年。`;
+
+            // H1B 年底自动抽签逻辑
+            let h1bMsg = '';
+            let newVisa = s.visa;
+            let newAttempts = s.h1b_attempts || 0;
+
+            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed') {
+              newAttempts += 1;
+              const winRate = 0.35 + (s.luck / 100) * 0.3;
+              const win = Math.random() < winRate;
+              if (win) {
+                newVisa = 'H1B (工签)';
+                h1bMsg = ` 🎉 人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
+              } else {
+                if (newAttempts === 1) {
+                  h1bMsg = ' 💔 第一年 H1B 未中签！已开启 STEM OPT 2 年延期，明年还有抽签机会！';
+                } else if (newAttempts === 2) {
+                  h1bMsg = ' 💔 第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，压力山大！';
+                } else {
+                  h1bMsg = ' 💥 警告：三年 H1B 抽签均未能中签！身份即将在今年到期，面临离境危机！';
+                }
+              }
+            }
            return { 
               ap: s.max_ap !== undefined ? s.max_ap : 3, 
               age: s.age + 1, 
               year: s.year + 1,
-              gc_progress: nextGc, 
+              visa: newVisa,
+               h1b_attempts: newAttempts,
+               gc_progress: nextGc, 
               cash: s.cash + netIncome,
               health: newHealth,
-              message: `扣除税收、房租、加州房产税与基础家庭开支 ${baseLiving.toFixed(1)} 万后，你今年的税后净结余是 ${netIncome > 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}${companyMsg}` 
+              message: `扣除税收、房租、加州房产税与基础家庭开支 ${baseLiving.toFixed(1)} 万后，你今年的税后净结余是 ${netIncome > 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}${companyMsg}${h1bMsg}` 
            };
         },
         nextEventId: (s) => {
           if (s.status === 'win') return 'end';
+          if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
+            return 'h1b_final_crisis';
+          }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
           
           const rand = Math.random();
@@ -1399,6 +1427,42 @@ export const events: Record<string, GameEvent> = {
         text: '立刻开始刷题，准备后路',
         effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 10, cash: s.cash, message: '你偷偷在上班时间刷题。果不其然，你被裁了，但你已经做好了准备。' }),
         nextEventId: 'layoff_hit',
+      }
+    ]
+  },
+  'h1b_final_crisis': {
+    id: 'h1b_final_crisis',
+    title: 'H1B 三抽不中 (绝境危机)',
+    description: '连续三年 H1B 抽签全军覆没！你的 STEM OPT 即将到期，公司 HR 和律所发来最终通知：必须在 30 天内解决合法身份，否则将被终止合同并安排外派离境！',
+    choices: [
+      {
+        text: '砸 $8w 现金找顶尖律师紧急加急办理 O1 杰出人才签证 (需要现金 >= $8w)',
+        condition: (s) => s.cash >= 8,
+        effect: (s) => {
+          const pass = Math.random() < (0.65 + (s.is_phd ? 0.25 : 0) + (s.leetcode >= 60 ? 0.1 : 0));
+          return pass
+            ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和项目中的亮点，成功压线批准了 O1 签证！绝地求生！' }
+            : { cash: s.cash - 8, health: s.health - 20, message: '移民局驳回了 O1 申请，$8w 律师费打了水漂...' };
+        },
+        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
+      },
+      {
+        text: '紧急闪婚领证 (靠公民/绿卡对象救急)',
+        effect: (s) => {
+          const fake = Math.random() > 0.8;
+          return fake
+            ? { status: 'game_over', message: '移民局严肃调查判定为虚假婚姻，你被当场遣返回国并终身禁入美国，游戏结束！' }
+            : { visa: '绿卡', is_married: true, message: '在绝境中你与对象紧急领证结婚，顺理成章提交了婚姻绿卡申请，拯救了身份！' };
+        },
+        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : 'post_green_card',
+      },
+      {
+        text: '接受外派温哥华/多伦多 L1 办公室 (离开硅谷离境)',
+        effect: (s) => ({
+          status: 'game_over',
+          message: '三年 H1B 均未抽中。你站在 SFO 机场准备登机外派温哥华 L1 办公室，看着加州湾区的夕阳，硅谷梦碎。'
+        }),
+        nextEventId: 'end',
       }
     ]
   },

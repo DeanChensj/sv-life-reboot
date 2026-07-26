@@ -902,17 +902,7 @@ export const events: Record<string, GameEvent> = {
          },
          nextEventId: 'sv_daily_life'
       },
-      {
-         text: '【社交】去 Movement / Planet Granite 攀岩馆 (消耗 1 精力, $0.01w) - 湾区最流行的码农技术社交',
-         condition: (s) => s.ap > 0 && s.cash >= 0.01,
-         effect: (s) => {
-           const staffNetwork = Math.random() < 0.35;
-           return staffNetwork
-             ? { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 4), tc: s.tc + 4, message: '你在抱石馆脱掉镁粉手套抱岩壁，旁边一位穿着始祖鸟黑标的老哥向你攀谈，聊天才发现是隔壁组的 Staff Engineer！对方欣赏你的解题节奏，直通荐你去核心 AI 架构团队！' }
-             : { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 25), charm: Math.min(25, s.charm + 3), message: '虽然前臂小臂肌肉酸痛得拿不稳水杯，但你成功顶住了 V5 的黑点挂墙，心理压力一扫而空，神清气爽！' };
-         },
-         nextEventId: 'sv_daily_life',
-      },
+
       {
          text: '【形象】医美与私教 (消耗 1 精力, $3w) - 提升魅力和健康',
          condition: (s) => s.ap > 0 && s.cash >= 3,
@@ -1092,7 +1082,11 @@ export const events: Record<string, GameEvent> = {
               'burning_man_invite',
               'boardgame_dating',
               'breakup_crisis',
-              'visa_check'
+              'visa_check',
+              'rock_climbing_event',
+              'tennis_networking',
+              'bay_area_hiking',
+              'hawaii_vacation'
             ];
 
             if (!s.is_married && Math.random() < 0.35) {
@@ -2272,6 +2266,117 @@ export const events: Record<string, GameEvent> = {
             ? { tc: s.tc + 3, cash: s.cash + 2, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板塞给你一份兼职外包合同，赚了点外快。' }
             : { message: '你和老板聊了半天，发现对方只是想白嫖你写个订餐小程序，你礼貌地拒绝了。' };
         },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'rock_climbing_event': {
+    id: 'rock_climbing_event',
+    title: '【湾区潮流】Movement 抱石馆的黑标大佬',
+    description: '周末你穿上始祖鸟，来到了 Sunnyvale 的 Movement 抱石馆。馆里到处都是身穿 Lululemon 和始祖鸟黑标的硅谷码农在研究 V4/V5 路线。',
+    choices: [
+      {
+        text: '挑战 V5 难度黑点路线 (体验攀岩硬核快感)',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 20),
+          charm: Math.min(25, s.charm + 3),
+          message: '你顶住了侧拉与脚尖 Hook 挂墙，成功 Top out 登顶！虽然前臂肌肉酸痛，但心理压力一扫而空，神清气爽！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '与旁边脱下镁粉袋的老哥交流动态跳跃 (尝试搭讪拓展人脉)',
+        effect: (s) => {
+          const win = Math.random() < 0.45;
+          return win
+            ? {
+                tc: s.tc + 5,
+                charm: Math.min(25, s.charm + 4),
+                health: Math.min(100, s.health + 15),
+                message: '聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，直通推荐你去了核心 AI 算力架构团队！TC 暴涨！'
+              }
+            : {
+                health: Math.min(100, s.health + 20),
+                charm: Math.min(25, s.charm + 2),
+                message: '老哥热情地向你分享了他的动态挂脚技巧，你们加了 Strava 好友，约定下周末继续来刷 V5 路线。'
+              };
+        },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'tennis_networking': {
+    id: 'tennis_networking',
+    title: '【湾区精英】Cupertino 网球场双打局',
+    description: '周六加州阳光明媚，你带着 Babolat 拍子来到了 Cupertino 的网球场。几位大厂 Senior 与 Startup Founder 正好缺一个双打搭档...',
+    choices: [
+      {
+        text: '轰出 100mph 强力发球，统治比赛',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 20),
+          charm: Math.min(25, s.charm + 4),
+          message: '你的正手上旋与发球统治了全场！球友们直呼“湾区费德勒”，纷纷拉你进南湾高端网球俱乐部群，相亲与社交胜率大增！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '打温和拉球，场下与搭档畅聊 AI 风口与美股',
+        effect: (s) => ({
+          cash: s.cash + 4,
+          health: Math.min(100, s.health + 10),
+          charm: Math.min(25, s.charm + 2),
+          message: '打完球后大家在场边喝电解质水，搭档大佬随口指点了你几只算力概念股，你果断跟进，随后获得了 $4w 美金的短期投资回报！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'bay_area_hiking': {
+    id: 'bay_area_hiking',
+    title: '【硅谷仪式感】Fremont Mission Peak 登顶拔剑',
+    description: '周末清晨，你被朋友拉去 Fremont 的 Mission Peak 徒步。面对 6 英里无遮挡的大斜坡与湾区烈日，你一步步迈向山顶那根著名的“拔剑柱” (Mission Peaker)...',
+    choices: [
+      {
+        text: '一口气冲上山顶，在拔剑柱前拍 OOTD 大片',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 25),
+          charm: Math.min(25, s.charm + 3),
+          message: '站在 Mission Peak 顶峰俯瞰整个旧金山湾区与 237 公路！你在拔剑柱前拍的帅气写真在朋友圈和小红书获得了上百个赞！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '中途在草地上躺平休养，呼吸湾区新鲜空气',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 30),
+          message: '阳光洒在身上，看着远处的牛群与红木山谷，你久违地感受到了灵魂的放松与惬意。'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'hawaii_vacation': {
+    id: 'hawaii_vacation',
+    title: '【WLB神仙体验】夏威夷 Maui 岛度假避世',
+    description: '积攒了一整年的 PTO 假期，你终于买好了飞往夏威夷 (Hawaii) 的机票。漫步在威基基海滩 (Waikiki) 的落日余晖中，手里拿着冰镇椰汁与新鲜 Poke ...',
+    choices: [
+      {
+        text: '体验欧胡岛冲浪与火山潜水 (花费 $0.8w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.8),
+          health: Math.min(100, s.health + 35),
+          charm: Math.min(25, s.charm + 4),
+          message: '太平洋的海浪与彩虹彻底洗去了写代码的疲惫！你的体能恢复满格，带着一身健康的阳光小麦肤色重返硅谷！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '海景酒店阳台躺平，听海浪声睡三整天 (花费 $0.4w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.4),
+          health: Math.min(100, s.health + 40),
+          message: '彻底关闭 Slack 和 Outlook 提醒！在海浪声中睡到了自然醒，Burnout 症状被完美治愈。'
+        }),
         nextEventId: 'sv_daily_life'
       }
     ]

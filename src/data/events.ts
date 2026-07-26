@@ -648,8 +648,8 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '🏡 参加湾区加价抢房大战 (购买买房置业, 消耗 1 精力) - (需现金 >= $28w)',
-         condition: (s) => s.ap > 0 && s.cash >= 28 && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
+         text: '🏡 参加湾区加价抢房大战 (购买买房置业, 消耗 1 精力) - (需现金 >= $40w)',
+         condition: (s) => s.ap > 0 && s.cash >= 40 && !['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || ''),
          effect: (s) => ({ ap: s.ap - 1, message: '你拿着这些年攒下的首付本金与股票，精神抖擞地走向了 Open House 现场！' }),
          nextEventId: 'buy_house',
       },
@@ -1408,9 +1408,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🏢 买 North San Jose 现代挑高高密度 Townhouse (首付 $28w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
-        condition: (s) => s.cash >= 28,
-        effect: (s) => ({ cash: s.cash - 28, rent: 2.5, has_housing: true, housing_name: 'North San Jose 联排', charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
+        text: '🏢 买 North San Jose 现代挑高高密度 Townhouse (首付 $40w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
+        condition: (s) => s.cash >= 40,
+        effect: (s) => ({ cash: s.cash - 40, rent: 2.5, has_housing: true, housing_name: 'North San Jose 联排', charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
         nextEventId: 'sv_daily_life',
       },
       {

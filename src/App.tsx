@@ -1675,12 +1675,12 @@ export default function App() {
               <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                 <div className="relative z-10">
-                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">现金资产 (Cash)</div>
-                  <div className="text-4xl font-bold tracking-tight text-emerald-400">${gameState.cash.toFixed(1)}w</div>
+                  <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-1">现金资产 (Cash)</div>
+                  <div className="text-4xl font-extrabold font-mono tabular-nums tracking-tight text-emerald-400">${gameState.cash.toFixed(1)}w</div>
                 </div>
                 <div className="text-right relative z-10">
-                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">当前总包 (TC)</div>
-                  <div className="text-2xl font-semibold tracking-tight text-zinc-200">${gameState.tc.toFixed(1)}w</div>
+                  <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-1">当前总包 (TC)</div>
+                  <div className="text-2xl font-bold font-mono tabular-nums tracking-tight text-zinc-100">${gameState.tc.toFixed(1)}w</div>
                 </div>
               </div>
               
@@ -1688,17 +1688,17 @@ export default function App() {
               {gameState.ap !== undefined && (currentEventId === 'sv_daily_life' || currentEventId === 'sv_year_end_settlement' || currentEventId === 'dating_market' || currentEventId === 'biohacking_party' || currentEventId === 'crypto_scam' || currentEventId === 'ai_wrapper_startup' || currentEventId === 'burning_man_invite' || currentEventId === 'stock_crash' || currentEventId === 'car_broken' || currentEventId === 'dental_emergency' || currentEventId === 'post_green_card' || currentEventId === 'layoff_rumor' || currentEventId === 'perf_review' || currentEventId === 'friday_pip' || currentEventId === 'visa_check') && (
               <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex items-center gap-6">
                 <div className="flex-1">
-                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-2">本年剩余精力 (AP)</div>
+                  <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-2">本年剩余精力 (AP)</div>
                   <div className="flex gap-2">
                     {Array.from({ length: gameState.max_ap || 3 }).map((_, i) => (
                       <div 
                         key={i} 
-                        className={`h-3 flex-1 rounded-full transition-all duration-300 ${i < gameState.ap ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-zinc-800'}`}
+                        className={`h-3 flex-1 rounded-full transition-all duration-300 ${i < gameState.ap ? 'bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.6)]' : 'bg-zinc-800/80'}`}
                       />
                     ))}
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-indigo-400 whitespace-nowrap">
+                <div className="text-2xl font-extrabold font-mono tabular-nums tracking-tight text-indigo-400 whitespace-nowrap">
                   {gameState.ap} / {gameState.max_ap || 3}
                 </div>
               </div>
@@ -1706,9 +1706,10 @@ export default function App() {
 
               {/* Health */}
               <div className="col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
-                <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-2">健康状态</div>
+                <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-2">健康状态</div>
                 <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold tracking-tight text-zinc-100">{Math.max(0, gameState.health)}</span>
+                  <span className="text-3xl font-extrabold font-mono tabular-nums tracking-tight text-zinc-100">{Math.max(0, gameState.health)}</span>
+                  <span className="text-xs font-mono text-zinc-500 mb-1">/100</span>
                 </div>
                 <div className="w-full bg-zinc-950 rounded-full h-1.5 mt-3 overflow-hidden">
                   <div 
@@ -1719,19 +1720,19 @@ export default function App() {
 
               {/* LeetCode & Year */}
               <div className="col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex flex-col justify-between">
-                <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">LeetCode</div>
-                <div className="text-3xl font-bold tracking-tight text-zinc-100">{gameState.leetcode}</div>
+                <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-1">LeetCode</div>
+                <div className="text-3xl font-extrabold font-mono tabular-nums tracking-tight text-amber-300">{gameState.leetcode}</div>
               </div>
               
               {/* Timeline */}
               <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
                 <div>
-                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">当前年份</div>
-                  <div className="text-xl font-medium text-zinc-300">{gameState.year}</div>
+                  <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-1">当前年份</div>
+                  <div className="text-xl font-bold font-mono tabular-nums text-zinc-200">{gameState.year}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em] mb-1">年龄</div>
-                  <div className="text-xl font-medium text-zinc-300">{gameState.age} 岁</div>
+                  <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-1">年龄</div>
+                  <div className="text-xl font-bold font-mono tabular-nums text-zinc-200">{gameState.age} 岁</div>
                 </div>
               </div>
 

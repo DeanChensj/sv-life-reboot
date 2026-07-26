@@ -25,6 +25,7 @@ interface GameState {
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed';
   imageUrl?: string;
   has_housing: boolean;
+  car?: 'none' | 'model_y' | 'porsche' | 'cybertruck';
   status: 'playing' | 'game_over' | 'win';
   message: string;
   ap: number;
@@ -102,6 +103,7 @@ export const generateInitialState = (): GameState => {
     win_threshold: 1000,
     laid_off: false,
     has_housing: false,
+    car: 'none',
     status: 'playing',
     message: bgMessage
   };
@@ -623,6 +625,24 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life'
       },
       {
+         text: '🚗 贷款分期购买白色 Tesla Model Y (消耗 1 精力, 4万) - 湾区最标准的民工街车',
+         condition: (s) => s.ap > 0 && s.cash >= 4 && s.car !== 'model_y' && s.car !== 'porsche' && s.car !== 'cybertruck',
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 4, car: 'model_y', charm: s.charm + 4, message: '你提了一台最标准的白色 Model Y。去 Cupertino 买奶茶在停车场发现身旁停了 6 台一模一样的车，你按半天钥匙开错别人的车门。' }),
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '🏎️ 提一台保时捷 Porsche Macan / Taycan (消耗 1 精力, 12万) - 破防相亲圈',
+         condition: (s) => s.ap > 0 && s.cash >= 12 && s.car !== 'porsche',
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 12, car: 'porsche', charm: Math.min(25, s.charm + 12), health: s.health + 10, message: '开上保时捷的那一刻，你感觉自己脱离了普通码农的范畴！CMB 约会匹配率与游艇局待遇飙升！' }),
+         nextEventId: 'sv_daily_life',
+      },
+      {
+         text: '📐 提一台赛博皮卡 Tesla Cybertruck (消耗 1 精力, 9万) - 科技硬核装逼',
+         condition: (s) => s.ap > 0 && s.cash >= 9 && s.car !== 'cybertruck',
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 9, car: 'cybertruck', charm: Math.min(25, s.charm + 8), leetcode: s.leetcode + 5, message: '开着硬核多边形皮卡上 237 公路，所有人都以为你是 Hayes Valley 刚拿到 A 轮融资的硬核 AI Founder！' }),
+         nextEventId: 'sv_daily_life',
+      },
+      {
          text: '❤️ 去 CMB 约会相亲 (消耗 1 精力)',
          condition: (s) => s.ap > 0 && !s.is_married,
          effect: (s) => ({ ap: s.ap - 1, message: '你去 Santana Row 喝了杯奶茶。' }),
@@ -692,11 +712,116 @@ export const events: Record<string, GameEvent> = {
           if (lifeRand < 0.36) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
           if (lifeRand < 0.48) return 'dental_emergency';
           if (lifeRand < 0.60) return 'crypto_scam';
-          if (lifeRand < 0.70) return 'xhs_boba'; // <--- Connected missing xhs_boba event!
+          if (lifeRand < 0.08) return 'blind_team_tea';
+          if (lifeRand < 0.16) return 'zoom_camera_off_leetcode';
+          if (lifeRand < 0.24) return 'boba_inflation';
+          if (lifeRand < 0.32) return 'rsu_vesting_crash';
+          if (lifeRand < 0.40) return 'h1b_rfe_vs_parent_nag';
+          if (lifeRand < 0.50) return 'xhs_boba'; // <--- Connected missing xhs_boba event!
           if (lifeRand < 0.80) return 'ai_wrapper_startup';
           if (lifeRand < 0.90) return 'biohacking_party';
           return 'burning_man_invite';
         },
+      }
+    ]
+  },
+  'blind_team_tea': {
+    id: 'blind_team_tea',
+    title: '【Blind黑料】深夜吃瓜突然吃到自己头上',
+    description: '深夜一点半，你躺在 Sunnyvale 的床上翻看 Blind。热榜第一条加红帖标题赫然写着：\n"Avoid Org [X] in [Company]: Micromanaging Director pip-ing top performers to hit quota, run before it is too late!"\n你越读越心惊——代号项目名、下周 Milestone 日期、以及下午 4 点死盯 Progress 的习惯……这说的特么不就是你的组？！',
+    choices: [
+      {
+        text: '混水摸鱼匿名跟帖：“TC 380k，做过同组，TL 人格分裂确实坑”',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 2), health: s.health - 5, message: '你出了一口恶气，但第二天看到 Manager 脸色阴沉地在全员会强调“我们要加强团队信任与通力协作”。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '极度恐慌！连夜关摄像头，边开全员大会边狂刷 LeetCode 备战跳槽',
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: s.health - 15, message: '你吓得半夜爬起来刷了 6 道动态规划困难题，咖啡因过量导致心率达到了 130。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '私信发帖人“同在湾区可以加微信交流吗”，结果发现是隔壁工位的同胞',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 3), cash: Math.max(0, s.cash - 0.2), message: '你们在 Palo Alto 密谋了一下午抱团取暖指南，并交换了彼此的 Referral 资源库。' }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'zoom_camera_off_leetcode': {
+    id: 'zoom_camera_off_leetcode',
+    title: '【多任务大师】“不好意思刚才我 Mute 了”',
+    description: '部门 60 人的 Quarterly Architecture Review 线上大会正在进行。你关着摄像头、开启静音，一边听高管讲 AI Roadmap，一边全神贯注地切 LeetCode 困难题 #2097。\n突然 Principal Architect 话锋一转：“[你的名字]，针对刚才这个微服务重构方案，你觉得 Rust 和 Go 哪个更适合你们组？”',
+    choices: [
+      {
+        text: '老油条废话推手：“Hello？抱歉刚才 AirPods 断了……我觉得这个要看 Trade-off，建议我们 Offline 找时间 Align 一下。”',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 2), message: '经典的硅谷废话太极！高管满意地点了点头，你成功保住了饭碗并继续写出 O(1) 空间复杂度的指针翻转。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '手滑点错！把力扣 Hard 解题窗口共享给了全公司 60 个人！',
+        effect: (s) => ({ health: s.health - 15, charm: Math.min(25, s.charm + 8), cash: s.cash + 10, message: '会议室内一片死寂。你把自己的社死截图匿名发到小红书《全员大会手滑投影了力扣Hard怎么破？》，收获 3 万点赞和 200 条求职 Referral 软广费！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '3 秒把问题扔给 ChatGPT，照着读“High throughput, horizontal scalability, zero-cost abstractions”',
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 5), tc: s.tc + 2, message: '高管赞叹你的技术深度，当场决定下季度让你负责这个高风险架构重组。' }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'rsu_vesting_crash': {
+    id: 'rsu_vesting_crash',
+    title: '【归属日渡劫】从准备买 Palo Alto 到看 Milpitas 打折便当',
+    description: '入职第四年，传说中的 4-Year RSU Vesting Cliff (股票归属崖) 正式到来，然而恰逢宏观加息加科技股大暴跌，公司股价从你入职时的 $380 暴跌至 $42。\n你打开 E*TRADE 账户，原本预估的 $40 万美元股票市值缩水成了“能够买两台二手特斯拉”。',
+    choices: [
+      {
+        text: '心理防御倒塌：“哥们，你们厂现在有 Referral 吗？包身份就行，TC 随缘！”',
+        effect: (s) => ({ tc: Math.max(10, s.tc - 5), health: s.health - 10, message: '你含泪跳槽去了一家给钱更少但至少股价底部的公司，重新开始坐 4 年股票牢。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》',
+        effect: (s) => ({ cash: s.cash + 15, charm: Math.min(25, s.charm + 4), message: '网友太喜欢看硅谷中产受苦了！你的小红书粉丝暴涨，光是电竞椅和挂壁盒饭的广告费就填补了股票亏损。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '死扛信仰！每天去大华超市买促销打折盒饭，熬到中东主权基金收购',
+        effect: (s) => ({ health: s.health - 12, luck: Math.min(45, s.luck + 8), message: '你开启了硅谷极简苦行僧模式，胃功能下降了，但心智磨砺得坚不可催。' }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'boba_inflation': {
+    id: 'boba_inflation',
+    title: '【湾区物价】一杯 $13 的珍珠奶茶与四个小费按钮',
+    description: '周六下午，你来到 Cupertino 的奶茶店。点了一杯“黑糖珍珠鲜奶微糖加蛋布丁”，结账单显示：$12.85。\n接着店员把旋转 iPad 屏幕转面向你，提示音响起，屏幕上赫然出现四个巨大按钮：\n【20%】   【25%】   【30%】   【Custom】',
+    choices: [
+      {
+        text: '冒着被店员白眼的风险，眯着眼准确点击极小的字体 Custom Tip -> $0.50',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), charm: Math.max(0, s.charm - 1), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '痛快点击 25%，拍照发朋友圈：“湾区物价让硅谷 L5 活得不如国内县城中产 [流泪]”',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 2), message: '你的朋友圈成功引起了老同学的围观和暗酸，完成了标准的硅谷式哭穷炫耀。' }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'h1b_rfe_vs_parent_nag': {
+    id: 'h1b_rfe_vs_parent_nag',
+    title: '【周五噩梦】移民局 80 页 RFE 信遇到老妈 60 秒语音',
+    description: '周五下午 4:55，律所律师发来紧急邮件：“USCIS 针对你的 H1B 发出了 Specialty Occupation RFE，质疑写前端 React 代码不需要计算机学士学位。”\n与此同时，你微信弹出老妈连续三条 60 秒语音：“隔壁王阿姨的小儿子在老家公务员双胞胎都两岁了！你整天在美利坚租房 4000 美金图个啥？！今年到底带不带女朋友回来？！”',
+    choices: [
+      {
+        text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
+        effect: (s) => ({ health: Math.max(10, s.health - 25), visa: 'H1B (工签)', message: '你用极具创造性的学术废话打动了移民局官员，获得了 3 年 H1B！但你的头发掉了三分之一。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: s.charm + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -983,8 +1108,8 @@ export const events: Record<string, GameEvent> = {
       {
         text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万)',
         condition: (s) => s.cash >= 300,
-        effect: (s) => ({ cash: s.cash - 300, has_housing: true, charm: s.charm + 50, health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
-        nextEventId: 'post_green_card',
+        effect: (s) => ({ visa: '绿卡', cash: s.cash - 300, has_housing: true, charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '加入抢房大战 (正常买房)',
@@ -994,20 +1119,21 @@ export const events: Record<string, GameEvent> = {
       {
         text: '搞副业炒股：梭哈英伟达 (NVDA)！',
         effect: (s) => {
-          const win = Math.random() > (s.luck >= 80 ? 0.1 : 0.3);
+          const winProb = 0.25 + (Math.min(45, s.luck) / 150);
+          const win = Math.random() < winProb;
           return win
-            ? { visa: '绿卡', cash: s.cash * 3, message: '皮衣黄刀法精准！英伟达市值突破天际，你直接财富自由了！', status: 'win' }
-            : { visa: '绿卡', cash: s.cash / 2, health: s.health - 20, message: '买在了高位... 股票腰斩，只能继续回去打工了。' };
+            ? { visa: '绿卡', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
+            : { visa: '绿卡', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
         },
-        nextEventId: (s) => s.cash > 200 ? 'end' : 'post_green_card',
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '辞职！凭多年大厂的技术积累直接搞 AI Startup',
         effect: (s) => {
           const success = s.leetcode >= 50 && Math.random() < 0.3;
           return success
-            ? { age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
-            : { age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
+            ? { visa: '绿卡', age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
+            : { visa: '绿卡', age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
         },
         nextEventId: 'sv_daily_life',
       },
@@ -1018,7 +1144,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '彻底摆烂，佛系上班',
-        effect: (s) => ({ health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
+        effect: (s) => ({ visa: '绿卡', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -1043,8 +1169,8 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '太卷了，我去东湾买新房',
-        effect: (s) => ({ cash: s.cash - 40, health: s.health + 10, message: '你搬到了偏远但宽敞的新房，每天通勤 2 小时，在 880 上堵到怀疑人生。' }),
-        nextEventId: 'post_green_card',
+        effect: (s) => ({ visa: '绿卡', cash: s.cash - 40, health: s.health + 10, message: '你搬到了偏远但宽敞的新房，每天通勤 2 小时，在 880 上堵到怀疑人生。' }),
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -1609,6 +1735,14 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Car Status */}
+              <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
+                <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em]">当前座驾</div>
+                <div className="text-sm font-semibold text-indigo-300 bg-indigo-500/10 px-3 py-1.5 rounded-full">
+                  {gameState.car === 'porsche' ? '🏎️ 保时捷 Porsche' : gameState.car === 'cybertruck' ? '📐 赛博皮卡' : gameState.car === 'model_y' ? '🚗 特斯拉 Model Y' : '🚶 徒步/11路'}
+                </div>
+              </div>
+
               {/* Visa */}
               <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
                 <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em]">签证状态</div>
@@ -1694,19 +1828,140 @@ export default function App() {
                   </div>
                 </>
                ) : (
-                <div className="text-center py-16">
-                  <h2 className={`text-5xl md:text-6xl font-bold tracking-tight mb-6 ${gameState.status === 'win' ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {gameState.status === 'win' ? '通关成功' : '游戏结束'}
-                  </h2>
-                  <p className="text-xl text-zinc-400 mb-12 leading-relaxed max-w-md mx-auto">
-                    {gameState.status === 'win' ? '你成功在硅谷生存下来，实现了自己的目标！' : gameState.message}
-                  </p>
-                  <button
-                    onClick={resetGame}
-                    className="px-10 py-5 rounded-full bg-zinc-100 text-zinc-950 hover:bg-white transition-colors duration-200 font-bold text-xl active:scale-[0.98]"
-                  >
-                    再次重开人生
-                  </button>
+                <div className="py-8 animate-in fade-in duration-500">
+                  <div className="text-center mb-8">
+                    <span className={`text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border ${gameState.status === 'win' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                      {gameState.status === 'win' ? '🎉 FIRE 财务自由通关' : '💀 硅谷生存中断'}
+                    </span>
+                    <h2 className={`text-4xl md:text-5xl font-extrabold tracking-tight mt-4 mb-3 ${gameState.status === 'win' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {gameState.status === 'win' ? '人生巅峰：财务自由！' : '硅谷生存结语'}
+                    </h2>
+                    <p className="text-zinc-300 text-lg max-w-xl mx-auto leading-relaxed">
+                      {gameState.message}
+                    </p>
+                  </div>
+
+                  {/* Bento Medals & Stats Card */}
+                  <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden shadow-2xl">
+                    <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-4 flex items-center justify-between">
+                      <span>🏆 你的硅谷生涯获得勋章 (Persona Medals)</span>
+                      <span>{gameState.year} 年 | {gameState.age} 岁</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                      {gameState.leetcode >= 60 && (
+                        <div className="bg-zinc-900/90 border border-amber-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">💻</span>
+                          <div>
+                            <div className="font-bold text-amber-300 text-sm">【做题神仙】</div>
+                            <div className="text-xs text-zinc-400">LeetCode 算法真经通关，随时手撕 Hard 题</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.charm >= 18 && (
+                        <div className="bg-zinc-900/90 border border-rose-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">💃</span>
+                          <div>
+                            <div className="font-bold text-rose-300 text-sm">【南湾顶流名流】</div>
+                            <div className="text-xs text-zinc-400">魅力值爆表，Santana Row 相亲收割机</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.cash >= 300 && (
+                        <div className="bg-zinc-900/90 border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">💰</span>
+                          <div>
+                            <div className="font-bold text-emerald-300 text-sm">【Atherton 征服者】</div>
+                            <div className="text-xs text-zinc-400">积攒重金，成功跨越硅谷阶级门槛</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.car === 'cybertruck' && (
+                        <div className="bg-zinc-900/90 border border-cyan-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">📐</span>
+                          <div>
+                            <div className="font-bold text-cyan-300 text-sm">【赛博朋克硬核族】</div>
+                            <div className="text-xs text-zinc-400">驾驶多边形皮卡征服 237 号公路</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.car === 'porsche' && (
+                        <div className="bg-zinc-900/90 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">🏎️</span>
+                          <div>
+                            <div className="font-bold text-purple-300 text-sm">【脱离民工车鄙视链】</div>
+                            <div className="text-xs text-zinc-400">告别街车 Model Y，开上保时捷震撼全场</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.visa === '绿卡' && (
+                        <div className="bg-zinc-900/90 border border-blue-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">🇺🇸</span>
+                          <div>
+                            <div className="font-bold text-blue-300 text-sm">【上岸自由身】</div>
+                            <div className="text-xs text-zinc-400">彻底甩开 USCIS 抽签与 H1B 签证枷锁</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.status === 'game_over' && gameState.health <= 0 && (
+                        <div className="bg-zinc-900/90 border border-red-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">💀</span>
+                          <div>
+                            <div className="font-bold text-red-300 text-sm">【荣誉 Burnout 社畜】</div>
+                            <div className="text-xs text-zinc-400">牺牲自我健康，照亮公司季度 OKR 交付</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.status === 'game_over' && gameState.cash <= 0 && (
+                        <div className="bg-zinc-900/90 border border-orange-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="text-2xl">💸</span>
+                          <div>
+                            <div className="font-bold text-orange-300 text-sm">【湾区月光大慈善家】</div>
+                            <div className="text-xs text-zinc-400">把高额总包全额上交给了房东与 $13 奶茶</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stats Summary Table */}
+                    <div className="grid grid-cols-4 gap-2 bg-zinc-900/60 p-4 rounded-2xl text-center text-xs">
+                      <div>
+                        <div className="text-zinc-500 mb-1">最终现金</div>
+                        <div className="font-bold text-emerald-400 text-base">${gameState.cash.toFixed(1)}w</div>
+                      </div>
+                      <div>
+                        <div className="text-zinc-500 mb-1">峰值总包</div>
+                        <div className="font-bold text-zinc-200 text-base">${gameState.tc}w</div>
+                      </div>
+                      <div>
+                        <div className="text-zinc-500 mb-1">LeetCode</div>
+                        <div className="font-bold text-zinc-200 text-base">{gameState.leetcode} 题</div>
+                      </div>
+                      <div>
+                        <div className="text-zinc-500 mb-1">魅力指数</div>
+                        <div className="font-bold text-rose-300 text-base">{gameState.charm} pts</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                      onClick={() => {
+                        const summaryText = `【硅谷模拟人生】我的生涯结语：\n${gameState.status === 'win' ? '🎉 成功实现 FIRE 财务自由通关！' : '💀 遗憾挂彩中断生存。'}\n最终资产: $${gameState.cash.toFixed(1)}万 | 年龄: ${gameState.age}岁 | 力扣: ${gameState.leetcode}题\n结语: ${gameState.message}\n来挑战你的硅谷人生！`;
+                        navigator.clipboard.writeText(summaryText);
+                        alert('已复制你的硅谷人生小红书/朋友圈分享文案！');
+                      }}
+                      className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.98]"
+                    >
+                      📋 复制我的战绩（发小红书/朋友圈）
+                    </button>
+                    <button
+                      onClick={resetGame}
+                      className="px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-base transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20"
+                    >
+                      🔄 再次重开人生
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

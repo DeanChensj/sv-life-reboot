@@ -199,10 +199,15 @@ export const events: Record<string, GameEvent> = {
     description: '四年过去了，你顺利从美国大学毕业，目前持有 OPT。现在是找工作还是继续深造？',
     choices: [
       {
-        text: '申请北美顶尖 PhD (做 Research) (需 LeetCode >= 30)',
+        text: '申请北美顶尖 PhD (录取率低, 需 LeetCode >= 30)',
         condition: (s) => s.leetcode >= 30,
-        effect: (s) => ({ cash: s.cash + 2, age: s.age + 1 }),
-        nextEventId: 'phd_life',
+        effect: (s) => {
+          const pass = Math.random() < (0.30 + (s.school === 'cmu' ? 0.25 : 0) + (s.leetcode >= 70 ? 0.20 : 0));
+          return pass 
+            ? { cash: s.cash + 2, age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '大喜讯！你战胜了数千名申请者，斩获北美顶级 CS 全奖 PhD Offer！' }
+            : { health: s.health - 15, age: s.age + 1, message: '全墨惨案！今年 CS 顶校 PhD 全奖录取率不到 3%，你的推荐信被审稿人刷了，惨遭拒信。' };
+        },
+        nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'job_hunt',
       },
 
       {
@@ -226,10 +231,15 @@ export const events: Record<string, GameEvent> = {
     description: '四年过去了，你在国内大学打下了坚实的代码基础。接下来去哪里？',
     choices: [
       {
-        text: '全奖直博美国 (北美学术民工) (需 LeetCode >= 30)',
+        text: '全奖直博美国 (录取率地狱级, 需 LeetCode >= 30)',
         condition: (s) => s.leetcode >= 30,
-        effect: (s) => ({ cash: s.cash + 2, visa: 'F1 (学生)', age: s.age + 1, housing_name: '美国 博士实验室' }),
-        nextEventId: 'phd_life',
+        effect: (s) => {
+          const pass = Math.random() < (0.25 + (s.leetcode >= 80 ? 0.30 : 0));
+          return pass
+            ? { cash: s.cash + 2, visa: 'F1 (学生)', age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '奇迹！凭着陆本顶尖算法功底，你跨海斩获了美国 CS 全奖直博 Offer！' }
+            : { health: s.health - 15, visa: 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推，你在套磁阶段就被卡了，只能转投国内大厂或申请水硕。' };
+        },
+        nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'cn_undergrad_grad',
       },
 
       {
@@ -1573,15 +1583,17 @@ export const events: Record<string, GameEvent> = {
     description: '顶着 AI 方向 PhD 的光环，你进入了人才市场。这不再是一般的刷题找工作，而是直接面 Research 岗位。',
     choices: [
       {
-        text: '申请 OpenAI / Anthropic 核心研究员',
+        text: '申请 OpenAI / Anthropic 核心研究员 (地狱面试, 胜率约 25%)',
         effect: (s) => {
-          const win = Math.random() > 0.4 || s.leetcode >= 80;
+          // Remove 100% auto win exploit! Base pass chance 22%, bonus up to 20% for high leetcode
+          const winRate = 0.22 + (s.leetcode >= 80 ? 0.18 : 0.08) + (s.charm >= 15 ? 0.05 : 0);
+          const win = Math.random() < winRate;
           return win
-            ? { tc: 80, cash: s.cash + 20, health: s.health - 20, visa: 'O1 (杰出人才)', job_type: 'ai_research', message: '顶级 AI 公司直接用 $80w 的百万包裹和 O1 签证把你砸晕，你正式成为了硅谷新贵！' }
-            : { health: s.health - 20, message: 'OpenAI 的面试太难了，不仅考手写 CUDA 还考偏门算法，你没能通过，只能重新找工作。' };
+            ? { tc: 80, cash: s.cash + 20, health: s.health - 20, visa: 'O1 (杰出人才)', job_type: 'ai_research', message: '震撼硅谷！你攻克了 AGI 前沿推理大模型面试，OpenAI 直接用 $80w 顶配包裹和 O1 签证把我聘为核心研究员！' }
+            : { health: s.health - 20, message: 'OpenAI 核心研究员面试太残酷了！不仅手撕 Triton 算子还深考系统对齐论文，你很遗憾没能拿到 Offer。好在顶级大厂抢着要你的 PhD 光环！' };
         },
         nextEventId: (s: GameState) => {
-          if (s.tc < 80) return 'job_hunt_fail';
+          if (s.tc < 45 && !s.job_type) return 'job_hunt_fail';
           const isDorm = !s.housing_name || ['CMU 校内宿舍','UCB 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },

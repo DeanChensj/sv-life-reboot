@@ -122,6 +122,11 @@ export default function App() {
             {Math.max(0, gameState.health)}
           </span>
 
+          {/* Level Tag */}
+          <span className="flex items-center gap-1 font-bold text-purple-300 shrink-0 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+            {gameState.level || (gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type ? '待业' : gameState.job_type === 'quant' ? 'Quant' : gameState.job_type === 'ai_research' ? 'MTS' : gameState.is_phd ? 'L4' : 'L3')}
+          </span>
+
           {/* Visa Tag */}
           <span className="flex items-center gap-1 font-semibold text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
             <svg className="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -144,7 +149,7 @@ export default function App() {
       {isMobileStatsOpen && (
         <div className="lg:hidden fixed inset-x-0 top-[42px] bottom-0 z-50 bg-zinc-950/95 backdrop-blur-2xl p-4 overflow-y-auto animate-in fade-in slide-in-from-top-3 duration-200">
           <div className="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
-            <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">📊 角色档案与完整 Bento 属性</span>
+            <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">角色档案与 Bento 属性面板</span>
             <button 
               onClick={() => setIsMobileStatsOpen(false)}
               className="text-xs text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-full font-bold border border-zinc-700 active:scale-95 transition-all"

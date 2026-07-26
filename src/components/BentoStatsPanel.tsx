@@ -8,8 +8,8 @@ interface BentoStatsPanelProps {
 }
 
 export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, currentEventId, onOpenCodex }) => {
-  // Fix AP Visibility: Hide only in onboarding screens or end game, show during active decision events
-  const showAPBar = gameState.ap !== undefined && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId);
+  // Fix AP Visibility: Show during active Bay Area daily life decision events, hide in onboarding or end screens
+  const showAPBar = gameState.ap !== undefined && !['choose_trait', 'choose_year', 'choose_school', 'us_undergrad_year1', 'us_undergrad_year3', 'cn_college_grad', 'cn_college_year3', 'cn_undergrad_grad', 'us_undergrad_grad', 'us_master_year1', 'us_master_grad', 'buy_house', 'change_rental', 'end'].includes(currentEventId);
 
   const displayLevel = gameState.level || (
     gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type 

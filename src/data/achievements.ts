@@ -135,7 +135,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('nvidia_nasdaq_god')) newlyUnlocked.push('nvidia_nasdaq_god');
   }
 
-  if (state.health < 30 && state.status === 'win') {
+  if ((state.health < 30 || state.message.includes('ICU') || state.message.includes('猝死') || state.message.includes('过劳猝死')) && state.status === 'win') {
     if (unlockAchievement('icu_resurrection')) newlyUnlocked.push('icu_resurrection');
   }
 
@@ -143,7 +143,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('stanford_professor')) newlyUnlocked.push('stanford_professor');
   }
 
-  if (state.cash >= (state.win_threshold || 300) && (state.housing_name?.includes('Fremont') || state.housing_name?.includes('Sunnyvale'))) {
+  if (state.status === 'win' && (state.trait_title === '家里有矿' || state.parents_helped_house)) {
     if (unlockAchievement('rich_family_fire')) newlyUnlocked.push('rich_family_fire');
   }
 

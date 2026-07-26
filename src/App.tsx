@@ -113,91 +113,9 @@ export default function App() {
   };
 
   const handleYearEndContinue = () => {
-    const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '');
-    const rentCost = isHomeowner 
-      ? (gameState.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0)
-      : (gameState.rent || 4.0);
-    const carCost = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
-    const livingCost = 3.0;
-
-    // Silicon Valley Federal + CA Income Tax (~25% with 401k & Mega Backdoor Roth tax-advantage)
-    const preTaxTC = gameState.tc > 0 ? gameState.tc : 0;
-    const postTaxIncome = preTaxTC * 0.75; 
-    const netChange = postTaxIncome - rentCost - carCost - livingCost;
-    const newCash = gameState.cash + netChange;
-
-    if (newCash < -0.001) {
-      setGameState((prev) => ({
-        ...prev,
-        cash: newCash,
-        status: 'game_over',
-        message: '年底结算扣除联邦与加州所得税、房租/房贷与生活账单后你的现金流彻底断裂，游戏结束！'
-      }));
-      setCurrentEventId('end');
-    } else {
-      // H1B Lottery & Visa Status Check
-      const currentVisa = gameState.visa || '无';
-      let newVisa = currentVisa;
-      let newH1bAttempts = gameState.h1b_attempts || 0;
-      let h1bMsg = '';
-
-      const isOptOrStudent = currentVisa.includes('OPT') || currentVisa.includes('F1');
-      if (isOptOrStudent && !gameState.laid_off && gameState.job_type && gameState.job_type !== 'unemployed') {
-        newH1bAttempts += 1;
-        const winRate = 0.35 + (gameState.luck / 100) * 0.3;
-        const win = Math.random() < winRate;
-        if (win) {
-          newVisa = 'H1B (工签)';
-          h1bMsg = ` 🎉 人品大爆发！在第 ${newH1bAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
-        } else {
-          if (newH1bAttempts === 1) {
-            h1bMsg = ' 💔 第一年 H1B 未中签！已开启 STEM OPT 2 年延期，明年还有抽签机会！';
-          } else if (newH1bAttempts === 2) {
-            h1bMsg = ' 💔 第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，压力山大！';
-          } else {
-            h1bMsg = ' 💥 警告：三年 H1B 抽签均未能中签！身份即将在今年到期，面临离境危机！';
-          }
-        }
-      }
-
-      // Annual Merit Raise & RSU Refresh check (45% chance for working engineers)
-      let updatedTC = gameState.tc;
-      let meritMsg = '';
-      const isWorking = !gameState.laid_off && gameState.job_type && gameState.job_type !== 'unemployed';
-      if (isWorking && Math.random() < 0.45) {
-        const refreshAmt = Math.random() < 0.3 ? 3.5 : 2.0;
-        updatedTC = gameState.tc + refreshAmt;
-        meritMsg = ` 📈 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
-      }
-
-      // GC Progress increment if working on H1B or Green Card track
-      const nextGc = (newVisa === '绿卡' || newVisa === 'H1B (工签)') 
-        ? Math.min(5, (gameState.gc_progress || 0) + 1) 
-        : (gameState.gc_progress || 0);
-
-      const updatedState: GameState = {
-        ...gameState,
-        ap: gameState.max_ap || 3,
-        year: gameState.year + 1,
-        age: gameState.age + 1,
-        cash: newCash,
-        tc: updatedTC,
-        visa: newVisa,
-        h1b_attempts: newH1bAttempts,
-        gc_progress: nextGc,
-        message: (h1bMsg || gameState.message) + meritMsg
-      };
-
-      // Transition to next event: Crisis if OPT expired after 3 tries, post_green_card if 5 yrs queue, else daily life
-      let nextId = 'sv_daily_life';
-      if (isOptOrStudent && newH1bAttempts >= 3 && newVisa !== 'H1B (工签)') {
-        nextId = 'h1b_final_crisis';
-      } else if (nextGc >= 5 && newVisa !== '绿卡' && newVisa !== '无') {
-        nextId = 'post_green_card';
-      }
-
-      setGameState(updatedState);
-      setCurrentEventId(nextId);
+    const settlementChoice = events['sv_year_end_settlement']?.choices[0];
+    if (settlementChoice) {
+      handleChoice(settlementChoice);
     }
   };
 

@@ -126,7 +126,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     
     if (gameState.leetcode >= 60) medals.push({ tag: 'ALG', title: '【做题神仙】', desc: 'LeetCode 算法手撕 Hard 题无压力', rarity: 'SSR', color: '#fbbf24' });
     if (gameState.charm >= 18) medals.push({ tag: 'SOC', title: '【南湾顶流名流】', desc: '魅力爆表，Santana Row 社交收割机', rarity: 'SR', color: '#f43f5e' });
-    if (gameState.cash >= 300 || gameState.has_housing) medals.push({ tag: 'EST', title: '【Atherton 征服者】', desc: '积攒重金，成功跨越硅谷阶级门槛', rarity: 'SSR', color: '#10b981' });
+    if (gameState.cash >= 300 || ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')) medals.push({ tag: 'EST', title: '【Atherton 征服者】', desc: '积攒重金，成功跨越硅谷阶级门槛', rarity: 'SSR', color: '#10b981' });
     if (gameState.car === 'porsche') medals.push({ tag: 'LUX', title: '【脱离民工车鄙视链】', desc: '开上保时捷 Porsche 震撼全场', rarity: 'SR', color: '#c084fc' });
     if (gameState.car === 'cybertruck') medals.push({ tag: 'RAW', title: '【赛博朋克硬核族】', desc: '驾驶多边形皮卡征服 237 号公路', rarity: 'SR', color: '#22d3ee' });
     if (gameState.visa === '绿卡') medals.push({ tag: 'PR', title: '【上岸自由身】', desc: '彻底甩开 USCIS 抽签与签证枷锁', rarity: 'SSR', color: '#60a5fa' });

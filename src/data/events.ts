@@ -2,7 +2,9 @@ import type { GameState, GameEvent } from '../types';
 
 // Initial State
 export const generateInitialState = (): GameState => {
-  localStorage.removeItem('sv_life_initial_seed');
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('sv_life_initial_seed');
+  }
 
   let cash, charm, luck;
   const randCash = Math.random();
@@ -151,7 +153,7 @@ export const events: Record<string, GameEvent> = {
     ]
   },
   'cn_college_grad': {
-    id: 'cn_college_year1',
+    id: 'cn_college_grad',
     title: '陆本大一：百团大战',
     description: '进入了国内大学，开学百团大战，各种社团招新。',
     choices: [
@@ -511,23 +513,23 @@ export const events: Record<string, GameEvent> = {
         text: '领养一只布偶猫/金毛 (每年额外花费 1w)',
         condition: (s) => s.rent >= 2, // Needs at least a 2b2b to have space
         effect: (s) => ({ rent: s.rent + 1, charm: s.charm + 10, health: s.health + 30, has_housing: true, housing_name: s.housing_name || 'San Jose 公寓', has_pet: true, message: '你领养了毛孩子！虽然每年要多花不少钱买猫粮/狗粮和看兽医，但每次下班回家看到它，你的疲惫都一扫而空，而且在相亲软件上放宠物照片让你大受欢迎！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
 
       {
         text: '豪华 1b1b (每年 4 万美元): 环境好，心情愉悦',
         effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: 'San Jose 高级公寓', message: '你租下了带有池高级公寓，生活质量极高，相亲市场竞争力上升。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
       {
         text: '和朋友合租 2b2b (每年 2 万美元): 性价比高',
         effect: (s) => ({ rent: 2, has_housing: true, housing_name: 'Cupertino 2b2b合租', message: '你和朋友合租，偶尔会因为抢厕所和洗碗吵架，但省下了不少钱。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
       {
         text: '挂壁大客厅 (每年 1 万美元): 终极省钱',
         effect: (s) => ({ rent: 1, charm: s.charm - 2, health: s.health - 15, has_housing: true, housing_name: '客厅屏风隔间', message: '你睡在客厅，用帘子隔开。每天被室友做饭吵醒，毫无隐私，连相亲都不敢带人回家。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       }
     ]
   },
@@ -967,13 +969,17 @@ export const events: Record<string, GameEvent> = {
         text: '结算并迎接新的一年',
         effect: (s) => {
            const nextGc = s.visa === '绿卡' ? s.gc_progress : s.gc_progress + 1;
-           // 加州边际所得税 40% + 房产税/物业费/家庭生活成本动算
-           const propertyTax = (s.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name))
-             ? (s.housing_name === 'Atherton 顶级豪宅' ? 3.5 : 1.5) : 0;
-           const familyCost = s.is_married ? 2.5 : 0;
-           const petCost = s.has_pet ? 0.8 : 0;
-           const baseLiving = 4 + propertyTax + familyCost + petCost;
-           const netIncome = (s.tc * 0.6) - s.rent - baseLiving;
+           const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || '');
+           const housingExpense = isHomeowner 
+             ? (s.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0)
+             : (s.rent || 4.0);
+           const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
+           const livingExpense = 3.0;
+           const totalExpense = housingExpense + carExpense + livingExpense;
+
+           const preTaxTC = s.tc > 0 ? s.tc : 0;
+           const postTaxIncome = preTaxTC * 0.75; 
+           const netIncome = postTaxIncome - totalExpense;
            
            let healthDrain = 0;
            let companyMsg = '';
@@ -1016,16 +1022,28 @@ export const events: Record<string, GameEvent> = {
                 }
               }
             }
+
+            // Merit raise / RSU refresh check (45% chance)
+            let updatedTC = s.tc;
+            let meritMsg = '';
+            const isWorking = !s.laid_off && s.job_type && s.job_type !== 'unemployed';
+            if (isWorking && Math.random() < 0.45) {
+              const refreshAmt = Math.random() < 0.3 ? 3.5 : 2.0;
+              updatedTC = s.tc + refreshAmt;
+              meritMsg = ` 📈 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+            }
+
            return { 
               ap: s.max_ap !== undefined ? s.max_ap : 3, 
               age: s.age + 1, 
               year: s.year + 1,
               visa: newVisa,
-               h1b_attempts: newAttempts,
-               gc_progress: nextGc, 
+              h1b_attempts: newAttempts,
+              gc_progress: nextGc, 
               cash: s.cash + netIncome,
+              tc: updatedTC,
               health: newHealth,
-              message: `扣除税收、房租、加州房产税与基础家庭开支 ${baseLiving.toFixed(1)} 万后，你今年的税后净结余是 ${netIncome > 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}${companyMsg}${h1bMsg}` 
+              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年净结余 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}${companyMsg}${h1bMsg}${meritMsg}` 
            };
         },
         nextEventId: (s) => {
@@ -1048,13 +1066,15 @@ export const events: Record<string, GameEvent> = {
              if (s.job_type === 'quant') return 'quant_stress';
              
              const bigTechRand = Math.random();
-             if (bigTechRand < 0.30) return 'perf_review';
-             if (bigTechRand < 0.55) return 'layoff_rumor';
-             if (bigTechRand < 0.75) return 'rto_wars';
+             if (bigTechRand < 0.25) return 'perf_review';
+             if (bigTechRand < 0.45) return 'layoff_rumor';
+             if (bigTechRand < 0.60) return 'rto_wars';
+             if (bigTechRand < 0.80) return 'meta_tlm';
+             if (bigTechRand < 0.90) return 'h1b_rfe_vs_parent_nag';
              return 'friday_pip';
           }
           
-          // 34% chance of LIFE & BAY AREA SOCIAL event (Total ~80% Event Trigger Rate)
+          // 34% chance of LIFE & BAY AREA SOCIAL event
           if (rand >= 0.46 && rand < 0.80) {
             const lifeEvents = [
               'overemployed',
@@ -1069,7 +1089,10 @@ export const events: Record<string, GameEvent> = {
               'ai_wrapper_startup',
               'biohacking_party',
               'tahoe_ski_blizzard',
-              'burning_man_invite'
+              'burning_man_invite',
+              'boardgame_dating',
+              'breakup_crisis',
+              'visa_check'
             ];
 
             if (!s.is_married && Math.random() < 0.35) {

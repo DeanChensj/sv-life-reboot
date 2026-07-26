@@ -37,6 +37,7 @@ export interface GameState {
   trait_desc?: string;
   cpt_used?: boolean;
   l1_relocated?: boolean;
+  mid_year?: boolean;
 }
 
 export interface Choice {

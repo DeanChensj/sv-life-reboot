@@ -122,6 +122,12 @@ export default function App() {
       if (nextId === 'sv_daily_life' && newState.ap <= 0) {
         nextId = 'sv_year_end_settlement';
       }
+
+      // Intercept return to daily life if we are in mid-year (so the random event routes to year end settlement)
+      if (nextId === 'sv_daily_life' && newState.mid_year) {
+        nextId = 'sv_year_end_settlement';
+      }
+      
       setCurrentEventId(nextId);
     }
   };

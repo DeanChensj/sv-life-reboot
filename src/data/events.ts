@@ -59,6 +59,39 @@ export const generateInitialState = (): GameState => {
   };
 };
 
+// Mid-year event router: called after choosing a yearly focus in sv_daily_life.
+// Weaves in 1-2 random events before year-end settlement.
+const midYearEventRouter = (s: GameState) => {
+  const rand = Math.random();
+  if (rand < 0.06) return 'stock_crash';
+  if (rand >= 0.06 && rand < 0.46) {
+     if (s.job_type === 'unemployed' || s.laid_off) return 'job_hunt';
+     if (s.job_type === 'startup') return 'startup_crisis';
+     if (s.job_type === 'ai_research') return 'ai_research_crisis';
+     if (s.job_type === 'quant') return 'quant_stress';
+     const bigTechRand = Math.random();
+     if (bigTechRand < 0.25) return 'perf_review';
+     if (bigTechRand < 0.45) return 'layoff_rumor';
+     if (bigTechRand < 0.60) return 'rto_wars';
+     if (bigTechRand < 0.80) return 'meta_tlm';
+     if (bigTechRand < 0.90) return 'h1b_rfe_vs_parent_nag';
+     return 'friday_pip';
+  }
+  if (rand >= 0.46 && rand < 0.80) {
+    const lifeEvents = [
+      'overemployed', 'pickleball_networking', 'dental_emergency', 'crypto_scam', 
+      'blind_team_tea', 'zoom_camera_off_leetcode', 'boba_inflation', 'rsu_vesting_crash', 
+      'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
+      'burning_man_invite', 'boardgame_dating', 'breakup_crisis', 'visa_check', 
+      'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation'
+    ];
+    if (!s.is_married && Math.random() < 0.35) return 'dating_market';
+    if (s.car && s.car !== 'none' && Math.random() < 0.25) return 'car_broken';
+    return lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
+  }
+  return 'sv_year_end_settlement';
+};
+
 // Events Engine
 export const events: Record<string, GameEvent> = {
 
@@ -715,9 +748,9 @@ export const events: Record<string, GameEvent> = {
             if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '🎉 奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
-          return { health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
+          return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
-        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_year_end_settlement'),
+        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : midYearEventRouter(s)),
       },
       {
         text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
@@ -729,13 +762,13 @@ export const events: Record<string, GameEvent> = {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
           
-          if (isFromAI) return { health: s.health - 25, tc: Math.max(s.tc + 25, 65), level: 'L6', job_type: 'big_tech', message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 包裹！TC 暴涨！' };
-          if (curLevel === 'L3') return { health: s.health - 25, tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
-          if (curLevel === 'L4') return { health: s.health - 25, tc: s.tc + 12, level: 'L5', message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5！' };
-          if (curLevel === 'L5') return { health: s.health - 30, tc: s.tc + 18, level: 'L6', message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 包裹！' };
-          return { health: s.health - 20, tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
+          if (isFromAI) return { mid_year: true, health: s.health - 25, tc: Math.max(s.tc + 25, 65), level: 'L6', job_type: 'big_tech', message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 包裹！TC 暴涨！' };
+          if (curLevel === 'L3') return { mid_year: true, health: s.health - 25, tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
+          if (curLevel === 'L4') return { mid_year: true, health: s.health - 25, tc: s.tc + 12, level: 'L5', message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5！' };
+          if (curLevel === 'L5') return { mid_year: true, health: s.health - 30, tc: s.tc + 18, level: 'L6', message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 包裹！' };
+          return { mid_year: true, health: s.health - 20, tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       },
       {
         text: '【年度重心：拓展副业】经营小红书与独立开发',
@@ -747,23 +780,32 @@ export const events: Record<string, GameEvent> = {
           let winRate = s.charm >= 12 ? 0.9 : (s.charm >= 7 ? 0.6 : 0.2);
           if (Math.random() < winRate) {
             if (s.charm >= 20 && Math.random() < 0.05) return { cash: s.cash + 48, charm: Math.min(25, s.charm + 5), health: s.health - 10, message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
-            return { cash: s.cash + 8, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
+            return { mid_year: true, cash: s.cash + 8, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
           }
-          return { cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
+          return { mid_year: true, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       },
       {
         text: '【年度重心：活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
         condition: (s) => true,
-        effect: (s) => ({ health: s.health - 10, charm: Math.min(25, s.charm + 3), message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。' }),
-        nextEventId: (s) => !s.is_married ? 'dating_market' : 'sv_year_end_settlement' 
+        effect: (s) => ({
+          mid_year: true,
+          health: s.health - 10,
+          charm: Math.min(25, s.charm + 3),
+          message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
+        }),
+        nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
       },
       {
         text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
         condition: (s) => true,
-        effect: (s) => ({ health: Math.min(100, s.health + 45), message: '这一年你彻底躺平，除了上班摸鱼外，回家就是打黑神话悟空。什么职场焦虑都没了，感觉重新活了过来！' }),
-        nextEventId: 'sv_year_end_settlement',
+        effect: (s) => ({
+          mid_year: true,
+          health: Math.min(100, s.health + 45),
+          message: '这一年你彻底躺平，除了上班摸鱼外，回家就是打黑神话悟空。什么职场焦虑都没了，感觉重新活了过来！'
+        }),
+        nextEventId: midYearEventRouter,
       }
     ]
   },
@@ -841,6 +883,7 @@ export const events: Record<string, GameEvent> = {
             }
 
            return { 
+              mid_year: false,
               ap: s.max_ap !== undefined ? s.max_ap : 3, 
               age: s.age + 1, 
               year: s.year + 1,
@@ -860,65 +903,6 @@ export const events: Record<string, GameEvent> = {
           }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
           
-          const rand = Math.random();
-          
-          // 6% chance of Macro Economic Crisis
-          if (rand < 0.06) return 'stock_crash';
-          
-          // 40% chance of WORK & CAREER event
-          if (rand >= 0.06 && rand < 0.46) {
-             if (s.job_type === 'unemployed' || s.laid_off) return 'job_hunt';
-             if (s.job_type === 'startup') return 'startup_crisis';
-             if (s.job_type === 'ai_research') return 'ai_research_crisis';
-             if (s.job_type === 'quant') return 'quant_stress';
-             
-             const bigTechRand = Math.random();
-             if (bigTechRand < 0.25) return 'perf_review';
-             if (bigTechRand < 0.45) return 'layoff_rumor';
-             if (bigTechRand < 0.60) return 'rto_wars';
-             if (bigTechRand < 0.80) return 'meta_tlm';
-             if (bigTechRand < 0.90) return 'h1b_rfe_vs_parent_nag';
-             return 'friday_pip';
-          }
-          
-          // 34% chance of LIFE & BAY AREA SOCIAL event
-          if (rand >= 0.46 && rand < 0.80) {
-            const lifeEvents = [
-              'overemployed',
-              'pickleball_networking',
-              'dental_emergency',
-              'crypto_scam',
-              'blind_team_tea',
-              'zoom_camera_off_leetcode',
-              'boba_inflation',
-              'rsu_vesting_crash',
-              'xhs_boba',
-              'ai_wrapper_startup',
-              'biohacking_party',
-              'tahoe_ski_blizzard',
-              'burning_man_invite',
-              'boardgame_dating',
-              'breakup_crisis',
-              'visa_check',
-              'rock_climbing_event',
-              'tennis_networking',
-              'bay_area_hiking',
-              'hawaii_vacation'
-            ];
-
-            if (!s.is_married && Math.random() < 0.35) {
-              return 'dating_market';
-            }
-
-            if (s.car && s.car !== 'none' && Math.random() < 0.25) {
-              return 'car_broken';
-            }
-
-            const chosenLifeEvent = lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
-            return chosenLifeEvent || 'sv_daily_life';
-          }
-
-          // 20% chance of Quiet Routine Year
           return 'sv_daily_life';
         },
       }

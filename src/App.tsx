@@ -145,12 +145,12 @@ export default function App() {
         }
       }
 
-      // Annual Merit Raise & RSU Refresh check (30% chance for working engineers)
+      // Annual Merit Raise & RSU Refresh check (45% chance for working engineers)
       let updatedTC = gameState.tc;
       let meritMsg = '';
       const isWorking = !gameState.laid_off && gameState.job_type && gameState.job_type !== 'unemployed';
-      if (isWorking && Math.random() < 0.30) {
-        const refreshAmt = Math.random() < 0.3 ? 2.0 : 1.5;
+      if (isWorking && Math.random() < 0.45) {
+        const refreshAmt = Math.random() < 0.3 ? 3.5 : 2.0;
         updatedTC = gameState.tc + refreshAmt;
         meritMsg = ` 📈 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
       }

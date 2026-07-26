@@ -67,27 +67,27 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
-        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 20, win_threshold: 480 }),
+        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 20, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 420 }),
+        effect: (s) => ({ charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，但天天蹦迪身体被彻底掏空。',
-        effect: (s) => ({ cash: s.cash + 25, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 750 }),
+        effect: (s) => ({ cash: s.cash + 70, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
-        effect: (s) => ({ luck: Math.min(99, Math.max(s.luck + 25, 68)), leetcode: s.leetcode + 10, charm: s.charm + 5, win_threshold: 350 }),
+        effect: (s) => ({ luck: Math.min(99, Math.max(s.luck + 25, 68)), leetcode: s.leetcode + 10, charm: s.charm + 5, win_threshold: 300 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
-        effect: (s) => ({ win_threshold: 420 }),
+        effect: (s) => ({ win_threshold: 360 }),
         nextEventId: 'choose_year',
       }
     ]
@@ -387,7 +387,7 @@ export const events: Record<string, GameEvent> = {
           if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30; // 疫情放水期
           return s.leetcode >= req 
-            ? { tc: s.year >= 2023 ? 25 : 22, laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: `上岸！${s.year}年大厂要求LeetCode>${req}，你顺利通过。` }
+            ? { tc: s.year >= 2023 ? 30 : 26, laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: `上岸！${s.year}年大厂要求LeetCode>${req}，你顺利通过。` }
             : { health: s.health - 10, message: `面试被挂了！${s.year}年市场要求LeetCode>${req}。` };
         },
         nextEventId: (s: GameState) => {
@@ -402,7 +402,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Meta (传说中的卷王之王) - (需要 LeetCode >= 60)',
         condition: (s) => s.leetcode >= 60,
-        effect: (s) => ({ tc: 35, laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
+        effect: (s) => ({ tc: 38, laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', level: s.is_phd ? 'L4' : 'L3', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -410,7 +410,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '面试普通 Startup',
-        effect: (s) => ({ tc: 12, laid_off: false, health: s.health - 2, job_type: 'startup', level: s.is_phd ? 'L4' : 'L3', message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' }),
+        effect: (s) => ({ tc: 18, laid_off: false, health: s.health - 2, job_type: 'startup', level: s.is_phd ? 'L4' : 'L3', message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -420,7 +420,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 TikTok (传说中的拿命换钱) - (需要 LeetCode >= 45)',
         condition: (s) => s.leetcode >= 45,
-        effect: (s) => ({ tc: s.year >= 2023 ? 35 : 25, laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', level: s.is_phd ? 'L4' : 'L3', message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' }),
+        effect: (s) => ({ tc: s.year >= 2023 ? 40 : 30, laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', level: s.is_phd ? 'L4' : 'L3', message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -429,7 +429,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Amazon (门槛较低，但入职即签生死状) - (需要 LeetCode >= 30)',
         condition: (s) => s.leetcode >= 30,
-        effect: (s) => ({ tc: 18, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', level: s.is_phd ? 'L4' : 'L3', message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' }),
+        effect: (s) => ({ tc: 24, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', level: s.is_phd ? 'L4' : 'L3', message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -438,7 +438,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 40)',
         condition: (s) => s.leetcode >= 40,
-        effect: (s) => ({ tc: s.year >= 2023 ? 55 : 20, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: s.is_phd ? 'L4' : 'L3', message: '你披上了黑色皮衣！如果这是 2023 年，你的包裹因为股票暴涨将达到 55w 的恐怖数字！' }),
+        effect: (s) => ({ tc: s.year >= 2023 ? 60 : 26, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: s.is_phd ? 'L4' : 'L3', message: '你披上了黑色皮衣！如果这是 2023 年，你的包裹因为股票暴涨将达到 60w 的恐怖数字！' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';

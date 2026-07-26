@@ -39,30 +39,30 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-800 pb-1">置业与居住 (Housing)</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
-                disabled={gameState.cash < 40}
+                disabled={gameState.cash < 40 || ['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')}
                 onClick={() => { onClose(); onTriggerEvent('buy_house'); }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative overflow-hidden"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">参加抢房大战 (首付 $40w+)</div>
-                <div className="text-xs text-zinc-500 mt-1">进入买房事件流，挑选湾区房产</div>
+                <div className="text-xs text-zinc-500 mt-1">{['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '') ? '已拥有一套房产' : '进入买房事件流，挑选湾区房产'}</div>
               </button>
               
               <button
-                disabled={!gameState.has_housing}
+                disabled={!gameState.has_housing || ['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')}
                 onClick={() => { onClose(); onTriggerEvent('change_rental'); }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">搬家与换租</div>
-                <div className="text-xs text-zinc-500 mt-1">改变你的租房环境</div>
+                <div className="text-xs text-zinc-500 mt-1">{['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '') ? '已买房，无法换租' : '改变你的租房环境'}</div>
               </button>
 
               <button
-                disabled={gameState.cash >= 10 || gameState.rent <= 0}
+                disabled={gameState.cash >= 10 || gameState.rent <= 0 || ['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')}
                 onClick={() => onBuy({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, gameState.health - 10) }, '你把睡袋塞进了车后备箱。虽然每天去健身房洗澡极其硬核，但成功将房租消耗砍到了 $0！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-zinc-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed group col-span-1 sm:col-span-2"
               >
                 <div className="font-bold text-zinc-400">挂壁退租睡车顶 (房租归零)</div>
-                <div className="text-xs text-zinc-500 mt-1">要求：现金 &lt; $10w 且当前有房租。健康大幅下降。</div>
+                <div className="text-xs text-zinc-500 mt-1">{['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '') ? '已买房，无法退租' : '要求：现金 < $10w 且当前有房租。健康大幅下降。'}</div>
               </button>
             </div>
           </section>

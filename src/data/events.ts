@@ -63,9 +63,12 @@ export const generateInitialState = (): GameState => {
 // Weaves in 1-2 random events before year-end settlement.
 const midYearEventRouter = (s: GameState) => {
   const rand = Math.random();
+  const isWorking = s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+  const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
+
   if (rand < 0.06) return 'stock_crash';
   if (rand >= 0.06 && rand < 0.46) {
-     if (s.job_type === 'unemployed' || s.laid_off) return 'job_hunt';
+     if (!isWorking) return 'job_hunt';
      if (s.job_type === 'startup') return 'startup_crisis';
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
      if (s.job_type === 'quant') return 'quant_stress';
@@ -79,13 +82,33 @@ const midYearEventRouter = (s: GameState) => {
   }
   if (rand >= 0.46 && rand < 0.80) {
     const lifeEvents = [
-      'overemployed', 'pickleball_networking', 'dental_emergency', 'crypto_scam', 
-      'blind_team_tea', 'zoom_camera_off_leetcode', 'boba_inflation', 'rsu_vesting_crash', 
-      'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
-      'burning_man_invite', 'boardgame_dating', 'breakup_crisis', 'visa_check', 
-      'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation'
+      'pickleball_networking', 'dental_emergency', 'crypto_scam', 
+      'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
+      'burning_man_invite', 'boardgame_dating', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation'
     ];
-    if (!s.is_married && Math.random() < 0.35) return 'dating_market';
+    
+    // Only working folks have Overemployed, blind gossips, and zoom camera off
+    if (isWorking) {
+        lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode');
+    }
+    
+    // Only Big Tech folks have RSU crashes
+    if (isBigTech) {
+        lifeEvents.push('rsu_vesting_crash');
+    }
+
+    // Only non-Green Card / non-US workers face visa checks
+    if (s.visa !== '绿卡' && s.visa !== '无') {
+        lifeEvents.push('visa_check');
+    }
+
+    // Married folks can get breakup crisis (divorce)! Single folks get dating market.
+    if (s.is_married) {
+        lifeEvents.push('breakup_crisis');
+    } else if (Math.random() < 0.35) {
+        return 'dating_market';
+    }
+
     if (s.car && s.car !== 'none' && Math.random() < 0.25) return 'car_broken';
     return lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
   }

@@ -97,6 +97,14 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
           </div>
         </div>
 
+        {/* Housing Status */}
+        <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
+          <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em]">当前住所</div>
+          <div className="text-sm font-semibold text-emerald-300 bg-emerald-500/10 px-3 py-1.5 rounded-full shrink-0" title={gameState.housing_name || '国内老家'}>
+            {gameState.housing_name || '国内老家'}
+          </div>
+        </div>
+
         {/* Car Status */}
         <div className="col-span-2 md:col-span-2 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center">
           <div className="text-zinc-500 text-[11px] font-medium uppercase tracking-[0.1em]">当前座驾</div>

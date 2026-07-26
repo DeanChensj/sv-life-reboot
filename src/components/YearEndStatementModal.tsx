@@ -60,46 +60,51 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
 
         {/* Detailed Financial Breakdown Table */}
         <div className="space-y-2.5 font-mono text-xs mb-6">
-          <div className="flex justify-between items-center p-3 bg-zinc-950/70 rounded-xl border border-zinc-800">
-            <span className="text-zinc-400 flex items-center gap-2">
-              <span className="text-emerald-400">💵</span> 基础薪资收入 (Base Salary)
+          <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+            <span className="text-zinc-400 flex items-center gap-2.5">
+              <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+              基础薪资收入 (Base Salary)
             </span>
-            <span className="font-bold text-emerald-400">+${salaryIncome}w</span>
+            <span className="font-bold text-emerald-400 tabular-nums">+${salaryIncome}w</span>
           </div>
 
           {gameState.tc > 0 && (
-            <div className="flex justify-between items-center p-3 bg-zinc-950/70 rounded-xl border border-zinc-800">
-              <span className="text-zinc-400 flex items-center gap-2">
-                <span className="text-indigo-400">📈</span> RSU 股票解禁归属
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                RSU 股票解禁归属
               </span>
-              <span className="font-bold text-indigo-300">+${rsuIncome}w</span>
+              <span className="font-bold text-indigo-300 tabular-nums">+${rsuIncome}w</span>
             </div>
           )}
 
-          <div className="flex justify-between items-center p-3 bg-zinc-950/70 rounded-xl border border-zinc-800">
-            <span className="text-zinc-400 flex items-center gap-2">
-              <span className="text-rose-400">🏠</span> {gameState.has_housing ? '自购房产物业税/HOA' : '租房房租'}
+          <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+            <span className="text-zinc-400 flex items-center gap-2.5">
+              <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              {gameState.has_housing ? '自购房产物业税/HOA' : '租房房租'}
             </span>
-            <span className="font-bold text-rose-400">-${housingExpense}w</span>
+            <span className="font-bold text-rose-400 tabular-nums">-${housingExpense}w</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 bg-zinc-950/70 rounded-xl border border-zinc-800">
-            <span className="text-zinc-400 flex items-center gap-2">
-              <span className="text-amber-400">🏎️</span> 车辆维保与出行
+          <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+            <span className="text-zinc-400 flex items-center gap-2.5">
+              <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              车辆维保与出行
             </span>
-            <span className="font-bold text-amber-300">-${carExpense}w</span>
+            <span className="font-bold text-amber-300 tabular-nums">-${carExpense}w</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 bg-zinc-950/70 rounded-xl border border-zinc-800">
-            <span className="text-zinc-400 flex items-center gap-2">
-              <span className="text-purple-400">🍵</span> 湾区基础日常生活
+          <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+            <span className="text-zinc-400 flex items-center gap-2.5">
+              <svg className="w-4 h-4 text-purple-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              湾区基础日常生活
             </span>
-            <span className="font-bold text-zinc-300">-${livingExpense}w</span>
+            <span className="font-bold text-zinc-300 tabular-nums">-${livingExpense}w</span>
           </div>
         </div>
 
         {/* Visa & Life Status Summary */}
-        <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 text-xs mb-6 space-y-1.5">
+        <div className="bg-zinc-950/90 p-4 rounded-2xl border border-zinc-800 text-xs mb-6 space-y-2">
           <div className="flex justify-between">
             <span className="text-zinc-400 font-mono">当前签证身份:</span>
             <span className="font-bold text-amber-300">{gameState.visa}</span>
@@ -107,23 +112,27 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
           {(gameState.gc_progress > 0 || gameState.visa === '绿卡') && (
             <div className="flex justify-between">
               <span className="text-zinc-400 font-mono">绿卡 (PERM/排期) 进度:</span>
-              <span className="font-bold text-emerald-400">
+              <span className="font-bold text-emerald-400 font-mono tabular-nums">
                 {gameState.visa === '绿卡' ? '100% (已获绿卡)' : `${Math.min(100, Math.max(0, gameState.gc_progress || 0))}%`}
               </span>
             </div>
           )}
           <div className="flex justify-between">
             <span className="text-zinc-400 font-mono">算法解题储备:</span>
-            <span className="font-bold text-amber-400">{gameState.leetcode} 题</span>
+            <span className="font-bold text-amber-400 font-mono tabular-nums">{gameState.leetcode} 题</span>
           </div>
         </div>
 
         {/* Continue Button */}
         <button
           onClick={onContinue}
-          className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-base transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-base transition-all duration-200 shadow-lg shadow-emerald-500/20 active:scale-[0.985] cursor-pointer flex items-center justify-center gap-2"
         >
-          <span>结清账单，进入下一年 🗓️</span>
+          <span>结清账单，进入下一年</span>
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
         </button>
       </div>
     </div>

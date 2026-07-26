@@ -71,7 +71,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
 
     ctx.font = '700 24px sans-serif';
     ctx.fillStyle = isWin ? '#34d399' : '#f87171';
-    ctx.fillText(isWin ? '🏆 成功撕掉社畜标签，实现财务自由！' : '💀 硅谷生存中断战报', 95, 235);
+    ctx.fillText(isWin ? '成功撕掉社畜标签，实现财务自由！' : '硅谷生存中断战报', 95, 235);
 
     // Wrap long message text
     ctx.font = '500 18px sans-serif';
@@ -118,9 +118,9 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     drawStatBox(415, 490, 315, 110, '最终存活年龄/年份', `${gameState.age} 岁 / ${gameState.year}`, '#a78bfa');
 
     // Medals Section Header
-    ctx.font = '700 22px sans-serif';
+    ctx.font = '700 20px monospace';
     ctx.fillStyle = '#f4f4f5';
-    ctx.fillText('🏅 生涯成就荣誉勋章', 70, 650);
+    ctx.fillText('[ACHIEVED_MEDALS] 生涯成就荣誉勋章', 70, 650);
 
     const medals: { tag: string; title: string; desc: string; rarity: 'SSR' | 'SR' | 'R'; color: string }[] = [];
     
@@ -195,8 +195,9 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-2xl overflow-y-auto animate-in fade-in duration-300">
       <div className="relative w-full max-w-xl bg-zinc-900 border border-zinc-700/80 rounded-3xl p-6 shadow-2xl my-8 flex flex-col items-center">
         <div className="flex justify-between items-center w-full mb-4 pb-2 border-b border-zinc-800">
-          <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">
-            📸 炫彩战报已生成 (READY TO SHARE)
+          <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+            <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            炫彩战报已生成 (READY TO SHARE)
           </span>
           <button
             onClick={onClose}

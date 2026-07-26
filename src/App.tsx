@@ -355,9 +355,7 @@ export default function App() {
                         <div className="bg-gradient-to-r from-amber-500/15 via-zinc-900 to-zinc-900 border border-amber-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-amber-400 text-zinc-950 shadow-md uppercase tracking-wider">SSR</span>
                           <div>
-                            <div className="font-bold text-amber-300 text-sm flex items-center gap-1.5">
-                              <span>👑</span> 【做题神仙】
-                            </div>
+                            <div className="font-bold text-amber-300 text-sm">【做题神仙】</div>
                             <div className="text-xs text-zinc-400 mt-0.5">LeetCode 算法真经通关，随时手撕 Hard 题</div>
                           </div>
                         </div>
@@ -366,9 +364,7 @@ export default function App() {
                         <div className="bg-gradient-to-r from-rose-500/15 via-zinc-900 to-zinc-900 border border-rose-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(244,63,94,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-rose-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>
-                            <div className="font-bold text-rose-300 text-sm flex items-center gap-1.5">
-                              <span>💖</span> 【南湾顶流名流】
-                            </div>
+                            <div className="font-bold text-rose-300 text-sm">【南湾顶流名流】</div>
                             <div className="text-xs text-zinc-400 mt-0.5">魅力值爆表，Santana Row 相亲收割机</div>
                           </div>
                         </div>
@@ -377,9 +373,7 @@ export default function App() {
                         <div className="bg-gradient-to-r from-emerald-500/15 via-zinc-900 to-zinc-900 border border-emerald-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-400 text-zinc-950 shadow-md uppercase tracking-wider">SSR</span>
                           <div>
-                            <div className="font-bold text-emerald-300 text-sm flex items-center gap-1.5">
-                              <span>🏰</span> 【Atherton 征服者】
-                            </div>
+                            <div className="font-bold text-emerald-300 text-sm">【Atherton 征服者】</div>
                             <div className="text-xs text-zinc-400 mt-0.5">积攒重金，成功跨越硅谷阶级门槛</div>
                           </div>
                         </div>
@@ -388,9 +382,7 @@ export default function App() {
                         <div className="bg-gradient-to-r from-cyan-500/15 via-zinc-900 to-zinc-900 border border-cyan-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(34,211,238,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-cyan-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>
-                            <div className="font-bold text-cyan-300 text-sm flex items-center gap-1.5">
-                              <span>⚡</span> 【赛博朋克硬核族】
-                            </div>
+                            <div className="font-bold text-cyan-300 text-sm">【赛博朋克硬核族】</div>
                             <div className="text-xs text-zinc-400 mt-0.5">驾驶多边形皮卡征服 237 号公路</div>
                           </div>
                         </div>
@@ -399,9 +391,7 @@ export default function App() {
                         <div className="bg-gradient-to-r from-purple-500/15 via-zinc-900 to-zinc-900 border border-purple-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(192,132,252,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-purple-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>
-                            <div className="font-bold text-purple-300 text-sm flex items-center gap-1.5">
-                              <span>🏎️</span> 【脱离民工车鄙视链】
-                            </div>
+                            <div className="font-bold text-purple-300 text-sm">【脱离民工车鄙视链】</div>
                             <div className="text-xs text-zinc-400 mt-0.5">告别街车 Model Y，开上保时捷震撼全场</div>
                           </div>
                         </div>
@@ -410,9 +400,7 @@ export default function App() {
                         <div className="bg-gradient-to-r from-blue-500/15 via-zinc-900 to-zinc-900 border border-blue-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(96,165,250,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-blue-400 text-zinc-950 shadow-md uppercase tracking-wider">SSR</span>
                           <div>
-                            <div className="font-bold text-blue-300 text-sm flex items-center gap-1.5">
-                              <span>🗽</span> 【上岸自由身】
-                            </div>
+                            <div className="font-bold text-blue-300 text-sm">【上岸自由身】</div>
                             <div className="text-xs text-zinc-400 mt-0.5">彻底甩开 USCIS 抽签与 H1B 签证枷锁</div>
                           </div>
                         </div>
@@ -461,13 +449,14 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
                       onClick={() => setShowWarReport(true)}
-                      className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-bold text-base transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2"
+                      className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-base transition-all duration-200 active:scale-[0.985] shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2.5"
                     >
-                      <span>📸 生成炫彩战报海报（朋友圈/小红书）</span>
+                      <svg className="w-5 h-5 text-zinc-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      <span>生成炫彩战报海报（朋友圈/小红书）</span>
                     </button>
                     <button
                       onClick={resetGame}
-                      className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.98] cursor-pointer"
+                      className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.985] cursor-pointer"
                     >
                       再次重开人生
                     </button>

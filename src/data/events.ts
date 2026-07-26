@@ -917,7 +917,8 @@ export const events: Record<string, GameEvent> = {
           
           // 60% chance of LIFE event
           const lifeRand = Math.random();
-           if (lifeRand < 0.05) return s.is_married ? 'sv_daily_life' : 'dating_market';
+           if (lifeRand < 0.03) return s.is_married ? 'breakup_crisis' : 'boardgame_dating';
+           if (lifeRand < 0.06) return s.is_married ? 'sv_daily_life' : 'dating_market';
            if (lifeRand < 0.10) return (s.car && s.car !== 'none') ? 'car_broken' : 'sv_daily_life';
            if (lifeRand < 0.15) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
            if (lifeRand < 0.25) return 'overemployed';
@@ -1245,14 +1246,30 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '周末一天排满 3 个 Coffee Date (Santana Row 喝奶茶)',
-        effect: (s) => s.charm >= 7 
-          ? { cash: s.cash + Math.min(25, Math.floor(s.tc * 0.4)), health: s.health + 20, is_married: true, imageUrl: 'images/boba_date.jpg', message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人一拍即合，组成双职工核心家庭，资产直接翻倍！' }
-          : { cash: Math.max(0, s.cash - 0.2), health: s.health - 15, imageUrl: 'images/boba_date.jpg', message: '连喝了三杯 Boba，对方一听你还没抽到 H1B 且没买房，默默地在吃完饭后选择了 AA。你不仅花了钱还受到了真实伤害。' },
+        effect: (s) => {
+          const winRate = 0.05 + (s.charm * 0.02) + (s.luck * 0.002);
+          const pass = Math.random() < winRate;
+          return pass 
+            ? { cash: s.cash + 15, health: Math.min(100, s.health + 15), is_married: true, imageUrl: 'images/boba_date.jpg', message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人经历了一年半的约会后顺利领证，组成了双职工核心家庭。不仅两人存款合并，你还获得了长久的情感支持！' }
+            : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, imageUrl: 'images/boba_date.jpg', message: '连喝了三杯 Boba，对方一听你还没抽到 H1B 且没买房，默默地在吃完饭后选择了 AA。你不仅花了钱还受到了真实伤害。' };
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '砸钱展示实力：米其林三星开局，保时捷接送 (高成功率，消耗 $0.5w)',
+        condition: (s) => s.cash >= 10 && (s.car === 'porsche' || s.car === 'cybertruck' || s.cash >= 30),
+        effect: (s) => {
+          const winRate = 0.4 + (s.charm * 0.02);
+          const pass = Math.random() < winRate;
+          return pass
+            ? { cash: s.cash + 20, health: Math.min(100, s.health + 15), is_married: true, message: '在钞能力与高价值展示的双重加持下，对方迅速沦陷！两人闪婚并合并了资产，你成为了湾区双职工家庭的主力军。' }
+            : { cash: s.cash - 0.5, health: s.health - 10, message: '你花了重金请吃米其林，结果发现对方只是来蹭饭打卡的“湾区海王/海后”。你成为了提款机，心痛不已！' };
+        },
         nextEventId: 'sv_daily_life',
       },
       {
         text: '算了吧，一个人挺好 (省钱省心)',
-        effect: (s) => ({ health: s.health + 5, cash: s.cash + 0.5, message: '你卸载了交友软件，省下了周末喝奶茶和请客吃饭的钱，宅在家里打游戏，心情出奇地平静。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 5), cash: s.cash + 0.5, message: '你卸载了交友软件，省下了周末喝奶茶和请客吃饭的钱，宅在家里打游戏，心情出奇地平静。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -1968,4 +1985,70 @@ export const events: Record<string, GameEvent> = {
     ]
   },
 
+  'breakup_crisis': {
+    id: 'breakup_crisis',
+    title: '感情危机：七年之痒',
+    description: '由于湾区高压的生活节奏、永远在比拼薪资的焦虑、以及你长期对伴侣的忽视，你们的感情走到了破裂的边缘。对方正式向你提出了分手/离婚。',
+    choices: [
+      {
+        text: '和平分手，资产平分',
+        effect: (s) => ({ cash: s.cash / 2, is_married: false, health: Math.max(10, s.health - 20), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '花 $10w 请湾区顶级离婚律师打官司 (高风险)',
+        condition: (s) => s.cash >= 15,
+        effect: (s) => {
+          const win = Math.random() > 0.5;
+          return win
+            ? { cash: (s.cash - 10) * 0.9, is_married: false, health: Math.max(10, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
+            : { cash: (s.cash - 10) * 0.3, is_married: false, health: Math.max(10, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 70% 的资产，你直接崩溃了！' };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '痛哭流涕挽留，发誓每天准时 5 点下班做饭',
+        effect: (s) => {
+          const win = s.charm >= 10 && Math.random() > 0.5;
+          return win
+            ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
+            : { cash: s.cash / 2, is_married: false, health: Math.max(10, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
+        },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+
+  'boardgame_dating': {
+    id: 'boardgame_dating',
+    title: '狼人杀/剧本杀相亲局',
+    description: '周末你被朋友拉去参加南湾的百人桌游大群局。名义上是玩剧本杀和狼人杀，实际上是大型单身男女相亲局。',
+    choices: [
+      {
+        text: '逻辑拉满！强势 Carry 狂踩全场 (展现高智商)',
+        effect: (s) => ({ charm: Math.max(0, s.charm - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你逻辑严密，把全场玩伴的漏洞指得一清二楚，带领好人阵营完胜！但是大家觉得你太有压迫感了，活动结束后没一个人加你微信。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '装小白疯狂给人递水，主打情绪价值',
+        effect: (s) => {
+          const win = Math.random() > 0.6;
+          return win
+            ? { charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), is_married: true, cash: s.cash + 10, message: '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们迅速确定关系并闪婚了！' }
+            : { charm: Math.min(25, s.charm + 1), health: s.health + 5, cash: Math.max(0, s.cash - 0.2), message: '你跑前跑后伺候大家，当了一整天的“沸羊羊”，虽然交了几个普通朋友，但并没有人看上你。' };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '发现场地的老板正在招全栈工程师，去聊聊',
+        effect: (s) => {
+          const win = s.leetcode >= 50;
+          return win
+            ? { tc: s.tc + 3, cash: s.cash + 2, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板塞给你一份兼职外包合同，赚了点外快。' }
+            : { message: '你和老板聊了半天，发现对方只是想白嫖你写个订餐小程序，你礼貌地拒绝了。' };
+        },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  }
 };

@@ -100,22 +100,22 @@ export const events: Record<string, GameEvent> = {
     description: '在转生到硅谷之前，上帝给了你一次选择天赋的机会。每个天赋都有独特的加成，也伴随着相应的代价。',
     choices: [
       {
-        text: '【卷王之王】初始 LeetCode +40，但初始健康 -20。',
+        text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
         effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 20, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
-        text: '【湾区海王】初始魅力 +10，但沉迷社交无心刷题 (初始现金 -15w，LeetCode -10)。',
+        text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
         effect: (s) => ({ charm: s.charm + 10, cash: s.cash - 15, leetcode: Math.max(0, s.leetcode - 10), win_threshold: 300 }),
         nextEventId: 'choose_year',
       },
       {
-        text: '【家里有矿】家里赞助了首付 (初始现金 +40w)，但天天蹦迪身体被掏空 (健康 -20，LeetCode -30)。',
+        text: '【家里有矿】家里直接在湾区给你准备了买房首付，但天天蹦迪身体被彻底掏空。',
         effect: (s) => ({ cash: s.cash + 40, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 600 }),
         nextEventId: 'choose_year',
       },
       {
-        text: '【天选之子】运气爆表，但日常有些倒霉 (初始 LeetCode -10，魅力 -2)。',
+        text: '【天选之子】玄学护体，总能在关键时刻化险为夷，但日常总是笨手笨脚惹人嫌。',
         effect: (s) => ({ luck: 100, leetcode: Math.max(0, s.leetcode - 10), charm: Math.max(0, s.charm - 2), win_threshold: 300 }),
         nextEventId: 'choose_year',
       },
@@ -227,7 +227,8 @@ export const events: Record<string, GameEvent> = {
     description: '四年过去了，你顺利从美国大学毕业，目前持有 OPT。现在是找工作还是继续深造？',
     choices: [
       {
-        text: '申请北美顶尖 PhD (做 Research)',
+        text: '申请北美顶尖 PhD (做 Research) (需 LeetCode >= 30)',
+        condition: (s) => s.leetcode >= 30,
         effect: (s) => ({ cash: s.cash + 2, age: s.age + 1 }),
         nextEventId: 'phd_life',
       },
@@ -252,7 +253,8 @@ export const events: Record<string, GameEvent> = {
     description: '四年过去了，你在国内大学打下了坚实的代码基础。接下来去哪里？',
     choices: [
       {
-        text: '全奖直博美国 (北美学术民工)',
+        text: '全奖直博美国 (北美学术民工) (需 LeetCode >= 30)',
+        condition: (s) => s.leetcode >= 30,
         effect: (s) => ({ cash: s.cash + 2, visa: 'F1 (学生)', age: s.age + 1 }),
         nextEventId: 'phd_life',
       },
@@ -431,8 +433,8 @@ export const events: Record<string, GameEvent> = {
           let winRate = s.luck >= 80 ? 0.6 : 0.35; // 天选之子 50% 概率
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent, message: '人品爆发，今年H1B中签了！' }
-            : { age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent, health: s.health - 10, message: '今年 H1B 没抽中！只能指望明年...' };
+            ? { visa: 'H1B (工签)', cash: s.cash, message: '人品爆发，今年H1B中签了！' }
+            : { cash: s.cash, health: s.health - 10, message: '今年 H1B 没抽中！只能指望明年...' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b',
       },
@@ -442,8 +444,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > (s.luck >= 80 ? 0.1 : 0.3); // 天选之子 90% 概率
           return win
-            ? { visa: 'H1B (工签)', age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 2, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证，效果等同于 H1B！' }
-            : { age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent - 2, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，两万美元打了水漂。' };
+            ? { visa: 'H1B (工签)', cash: s.cash - 2, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证，效果等同于 H1B！' }
+            : { cash: s.cash - 2, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，两万美元打了水漂。' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b',
       },
@@ -453,7 +455,7 @@ export const events: Record<string, GameEvent> = {
           const fake = Math.random() > 0.7; // 30% fake marriage caught
           return fake
             ? { status: 'game_over', message: '移民局家访时发现你们是商婚，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { visa: '绿卡', age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你通过婚姻顺利拿到了绿卡，直接跨过了最大的槛！' }
+            : { visa: '绿卡', cash: s.cash, message: '你通过婚姻顺利拿到了绿卡，直接跨过了最大的槛！' }
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
       }
@@ -470,8 +472,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.7; // 30% 海底捞 
           return win 
-            ? { visa: 'H1B (工签)', age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent, message: '谢天谢地，海底捞中签了！' }
-            : { age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent, status: 'game_over', message: 'H1B 彻底没抽中，被迫 Relocate 到加拿大，游戏结束。' };
+            ? { visa: 'H1B (工签)', cash: s.cash, message: '谢天谢地，海底捞中签了！' }
+            : { cash: s.cash, status: 'game_over', message: 'H1B 彻底没抽中，被迫 Relocate 到加拿大，游戏结束。' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'end',
       }
@@ -485,7 +487,7 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '老老实实搬砖，开启新的一年',
-        effect: (s) => ({ age: s.age + 1, gc_progress: s.gc_progress + 1, message: `距离拿到绿卡还差 ${5 - (s.gc_progress + 1)} 年。` }),
+        effect: (s) => ({ age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + (s.tc * 0.6) - s.rent, message: `这一年你努力工作，税后结余 ${Math.max(0, (s.tc * 0.6) - s.rent).toFixed(1)} 万美元。距离拿到绿卡还差 ${5 - (s.gc_progress + 1)} 年。` }),
                 nextEventId: (s) => {
           if (s.status === 'win') return 'end';
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
@@ -519,11 +521,11 @@ export const events: Record<string, GameEvent> = {
            
            if (win) {
              if (s.charm >= 18) {
-                return { cash: s.cash + 300, charm: s.charm + 10, status: 'win', message: '你的小红书粉丝突破 100 万！你毅然辞去代码工作，全职接商单带货、开 MCN 机构，彻底掌握了流量密码，在湾区名利双收，惊艳了所有人！' };
+                return { cash: s.cash + 300 + (s.tc * 0.6) - s.rent, charm: s.charm + 10, status: 'win', message: '你的小红书粉丝突破 100 万！你毅然辞去代码工作，全职接商单带货、开 MCN 机构，彻底掌握了流量密码，在湾区名利双收，惊艳了所有人！' };
              }
-             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '你周末不休息，去拍 OOTD、剪视频，终于涨粉了几万！接到了几笔软广赞助，但身体非常疲惫。' };
+             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + 5 + (s.tc * 0.6) - s.rent, charm: s.charm + 2, health: s.health - 15, message: '你周末不休息，去拍 OOTD、剪视频，终于涨粉了几万！接到了几笔软广赞助，但身体非常疲惫。' };
            } else {
-             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 5, health: s.health - 20, message: '你为了拍 OOTD 疯狂买装备，熬夜剪视频，结果根本没人看。不仅倒贴钱，还陷入了严重的容貌焦虑，身心俱疲。' };
+             return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 5 + (s.tc * 0.6) - s.rent, health: s.health - 20, message: '你为了拍 OOTD 疯狂买装备，熬夜剪视频，结果根本没人看。不仅倒贴钱，还陷入了严重的容貌焦虑，身心俱疲。' };
            }
         },
                 nextEventId: (s) => {
@@ -554,12 +556,12 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const rand = Math.random();
           if (rand < 0.1) {
-            return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 10, health: s.health - 30, message: '周末去 Tahoe 滑雪，为了装杯飞大跳台摔断了腿。叫了一次救护车，扣除保险后依然收到了 $10k 的天价医疗账单。' };
+            return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 10 + (s.tc * 0.6) - s.rent, health: s.health - 30, message: '周末去 Tahoe 滑雪，为了装杯飞大跳台摔断了腿。叫了一次救护车，扣除保险后依然收到了 $10k 的天价医疗账单。' };
           }
           if (rand < 0.3) {
-            return { age: s.age + 1, gc_progress: s.gc_progress + 1, charm: s.charm + 10, health: s.health + 20, message: '在狼人杀局上认识了心动嘉宾，你们一起去了优胜美地 Hiking，成功脱单！生活焕发了新生！' };
+            return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash + (s.tc * 0.6) - s.rent, charm: s.charm + 10, health: s.health + 20, message: '在狼人杀局上认识了心动嘉宾，你们一起去了优胜美地 Hiking，成功脱单！生活焕发了新生！' };
           }
-          return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 1, health: s.health + 5, charm: s.charm + 1, message: '花了不少门票钱和油钱，局上全是单身男码农，什么浪漫的事都没发生，你只是变成了更强壮的单身狗。' };
+          return { age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 1 + (s.tc * 0.6) - s.rent, health: s.health + 5, charm: s.charm + 1, message: '花了不少门票钱和油钱，局上全是单身男码农，什么浪漫的事都没发生，你只是变成了更强壮的单身狗。' };
         },
                 nextEventId: (s) => {
           if (s.status === 'win') return 'end';
@@ -624,14 +626,14 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.7; // 30% 海底捞
           return win 
-            ? { health: s.health - 20, tc: s.tc + 5, cash: s.cash + (s.tc * 0.6) - s.rent, message: '卷赢了！你拿到了 Exceeds Expectations，涨薪 5 万美元！' }
-            : { health: s.health - 20, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
+            ? { health: s.health - 20, tc: s.tc + 5, cash: s.cash, message: '卷赢了！你拿到了 Exceeds Expectations，涨薪 5 万美元！' }
+            : { health: s.health - 20, cash: s.cash, message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
         nextEventId: (s) => (s.tc >= 50 && s.job_type === 'big_tech') ? 'meta_tlm' : 'sv_daily_life',
       },
       {
         text: '准点下班，躺平拿 Meets',
-        effect: (s) => ({ health: s.health + 10, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
+        effect: (s) => ({ health: s.health + 10, cash: s.cash, message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -671,7 +673,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.7;
           return win 
-            ? { charm: s.charm + 2, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你像叶问一样一打十，从黑帮手里夺回了电脑，成为了湾区传说！' }
+            ? { charm: s.charm + 2, cash: s.cash, message: '你像叶问一样一打十，从黑帮手里夺回了电脑，成为了湾区传说！' }
             : { health: s.health - 30, cash: s.cash - 5 + s.tc, message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };
         },
         nextEventId: 'sv_daily_life',
@@ -686,7 +688,7 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '在国内每天熬夜，按美国时间远程上班',
-        effect: (s) => ({ health: s.health - 30, cash: s.cash + (s.tc * 0.6) - s.rent, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
+        effect: (s) => ({ health: s.health - 30, cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -709,14 +711,14 @@ export const events: Record<string, GameEvent> = {
           if (s.leetcode >= 80) surviveRate = 0.8;
           const win = Math.random() < surviveRate;
           return win 
-            ? { health: s.health - 20, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你没日没夜地干活，终于在这个裁员季活了下来，但距离 Burnout 只有一步之遥。' }
-            : { health: s.health - 10, cash: s.cash + (s.tc * 0.6) - s.rent, laid_off: true, message: '不管你怎么卷，你们整个组都被端了。你被裁员了！' };
+            ? { health: s.health - 20, cash: s.cash, message: '你没日没夜地干活，终于在这个裁员季活了下来，但距离 Burnout 只有一步之遥。' }
+            : { health: s.health - 10, cash: s.cash, laid_off: true, message: '不管你怎么卷，你们整个组都被端了。你被裁员了！' };
         },
         nextEventId: (s) => s.laid_off ? 'layoff_hit' : 'sv_daily_life',
       },
       {
         text: '立刻开始刷题，准备后路',
-        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 10, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你偷偷在上班时间刷题。果不其然，你被裁了，但你已经做好了准备。' }),
+        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 10, cash: s.cash, message: '你偷偷在上班时间刷题。果不其然，你被裁了，但你已经做好了准备。' }),
         nextEventId: 'layoff_hit',
       }
     ]
@@ -729,7 +731,7 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '加入抢房大战 (买房)',
-        effect: (s) => ({ age: s.age + 1, visa: '绿卡' }),
+        effect: (s) => ({ age: s.age + 1, visa: '绿卡', cash: s.cash + (s.tc * 0.6) - s.rent }),
         nextEventId: 'buy_house',
       },
       {
@@ -745,14 +747,14 @@ export const events: Record<string, GameEvent> = {
       {
         text: '辞职！凭多年大厂的技术积累直接搞 AI Startup',
         effect: (s) => s.leetcode >= 60
-          ? { cash: s.cash + 500, tc: 0,
+          ? { age: s.age + 1, cash: s.cash + 500, tc: 0,
     rent: 4, status: 'win', message: '你带着前沿的 AI 理念获得了顶级风投 $50M 融资！成为了下一代独角兽 CEO！' }
-          : { cash: s.cash - 50, health: s.health - 30, message: '技术不够硬，做出来的产品没人用，烧光了积蓄又灰溜溜回去打工。' },
+          : { age: s.age + 1, cash: s.cash - 50, health: s.health - 30, message: '技术不够硬，做出来的产品没人用，烧光了积蓄又灰溜溜回去打工。' },
         nextEventId: (s) => s.leetcode >= 60 ? 'end' : 'post_green_card',
       },
       {
         text: '不再唯唯诺诺，开始在职场上重拳出击',
-        effect: (s) => ({ age: s.age + 1, visa: '绿卡' }),
+        effect: (s) => ({ age: s.age + 1, visa: '绿卡', cash: s.cash + (s.tc * 0.6) - s.rent }),
         nextEventId: 'office_politics',
       },
       {
@@ -794,7 +796,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '小心翼翼地继续打工还贷',
-        effect: (s) => ({ age: s.age + 1, cash: s.cash + (s.tc * 0.6) - s.rent, health: s.health - 5 }),
+        effect: (s) => ({ age: s.age + 1, cash: s.cash, health: s.health - 5 }),
         nextEventId: (s) => s.cash > 150 ? 'end' : 'house_slave',
       },
       {
@@ -1032,14 +1034,14 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.85; // 15% success rate
           return win 
-            ? { cash: s.cash + 500 + (s.tc * 0.6) - s.rent, status: 'win', message: '奇迹发生！公司靠新一轮的 AI 概念起死回生，最终成功被大厂收购。你的期权变现 $5M，财富自由！' }
-            : { cash: s.cash - 10 + (s.tc * 0.6) - s.rent, tc: 0, health: s.health - 15, laid_off: true, message: '风口过了，投资人撤资，公司最终还是倒闭了。你的期权变成了一堆废纸。' };
+            ? { cash: s.cash + 500, status: 'win', message: '奇迹发生！公司靠新一轮的 AI 概念起死回生，最终成功被大厂收购。你的期权变现 $5M，财富自由！' }
+            : { cash: s.cash - 10, tc: 0, health: s.health - 15, laid_off: true, message: '风口过了，投资人撤资，公司最终还是倒闭了。你的期权变成了一堆废纸。' };
         },
         nextEventId: (s) => s.status === 'win' ? 'end' : 'job_hunt',
       },
       {
         text: '偷偷骑驴找马，准备跑路',
-        effect: (s) => ({ health: s.health - 5, tc: 0, cash: s.cash + (s.tc * 0.6) - s.rent, laid_off: true, message: '你一边假装努力工作，一边偷偷刷题。不久后公司果然资金链断裂，你不得不重新找工作。' }),
+        effect: (s) => ({ health: s.health - 5, tc: 0, cash: s.cash, laid_off: true, message: '你一边假装努力工作，一边偷偷刷题。不久后公司果然资金链断裂，你不得不重新找工作。' }),
         nextEventId: 'job_hunt',
       }
     ]
@@ -1054,14 +1056,14 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.5;
           return win 
-            ? { tc: s.tc + 10, cash: s.cash + (s.tc*0.6) - s.rent, charm: s.charm + 3, health: s.health - 20, message: '你的 Paper 被 NeurIPS 接收了！并且在推特上引起了轰动，公司立刻给你发了 Retention Bonus！' }
-            : { health: s.health - 25, cash: s.cash + (s.tc*0.6) - s.rent, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
+            ? { tc: s.tc + 10, cash: s.cash, charm: s.charm + 3, health: s.health - 20, message: '你的 Paper 被 NeurIPS 接收了！并且在推特上引起了轰动，公司立刻给你发了 Retention Bonus！' }
+            : { health: s.health - 25, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
         text: '佛系跟进，不争不抢',
-        effect: (s) => ({ health: s.health + 10, cash: s.cash + (s.tc*0.6) - s.rent, message: '反正公司也不差你这一个项目，你按时下班，每天看着同事们卷生卷死。' }),
+        effect: (s) => ({ health: s.health + 10, cash: s.cash, message: '反正公司也不差你这一个项目，你按时下班，每天看着同事们卷生卷死。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -1076,14 +1078,14 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.6;
           return win 
-            ? { cash: s.cash + 100 + (s.tc*0.6) - s.rent, health: s.health - 25, message: '你赌对了！这波 V 型反转让你帮公司赚了上千万，年底直接发了巨额 Bonus！' }
-            : { cash: s.cash + (s.tc*0.6) - s.rent - 20, health: s.health - 30, message: '你的手动干预导致策略彻底崩溃，亏损加剧。年终奖被砍没了，还被老板痛骂一顿。' };
+            ? { cash: s.cash + 100, health: s.health - 25, message: '你赌对了！这波 V 型反转让你帮公司赚了上千万，年底直接发了巨额 Bonus！' }
+            : { cash: s.cash - 20, health: s.health - 30, message: '你的手动干预导致策略彻底崩溃，亏损加剧。年终奖被砍没了，还被老板痛骂一顿。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
         text: '相信数学，不干预策略',
-        effect: (s) => ({ health: s.health - 10, cash: s.cash + (s.tc*0.6) - s.rent, message: '虽然每天看着回撤心惊肉跳，但你还是忍住了干预的冲动。最终策略慢慢回本了。' }),
+        effect: (s) => ({ health: s.health - 10, cash: s.cash, message: '虽然每天看着回撤心惊肉跳，但你还是忍住了干预的冲动。最终策略慢慢回本了。' }),
         nextEventId: 'sv_daily_life',
       }
     ]

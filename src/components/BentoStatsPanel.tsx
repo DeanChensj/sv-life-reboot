@@ -19,7 +19,7 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({ gameState, cur
   const showAPBar = gameState.ap !== undefined && AP_VISIBLE_EVENTS.has(currentEventId);
 
   return (
-    <div className="lg:col-span-5 order-first lg:order-none lg:sticky lg:top-12 flex flex-col mb-6 lg:mb-0">
+    <div id="bento-stats-panel" className="lg:col-span-5 order-first lg:order-none lg:sticky lg:top-12 flex flex-col mb-6 lg:mb-0">
       {/* Header / Title */}
       <div className="mb-10">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-zinc-100 mb-3">

@@ -6,9 +6,15 @@ import { BentoStatsPanel } from './components/BentoStatsPanel';
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
   const [currentEventId, setCurrentEventId] = useState<string>('choose_trait');
+  const [isMobileStatsOpen, setIsMobileStatsOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const cardEl = document.getElementById('event-decision-card');
+    if (cardEl && window.innerWidth < 1024) {
+      cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, [currentEventId]);
 
   const currentEvent = events[currentEventId];
@@ -50,6 +56,7 @@ export default function App() {
     }
 
     setGameState(newState);
+    setIsMobileStatsOpen(false); // Close mobile drawer if open
 
     // 2. Transition to next event
     if (newState.status !== 'playing') {
@@ -71,14 +78,56 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+      {/* Mobile Sticky Mini-HUD Header */}
+      <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 px-3 py-2.5 shadow-2xl flex items-center justify-between gap-2 text-xs font-mono">
+        <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5">
+          <span className="font-bold text-[11px] text-zinc-200 bg-zinc-800/90 px-2 py-0.5 rounded shrink-0 border border-zinc-700/50">📅 {gameState.age}岁</span>
+          <span className="font-bold text-emerald-400 shrink-0">💵 ${gameState.cash.toFixed(1)}w</span>
+          <span className="text-zinc-400 shrink-0">TC <strong className="text-zinc-200">${gameState.tc}w</strong></span>
+          {gameState.ap !== undefined && (
+            <span className="font-bold text-indigo-400 shrink-0">⚡{gameState.ap}/{gameState.max_ap || 3}</span>
+          )}
+          <span className="text-rose-400 shrink-0">❤️{Math.max(0, gameState.health)}</span>
+          <span className="text-amber-400 shrink-0">{gameState.visa}</span>
+        </div>
+        <button
+          onClick={() => setIsMobileStatsOpen(!isMobileStatsOpen)}
+          className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all active:scale-95 ${
+            isMobileStatsOpen 
+              ? 'bg-emerald-500 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20' 
+              : 'bg-zinc-800 hover:bg-zinc-700 text-emerald-300 border-zinc-700/70'
+          }`}
+        >
+          {isMobileStatsOpen ? '收起 ▲' : '全量属性 ▼'}
+        </button>
+      </div>
+
+      {/* Mobile Slide-Down Drawer Overlay */}
+      {isMobileStatsOpen && (
+        <div className="lg:hidden fixed inset-x-0 top-[42px] bottom-0 z-50 bg-zinc-950/95 backdrop-blur-2xl p-4 overflow-y-auto animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
+            <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">📊 角色档案与完整 Bento 属性</span>
+            <button 
+              onClick={() => setIsMobileStatsOpen(false)}
+              className="text-xs text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-full font-bold border border-zinc-700 active:scale-95 transition-all"
+            >
+              完成返回决策 ✕
+            </button>
+          </div>
+          <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} />
+        </div>
+      )}
+
       <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
           
-          {/* Left Sticky Bento Panel */}
-          <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} />
+          {/* Left Sticky Bento Panel (Desktop Only, Mobile uses sliding drawer) */}
+          <div className="hidden lg:flex lg:col-span-5 flex-col sticky top-12">
+            <BentoStatsPanel gameState={gameState} currentEventId={currentEventId} />
+          </div>
 
           {/* Right Column: Event Narrative & Decisions */}
-          <div className="lg:col-span-7 flex flex-col justify-center min-h-[60vh] lg:min-h-[80vh] lg:pl-8 xl:pl-16">
+          <div className="col-span-1 lg:col-span-7 flex flex-col justify-center min-h-[65vh] lg:min-h-[80vh] lg:pl-8 xl:pl-16">
             
             {/* Message Banner */}
             {gameState.message && (
@@ -88,7 +137,7 @@ export default function App() {
             )}
 
             {/* Event Card */}
-            <div key={currentEventId} className="bg-zinc-900/40 rounded-3xl p-8 md:p-12 border border-zinc-800 backdrop-blur-md transition-all duration-300 shadow-2xl animate-in fade-in duration-500 slide-in-from-bottom-2">
+            <div key={currentEventId} id="event-decision-card" className="scroll-mt-14 bg-zinc-900/40 rounded-3xl p-8 md:p-12 border border-zinc-800 backdrop-blur-md transition-all duration-300 shadow-2xl animate-in fade-in duration-500 slide-in-from-bottom-2">
               {gameState.status === 'playing' && currentEvent ? (
                 <>
                   <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-6">{currentEvent.title}</h2>

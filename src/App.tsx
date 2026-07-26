@@ -122,17 +122,17 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ charm: s.charm + 50, cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 500 }),
+        effect: (s) => ({ charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，但天天蹦迪身体被彻底掏空。',
-        effect: (s) => ({ cash: s.cash + 40, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 1000 }),
+        effect: (s) => ({ cash: s.cash + 25, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 1000 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，但日常总是笨手笨脚惹人嫌。',
-        effect: (s) => ({ luck: 100, leetcode: s.leetcode + 10, charm: s.charm + 10, win_threshold: 300 }),
+        effect: (s) => ({ luck: 45, leetcode: s.leetcode + 10, charm: s.charm + 10, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
@@ -369,17 +369,12 @@ export const events: Record<string, GameEvent> = {
         text: '加入一家刚成立的 AI 初创公司 (高风险高回报)',
         condition: (s) => s.year >= 2023,
         effect: (s) => {
-          const win = Math.random() > 0.9; // Only 10% chance to pick the right one
+          const win = Math.random() < 0.08;
           return win 
-            ? { tc: 15, health: s.health - 20, cash: s.cash + 500, visa: 'O1 (杰出人才)', status: 'win', message: '天选之子！你居然盲狙到了下一个 Anthropic！公司估值暴涨，你手里的期权直接变现，原地财富自由起飞！' }
+            ? { tc: 25, health: s.health - 20, cash: s.cash + 100, visa: 'O1 (杰出人才)', message: '天选之子！你盲狙的公司获得核心突破并由资本巨额注资，你分到了高额股票！' }
             : { tc: 10, health: s.health - 30, message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
         },
-        nextEventId: (s) => {
-          // If we want to evaluate the same win/loss logic for routing without duplicating Math.random, 
-          // we should ideally compute it once. But since effect runs before nextEventId in our engine,
-          // we can check if they won by checking if status === 'win' or cash > 400.
-          return s.status === 'win' ? 'end' : 'job_hunt';
-        },
+        nextEventId: (s) => s.cash >= 100 ? (s.has_housing ? 'sv_daily_life' : 'choose_housing') : 'job_hunt',
       }
     ]
   },
@@ -585,7 +580,7 @@ export const events: Record<string, GameEvent> = {
       {
          text: '🏋️ 医美与私教 (消耗 1 精力, 3 万美元) - 提升魅力和健康',
          condition: (s) => s.ap > 0 && s.cash >= 3,
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 3, health: Math.min(100, s.health + 20), charm: s.charm + 3, message: '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！' }),
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 3, health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 2), message: '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！' }),
          nextEventId: 'sv_daily_life',
       },
       {
@@ -598,14 +593,14 @@ export const events: Record<string, GameEvent> = {
             const win = Math.random() < winRate;
             if (win) {
               if (s.charm >= 20 && Math.random() < 0.05) {
-                 return { ap: s.ap - 1, cash: s.cash + 300, charm: s.charm + 10, status: 'win', message: '极小概率的奇迹！你的小红书粉丝突破 100 万！彻底掌握了流量密码，在湾区名利双收！' };
+                 return { ap: s.ap - 1, cash: s.cash + 80, charm: Math.min(25, s.charm + 5), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
               }
               return { ap: s.ap - 1, cash: s.cash + 5, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
             } else {
               return { ap: s.ap - 1, cash: s.cash - 3, health: s.health - 20, message: '疯狂买装备拍 OOTD 却没人看，倒贴钱还心累。' };
             }
          },
-         nextEventId: (s) => s.status === 'win' ? 'end' : 'sv_daily_life',
+         nextEventId: 'sv_daily_life',
       },
       {
          text: '🤖 搞 AI 独立开发 (消耗 1 精力, 2万美元) - 需要高强算法',
@@ -636,7 +631,7 @@ export const events: Record<string, GameEvent> = {
       {
          text: '🏖️ 宅家躺平打游戏 (消耗 1 精力) - 恢复大量健康',
          condition: (s) => s.ap > 0,
-         effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 40), message: '整个周末都在家打黑神话：悟空，什么代码都不想写，虽然没进步，但是感觉重新活了过来。' }),
+         effect: (s) => ({ ap: s.ap - 1, health: Math.min(100, s.health + 30), message: '整个周末都在家打黑神话：悟空，什么代码都不想写，虽然没进步，但是感觉重新活了过来。' }),
          nextEventId: 'sv_daily_life',
       },
       {
@@ -892,7 +887,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '周末一天排满 3 个 Coffee Date (Santana Row 喝奶茶)',
         effect: (s) => s.charm >= 7 
-          ? { cash: s.cash + s.tc, health: s.health + 20, is_married: true, imageUrl: 'images/boba_date.jpg', message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人一拍即合，组成双职工核心家庭，资产直接翻倍！' }
+          ? { cash: s.cash + Math.min(25, Math.floor(s.tc * 0.4)), health: s.health + 20, is_married: true, imageUrl: 'images/boba_date.jpg', message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人一拍即合，组成双职工核心家庭，资产直接翻倍！' }
           : { cash: s.cash - 0.2, health: s.health - 15, imageUrl: 'images/boba_date.jpg', message: '连喝了三杯 Boba，对方一听你还没抽到 H1B 且没买房，默默地在吃完饭后选择了 AA。你不仅花了钱还受到了真实伤害。' },
         nextEventId: 'sv_daily_life',
       },
@@ -911,7 +906,7 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '报警认栽，自认倒霉',
-        effect: (s) => ({ cash: s.cash - 5 + s.tc, health: s.health - 10, message: '警察让你填了个表就没下文了，你花了 $5000 换玻璃和买新电脑。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), health: s.health - 10, message: '警察让你填了个表就没下文了，你花了 $5000 换玻璃和买新电脑。' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -998,11 +993,13 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '辞职！凭多年大厂的技术积累直接搞 AI Startup',
-        effect: (s) => s.leetcode >= 60
-          ? { age: s.age + 1, cash: s.cash + 500, tc: 0,
-    rent: 4, status: 'win', message: '你带着前沿的 AI 理念获得了顶级风投 $50M 融资！成为了下一代独角兽 CEO！' }
-          : { age: s.age + 1, cash: s.cash - 50, health: s.health - 30, message: '技术不够硬，做出来的产品没人用，烧光了积蓄又灰溜溜回去打工。' },
-        nextEventId: (s) => s.leetcode >= 60 ? 'end' : 'post_green_card',
+        effect: (s) => {
+          const success = s.leetcode >= 50 && Math.random() < 0.3;
+          return success
+            ? { age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
+            : { age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
+        },
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '不再唯唯诺诺，开始在职场上重拳出击',
@@ -1010,9 +1007,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'office_politics',
       },
       {
-        text: '彻底摆烂，躺平养老',
-        effect: (s) => ({ health: s.health + 40, cash: s.cash + 50, age: s.age + 10, status: 'win', message: '你选择了躺平，虽然没有大富大贵，但在湾区过上了平淡且安稳的中产生活。' }),
-        nextEventId: 'end',
+        text: '彻底摆烂，佛系上班',
+        effect: (s) => ({ health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -1023,10 +1020,10 @@ export const events: Record<string, GameEvent> = {
     choices: [
 
       {
-        text: 'All in 现金，加价 $50w 硬抢！(需现金 > 60w)',
+        text: 'All in 现金，加价 $50w 硬抢！(需现金 >= 60w)',
         condition: (s) => s.cash >= 60,
-        effect: (s) => ({ cash: s.cash - 60, health: s.health - 20, imageUrl: 'images/house.jpg', message: '恭喜！你成功抢到了房子，成为了光荣的湾区房奴。', status: 'win' }),
-        nextEventId: 'end',
+        effect: (s) => ({ cash: s.cash - 60, rent: 1, has_housing: true, health: s.health + 10, imageUrl: 'images/house.jpg', message: '恭喜！你成功抢到了 Sunnyvale 的房子！每年固定房租大幅降低为微薄的持有成本。' }),
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '向国内父母求助（掏空六个钱包）',
@@ -1103,11 +1100,11 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '放下 IDE，打开 PPT 开始高强度对线',
-        effect: (s) => s.leetcode > 50
-          ? { tc: s.tc + 30, cash: s.cash + 100, message: '你顿悟了硅谷“向上管理”的精髓，成功画饼，荣升 Director！', status: 'win' }
-          : { health: s.health - 40, message: '你平时只顾着刷题，画饼技术太差，被 Raj 在会上抓住漏洞疯狂攻击，晋升失败。' },
-        nextEventId: (s) => s.leetcode > 50 ? 'end' : 'post_green_card',
+        text: '放下 IDE，打开 PPT 开始高强度向上管理',
+        effect: (s) => s.charm >= 12
+          ? { tc: s.tc + 15, cash: s.cash + 15, charm: Math.min(25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功升职加薪！' }
+          : { health: s.health - 25, charm: Math.max(0, s.charm - 2), message: '缺乏社交情商，你的汇报被对手挑出毛病，功劳全被同事占了。' },
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -1147,13 +1144,12 @@ export const events: Record<string, GameEvent> = {
         text: '跳槽加入一家叫“字节跳动”的初创公司',
         condition: (s) => s.year <= 2018,
         effect: (s) => {
-          const win = Math.random() > 0.3; // 70% 胜率
+          const win = Math.random() < 0.25;
           return win 
-            ? { cash: s.cash + 1000, tc: 0,
-    rent: 4, status: 'win', message: '你赶上了移动互联网最肥美的一波红利！期权兑现，你在海淀买下大平层，实现财务自由！' }
-            : { health: s.health - 50, message: '期权还没变现你就因为天天熬夜大小周被抬进了急诊室...' };
+            ? { cash: s.cash + 350, health: s.health - 25, message: '你赶上了移动互联网最肥美的一波红利！公司上市期权兑现，获得了巨额第一桶金！' }
+            : { health: s.health - 40, message: '每天大小周熬到凌晨两点，公司上市受阻，身体反而落下一身病。' };
         },
-        nextEventId: (s) => s.status === 'win' ? 'end' : 'cn_burnout'
+        nextEventId: 'cn_burnout'
       }
     ]
   },
@@ -1203,14 +1199,14 @@ export const events: Record<string, GameEvent> = {
       {
         text: '坚守传统赛道 (如 SaaS / Web3)',
         effect: (s) => {
-          let winRate = 0.15; // 15% base success
-          if (s.year >= 2020 && s.year <= 2022) winRate = 0.4; // Web3/SaaS boom during COVID
+          let winRate = 0.15;
+          if (s.year >= 2020 && s.year <= 2022) winRate = 0.35;
           const win = Math.random() < winRate; 
           return win 
-            ? { cash: s.cash + 200, status: 'win', message: '奇迹发生！公司靠稳扎稳打被大厂收购了，你财富自由了！' }
-            : { cash: s.cash - 5, health: s.health - 15, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸。' }
+            ? { cash: s.cash + 150, message: '奇迹发生！公司靠稳扎稳打被大厂收购了，你的期权兑现了大笔现金！' }
+            : { cash: Math.max(0, s.cash - 5), health: s.health - 15, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸。' };
         },
-        nextEventId: (s) => s.status === 'win' ? 'end' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
+        nextEventId: (s) => (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
       },
       {
         text: '立刻 Pivot (转型) 做 AI / 大模型套壳',
@@ -1218,13 +1214,12 @@ export const events: Record<string, GameEvent> = {
           if (s.year < 2022) {
             return { cash: s.cash - 10, health: s.health - 20, message: `现在才 ${s.year} 年，你的 AI 理念太超前了！投资人觉得你不切实际，拒绝投资，公司倒闭。` };
           }
-          const win = Math.random() > 0.8; // 20% success rate in 2022+
+          const win = Math.random() < 0.18;
           return win 
-            ? { cash: s.cash + 800, tc: 0,
-    rent: 4, visa: '绿卡', status: 'win', message: '踩中 AI 风口！拿到巨额融资成为独角兽，财富自由，顺便批了 EB-1 杰出人才绿卡！' }
-            : { cash: s.cash - 10, health: s.health - 30, message: '转型太慢，被 OpenAI 连夜更新的接口直接“背刺”干死了...' }
+            ? { cash: s.cash + 300, visa: '绿卡', message: '踩中 AI 风口！拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
+            : { cash: Math.max(0, s.cash - 10), health: s.health - 25, message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...' };
         },
-        nextEventId: (s) => s.status === 'win' ? 'end' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
+        nextEventId: (s) => (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
       }
     ]
   },
@@ -1313,12 +1308,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '相信老板的 PPT，自愿降薪换取更多期权',
         effect: (s) => {
-          const win = Math.random() > 0.85; // 15% success rate
+          const win = Math.random() < 0.12;
           return win 
-            ? { cash: s.cash + 500, status: 'win', message: '奇迹发生！公司靠新一轮的 AI 概念起死回生，最终成功被大厂收购。你的期权变现 $5M，财富自由！' }
-            : { cash: s.cash - 10, tc: 0, health: s.health - 15, laid_off: true, message: '风口过了，投资人撤资，公司最终还是倒闭了。你的期权变成了一堆废纸。' };
+            ? { cash: s.cash + 180, message: '奇迹发生！公司靠新一轮概念起死回生，最终被大厂并购，你的期权兑现！' }
+            : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
         },
-        nextEventId: (s) => s.status === 'win' ? 'end' : 'job_hunt',
+        nextEventId: (s) => 'job_hunt',
       },
       {
         text: '偷偷骑驴找马，准备跑路',
@@ -1402,13 +1397,13 @@ export const events: Record<string, GameEvent> = {
         text: '搏一搏，单车变摩托！投入 $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
-          const winRate = 0.01 + (s.luck / 100) * 0.3; // 土狗币暴富概率 1% - 31%
+          const winRate = 0.01 + (Math.min(45, s.luck) / 100) * 0.15;
           const win = Math.random() < winRate;
           return win 
-            ? { cash: s.cash + 100, status: 'win', message: '你买的土狗币居然真的上了币安！瞬间百倍收益，你看着余额里多出来的 $1M 陷入了沉思...' }
-            : { cash: s.cash - 5, health: s.health - 15, imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都换成了毫无价值的空气币。' }
+            ? { cash: s.cash + 60, message: '你买的土狗币居然真的小火了一把！你在高点果断卖出提现，狠赚了一笔！' }
+            : { cash: Math.max(0, s.cash - 5), health: s.health - 15, imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都变成了空气币。' };
         },
-        nextEventId: (s) => s.status === 'win' ? 'end' : 'sv_daily_life'
+        nextEventId: 'sv_daily_life'
       },
       {
         text: '天上不会掉馅饼，退群保平安',

@@ -594,6 +594,42 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
+        text: '花重金自我提升 (医美、私教、心理咨询) (需花费 3 万美元)',
+        condition: (s) => s.cash >= 3,
+        effect: (s) => ({ age: s.age + 1, gc_progress: s.gc_progress + 1, cash: s.cash - 3 + (s.tc * 0.6) - s.rent - 4, charm: s.charm + 3, health: Math.min(100, s.health + 20), message: '你花大价钱请了硅谷最贵的私教，又做全脸热玛吉。你的颜值和健康度大幅飙升，走在 Santana Row 上回头率极高！距离拿到绿卡还差 ' + (5 - (s.gc_progress + 1)) + ' 年。' }),
+        nextEventId: (s) => {
+          if (s.status === 'win') return 'end';
+          if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
+          
+          const rand = Math.random();
+          
+          // 5% chance of Macro Economic Crisis
+          if (rand < 0.05) return 'stock_crash';
+          
+          // 35% chance of WORK related event based on job type
+          if (rand >= 0.05 && rand < 0.4) {
+             if (s.job_type === 'startup') return 'startup_crisis';
+             if (s.job_type === 'ai_research') return 'ai_research_crisis';
+             if (s.job_type === 'quant') return 'quant_stress';
+             const bigTechRand = Math.random();
+             if (bigTechRand < 0.33) return 'perf_review';
+             if (bigTechRand < 0.66) return 'layoff_rumor';
+             return 'friday_pip'; // big_tech default
+          }
+          
+          // 60% chance of LIFE event
+          const lifeRand = Math.random();
+          if (lifeRand < 0.15) return s.is_married ? 'sv_daily_life' : 'dating_market';
+          if (lifeRand < 0.25) return 'car_broken';
+          if (lifeRand < 0.4) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
+          if (lifeRand < 0.55) return 'dental_emergency';
+          if (lifeRand < 0.7) return 'crypto_scam';
+          if (lifeRand < 0.8) return 'ai_wrapper_startup';
+          if (lifeRand < 0.9) return 'biohacking_party';
+          return 'burning_man_invite';
+        },
+      },
+      {
         text: '周末兼职运营小红书，卷“湾区精英”人设 (高体力消耗)',
         effect: (s) => {
            let winRate = 0.2;

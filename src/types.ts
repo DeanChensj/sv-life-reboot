@@ -11,7 +11,7 @@ export interface GameState {
   rent: number; // 万美元
   charm: number; // 颜值 1-10 (隐藏)
   year: number; // 当前年份
-  gc_progress: number; // 绿卡进度 0-100
+  gc_progress: number; // 绿卡排期进度 0-5 年
   has_us_degree: boolean;
   school: string;
   is_phd: boolean;

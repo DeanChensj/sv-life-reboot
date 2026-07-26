@@ -653,21 +653,51 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life'
       },
       {
-         text: '🚗 贷款分期购买白色 Tesla Model Y (消耗 1 精力, 4万) - 湾区最标准的民工街车',
+         text: '🚗 购买白色 Tesla Model Y (消耗 1 精力, $4w) - 湾区标准的民工街车',
          condition: (s) => s.ap > 0 && s.cash >= 4 && s.car !== 'model_y' && s.car !== 'porsche' && s.car !== 'cybertruck',
          effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 4, car: 'model_y', charm: s.charm + 4, message: '你提了一台最标准的白色 Model Y。去 Cupertino 买奶茶在停车场发现身旁停了 6 台一模一样的车，你按半天钥匙开错别人的车门。' }),
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '🏎️ 提一台保时捷 Porsche Macan / Taycan (消耗 1 精力, 12万) - 破防相亲圈',
-         condition: (s) => s.ap > 0 && s.cash >= 12 && s.car !== 'porsche',
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 12, car: 'porsche', charm: Math.min(25, s.charm + 12), health: s.health + 10, message: '开上保时捷的那一刻，你感觉自己脱离了普通码农的范畴！CMB 约会匹配率与游艇局待遇飙升！' }),
+         text: '🏎️ 购买保时捷 Porsche Macan / Taycan (消耗 1 精力, 置换折抵后实付 $12w) - 破防相亲圈',
+         condition: (s) => {
+           const cost = s.car === 'cybertruck' ? 7 : s.car === 'model_y' ? 10 : 12;
+           return s.ap > 0 && s.cash >= cost && s.car !== 'porsche';
+         },
+         effect: (s) => {
+           const tradeInCredit = s.car === 'cybertruck' ? 5 : s.car === 'model_y' ? 2 : 0;
+           const actualCost = 12 - tradeInCredit;
+           const tradeMsg = tradeInCredit > 0 ? `将旧车二手置换抵扣了 $${tradeInCredit}w 现金后，` : '';
+           return {
+             ap: s.ap - 1,
+             cash: s.cash - actualCost,
+             car: 'porsche',
+             charm: Math.min(25, s.charm + 12),
+             health: s.health + 10,
+             message: `你${tradeMsg}开上了全新保时捷！那一刻你感觉自己脱离了普通码农范畴，CMB 约会匹配率与游艇局待遇飙升！`
+           };
+         },
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '📐 提一台赛博皮卡 Tesla Cybertruck (消耗 1 精力, 9万) - 科技硬核装逼',
-         condition: (s) => s.ap > 0 && s.cash >= 9 && s.car !== 'cybertruck',
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash - 9, car: 'cybertruck', charm: Math.min(25, s.charm + 8), leetcode: s.leetcode + 5, message: '开着硬核多边形皮卡上 237 公路，所有人都以为你是 Hayes Valley 刚拿到 A 轮融资的硬核 AI Founder！' }),
+         text: '📐 购买赛博皮卡 Tesla Cybertruck (消耗 1 精力, 置换折抵后实付 $9w) - 科技硬核装逼',
+         condition: (s) => {
+           const cost = s.car === 'porsche' ? 3 : s.car === 'model_y' ? 7 : 9;
+           return s.ap > 0 && s.cash >= cost && s.car !== 'cybertruck';
+         },
+         effect: (s) => {
+           const tradeInCredit = s.car === 'porsche' ? 6 : s.car === 'model_y' ? 2 : 0;
+           const actualCost = 9 - tradeInCredit;
+           const tradeMsg = tradeInCredit > 0 ? `把旧车送到车行置换抵扣了 $${tradeInCredit}w 现金残值，` : '';
+           return {
+             ap: s.ap - 1,
+             cash: s.cash - actualCost,
+             car: 'cybertruck',
+             charm: Math.min(25, s.charm + 8),
+             leetcode: s.leetcode + 5,
+             message: `你${tradeMsg}换上了多边形赛博皮卡！开在 237 公路上所有人都以为你是 Hayes Valley 刚拿到 A 轮融资的硬核 AI Founder！`
+           };
+         },
          nextEventId: 'sv_daily_life',
       },
       {

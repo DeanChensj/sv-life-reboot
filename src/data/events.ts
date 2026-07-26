@@ -452,7 +452,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '领养一只布偶猫/金毛 (每年额外花费 1w)',
         condition: (s) => s.rent >= 2, // Needs at least a 2b2b to have space
-        effect: (s) => ({ rent: s.rent + 1, charm: s.charm + 10, health: s.health + 30, has_housing: true, message: '你领养了毛孩子！虽然每年要多花不少钱买猫粮/狗粮和看兽医，但每次下班回家看到它，你的疲惫都一扫而空，而且在相亲软件上放宠物照片让你大受欢迎！' }),
+        effect: (s) => ({ rent: s.rent + 1, charm: s.charm + 10, health: s.health + 30, has_housing: true, housing_name: s.housing_name || 'San Jose 公寓', has_pet: true, message: '你领养了毛孩子！虽然每年要多花不少钱买猫粮/狗粮和看兽医，但每次下班回家看到它，你的疲惫都一扫而空，而且在相亲软件上放宠物照片让你大受欢迎！' }),
         nextEventId: 'big_tech_work'
       },
 
@@ -799,13 +799,14 @@ export const events: Record<string, GameEvent> = {
           
           // 35% chance of WORK related event based on job type
           if (rand >= 0.05 && rand < 0.4) {
+             if (s.job_type === 'unemployed' || s.laid_off) return 'job_hunt';
              if (s.job_type === 'startup') return 'startup_crisis';
              if (s.job_type === 'ai_research') return 'ai_research_crisis';
              if (s.job_type === 'quant') return 'quant_stress';
              const bigTechRand = Math.random();
              if (bigTechRand < 0.33) return 'perf_review';
              if (bigTechRand < 0.66) return 'layoff_rumor';
-             return 'friday_pip'; // big_tech default
+             return 'friday_pip';
           }
           
           // 60% chance of LIFE event

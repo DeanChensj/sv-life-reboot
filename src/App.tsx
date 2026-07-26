@@ -38,7 +38,7 @@ export default function App() {
     }
 
     // Check if bankrupt
-    if (newState.cash < 0 && newState.status === 'playing') {
+    if (newState.cash < -0.001 && newState.status === 'playing') {
       newState.status = 'game_over';
       if (!effectResult.message) newState.message = '你破产了，无法支付账单，游戏结束！';
     }
@@ -109,12 +109,11 @@ export default function App() {
                       const isAvailable = !choice.condition || choice.condition(gameState);
                       
                       // Precise badge extraction from text
-                      const costMatch = choice.text.match(/\((?:消耗|花费|每年|\$|成本).*?\)/);
-                      const reqMatch = choice.text.match(/ - (.*)/) || choice.text.match(/\((需要|需|算法|高魅力|现金).*?\)/);
+                      const costMatch = choice.text.match(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/);
+                      const reqMatch = choice.text.match(/\((?:需要|需|算法|高魅力|现金).*?\)/);
                       const mainText = choice.text
-                        .replace(/\((?:消耗|花费|每年|\$|成本).*?\)/g, '')
+                        .replace(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/g, '')
                         .replace(/\((?:需要|需|算法|高魅力|现金).*?\)/g, '')
-                        .replace(/ - (?:消耗|花费|每年|\$|成本|需要|需).*?$/, '')
                         .trim();
                       
                       return (
@@ -193,7 +192,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {(gameState.cash >= 300 || gameState.has_housing) && (
+                      {(gameState.cash >= 300 || ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')) && (
                         <div className="bg-zinc-900/90 border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-3">
                           <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 uppercase">EST</span>
                           <div>

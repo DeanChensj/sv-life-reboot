@@ -192,7 +192,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '在国内读本科 (四年总开销 2 万美元)',
-        effect: (s) => ({ cash: s.cash - 2, age: s.age + 4 }),
+        effect: (s) => ({ cash: s.cash - 2 }),
         nextEventId: 'cn_college_grad',
       },
       {
@@ -228,12 +228,12 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '报班死磕托福/GRE (为了出国)',
-        effect: (s) => ({ cash: s.cash - 2, health: s.health - 10, age: s.age + 1, message: '考出了满意的托福成绩！' }),
+        effect: (s) => ({ cash: s.cash - 2, health: s.health - 10, age: s.age + 2, message: '考出了满意的托福成绩！' }),
         nextEventId: 'cn_undergrad_grad',
       },
       {
         text: '佛系对待，每天在寝室打黑神话悟空',
-        effect: (s) => ({ health: s.health + 10, leetcode: s.leetcode - 5, age: s.age + 1, message: '虽然很爽，但荒废了学业。' }),
+        effect: (s) => ({ health: s.health + 10, leetcode: s.leetcode - 5, age: s.age + 2, message: '虽然很爽，但荒废了学业。' }),
         nextEventId: 'cn_undergrad_grad',
       }
     ]
@@ -336,17 +336,17 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '翘课刷题！(力扣大军)',
-        effect: (s) => ({ leetcode: s.leetcode + 25, health: s.health - 15, age: s.age + 2, message: 'GPA 擦边过，但你闭着眼睛都能写出红黑树的翻转。' }),
+        effect: (s) => ({ leetcode: s.leetcode + 25, health: s.health - 15, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能写出红黑树的翻转。' }),
         nextEventId: 'us_master_grad',
       },
       {
         text: '疯狂赶 Due，力保全 A (4.0 GPA)',
-        effect: (s) => ({ leetcode: s.leetcode + 5, health: s.health - 10, age: s.age + 2, message: '你拿到了 4.0 的完美绩点！但是一去面试发现大厂根本不在乎成绩，只考算法。' }),
+        effect: (s) => ({ leetcode: s.leetcode + 5, health: s.health - 10, age: s.age + 1, message: '你拿到了 4.0 的完美绩点！但是一去面试发现大厂根本不在乎成绩，只考算法。' }),
         nextEventId: 'us_master_grad',
       },
       {
         text: '去硅谷大厂活动混脸熟要内推',
-        effect: (s) => ({ cash: s.cash - 1, charm: s.charm + 10, age: s.age + 2, message: '你加了 50 个大厂学长学姐的 LinkedIn，虽然花了不少钱请客喝咖啡，但拿到了不少内推机会。' }),
+        effect: (s) => ({ cash: s.cash - 1, charm: s.charm + 10, age: s.age + 1, message: '你加了 50 个大厂学长学姐的 LinkedIn，虽然花了不少钱请客喝咖啡，但拿到了不少内推机会。' }),
         nextEventId: 'us_master_grad',
       }
     ]
@@ -1384,7 +1384,7 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '偷偷刷题，准备跳槽大厂',
-        effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 20, age: s.age + 2 }),
+        effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 20, age: s.age + 1 }),
         nextEventId: 'job_hunt',
       }
     ]

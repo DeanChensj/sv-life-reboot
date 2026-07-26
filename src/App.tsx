@@ -224,71 +224,85 @@ export default function App() {
         />
       )}
 
-      {/* Mobile Sticky Mini-HUD Header */}
-      <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-800/80 px-3.5 py-2.5 shadow-2xl flex items-center justify-between gap-2.5 text-xs font-mono">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-          {/* Age & Year Tag */}
-          <span className="flex items-center gap-1 font-bold text-[11px] text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-md shrink-0 border border-zinc-800">
-            <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            {gameState.year}年·{gameState.age}岁
-          </span>
-
-          {/* Cash Tag */}
-          <span className="flex items-center gap-1 font-black text-emerald-400 shrink-0 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 tabular-nums">
-            <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            ${gameState.cash.toFixed(1)}w
-          </span>
-
-          {/* TC Tag */}
-          <span className="flex items-center gap-1 text-zinc-300 shrink-0 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800 tabular-nums">
-            <span className="text-zinc-500 text-[10px] uppercase font-bold">TC</span>
-            <strong className="text-zinc-200 font-bold">${gameState.tc}w</strong>
-          </span>
-
-          {/* Action Points (AP) Tag */}
-          {gameState.ap !== undefined && (
-            <span className="flex items-center gap-1 font-extrabold text-indigo-300 shrink-0 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.25)] tabular-nums">
-              <svg className="w-3 h-3 text-indigo-400 fill-indigo-400/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              AP {gameState.ap}/{gameState.max_ap || 3}
+      {/* Mobile Sticky 2-Layer Mini-HUD Header */}
+      <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-800/80 px-3 py-2 shadow-2xl flex flex-col gap-1.5 text-xs font-mono">
+        {/* Layer 1: Year/Age, AP, Cash, TC, Drawer Toggle */}
+        <div className="flex items-center justify-between gap-1.5 w-full">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {/* Age & Year Tag */}
+            <span className="flex items-center gap-1 font-bold text-[11px] text-zinc-200 bg-zinc-900 px-2 py-0.5 rounded-md shrink-0 border border-zinc-800">
+              <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {gameState.year}年·{gameState.age}岁
             </span>
-          )}
+
+            {/* Action Points (AP) Tag */}
+            {gameState.ap !== undefined && (
+              <span className="flex items-center gap-1 font-extrabold text-indigo-300 shrink-0 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.25)] tabular-nums">
+                <svg className="w-3 h-3 text-indigo-400 fill-indigo-400/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 10 11 22 21 10 12 10 13 2"/></svg>
+                AP {gameState.ap}/{gameState.max_ap || 3}
+              </span>
+            )}
+
+            {/* Cash Tag */}
+            <span className="flex items-center gap-1 font-black text-emerald-400 shrink-0 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 tabular-nums">
+              <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              ${gameState.cash.toFixed(1)}w
+            </span>
+
+            {/* TC Tag */}
+            <span className="flex items-center gap-1 text-zinc-300 shrink-0 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800 tabular-nums">
+              <span className="text-zinc-500 text-[10px] uppercase font-bold">TC</span>
+              <strong className="text-zinc-200 font-bold">${gameState.tc}w</strong>
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsMobileStatsOpen(!isMobileStatsOpen)}
+            className={`shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-extrabold border transition-all duration-200 active:scale-95 cursor-pointer ${
+              isMobileStatsOpen 
+                ? 'bg-emerald-500 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20' 
+                : 'bg-zinc-800/90 hover:bg-zinc-700 text-emerald-300 border-zinc-700/80'
+            }`}
+          >
+            {isMobileStatsOpen ? '收起 ▲' : '全量属性 ▼'}
+          </button>
+        </div>
+
+        {/* Layer 2: Status Badges (Health, Level, Visa, Green Card) */}
+        <div className="flex items-center justify-between gap-1.5 w-full pt-1 border-t border-zinc-900/80">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {/* Health Tag */}
+            <span className={`flex items-center gap-1 font-bold text-[11px] shrink-0 px-2 py-0.5 rounded-md border tabular-nums ${
+              gameState.health >= 70 
+                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
+                : gameState.health >= 40 
+                  ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' 
+                  : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+            }`}>
+              <svg className="w-3 h-3 text-rose-400 fill-rose-400/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              健康 {Math.max(0, gameState.health)}
+            </span>
+
+            {/* Level Tag */}
+            <span className="flex items-center gap-1 font-bold text-[11px] text-purple-300 shrink-0 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+              <span className="text-purple-400 font-extrabold">职级</span> {gameState.level || (gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type ? '待业' : gameState.job_type === 'quant' ? 'Quant' : gameState.job_type === 'ai_research' ? 'MTS' : gameState.is_phd ? 'L4' : 'L3')}
+            </span>
+
+            {/* Visa Tag */}
+            <span className="flex items-center gap-1 font-semibold text-[11px] text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+              <svg className="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              {gameState.visa}
+            </span>
+          </div>
 
           {/* Green Card Progress Tag (Mobile HUD) */}
           {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && (
-            <span className="flex items-center gap-1.5 font-bold text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
+            <span className="flex items-center gap-1.5 font-bold text-[10px] text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               GC: {gameState.visa === '绿卡' ? '100%' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}%`}
             </span>
           )}
-
-          {/* Health Tag */}
-          <span className="flex items-center gap-1 font-bold text-rose-400 shrink-0 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 tabular-nums">
-            <svg className="w-3 h-3 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            {Math.max(0, gameState.health)}
-          </span>
-
-          {/* Level Tag */}
-          <span className="flex items-center gap-1 font-bold text-purple-300 shrink-0 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
-            {gameState.level || (gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type ? '待业' : gameState.job_type === 'quant' ? 'Quant' : gameState.job_type === 'ai_research' ? 'MTS' : gameState.is_phd ? 'L4' : 'L3')}
-          </span>
-
-          {/* Visa Tag */}
-          <span className="flex items-center gap-1 font-semibold text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-            <svg className="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            {gameState.visa}
-          </span>
         </div>
-
-        <button
-          onClick={() => setIsMobileStatsOpen(!isMobileStatsOpen)}
-          className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold border transition-all duration-200 active:scale-95 cursor-pointer ${
-            isMobileStatsOpen 
-              ? 'bg-emerald-500 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20' 
-              : 'bg-zinc-800/90 hover:bg-zinc-700 text-emerald-300 border-zinc-700/80'
-          }`}
-        >
-          {isMobileStatsOpen ? '收起 ▲' : '全量属性 ▼'}
-        </button>
       </div>
 
       {/* Mobile Slide-Down Drawer Overlay */}

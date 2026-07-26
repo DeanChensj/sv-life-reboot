@@ -22,6 +22,7 @@ interface GameState {
   is_married: boolean;
   win_threshold: number;
   laid_off: boolean;
+  imageUrl?: string;
   status: 'playing' | 'game_over' | 'win';
   message: string;
 }
@@ -596,8 +597,8 @@ export const events: Record<string, GameEvent> = {
       {
         text: '周末一天排满 3 个 Coffee Date (Santana Row 喝奶茶)',
         effect: (s) => s.charm >= 7 
-          ? { cash: s.cash + s.tc, health: s.health + 20, is_married: true, message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人一拍即合，组成双职工核心家庭，资产直接翻倍！' }
-          : { cash: s.cash - 0.2, health: s.health - 15, message: '连喝了三杯 Boba，对方一听你还没抽到 H1B 且没买房，默默地在吃完饭后选择了 AA。你不仅花了钱还受到了真实伤害。' },
+          ? { cash: s.cash + s.tc, health: s.health + 20, is_married: true, imageUrl: 'images/boba_date.jpg', message: '因为你主页挂了滑雪和宠物照片，成功吸引了一位大厂双职工！两人一拍即合，组成双职工核心家庭，资产直接翻倍！' }
+          : { cash: s.cash - 0.2, health: s.health - 15, imageUrl: 'images/boba_date.jpg', message: '连喝了三杯 Boba，对方一听你还没抽到 H1B 且没买房，默默地在吃完饭后选择了 AA。你不仅花了钱还受到了真实伤害。' },
         nextEventId: 'sv_daily_life',
       },
       {
@@ -638,12 +639,12 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '在国内每天熬夜，按美国时间远程上班',
-        effect: (s) => ({ health: s.health - 30, cash: s.cash + (s.tc * 0.6) - s.rent, message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
+        effect: (s) => ({ health: s.health - 30, cash: s.cash + (s.tc * 0.6) - s.rent, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '管他呢，直接请无薪假在国内到处旅游！',
-        effect: (s) => ({ cash: s.cash - 20, health: s.health + 30, leetcode: s.leetcode - 10, message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
+        effect: (s) => ({ cash: s.cash - 20, health: s.health + 30, leetcode: s.leetcode - 10, imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -723,7 +724,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: 'All in 现金，加价 $50w 硬抢！(需现金 > 60w)',
         condition: (s) => s.cash >= 60,
-        effect: (s) => ({ cash: s.cash - 60, health: s.health - 20, message: '恭喜！你成功抢到了房子，成为了光荣的湾区房奴。', status: 'win' }),
+        effect: (s) => ({ cash: s.cash - 60, health: s.health - 20, imageUrl: 'images/house.jpg', message: '恭喜！你成功抢到了房子，成为了光荣的湾区房奴。', status: 'win' }),
         nextEventId: 'end',
       },
       {
@@ -777,8 +778,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.3; // 70% 成功率
           return win 
-            ? { tc: s.tc + 30, cash: s.cash + s.tc, health: s.health - 20, message: `你干掉了同组的竞争对手，成功拿到了顶格绩效并升职！当前 TC 达到 ${s.tc + 30}w，包裹极大，但你的身体严重透支。` }
-            : { health: s.health - 15, message: '辛辛苦苦卷了一年，名额却被空降的 VP 亲信抢走了。' };
+            ? { tc: s.tc + 30, cash: s.cash + s.tc, health: s.health - 20, imageUrl: 'images/burnout.jpg', message: `你干掉了同组的竞争对手，成功拿到了顶格绩效并升职！当前 TC 达到 ${s.tc + 30}w，包裹极大，但你的身体严重透支。` }
+            : { health: s.health - 15, imageUrl: 'images/burnout.jpg', message: '辛辛苦苦卷了一年，名额却被空降的 VP 亲信抢走了。' };
         },
         nextEventId: (s) => s.health <= 0 ? 'end' : 'sv_daily_life',
       },
@@ -1002,7 +1003,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() > (s.luck >= 80 ? 0.65 : 0.95); // 天选之子 35% 暴富，普通人 5%
           return win 
             ? { cash: s.cash + 100, status: 'win', message: '你买的土狗币居然真的上了币安！瞬间百倍收益，你看着余额里多出来的 $1M 陷入了沉思...' }
-            : { cash: s.cash - 5, health: s.health - 15, message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都换成了毫无价值的空气币。' }
+            : { cash: s.cash - 5, health: s.health - 15, imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都换成了毫无价值的空气币。' }
         },
         nextEventId: (s) => s.status === 'win' ? 'end' : 'sv_daily_life'
       },
@@ -1057,7 +1058,7 @@ export default function App() {
 
   const handleChoice = (choice: Choice) => {
     // 1. Calculate new state
-    const newState = { ...gameState, message: '', laid_off: false }; // Clear old message and generic flags
+    const newState = { ...gameState, message: '', laid_off: false, imageUrl: undefined }; // Clear old message, image and generic flags
     const effectResult = choice.effect(gameState);
     Object.assign(newState, effectResult); // Apply new effects
     
@@ -1192,6 +1193,16 @@ export default function App() {
               {gameState.status === 'playing' && currentEvent ? (
                 <>
                   <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-6">{currentEvent.title}</h2>
+                  
+                  {gameState.imageUrl && (
+                    <img 
+                      src={`${import.meta.env.BASE_URL}${gameState.imageUrl}`} 
+                      alt="Event Scene" 
+                      className="w-full h-48 md:h-72 object-cover rounded-2xl mb-8 shadow-2xl border border-zinc-700/50 transition-all duration-500 ease-out"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
+
                   <p className="text-zinc-400 mb-10 text-lg md:text-xl leading-relaxed">{currentEvent.description}</p>
                   
                   <div className="flex flex-col space-y-4">

@@ -255,7 +255,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => s.year === 2020 
           ? { message: '疫情爆发！各大公司全面冻结招聘，应届生根本找不到工作！你只能被迫继续留在学校延长毕业一年。', health: s.health - 10, year: s.year + 1, age: s.age + 1 }
           : { visa: 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' },
-        nextEventId: (s) => (s.year === 2020 && s.year <= 2020) ? 'us_undergrad_grad' : 'job_hunt',
+        nextEventId: (s) => (s.year === 2021 && s.age === 23) ? 'us_undergrad_grad' : 'job_hunt',
       },
       {
         text: '申请大U硕士 (刷题进厂预备役 / 避避风头)',
@@ -422,7 +422,7 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '加入 Meta (传说中的卷王之王)',
+        text: '加入 Meta (传说中的卷王之王) - (需要 LeetCode >= 60)',
         condition: (s) => s.leetcode >= 60,
         effect: (s) => ({ tc: 35, health: s.health - 20, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
         nextEventId: (s) => s.has_housing ? 'sv_daily_life' : 'choose_housing',
@@ -459,9 +459,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '再读一个水硕维持身份 (Day 1 CPT)',
+        text: '再读一个水硕维持身份 (Day 1 CPT) - (消耗 $5w, +25 力扣)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== 'O1 (杰出人才)',
-        effect: (s) => ({ cash: s.cash - 5, age: s.age + 1 }),
+        effect: (s) => ({ cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
         nextEventId: 'job_hunt',
       }
     ]
@@ -605,7 +605,7 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life',
       },
       {
-         text: '🤖 搞 AI 独立开发 (消耗 1 精力, 2万美元) - 需要高强算法',
+         text: '🤖 搞 AI 独立开发 (消耗 1 精力, $2w) - (需要 LeetCode >= 30)',
          condition: (s) => s.ap > 0 && s.cash >= 2 && s.leetcode >= 30,
          effect: (s) => {
             const jackpot = Math.random() < (0.05 + s.luck / 500); // 5% to 25% chance
@@ -615,7 +615,7 @@ export const events: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life'
       },
       {
-         text: '🍸 参加高尔夫/游艇高端局 (消耗 1 精力, 5万美元) - 需要高魅力',
+         text: '🍸 参加高尔夫/游艇高端局 (消耗 1 精力, $5w) - (需要 魅力 >= 8)',
          condition: (s) => s.ap > 0 && s.cash >= 5 && s.charm >= 8,
          effect: (s) => {
             const success = Math.random() > 0.5;
@@ -899,7 +899,7 @@ export const events: Record<string, GameEvent> = {
     description: '在 Atherton 的一个豪宅派对上，主人戴着三个智能指环，宣称自己把生物钟逆转到了 18 岁。他递给你一杯绿色的不明液体，说是他独家研发的“细胞级抗衰老矩阵精华”，只要 $500 一杯。',
     choices: [
       {
-        text: '花 50 万美元报名“长寿换血抗衰老”年度会员 (永久 +1 精力上限)',
+        text: '报名“长寿换血抗衰老”年度会员 (消耗 $50w) - (永久 +1 精力上限)',
         effect: (s) => ({ 
           cash: s.cash - 50, 
           max_ap: (s.max_ap || 3) + 1,
@@ -1685,7 +1685,7 @@ export default function App() {
               </div>
               
               {/* Action Points (AP) - Only shown if AP has been unlocked by entering the work loop */}
-              {gameState.ap !== undefined && (currentEventId === 'sv_daily_life' || currentEventId === 'sv_year_end_settlement' || currentEventId === 'dating_market' || currentEventId === 'biohacking_party' || currentEventId === 'crypto_scam' || currentEventId === 'ai_wrapper_startup' || currentEventId === 'burning_man_invite' || currentEventId === 'stock_crash' || currentEventId === 'car_broken' || currentEventId === 'dental_emergency' || currentEventId === 'post_green_card' || currentEventId === 'layoff_rumor' || currentEventId === 'perf_review' || currentEventId === 'friday_pip' || currentEventId === 'visa_check') && (
+              {gameState.ap !== undefined && (currentEventId === 'sv_daily_life' || currentEventId === 'sv_year_end_settlement' || currentEventId === 'dating_market' || currentEventId === 'biohacking_party' || currentEventId === 'crypto_scam' || currentEventId === 'ai_wrapper_startup' || currentEventId === 'burning_man_invite' || currentEventId === 'stock_crash' || currentEventId === 'car_broken' || currentEventId === 'dental_emergency' || currentEventId === 'post_green_card' || currentEventId === 'layoff_rumor' || currentEventId === 'perf_review' || currentEventId === 'friday_pip' || currentEventId === 'visa_check' || currentEventId === 'blind_team_tea' || currentEventId === 'zoom_camera_off_leetcode' || currentEventId === 'boba_inflation' || currentEventId === 'rsu_vesting_crash' || currentEventId === 'h1b_rfe_vs_parent_nag' || currentEventId === 'xhs_boba' || currentEventId === 'startup_crisis' || currentEventId === 'ai_research_crisis' || currentEventId === 'quant_stress') && (
               <div className="col-span-2 md:col-span-4 bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex items-center gap-6">
                 <div className="flex-1">
                   <div className="text-zinc-400 text-[10.5px] font-mono font-medium uppercase tracking-[0.15em] mb-2">本年剩余精力 (AP)</div>
@@ -1789,7 +1789,7 @@ export default function App() {
                       const mainText = choice.text
                         .replace(/\(.*?\)/g, '')
                         .replace(/ - .*/, '')
-                        .replace(/[:：]\s*.*$/, '')
+                        // preserve Chinese colons in dialogue quotes
                         .trim();
                       
                       return (
@@ -1919,6 +1919,33 @@ export default function App() {
                           <div>
                             <div className="font-bold text-orange-300 text-sm">【湾区月光大慈善家】</div>
                             <div className="text-xs text-zinc-400">把高额总包全额上交给了房东与 $13 奶茶</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.status === 'game_over' && (gameState.message.includes('遣返') || gameState.message.includes('失业期') || gameState.message.includes('OPT') || gameState.message.includes('终身禁入')) && (
+                        <div className="bg-zinc-900/90 border border-indigo-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase">ICE</span>
+                          <div>
+                            <div className="font-bold text-indigo-300 text-sm">【身份终结者】</div>
+                            <div className="text-xs text-zinc-400">拜倒在 USCIS 签证铁拳与绿卡排期的大山之下</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.status === 'game_over' && (gameState.message.includes('Raj') || gameState.message.includes('抢功') || gameState.message.includes('排挤') || gameState.message.includes('被裁')) && (
+                        <div className="bg-zinc-900/90 border border-purple-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase">POL</span>
+                          <div>
+                            <div className="font-bold text-purple-300 text-sm">【职场斗争牺牲品】</div>
+                            <div className="text-xs text-zinc-400">不敌高强度向上管理与大佬办公室政治陷阱</div>
+                          </div>
+                        </div>
+                      )}
+                      {gameState.status === 'game_over' && (gameState.message.includes('创业') || gameState.message.includes('烧钱') || gameState.message.includes('跑路') || gameState.message.includes('清零')) && (
+                        <div className="bg-zinc-900/90 border border-yellow-500/30 p-4 rounded-2xl flex items-center gap-3">
+                          <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 uppercase">FOMO</span>
+                          <div>
+                            <div className="font-bold text-yellow-300 text-sm">【赛博大饼吞噬者】</div>
+                            <div className="text-xs text-zinc-400">坚信风口大佬 PPT，最终把积蓄变为了赛博泡沫</div>
                           </div>
                         </div>
                       )}

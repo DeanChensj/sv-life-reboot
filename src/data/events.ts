@@ -88,8 +88,8 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'choose_year',
       },
       {
-        text: '【天选之子】玄学护体，总能在关键时刻化险为夷，但日常总是笨手笨脚惹人嫌。',
-        effect: (s) => ({ luck: 45, leetcode: s.leetcode + 10, charm: s.charm + 10, win_threshold: 400 }),
+        text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
+        effect: (s) => ({ luck: Math.min(99, Math.max(s.luck + 25, 68)), leetcode: s.leetcode + 10, charm: s.charm + 5, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
@@ -415,12 +415,13 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '挑战顶级量化基金 (Quant)',
+        text: '挑战顶级量化基金 (Quant) (极高门槛, 力扣>=75提高胜率)',
         effect: (s) => {
-          const pass = Math.random() > 0.8;
+          const winRate = 0.18 + (s.leetcode >= 75 ? 0.27 : s.leetcode >= 50 ? 0.12 : 0) + (s.luck / 100) * 0.12;
+          const pass = Math.random() < winRate;
           return pass 
-            ? { tc: 40, cash: s.cash + 10, health: s.health - 30, job_type: 'quant', message: '奇迹发生！你拿下了华尔街顶级 Quant Fund 的 Offer，起薪 40 万美元！' }
-            : { health: s.health - 15, message: '量化面试的数学题太难了，智商被按在地上摩擦...' };
+            ? { tc: 40, cash: s.cash + 10, health: s.health - 30, job_type: 'quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
+            : { health: s.health - 15, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 40) return 'job_hunt_fail';
@@ -565,13 +566,13 @@ export const events: Record<string, GameEvent> = {
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
       {
-         text: '🧗 周末去 Movement / Planet Granite 抱石馆抓 V5 难度墙 (消耗 1 精力, $0.1w) - 湾区最流行的码农技术社交',
-         condition: (s) => s.ap > 0 && s.cash >= 0.1,
+         text: '🧗 周末去 Movement / Planet Granite 抱石馆抓 V5 难度墙 (消耗 1 精力, $0.01w) - 湾区最流行的码农技术社交',
+         condition: (s) => s.ap > 0 && s.cash >= 0.01,
          effect: (s) => {
            const staffNetwork = Math.random() < 0.35;
            return staffNetwork
-             ? { ap: s.ap - 1, cash: s.cash - 0.1, health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 4), tc: s.tc + 4, message: '你在抱石馆脱掉镁粉手套抱岩壁，旁边一位穿着始祖鸟黑标的老哥向你攀谈，聊天才发现是隔壁组的 Staff Engineer！对方欣赏你的解题节奏，直通荐你去核心 AI 架构团队！' }
-             : { ap: s.ap - 1, cash: s.cash - 0.1, health: Math.min(100, s.health + 25), charm: Math.min(25, s.charm + 3), message: '虽然前臂小臂肌肉酸痛得拿不稳水杯，但你成功顶住了 V5 的黑点挂墙，心理压力一扫而空，神清气爽！' };
+             ? { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 20), charm: Math.min(25, s.charm + 4), tc: s.tc + 4, message: '你在抱石馆脱掉镁粉手套抱岩壁，旁边一位穿着始祖鸟黑标的老哥向你攀谈，聊天才发现是隔壁组的 Staff Engineer！对方欣赏你的解题节奏，直通荐你去核心 AI 架构团队！' }
+             : { ap: s.ap - 1, cash: Math.max(0, s.cash - 0.01), health: Math.min(100, s.health + 25), charm: Math.min(25, s.charm + 3), message: '虽然前臂小臂肌肉酸痛得拿不稳水杯，但你成功顶住了 V5 的黑点挂墙，心理压力一扫而空，神清气爽！' };
          },
          nextEventId: 'sv_daily_life',
       },
@@ -651,9 +652,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-         text: '🚗 周末跑 Uber / 送外卖赚外快 (消耗 1 精力)',
-         condition: (s) => s.ap > 0 && s.cash <= 15,
-         effect: (s) => ({ ap: s.ap - 1, cash: s.cash + 2, health: s.health - 20, message: '手头太紧了，你周末开车去送外卖，虽然赚了点辛苦钱，但累得腰酸背痛。' }),
+         text: '🚗 周末跑 Uber / 送外卖赚外快 (消耗 1 精力, 净赚 $300)',
+         condition: (s) => s.ap > 0 && s.cash <= 25,
+         effect: (s) => ({ ap: s.ap - 1, cash: s.cash + 0.03, health: s.health - 15, message: '手头太紧了，你周末开着破车去 DoorDash 送外卖，拉满两天赚了 $300 美金外快，累得腰酸背痛。' }),
          nextEventId: 'sv_daily_life',
       },
       {
@@ -822,7 +823,7 @@ export const events: Record<string, GameEvent> = {
           // 60% chance of LIFE event
           const lifeRand = Math.random();
            if (lifeRand < 0.07) return s.is_married ? 'sv_daily_life' : 'dating_market';
-           if (lifeRand < 0.14) return 'car_broken';
+           if (lifeRand < 0.14) return (s.car && s.car !== 'none') ? 'car_broken' : 'sv_daily_life';
            if (lifeRand < 0.21) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'visa_check';
            if (lifeRand < 0.28) return 'dental_emergency';
            if (lifeRand < 0.35) return 'crypto_scam';
@@ -830,7 +831,7 @@ export const events: Record<string, GameEvent> = {
            if (lifeRand < 0.49) return 'zoom_camera_off_leetcode';
            if (lifeRand < 0.56) return 'boba_inflation';
            if (lifeRand < 0.63) return 'rsu_vesting_crash';
-           if (lifeRand < 0.70) return 'h1b_rfe_vs_parent_nag';
+           if (lifeRand < 0.70) return (s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'h1b_rfe_vs_parent_nag';
            if (lifeRand < 0.77) return 'xhs_boba';
            if (lifeRand < 0.84) return 'ai_wrapper_startup';
            if (lifeRand < 0.92) return 'biohacking_party';
@@ -1733,8 +1734,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const viral = Math.random() > 0.8;
           return viral 
-            ? { charm: s.charm + 10, health: s.health + 10, cash: s.cash - 0.1, message: '排队 2 小时买到了。你随手拍的照片加了滤镜发到小红书，居然成了爆款！涨粉 1000 人，极大地满足了虚荣心。' }
-            : { health: s.health - 10, cash: s.cash - 0.1, message: '在烈日下排队 2 小时，喝了一口发现又贵又难喝，纯纯智商税。' };
+            ? { charm: s.charm + 10, health: s.health + 10, cash: Math.max(0, s.cash - 0.0015), message: '排队 2 小时买到了。你随手拍的照片加了滤镜发到小红书，居然成了爆款！涨粉 1000 人，极大地满足了虚荣心。' }
+            : { health: s.health - 10, cash: Math.max(0, s.cash - 0.0015), message: '在烈日下排队 2 小时，喝了一口发现又贵又难喝，纯纯智商税。' };
         },
         nextEventId: 'sv_daily_life',
       },

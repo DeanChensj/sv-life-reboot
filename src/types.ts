@@ -22,6 +22,7 @@ export interface GameState {
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia';
   company?: string;
   level?: string;
+  last_promo_age?: number;
   h1b_attempts?: number;
   imageUrl?: string;
   has_housing: boolean;

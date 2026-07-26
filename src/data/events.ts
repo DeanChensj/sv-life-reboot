@@ -236,14 +236,19 @@ export const events: Record<string, GameEvent> = {
       },
 
       {
-        text: '申请美国水硕 (为了留在湾区！)',
-        condition: (s) => s.cash >= 10,
-        effect: (s) => ({ cash: s.cash - 10, visa: 'F1 (学生)', age: s.age, housing_name: '美硕 校外公寓' }),
+        text: '申请美国 CS 硕士 (自筹资金 / 积蓄 $5w 即可申请)',
+        condition: (s) => s.cash >= 5,
+        effect: (s) => ({ cash: s.cash - 5, visa: 'F1 (学生)', age: s.age, housing_name: '美硕 校外公寓' }),
         nextEventId: 'us_master_year1',
       },
       {
-        text: '在国内大厂卷 (提前体验福报)',
-        effect: (s) => ({ cash: s.cash + 10, health: s.health - 20, tc: 5, age: s.age + 3, housing_name: '国内 厂区单间' }),
+        text: '申请美国 CS 硕士 (无抵押留学贷款 + 校内 TA 助教，无现金门槛)',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, housing_name: '美硕 校外公寓', message: '你凭借优异的本科 GPA 与算法基础申请到了无抵押留学贷款与校内助教 TA，免除大半学费顺利赴美！' }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '在国内大厂打工攒钱 (积累工作经验)',
+        effect: (s) => ({ cash: s.cash + 8, health: Math.max(30, s.health - 12), tc: 8, age: s.age + 1, housing_name: '国内 厂区单间' }),
         nextEventId: 'cn_work',
       }
     ]
@@ -715,32 +720,37 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.ap > 0 && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          const pass = Math.random() < (0.35 + s.leetcode / 300);
+          const lastPromoAge = s.last_promo_age || (s.is_phd ? 24 : 22);
+          const yearsInGrade = s.age - lastPromoAge;
+          
+          // Multi-dimensional dynamic promo odds (LeetCode skill + Charm management + Luck randomness)
+          const baseWinRate = 0.15 + (s.leetcode / 300) + (s.charm * 0.02) + (s.luck * 0.001);
+          const pass = Math.random() < Math.min(0.7, baseWinRate);
+
           if (curLevel === 'L3') {
-            return pass 
-              ? { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 5, level: 'L4', message: '恭喜！Perf 拿下 Strong Exceeds，成功从 L3 晋升至 L4！TC +$5w！' }
-              : { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: '你拼命熬夜写代码，但 Manager 饼画得飞起：“今年团队额度有限，明年一定升 L4。”' };
+            if (s.leetcode < 30) {
+              return { ap: s.ap - 1, health: Math.max(10, s.health - 10), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (需 LeetCode≥30)，建议多提升技术硬实力。' };
+            }
+            if (yearsInGrade >= 1 && pass) {
+              return { ap: s.ap - 1, health: Math.max(10, s.health - 15), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '🎉 恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
+            }
           } else if (curLevel === 'L4') {
-            return pass 
-              ? { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 10, level: 'L5', message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5！TC +$10w！' }
-              : { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 1, message: 'Manager 嘴上夸你表现好，但升职委员会以“缺乏 Leadership”为由把你卡在了 L4。' };
-          } else if (curLevel === 'L5') {
-            return pass 
-              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 15, level: 'L6', message: '登顶！你跨越了硅谷码农最大天堑，成功晋升为 L6！TC +$15w！' }
-              : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 2, message: '升 L6 竞争极其残酷，跨组 Director 把你否决了，继续留守 L5。' };
-          } else if (curLevel === 'L6') {
-            return pass 
-              ? { ap: s.ap - 1, health: s.health - 30, tc: s.tc + 25, level: 'L7', message: '硅谷传奇！你成功封神晋升为 L7！VP 亲自为你提薪！' }
-              : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 3, message: 'L7 席位太少，今年全部门只有一个人升上去了，你继续保持 L6。' };
-          } else if (curLevel === 'MTS') {
-            return pass 
-              ? { ap: s.ap - 1, health: s.health - 25, tc: s.tc + 20, level: 'L6', message: '前沿研究成果震撼发布！你从 MTS 破格提拔为 L6！TC +$20w！' }
-              : { ap: s.ap - 1, health: s.health - 20, tc: s.tc + 5, message: '你在实验室熬夜训大模型，研究进展顺利，奖金丰厚！' };
-          } else {
-            return { ap: s.ap - 1, health: s.health - 15, tc: s.tc + 3, message: '你在公司疯狂加班，拿到满额绩效奖金！' };
+            if (s.leetcode < 50) {
+              return { ap: s.ap - 1, health: Math.max(10, s.health - 12), tc: s.tc + 1.0, message: '晋升委员会 (Promo Committee) 认为你的技术深度还不到 Senior 级别 (需 LeetCode/系统设计≥50)。' };
+            }
+            if (yearsInGrade >= 1 && pass) {
+              return { ap: s.ap - 1, health: Math.max(10, s.health - 20), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '🎉 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior 资深工程师！总包调薪 +$6.5w！' };
+            }
+          } else if (curLevel === 'L5 (Senior)') {
+            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) {
+              return { ap: s.ap - 1, health: Math.max(10, s.health - 25), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '🎉 奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！总包暴涨 +$15w！' };
+            }
           }
+
+          const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
+          return { ap: s.ap - 1, health: Math.max(10, s.health - 10), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
       },
       {
         text: '【跳槽】刷题跳槽冲刺 (尝试跳槽升职级, 消耗 1 精力) - (需 LeetCode >= 50)',
@@ -1358,10 +1368,10 @@ export const events: Record<string, GameEvent> = {
           const tcIncrease = isL3 ? 3.5 : 6.5;
           const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
-            ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, message: `卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
+            ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: `🎉 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
             : { health: Math.max(10, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
       },
       {
         text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L6 专属高门槛)',
@@ -1372,10 +1382,10 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.15 + (s.leetcode / 100) * 0.15; // 15% - 30% hard chance
           const win = Math.random() < winRate;
           return win 
-            ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), message: '🎉 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
+            ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), last_promo_age: s.age, message: '🎉 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
             : { health: Math.max(10, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: (s) => (s.message.includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
       },
       {
         text: '准点下班，躺平拿 Meets (保重身体)',
@@ -1384,7 +1394,19 @@ export const events: Record<string, GameEvent> = {
       }
     ]
   },
-'dating_market': {
+  'promo_celebration': {
+    id: 'promo_celebration',
+    title: '🎉 职级大晋升喜报！PROMOTION UNLOCKED',
+    description: '轰动部门！鉴于你在公司核心业务中的突出 Impact，晋升委员会 (Promo Committee) 官方批准了你的职级晋升！',
+    choices: [
+      {
+        text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗 (健康 +5, 魅力 +1)',
+        effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level} 的职级头衔，包裹与职场地位同步跃升！` }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'dating_market': {
     id: 'dating_market',
     title: '湾区婚恋市场 (CMB)',
     description: '家里疯狂催婚，你下载了 Coffee Meets Bagel (CMB) 并充值了高级会员，开始在湾区相亲市场上碰运气。',
@@ -1724,55 +1746,42 @@ export const events: Record<string, GameEvent> = {
   },
   'cn_work': {
     id: 'cn_work',
-    title: '国内大厂',
-    description: '你在国内大厂疯狂 996，虽然赚了些钱，但感觉身体被掏空。',
+    title: '国内大厂体验期',
+    description: '你在国内大厂打工攒钱，积累硬核工程经验与算法能力，为后续赴美做准备。',
     choices: [
-
       {
-        text: '拼命卷！打工攒钱 (攒 5 万美元)',
-        effect: (s) => ({ health: s.health - 25, cash: s.cash + 5, age: s.age + 1, message: '你扛着 996 的压力干了一年，拿命换来了 5 万存款。' }),
+        text: '【打工攒钱】积累赴美存款 (积累 $8w 存款, 提高算法)',
+        effect: (s) => ({ health: Math.max(25, s.health - 12), cash: s.cash + 8, age: s.age + 1, leetcode: s.leetcode + 15, message: '你打工一年攒下了 8 万美金存款，算法与硬核项目经验有了显著提升！' }),
         nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work',
       },
       {
-        text: '拿着钱申请美国水硕 (逃离内卷)',
-        condition: (s) => s.cash >= 15,
-        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', age: s.age }),
+        text: '【申请美硕】拿着积蓄申请美国 CS 硕士 (顺利赴美)',
+        condition: (s) => s.cash >= 4,
+        effect: (s) => ({ cash: s.cash - 4, visa: 'F1 (学生)', age: s.age, message: '拿着打工攒下的第一桶金，你顺利通过签证与录取，踏上了赴美求学之路！' }),
         nextEventId: 'us_master_year1',
       },
       {
-        text: '跳槽加入一家叫“字节跳动”的初创公司',
-        condition: (s) => s.year <= 2018,
-        effect: (s) => {
-          const win = Math.random() < 0.25;
-          return win 
-            ? { cash: s.cash + 350, year: s.year + 4, health: s.health - 25, message: '你赶上了移动互联网最肥美的一波红利！熬了四年，公司上市期权兑现，获得了巨额第一桶金！' }
-            : { health: s.health - 40, message: '每天大小周熬到凌晨两点，公司上市受阻，身体反而落下一身病。' };
-        },
-        nextEventId: 'cn_burnout'
+        text: '【跨海直投】凭硬核算法直接面北美大厂 Offer (需 LeetCode >= 50)',
+        condition: (s) => s.leetcode >= 50,
+        effect: (s) => ({ visa: 'OPT (实习)', tc: 22, cash: s.cash + 5, age: s.age + 1, message: '陆本硬核算法发威！你跨海面过了北美大厂并拿到签证 Offer，直接飞往硅谷！' }),
+        nextEventId: 'job_hunt',
       }
     ]
   },
   'cn_burnout': {
     id: 'cn_burnout',
-    title: '职场危机：ICU 警告',
-    description: '你的身体因为长期 996 亮起了红灯，拿着体检报告，你感到前所未有的恐惧。',
+    title: '职场调养：体检警示',
+    description: '长期加班让你的身体有点疲惫，公司医疗保险为你提供了全面的体检与休养支持。',
     choices: [
       {
-        text: '花钱治病保命 (花费 5 万美元)',
-        condition: (s) => s.cash >= 5,
-        effect: (s) => ({ cash: s.cash - 5, health: s.health + 40, age: s.age + 1, year: s.year + 1, message: '休养了一年，在医院躺了半个月，捡回一条命，但存款缩水了。' }),
+        text: '公司医保大部分报销治病休养 (花费 1 万美元)',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 40), age: s.age + 1, message: '在医保绝大部分报销后，你休养了半个月恢复了健康！' }),
         nextEventId: 'cn_work'
       },
       {
-        text: '拿着钱申请美国水硕 (逃离内卷)',
-        condition: (s) => s.cash >= 15,
-        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', age: s.age, health: s.health + 20, message: '趁着还能走动，你赶紧跑路去了美国。' }),
+        text: '趁机申请美硕离开 (留学贷款 + TA 助教，开启赴美新旅程)',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: '你果断提交了留学生贷款与 Master 申请，开启了赴美新生活！' }),
         nextEventId: 'us_master_year1'
-      },
-      {
-        text: '放弃治疗，遗憾退场',
-        effect: (s) => ({ status: 'game_over', message: '你错过了最佳治疗时间，身体彻底垮掉，人生提前画上了句号。' }),
-        nextEventId: 'end'
       }
     ]
   },

@@ -20,6 +20,7 @@ export interface GameState {
   win_threshold: number;
   laid_off: boolean;
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia';
+  company?: string;
   imageUrl?: string;
   has_housing: boolean;
   parents_helped_house?: boolean;
@@ -36,6 +37,7 @@ export interface Choice {
   effect: (state: GameState) => Partial<GameState>;
   nextEventId: string | ((state: GameState) => string);
   condition?: (state: GameState) => boolean;
+  hideIfUnavailable?: boolean;
 }
 
 export interface GameEvent {

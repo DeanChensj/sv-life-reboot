@@ -192,7 +192,15 @@ export default function App() {
                   <p className="text-zinc-400 mb-10 text-lg md:text-xl leading-relaxed">{currentEvent.description}</p>
                   
                   <div className="flex flex-col space-y-4">
-                    {currentEvent.choices.map((choice, idx) => {
+                    {currentEvent.choices
+                      .filter((choice) => {
+                        const isAvailable = !choice.condition || choice.condition(gameState);
+                        if (!isAvailable && (choice.hideIfUnavailable || choice.text.includes('今年限时机会'))) {
+                          return false;
+                        }
+                        return true;
+                      })
+                      .map((choice, idx) => {
                       const isAvailable = !choice.condition || choice.condition(gameState);
                       
                       // Precise badge extraction from text

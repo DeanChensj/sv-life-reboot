@@ -653,9 +653,10 @@ export const events: Record<string, GameEvent> = {
          effect: (s) => ({ ap: s.ap - 1, message: '你拿着这些年攒下的首付本金与股票，精神抖擞地走向了 Open House 现场！' }),
          nextEventId: 'buy_house',
       },
-      {
+       {
         text: '🔥【今年限时机会】 Stanford 师兄拉你组队冲 AI Hackathon (消耗 1 精力, $0.5w)',
         condition: (s) => s.ap > 0 && s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3),
+        hideIfUnavailable: true,
         effect: (s) => {
           const win = Math.random() < (0.35 + s.leetcode / 300);
           return win
@@ -667,6 +668,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '🔥【今年限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场近距离见皮衣黄 (消耗 1 精力, $1.5w)',
         condition: (s) => s.ap > 0 && s.cash >= 1.5 && (s.year % 6 === 1),
+        hideIfUnavailable: true,
         effect: (s) => ({
           ap: s.ap - 1,
           cash: s.cash - 1.5,
@@ -679,17 +681,19 @@ export const events: Record<string, GameEvent> = {
       {
         text: '🔥【今年限时机会】 酒店拍卖破产 Web3 公司资产：超低价淘二手 Herman Miller 人体工学椅 (消耗 1 精力, $0.3w)',
         condition: (s) => s.ap > 0 && s.cash >= 0.3 && (s.year % 6 === 2),
+        hideIfUnavailable: true,
         effect: (s) => ({
           ap: s.ap - 1,
           cash: s.cash - 0.3,
           health: Math.min(100, s.health + 35),
-          message: '你花了原价二折淘到了一把全配 AERON 椅子。从此写代码腰也不酸了，每次在家里躺平休养的恢复效果永久提升！'
+          message: '你花了原价二折淘到了一把全配 AERON 椅子。从此写代码腰也不酸了，每次在家里躺平休养的恢复效果提升！'
         }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '🔥【今年限时机会】 硅谷暴雨冲毁数据中心，连夜接单抗洪抢修服务器机房 (消耗 1 精力)',
         condition: (s) => s.ap > 0 && (s.year % 6 === 4),
+        hideIfUnavailable: true,
         effect: (s) => ({
           ap: s.ap - 1,
           cash: s.cash + 15,
@@ -702,6 +706,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '🔥【今年限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (消耗 1 精力) - (需要 LeetCode >= 35)',
         condition: (s) => s.ap > 0 && s.leetcode >= 35 && (s.year % 6 === 5),
+        hideIfUnavailable: true,
         effect: (s) => {
           const success = Math.random() < 0.25;
           return success

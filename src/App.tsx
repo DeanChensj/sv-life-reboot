@@ -89,73 +89,42 @@ const events: Record<string, GameEvent> = {
       }
     ]
   },
-  'choose_school': {
+'choose_school': {
     id: 'choose_school',
     title: '第一步：人生十字路口',
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校的选择：',
     choices: [
       {
-        text: '去美国读本科 (直接拿F1，体验多元文化)',
-        effect: (s) => ({ cash: s.cash - 5, visa: 'F1 (学生)', age: s.age + 1 }),
-        nextEventId: 'us_college_year1',
+        text: 'CMU 计算机本科 (四年总开销 30 万美元)',
+        condition: (s) => s.cash >= 30,
+        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, age: s.age + 4, leetcode: s.leetcode + 40, health: s.health - 20, message: '你在匹兹堡经过四年的魔鬼训练，你的编程能力冠绝全场，但因为长期熬夜，健康大幅下降。' }),
+        nextEventId: 'us_undergrad_grad',
       },
       {
-        text: '在国内读本科 (省钱，打好理工科基础)',
-        effect: (s) => ({ cash: s.cash - 1, age: s.age + 1 }),
-        nextEventId: 'cn_college_year1',
+        text: 'UC Berkeley 本科 (四年总开销 25 万美元)',
+        condition: (s) => s.cash >= 25,
+        effect: (s) => ({ cash: s.cash - 25, visa: 'F1 (学生)', has_us_degree: true, age: s.age + 4, leetcode: s.leetcode + 25, health: s.health - 10, message: '每天在 Telegraph 街防抢劫的同时学 EECS，练就了强大的抗压心理素质。' }),
+        nextEventId: 'us_undergrad_grad',
+      },
+      {
+        text: '美国普通公立大学 (四年总开销 15 万美元)',
+        condition: (s) => s.cash >= 15,
+        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', has_us_degree: true, age: s.age + 4, charm: s.charm + 2, leetcode: s.leetcode + 5, message: '你度过了愉快的四年，参加了各种派对，享受了多元文化，但代码没写几行。' }),
+        nextEventId: 'us_undergrad_grad',
+      },
+      {
+        text: '在国内读本科 (四年总开销 2 万美元)',
+        effect: (s) => ({ cash: s.cash - 2, age: s.age + 4 }),
+        nextEventId: 'cn_college_grad',
       },
       {
         text: '不上大学了！拿着启动资金直接创业',
-        effect: (s) => ({ cash: s.cash - 10, age: s.age + 2, message: '你辍学创业，体验了社会的毒打。' }),
+        effect: (s) => ({ age: s.age + 2, message: '你辍学创业，体验了社会的毒打。' }),
         nextEventId: 'startup_work',
       }
     ]
   },
-  'us_college_year1': {
-    id: 'us_college_year1',
-    title: '美本大一：初来乍到',
-    description: '刚来到美国，陌生的环境让你兴奋又迷茫。这学期你打算怎么过？',
-    choices: [
-      {
-        text: '疯狂社交，谈恋爱，参加派对',
-        effect: (s) => ({ cash: s.cash - 3, health: s.health - 10, charm: s.charm + 1, age: s.age + 2, message: '虽然花了不少钱，但你谈了一场轰轰烈烈的恋爱！' }),
-        nextEventId: 'us_college_year3',
-      },
-      {
-        text: '死磕 GPA 和编程基础',
-        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 5, age: s.age + 2, message: '你拿了全A，但也因为久坐胖了三斤。' }),
-        nextEventId: 'us_college_year3',
-      }
-    ]
-  },
-  'us_college_year3': {
-    id: 'us_college_year3',
-    title: '美本大三：危机降临',
-    description: '大三了，CS的一门核心课难到令人发指。你眼看就要挂科了：',
-    choices: [
-      {
-        text: '花钱找代写 (高风险)',
-        effect: (s) => {
-          const caught = Math.random() > 0.7; // 30% 概率被抓
-          return caught 
-            ? { status: 'game_over', message: '找代写被教授抓到，违反学术诚信，直接开除遣返！' }
-            : { cash: s.cash - 2, age: s.age + 1, message: '侥幸通过了，但你其实什么都没学到。' };
-        },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'us_undergrad_grad',
-      },
-      {
-        text: '在图书馆通宵复习，死磕到底',
-        effect: (s) => ({ health: s.health - 20, leetcode: s.leetcode + 15, age: s.age + 1, cash: s.cash - 5, message: '你熬了无数个大夜，终于 Pass 了这门课！' }),
-        nextEventId: 'us_undergrad_grad',
-      },
-      {
-        text: '及时止损，转专业去学商科/文科',
-        effect: (s) => ({ health: s.health + 10, leetcode: Math.max(0, s.leetcode - 10), age: s.age + 1, charm: s.charm + 1, message: '虽然放下了代码，但你找到了生活的快乐，颜值/魅力也变高了。' }),
-        nextEventId: 'us_undergrad_grad',
-      }
-    ]
-  },
-  'cn_college_year1': {
+  'cn_college_grad': {
     id: 'cn_college_year1',
     title: '陆本大一：百团大战',
     description: '进入了国内大学，开学百团大战，各种社团招新。',

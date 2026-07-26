@@ -105,9 +105,9 @@ export default function App() {
     const carCost = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
     const livingCost = 3.0;
 
-    // Silicon Valley Federal + CA Income Tax (~35%)
+    // Silicon Valley Federal + CA Income Tax (~25% with 401k & Mega Backdoor Roth tax-advantage)
     const preTaxTC = gameState.tc > 0 ? gameState.tc : 0;
-    const postTaxIncome = preTaxTC * 0.65; 
+    const postTaxIncome = preTaxTC * 0.75; 
     const netChange = postTaxIncome - rentCost - carCost - livingCost;
     const newCash = gameState.cash + netChange;
 
@@ -145,6 +145,16 @@ export default function App() {
         }
       }
 
+      // Annual Merit Raise & RSU Refresh check (30% chance for working engineers)
+      let updatedTC = gameState.tc;
+      let meritMsg = '';
+      const isWorking = !gameState.laid_off && gameState.job_type && gameState.job_type !== 'unemployed';
+      if (isWorking && Math.random() < 0.30) {
+        const refreshAmt = Math.random() < 0.3 ? 2.0 : 1.5;
+        updatedTC = gameState.tc + refreshAmt;
+        meritMsg = ` 📈 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+      }
+
       // GC Progress increment if working on H1B or Green Card track
       const nextGc = (newVisa === '绿卡' || newVisa === 'H1B (工签)') 
         ? Math.min(5, (gameState.gc_progress || 0) + 1) 
@@ -156,10 +166,11 @@ export default function App() {
         year: gameState.year + 1,
         age: gameState.age + 1,
         cash: newCash,
+        tc: updatedTC,
         visa: newVisa,
         h1b_attempts: newH1bAttempts,
         gc_progress: nextGc,
-        message: h1bMsg || gameState.message
+        message: (h1bMsg || gameState.message) + meritMsg
       };
 
       // Transition to next event: Crisis if OPT expired after 3 tries, post_green_card if 5 yrs queue, else daily life

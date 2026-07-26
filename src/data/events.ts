@@ -67,27 +67,27 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
-        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 20, win_threshold: 600 }),
+        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 20, win_threshold: 480 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 500 }),
+        effect: (s) => ({ charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 420 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，但天天蹦迪身体被彻底掏空。',
-        effect: (s) => ({ cash: s.cash + 25, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 1000 }),
+        effect: (s) => ({ cash: s.cash + 25, leetcode: Math.max(0, s.leetcode - 30), health: s.health - 20, win_threshold: 750 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
-        effect: (s) => ({ luck: Math.min(99, Math.max(s.luck + 25, 68)), leetcode: s.leetcode + 10, charm: s.charm + 5, win_threshold: 400 }),
+        effect: (s) => ({ luck: Math.min(99, Math.max(s.luck + 25, 68)), leetcode: s.leetcode + 10, charm: s.charm + 5, win_threshold: 350 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
-        effect: (s) => ({ win_threshold: 500 }),
+        effect: (s) => ({ win_threshold: 420 }),
         nextEventId: 'choose_year',
       }
     ]
@@ -1347,23 +1347,39 @@ export const events: Record<string, GameEvent> = {
   },
   'perf_review': {
     id: 'perf_review',
-    title: '年底 Perf Review',
-    description: '又到了公司一年一度的绩效考核时间，大家都开始疯狂抢 Impact。',
+    title: '年底 Perf Review 绩效考核',
+    description: '又到了公司一年一度的 PSC 绩效考核时间，大家都开始疯狂抢 Project Impact 争夺升职名额。',
     choices: [
-
       {
-        text: '卷！周末也加班写文档！',
+        text: '【稳扎稳打】加班抢项目 Impact (争取 L4/L5 普升)',
         effect: (s) => {
-          const win = Math.random() > 0.7; // 30% 海底捞
+          const win = Math.random() < 0.45;
+          const isL3 = (s.level || 'L3') === 'L3';
+          const tcIncrease = isL3 ? 3.5 : 6.5;
+          const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
-            ? { health: s.health - 20, tc: s.tc + 5, cash: s.cash, message: '卷赢了！你拿到了 Exceeds Expectations，涨薪 5 万美元！' }
-            : { health: s.health - 20, cash: s.cash, message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
+            ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, message: `卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
+            : { health: Math.max(10, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
-        nextEventId: (s) => (s.tc >= 50 && s.job_type === 'big_tech') ? 'meta_tlm' : 'sv_daily_life',
+        nextEventId: 'sv_daily_life',
       },
       {
-        text: '准点下班，躺平拿 Meets',
-        effect: (s) => ({ health: s.health + 10, cash: s.cash, message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
+        text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L6 专属高门槛)',
+        condition: (s) => (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30),
+        reqBadge: '需 解题/系统设计≥70 & 健康≥40 & 当前TC≥30w',
+        costBadge: '消耗健康与极高精力',
+        effect: (s) => {
+          const winRate = 0.15 + (s.leetcode / 100) * 0.15; // 15% - 30% hard chance
+          const win = Math.random() < winRate;
+          return win 
+            ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), message: '🎉 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
+            : { health: Math.max(10, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '准点下班，躺平拿 Meets (保重身体)',
+        effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
         nextEventId: 'sv_daily_life',
       }
     ]

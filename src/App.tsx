@@ -81,14 +81,44 @@ export default function App() {
       {/* Mobile Sticky Mini-HUD Header */}
       <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 px-3 py-2.5 shadow-2xl flex items-center justify-between gap-2 text-xs font-mono">
         <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-0.5">
-          <span className="font-bold text-[11px] text-zinc-200 bg-zinc-800/90 px-2 py-0.5 rounded shrink-0 border border-zinc-700/50">📅 {gameState.age}岁</span>
-          <span className="font-bold text-emerald-400 shrink-0">💵 ${gameState.cash.toFixed(1)}w</span>
-          <span className="text-zinc-400 shrink-0">TC <strong className="text-zinc-200">${gameState.tc}w</strong></span>
+          {/* Age Tag */}
+          <span className="flex items-center gap-1 font-bold text-[11px] text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded-md shrink-0 border border-zinc-800">
+            <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {gameState.age}岁
+          </span>
+
+          {/* Cash Tag */}
+          <span className="flex items-center gap-1 font-bold text-emerald-400 shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+            <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            {gameState.cash.toFixed(1)}w
+          </span>
+
+          {/* TC Tag */}
+          <span className="flex items-center gap-1 text-zinc-400 shrink-0 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800">
+            <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            <span className="text-zinc-500 text-[10px]">TC</span>
+            <strong className="text-zinc-200 font-bold">{gameState.tc}w</strong>
+          </span>
+
+          {/* Action Points (AP) Tag */}
           {gameState.ap !== undefined && (
-            <span className="font-bold text-indigo-400 shrink-0">⚡{gameState.ap}/{gameState.max_ap || 3}</span>
+            <span className="flex items-center gap-1 font-bold text-indigo-300 shrink-0 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.25)]">
+              <svg className="w-3 h-3 text-indigo-400 fill-indigo-400/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              {gameState.ap}/{gameState.max_ap || 3}
+            </span>
           )}
-          <span className="text-rose-400 shrink-0">❤️{Math.max(0, gameState.health)}</span>
-          <span className="text-amber-400 shrink-0">{gameState.visa}</span>
+
+          {/* Health Tag */}
+          <span className="flex items-center gap-1 font-bold text-rose-400 shrink-0 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20">
+            <svg className="w-3 h-3 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            {Math.max(0, gameState.health)}
+          </span>
+
+          {/* Visa Tag */}
+          <span className="flex items-center gap-1 font-semibold text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+            <svg className="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            {gameState.visa}
+          </span>
         </div>
         <button
           onClick={() => setIsMobileStatsOpen(!isMobileStatsOpen)}

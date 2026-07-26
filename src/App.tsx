@@ -395,28 +395,28 @@ export default function App() {
             
             {/* Message Banner */}
             {gameState.message && (
-              <div aria-live="polite" role="status" className="border-l-2 border-emerald-500 bg-emerald-500/10 text-emerald-300 px-5 py-4 rounded-r-lg mb-8 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+              <div aria-live="polite" role="status" className="border-l-2 border-emerald-500 bg-emerald-500/10 text-emerald-300 px-4 py-3 md:px-5 md:py-4 rounded-r-lg mb-4 md:mb-8 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
                 {gameState.message}
               </div>
             )}
 
             {/* Event Card */}
-            <div key={currentEventId} id="event-decision-card" className="scroll-mt-14 bg-zinc-900/40 rounded-3xl p-8 md:p-12 border border-zinc-800 backdrop-blur-md transition-all duration-300 shadow-2xl animate-in fade-in duration-500 slide-in-from-bottom-2">
+            <div key={currentEventId} id="event-decision-card" className="scroll-mt-14 bg-zinc-900/40 rounded-3xl p-5 sm:p-6 md:p-12 border border-zinc-800 backdrop-blur-md transition-all duration-300 shadow-2xl animate-in fade-in duration-500 slide-in-from-bottom-2">
               {gameState.status === 'playing' && currentEvent ? (
                 <>
-                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-6">{currentEvent.title}</h2>
+                  <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-3 md:mb-6">{currentEvent.title}</h2>
                   
                   {(gameState.imageUrl || currentEvent.imageUrl) && (
                     <img 
                       src={getImgSrc(gameState.imageUrl || currentEvent.imageUrl || '')} 
                       alt="Event Scene" 
-                      className="w-full h-48 md:h-72 object-cover rounded-2xl mb-8 shadow-2xl border border-zinc-700/50 transition-all duration-500 ease-out"
+                      className="w-full h-32 sm:h-48 md:h-72 object-cover rounded-2xl mb-4 md:mb-8 shadow-2xl border border-zinc-700/50 transition-all duration-500 ease-out"
                     />
                   )}
 
-                  <p className="text-zinc-400 mb-10 text-lg md:text-xl leading-relaxed">{currentEvent.description}</p>
+                  <p className="text-zinc-400 mb-5 md:mb-10 text-[15px] sm:text-base md:text-xl leading-relaxed">{currentEvent.description}</p>
                   
-                  <div className="flex flex-col space-y-4">
+                  <div className="flex flex-col space-y-2.5 md:space-y-4">
                     {currentEvent.choices
                       .filter((choice) => {
                         const isAvailable = !choice.condition || choice.condition(gameState);
@@ -446,13 +446,13 @@ export default function App() {
                         key={idx}
                         onClick={() => isAvailable && handleChoice(choice)}
                         disabled={!isAvailable}
-                        className={`group w-full text-left px-6 py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer ${
+                        className={`group w-full text-left px-4 py-3 md:px-6 md:py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 cursor-pointer ${
                           isAvailable 
                             ? 'bg-zinc-900 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 active:scale-[0.98]' 
                             : 'bg-zinc-950/50 border-zinc-800/50 opacity-50 cursor-not-allowed'
                         }`}
                       >
-                        <span className={`font-medium text-lg transition-colors ${isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'}`}>
+                        <span className={`font-medium text-[15px] sm:text-base md:text-lg transition-colors ${isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'}`}>
                           {mainText}
                         </span>
                         

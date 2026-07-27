@@ -8,6 +8,7 @@ interface BentoStatsPanelProps {
   onOpenShop?: () => void;
   onToggleSound?: () => void;
   isMuted?: boolean;
+  hasOpenedShop?: boolean;
 }
 
 export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
@@ -16,7 +17,8 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
   onOpenCodex,
   onOpenShop,
   onToggleSound,
-  isMuted
+  isMuted,
+  hasOpenedShop = false,
 }) => {
   const displayLevel = gameState.level || (
     gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type 
@@ -79,10 +81,16 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
             {onOpenShop && gameState.job_type !== undefined && (
               <button
                 onClick={onOpenShop}
-                className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer"
+                className="relative px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/40 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/10 active:scale-95 transition-all cursor-pointer group"
               >
-                <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <svg className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span>商城</span>
+                {!hasOpenedShop && (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute -top-0.5 -right-0.5" />
+                    <span className="w-2 h-2 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5" />
+                  </>
+                )}
               </button>
             )}
             {onOpenCodex && (

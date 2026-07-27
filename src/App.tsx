@@ -22,12 +22,28 @@ export default function App() {
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
   const [isShopOpen, setIsShopOpen] = useState<boolean>(false);
+  const [hasOpenedShop, setHasOpenedShop] = useState<boolean>(false);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
+  const [hasUnlockedShopToast, setHasUnlockedShopToast] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
 
   const handleToggleSound = () => {
     setIsMuted(sound.toggleMute());
   };
+
+  const handleOpenShop = () => {
+    setIsShopOpen(true);
+    setHasOpenedShop(true);
+  };
+
+  useEffect(() => {
+    if (gameState.job_type !== undefined && !hasUnlockedShopToast) {
+      setHasUnlockedShopToast(true);
+      sound.play('achievement');
+      setAchievementToast('[商城解锁] 恭喜步入职场！资产与消费商城已解锁，可前往购买豪车与置业！');
+      setTimeout(() => setAchievementToast(null), 5500);
+    }
+  }, [gameState.job_type, hasUnlockedShopToast]);
 
   useEffect(() => {
     const newlyUnlocked = checkAndUnlockAchievements(gameState, currentEventId);
@@ -190,6 +206,8 @@ export default function App() {
     setCurrentEventId('choose_trait');
     setShowCharacterPass(false);
     setShowWarReport(false);
+    setHasUnlockedShopToast(false);
+    setHasOpenedShop(false);
   };
 
   const handleYearEndContinue = () => {
@@ -254,16 +272,35 @@ export default function App() {
         />
       )}
 
-      {/* Achievement Unlock Toast */}
+      {/* Unlock Notification Toast */}
       {achievementToast && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-zinc-900/90 border border-purple-500/50 text-purple-200 px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 font-bold text-sm">
+        <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 font-bold text-sm border ${
+          achievementToast.includes('商城')
+            ? 'bg-gradient-to-r from-amber-950/95 via-emerald-950/95 to-zinc-900/95 border-amber-500/50 text-amber-200 shadow-amber-500/10'
+            : 'bg-gradient-to-r from-purple-900/90 via-indigo-900/90 to-zinc-900/90 border-purple-500/50 text-purple-200'
+        }`}>
           <span>{achievementToast}</span>
-          <button
-            onClick={() => setShowAchievementCodex(true)}
-            className="text-xs text-purple-300 hover:text-white underline font-mono cursor-pointer"
-          >
-            查看图鉴 
-          </button>
+          {achievementToast.includes('商城') ? (
+            <button
+              onClick={() => {
+                handleOpenShop();
+                setAchievementToast(null);
+              }}
+              className="text-xs text-amber-300 hover:text-white underline font-mono cursor-pointer shrink-0"
+            >
+              查看商城
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setShowAchievementCodex(true);
+                setAchievementToast(null);
+              }}
+              className="text-xs text-purple-300 hover:text-white underline font-mono cursor-pointer shrink-0"
+            >
+              查看图鉴
+            </button>
+          )}
         </div>
       )}
 
@@ -364,7 +401,7 @@ export default function App() {
             {/* Shop Mobile Button */}
             {gameState.job_type !== undefined && (
               <button
-                onClick={() => setIsShopOpen(true)}
+                onClick={handleOpenShop}
                 className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
               >
                 <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -403,9 +440,10 @@ export default function App() {
             gameState={gameState} 
             currentEventId={currentEventId} 
             onOpenCodex={() => setShowAchievementCodex(true)} 
-            onOpenShop={() => setIsShopOpen(true)}
+            onOpenShop={handleOpenShop}
             onToggleSound={handleToggleSound} 
             isMuted={isMuted} 
+            hasOpenedShop={hasOpenedShop}
           />
         </div>
       )}
@@ -419,9 +457,10 @@ export default function App() {
               gameState={gameState} 
               currentEventId={currentEventId} 
               onOpenCodex={() => setShowAchievementCodex(true)} 
-              onOpenShop={() => setIsShopOpen(true)}
+              onOpenShop={handleOpenShop}
               onToggleSound={handleToggleSound} 
               isMuted={isMuted} 
+              hasOpenedShop={hasOpenedShop}
             />
           </div>
 

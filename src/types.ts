@@ -19,6 +19,7 @@ export interface GameState {
   has_pet: boolean;
   pet_name?: string;
   luck: number;
+  network: number; // 人脉/关系网 0-100
   is_married: boolean;
   relationship_status?: RelationshipStatus;
   win_threshold: number;

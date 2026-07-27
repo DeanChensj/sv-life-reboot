@@ -66,6 +66,7 @@ export default function App() {
     newState.health = Math.max(0, Math.min(100, newState.health));
     newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
     newState.charm = Math.max(0, Math.min(maxCharmLimit, newState.charm));
+    newState.network = Math.max(0, Math.min(100, newState.network || 10));
 
     // Check if health drops <= 0
     if (newState.health <= 0 && newState.status === 'playing') {
@@ -208,43 +209,46 @@ export default function App() {
 
       {/* Mobile Sticky 2-Layer Mini-HUD Header */}
       <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-800/80 px-3 py-2 shadow-2xl flex flex-col gap-1.5 text-xs font-mono">
-        {/* Layer 1: Year/Age, AP, Cash, TC, Drawer Toggle */}
+        {/* Layer 1: Year/Age, Cash, TC, Network, LeetCode, Drawer Toggle */}
         <div className="flex items-center justify-between gap-1.5 w-full">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             {/* Age & Year Tag */}
             <span className="flex items-center gap-1 font-bold text-[11px] text-zinc-200 bg-zinc-900 px-2 py-0.5 rounded-md shrink-0 border border-zinc-800">
-              <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               {gameState.year}年·{gameState.age}岁
             </span>
 
-
-
             {/* Cash Tag */}
             <span className="flex items-center gap-1 font-black text-emerald-400 shrink-0 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 tabular-nums">
-              <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               ${gameState.cash.toFixed(1)}w
             </span>
 
             {/* TC Tag */}
             <span className="flex items-center gap-1 text-zinc-300 shrink-0 bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-800 tabular-nums">
               <span className="text-zinc-500 text-[10px] uppercase font-bold">TC</span>
-              <strong className="text-zinc-200 font-bold">${gameState.tc}w</strong>
+              <strong className="text-zinc-200 font-bold">${gameState.tc.toFixed(1)}w</strong>
+            </span>
+
+            {/* LeetCode Tag */}
+            <span className="flex items-center gap-1 font-bold text-[10.5px] text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 tabular-nums">
+              LC {gameState.leetcode}
             </span>
           </div>
 
           <button
             onClick={() => setIsMobileStatsOpen(!isMobileStatsOpen)}
-            className={`shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-extrabold border transition-all duration-200 active:scale-95 cursor-pointer ${
+            className={`shrink-0 px-2.5 py-1 rounded-xl text-[11px] font-extrabold border transition-all duration-200 active:scale-95 cursor-pointer shadow-md ${
               isMobileStatsOpen 
-                ? 'bg-emerald-500 text-zinc-950 border-emerald-400 shadow-lg shadow-emerald-500/20' 
-                : 'bg-zinc-800/90 hover:bg-zinc-700 text-emerald-300 border-zinc-700/80'
+                ? 'bg-emerald-500 text-zinc-950 border-emerald-400 shadow-emerald-500/20' 
+                : 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40'
             }`}
           >
-            {isMobileStatsOpen ? '收起 ▲' : '全量属性 ▼'}
+            {isMobileStatsOpen ? '收起 ▲' : '全量属性面板 ▼'}
           </button>
         </div>
 
-        {/* Layer 2: Status Badges (Health, Level, Visa, Green Card, Codex) */}
+        {/* Layer 2: Status Badges (Health, Level, Visa, Green Card, Quick Actions) */}
         <div className="flex items-center justify-between gap-1.5 w-full pt-1 border-t border-zinc-900/80">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             {/* Health Tag */}
@@ -255,7 +259,7 @@ export default function App() {
                   ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' 
                   : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
             }`}>
-              <svg className="w-3 h-3 text-rose-400 fill-rose-400/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <svg className="w-3 h-3 text-rose-400 fill-rose-400/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               健康 {Math.max(0, gameState.health)}
             </span>
 
@@ -266,16 +270,24 @@ export default function App() {
 
             {/* Visa Tag */}
             <span className="flex items-center gap-1 font-semibold text-[11px] text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-              <svg className="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <svg className="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               {gameState.visa}
             </span>
+
+            {/* Green Card Progress Tag (Mobile HUD) */}
+            {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && (
+              <span className="flex items-center gap-1.5 font-bold text-[10px] text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                GC: {gameState.visa === '绿卡' ? '100%' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}%`}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Sound Toggle Mobile Button */}
             <button
               onClick={handleToggleSound}
-              className={`p-1 rounded-md border text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`p-1.5 rounded-md border text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center ${
                 isMuted
                   ? 'bg-zinc-900 text-zinc-500 border-zinc-800'
                   : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
@@ -283,49 +295,48 @@ export default function App() {
               title={isMuted ? '开启音效' : '静音'}
             >
               {isMuted ? (
-                <svg className="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <line x1="23" y1="9" x2="17" y2="15"></line>
-                  <line x1="17" y1="9" x2="23" y2="15"></line>
-                </svg>
+                <svg className="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
               ) : (
-                <svg className="w-3.5 h-3.5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
+                <svg className="w-3.5 h-3.5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
               )}
             </button>
+
+            {/* Shop Mobile Button */}
+            {currentEventId === 'sv_daily_life' && (
+              <button
+                onClick={() => setIsShopOpen(true)}
+                className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+              >
+                <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>商城</span>
+              </button>
+            )}
 
             {/* Achievement Codex Mobile Button */}
             <button
               onClick={() => setShowAchievementCodex(true)}
-              className="px-2 py-0.5 rounded-md bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+              className="px-2 py-1 rounded-md bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
             >
-              <svg className="w-3 h-3 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
+              <svg className="w-3 h-3 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
               <span>图鉴</span>
             </button>
-
-            {/* Green Card Progress Tag (Mobile HUD) */}
-            {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && (
-              <span className="flex items-center gap-1.5 font-bold text-[10px] text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                GC: {gameState.visa === '绿卡' ? '100%' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}%`}
-              </span>
-            )}
           </div>
         </div>
       </div>
 
       {/* Mobile Slide-Down Drawer Overlay */}
       {isMobileStatsOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[42px] bottom-0 z-50 bg-zinc-950/95 backdrop-blur-2xl p-4 overflow-y-auto animate-in fade-in slide-in-from-top-3 duration-200">
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
-            <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">角色档案与 Bento 属性面板</span>
+        <div className="lg:hidden fixed inset-x-0 top-[76px] bottom-0 z-50 bg-zinc-950/98 backdrop-blur-3xl p-4 overflow-y-auto animate-in fade-in slide-in-from-top-3 duration-200 shadow-2xl">
+          <div className="flex justify-between items-center mb-4 pb-2.5 border-b border-zinc-800/80 sticky top-0 bg-zinc-950/90 backdrop-blur-xl z-10 py-1">
+            <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              全量角色属性与 Bento 仪表盘
+            </span>
             <button 
               onClick={() => setIsMobileStatsOpen(false)}
-              className="text-xs text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-full font-bold border border-zinc-700 active:scale-95 transition-all"
+              className="text-xs text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3.5 py-1.5 rounded-full font-bold border border-zinc-700 active:scale-95 transition-all shadow-md"
             >
-              完成返回决策 ✕
+              返回游戏 ✕
             </button>
           </div>
           <BentoStatsPanel 

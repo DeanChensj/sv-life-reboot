@@ -71,6 +71,7 @@ export const generateInitialState = (): GameState => {
     is_phd: false,
     has_pet: false,
     luck,
+    network: 10,
     is_married: false,
     relationship_status: 'single',
     win_threshold: 1000,
@@ -207,27 +208,27 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
-        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 25, health: s.health - 25, win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 25, health: s.health - 25, network: 5, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
-        text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ trait_title: '湾区海王', max_charm: (s.max_charm || 25) + 5, charm: Math.min((s.max_charm || 25) + 5, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
+        text: '【湾区海王】精通高端局社交，人脉极广且极善拿捏人心，但一看到代码就犯困。',
+        effect: (s) => ({ trait_title: '湾区海王', max_charm: (s.max_charm || 25) + 5, charm: Math.min((s.max_charm || 25) + 5, s.charm + 12), network: 35, cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
         nextEventId: 'choose_year',
       },
       {
-        text: '【家里有矿】家里直接在湾区给你准备了买房首付，但天天蹦迪身体被彻底掏空。',
-        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 70, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 450 }),
+        text: '【家里有矿】家里直接在湾区给你准备了买房首付，人脉背景深厚。',
+        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 70, network: 25, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 450 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
-        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), leetcode: s.leetcode + 8, charm: s.charm + 5, win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), network: 20, leetcode: s.leetcode + 8, charm: s.charm + 5, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
-        effect: (s) => ({ trait_title: '小镇做题家', win_threshold: 360 }),
+        effect: (s) => ({ trait_title: '小镇做题家', network: 10, win_threshold: 360 }),
         nextEventId: 'choose_year',
       }
     ]
@@ -733,6 +734,24 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.school === 'ucb' && s.cash >= 5,
         effect: (s) => ({ cash: s.cash - 5, laid_off: false, message: '你加入了教授的局，虽然没拿到大厂包裹，但感觉马上就要改变世界了。' }),
         nextEventId: 'startup_work',
+      },
+      {
+        text: '【强力人脉 Referral】凭借学长/熟人总监直通大厂面试 (需人脉 >= 25)',
+        reqBadge: '需人脉>=25',
+        condition: (s) => (s.network || 0) >= 25,
+        effect: (s) => ({
+          tc: s.year >= 2023 ? 32 : 28,
+          laid_off: false,
+          cash: s.cash + 6,
+          job_type: 'big_tech',
+          level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'),
+          network: Math.min(100, (s.network || 0) + 5),
+          message: '🎉 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸！'
+        }),
+        nextEventId: (s: GameState) => {
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+        },
       },
       {
         text: '通过兄弟会内推，加入当地中型养老公司',
@@ -2011,6 +2030,19 @@ export const events: Record<string, GameEvent> = {
           laid_off: false,
           health: Math.min(100, s.health + 25),
           message: '领着加州 EDD 官方失业补贴，你顺便休假半年去 Lake Tahoe 滑雪，心态极度放松！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【强力人脉救援】联系 LinkedIn 熟人总监直通内部免试 referral 上岸 (需人脉 >= 35)',
+        reqBadge: '需人脉>=35',
+        condition: (s) => (s.network || 0) >= 35,
+        effect: (s) => ({
+          tc: Math.max(20, s.tc),
+          laid_off: false,
+          health: Math.min(100, s.health + 10),
+          network: Math.min(100, (s.network || 0) + 5),
+          message: '🎉 人脉爆破！你的熟人总监收到求助后连夜开绿灯将你内推拉入团队，跳过倒计时直接上岸，成功保住身份！'
         }),
         nextEventId: 'sv_daily_life',
       },

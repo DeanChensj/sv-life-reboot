@@ -92,6 +92,8 @@ const midYearEventRouter = (s: GameState) => {
   const isWorking = s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
   const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
 
+  if (s.job_type === 'trader') return 'trader_annual_strategy';
+  if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
   if (s.year === 2022 && Math.random() < 0.15) return 'stock_crash';
   if (rand < 0.06) return 'stock_crash';
   if (rand >= 0.06 && rand < 0.46) {
@@ -1159,8 +1161,36 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
       },
       {
+        text: '【离职全职 Day Trader】凭 $50w 本金与绿卡自由身全职操盘 (需绿卡 + 现金>=50w)',
+        reqBadge: '需绿卡+现金>=50w',
+        condition: (s) => s.visa === '绿卡' && s.cash >= 50,
+        effect: (_s) => ({
+          job_type: 'trader',
+          company: '全职 Day Trader',
+          level: '全职 Trader',
+          tc: 0,
+          laid_off: false,
+          message: '🎉 你正式递交了离职辞呈！凭借 $50w 初始本金与绿卡自由身，开启了全职 Day Trader 操盘人生！'
+        }),
+        nextEventId: 'trader_annual_strategy',
+      },
+      {
+        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资',
+        effect: (_s) => ({
+          job_type: 'startup_founder',
+          company: 'AI/科技 Startup',
+          level: 'CEO & Founder',
+          tc: 10,
+          founder_stage: 'seed',
+          company_valuation: 800,
+          laid_off: false,
+          message: '🎉 你拒绝了稳健的大厂打工路，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+        }),
+        nextEventId: 'founder_annual_strategy',
+      },
+      {
         text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
-        condition: (s) => true,
+        condition: (_s) => true,
         effect: (s) => ({
           mid_year: true,
           health: Math.min(100, s.health + 18),
@@ -2443,7 +2473,140 @@ export const events: Record<string, GameEvent> = {
     title: '游戏结束',
     description: '',
     choices: [
-]
+    ]
+  },
+  'trader_annual_strategy': {
+    id: 'trader_annual_strategy',
+    title: '【全职 Day Trader】年度操盘策略选择',
+    description: '作为全职 Trader，你不再依靠大厂发放的死工资。今年的美股/加密货币市场波谲云诡，你打算采用哪种操盘策略？',
+    choices: [
+      {
+        text: '【稳健对冲股息策略】主要布局标普500/高股息 ETF 与跨期对冲期权 (低风险)',
+        effect: (s) => {
+          const gainRate = 0.12 + (s.luck / 500);
+          const profit = s.cash * gainRate;
+          return {
+            cash: s.cash + profit,
+            health: Math.min(100, s.health + 10),
+            message: `📈 稳健盈利！凭借严谨的风险控制与高股息收益，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${profit.toFixed(1)}w 美元)！时间自由，心态极其放松！`
+          };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险)',
+        effect: (s) => {
+          const isBoomYear = s.year >= 2023 || Math.random() < 0.60;
+          if (isBoomYear) {
+            const gain = s.cash * 0.45;
+            return {
+              cash: s.cash + gain,
+              message: `🚀 飞天暴富！你重仓的 AI 科技巨头股价随着风口暴涨 45%！账面盈利 +${gain.toFixed(1)}w 美元！`
+            };
+          } else {
+            const loss = s.cash * 0.18;
+            return {
+              cash: Math.max(10, s.cash - loss),
+              message: `📉 宏观回调！科技板块经历美联储加息回调 -18%，本金受损 -${loss.toFixed(1)}w 美元！好在你仓位稳固。`
+            };
+          }
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险)',
+        effect: (s) => {
+          const roll = Math.random();
+          if (roll < 0.50) {
+            const doubleGain = s.cash * 0.85;
+            return {
+              cash: s.cash + doubleGain,
+              message: `💥 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +85% (+${doubleGain.toFixed(1)}w 美元)！`
+            };
+          } else if (roll < 0.80) {
+            const drop = s.cash * 0.35;
+            return {
+              cash: Math.max(5, s.cash - drop),
+              message: `😭 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -35% (-${drop.toFixed(1)}w 美元)！`
+            };
+          } else {
+            const bust = s.cash * 0.70;
+            return {
+              cash: Math.max(2, s.cash - bust),
+              health: Math.max(10, s.health - 25),
+              message: `💥 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
+            };
+          }
+        },
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+  'founder_annual_strategy': {
+    id: 'founder_annual_strategy',
+    title: '【全职 Founder】公司战略与轮次推进',
+    description: '作为初创公司 CEO，你手下带着十几名员工，烧钱率与公司生命线全掌握在你手里。请决定本年度的核心战略：',
+    choices: [
+      {
+        text: '前往 Sand Hill Road (沙丘路) 向顶级 VC 演示 Pitch 寻求融资 (需人脉>=20 或 魅力>=18)',
+        reqBadge: '需人脉>=20或魅力>=18',
+        condition: (s) => (s.network || 0) >= 20 || (s.charm || 0) >= 18,
+        effect: (s) => {
+          const stage = s.founder_stage || 'seed';
+          if (stage === 'seed') {
+            return {
+              founder_stage: 'series_a',
+              company_valuation: 2500,
+              cash: s.cash + 25,
+              tc: 18,
+              message: '🎉 天使轮融资大获成功！a16z 领投 $250w 天使轮支票（估值 $2500w），你成功套现 $25w 现金并为自己发放了 $18w TC 创始人薪水！'
+            };
+          } else {
+            return {
+              founder_stage: 'exit',
+              company_valuation: 8000,
+              cash: s.cash + 50,
+              tc: 30,
+              message: '🚀 B 轮超级融资！红杉资本以 $8000w 估值领投，公司账上资金充沛，离 IPO 上市仅有一步之遥！'
+            };
+          }
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【高举高打招聘】重金从 Meta/Google 挖掘顶级大牛核心工程组 (需现金>=15w)',
+        reqBadge: '现金>=15w',
+        condition: (s) => s.cash >= 15,
+        effect: (s) => ({
+          cash: s.cash - 15,
+          company_valuation: (s.company_valuation || 1000) + 1500,
+          leetcode: Math.min(100, s.leetcode + 10),
+          message: '💡 团队战力爆表！大厂 Senior 大牛加盟后，研发出颠覆性的 AI Agent 产品，公司估值飙升！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【终局 Exit】考虑公司并购 Acq-hire 或准备 纳斯达克 IPO 敲钟上市',
+        condition: (s) => (s.company_valuation || 0) >= 2000,
+        effect: (s) => {
+          const isIPO = Math.random() < 0.55;
+          if (isIPO) {
+            return {
+              status: 'win',
+              cash: s.cash + 450,
+              message: '🏆 传奇诞生！公司成功在纳斯达克 IPO 挂牌敲钟！创始人股权套现 $450w 美元，名利双收极速达成 FIRE 终局！'
+            };
+          } else {
+            return {
+              status: 'win',
+              cash: s.cash + 320,
+              message: '🎉 成功被收购！Google/Meta 科技巨头以高额溢价并购了你们的公司，创始人获得 $320w 现金现金分红，成功财务自由！'
+            };
+          }
+        },
+        nextEventId: 'end',
+      }
+    ]
   },
 
   'rto_wars': {

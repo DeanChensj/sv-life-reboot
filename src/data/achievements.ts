@@ -80,6 +80,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: 'ending',
     description: '凭【家里有矿】初始首付资金，在 35 岁前极速完成 FIRE！',
     hint: '暗号：选择【家里有矿】角色并通关。'
+  },
+  {
+    id: 'day_trader_god',
+    title: '纳斯达克全职操盘战神',
+    icon: 'trending-up',
+    category: 'ending',
+    description: '凭借绿卡自由身与 50 万美金本金全职操盘，在美股期权中大赚并成功 FIRE！',
+    hint: '暗号：持绿卡且现金 >= $50w 开启全职 Day Trader 操盘并通关。'
   }
 ];
 
@@ -146,6 +154,10 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
 
   if (state.status === 'win' && (state.trait_title === '家里有矿' || state.parents_helped_house)) {
     if (unlockAchievement('rich_family_fire')) newlyUnlocked.push('rich_family_fire');
+  }
+
+  if (state.job_type === 'trader' && state.status === 'win') {
+    if (unlockAchievement('day_trader_god')) newlyUnlocked.push('day_trader_god');
   }
 
   return newlyUnlocked;

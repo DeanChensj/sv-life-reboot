@@ -24,7 +24,7 @@ export interface GameState {
   relationship_status?: RelationshipStatus;
   win_threshold: number;
   laid_off: boolean;
-  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia';
+  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia' | 'trader' | 'startup_founder';
   company?: string;
   level?: string;
   last_promo_age?: number;
@@ -45,6 +45,8 @@ export interface GameState {
   mid_year?: boolean;
   difficulty_title?: string;
   startup_tenure?: number; // 初创公司入职年限 (前2年不办PERM)
+  founder_stage?: 'seed' | 'series_a' | 'exit';
+  company_valuation?: number; // 公司估值 (万美元)
 }
 
 export interface Choice {

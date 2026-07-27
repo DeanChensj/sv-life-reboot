@@ -25,9 +25,13 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
         ? 'Quant' 
         : gameState.job_type === 'ai_research' 
           ? 'MTS' 
-          : gameState.is_phd 
-            ? 'L4' 
-            : 'L3'
+          : gameState.job_type === 'trader'
+            ? '全职 Trader'
+            : gameState.job_type === 'startup_founder'
+              ? 'CEO & Founder'
+              : gameState.is_phd 
+                ? 'L4' 
+                : 'L3'
   );
 
   const hasCar = gameState.car && gameState.car !== 'none';

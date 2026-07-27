@@ -42,7 +42,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
               ANNUAL FINANCIAL & STATUS REPORT
             </span>
             <h3 className="text-2xl font-extrabold text-zinc-50 tracking-tight mt-0.5">
-              {gameState.year} 年终财务与人生账单
+              第 {Math.max(1, gameState.age - 17)} 年 · 年终财务与人生账单
             </h3>
           </div>
           <span className="text-xs font-mono font-bold bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-full border border-zinc-700">

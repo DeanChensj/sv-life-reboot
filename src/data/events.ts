@@ -541,28 +541,28 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【硬核刷题】泡在图书馆死磕 GPA 和算法',
-        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 5, age: s.age + 1, message: '每天和电脑作伴，代码实力突飞猛进！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 5, age: s.age + 2, message: '每天和电脑作伴，代码实力突飞猛进！两年时光弹指一挥间。' }),
         nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       },
       {
         text: '【华尔街探索】加入校内量化/学生投资俱乐部 (Quant & Trading Club)',
-        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 5), health: s.health - 3, age: s.age + 1, message: '在模拟盘实盘操作中大获全胜，赚到了第一笔金融交易收益！' }),
+        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 5), health: s.health - 3, age: s.age + 2, message: '在模拟盘实盘操作中大获全胜，赚到了第一笔金融交易收益！两年时光弹指一挥间。' }),
         nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       },
       {
         text: '【竞技体育】加入校队竞技体育 (网球/抱石/橄榄球)',
-        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(25, s.charm + 5), cash: Math.max(0, s.cash - 1), age: s.age + 1, message: '高强度体育训练拉满！体能与气场全面大爆发！' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(25, s.charm + 5), cash: Math.max(0, s.cash - 1), age: s.age + 2, message: '高强度体育训练拉满！体能与气场全面大爆发！两年时光弹指一挥间。' }),
         nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       },
       {
         text: '【音乐与社团】组建校园摇滚乐队举办草坪音乐节',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: Math.min(100, s.health + 5), cash: Math.max(0, s.cash - 1), age: s.age + 1, message: '你在音乐节上作为主唱震撼全场，成为了校园里的风云人物！' }),
+        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: Math.min(100, s.health + 5), cash: Math.max(0, s.cash - 1), age: s.age + 2, message: '你在音乐节上作为主唱震撼全场，成为了校园里的风云人物！两年时光弹指一挥间。' }),
         nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       },
       {
         text: '加入兄弟会/姐妹会 (Frat Party 社交局)',
         condition: (s) => s.cash >= 2,
-        effect: (s) => ({ cash: s.cash - 2, charm: Math.min(25, s.charm + 8), health: s.health - 10, age: s.age + 1, message: '每周 Party，在啤酒乒乓桌上认识了一堆富二代与校友朋友。' }),
+        effect: (s) => ({ cash: s.cash - 2, charm: Math.min(25, s.charm + 8), health: s.health - 10, age: s.age + 2, message: '每周 Party，在啤酒乒乓桌上认识了一堆富二代与校友朋友。两年时光弹指一挥间。' }),
         nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       }
     ]
@@ -640,33 +640,33 @@ export const events: Record<string, GameEvent> = {
 
   'us_undergrad_year3': {
     id: 'us_undergrad_year3',
-    title: '美本大三：实习焦虑与方向选择',
-    description: '转眼到了大三，周围的中国同学都在疯狂准备 Summer Intern。你打算怎么办？',
+    title: '美本大三与大四：实习与毕业冲刺',
+    description: '转眼到了大三和大四，周围的中国同学都在疯狂准备 Summer Intern 与全职 Offer。你打算怎么办？',
     choices: [
       {
         text: '海投 500 份简历，疯狂刷 LeetCode',
-        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 10, age: s.age + 1, message: '你拿到了硅谷大厂的暑期实习 Offer，为全职转正铺平了道路！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 10, age: s.age + 2, message: '你拿到了硅谷大厂的暑期实习 Offer，顺利完成了大三与大四学业！' }),
         nextEventId: 'us_undergrad_grad',
       },
       {
         text: '【华尔街/金融实习】冲击纽约投资银行/量化基金 Quant 实习',
-        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 5), health: s.health - 10, age: s.age + 1, message: '成功斩获纽约名企实习！年薪高昂，履历含金量暴涨！' }),
+        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 5), health: s.health - 10, age: s.age + 2, message: '成功斩获纽约名企实习！年薪高昂，顺利完成大学最后两年！' }),
         nextEventId: 'us_undergrad_grad',
       },
       {
         text: '【学术科研】跟教授进 AI 实验室做 Research (冲全奖 PhD)',
-        effect: (s) => ({ leetcode: s.leetcode + 10, charm: Math.min(25, s.charm + 4), health: s.health - 8, age: s.age + 1, is_phd: true, message: '你拿到了顶尖教授的强力推荐信，具备了申请顶尖 PhD 的资本！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 10, charm: Math.min(25, s.charm + 4), health: s.health - 8, age: s.age + 2, is_phd: true, message: '你拿到了顶尖教授的强力推荐信，具备了申请顶尖 PhD 的资本！顺利毕业！' }),
         nextEventId: 'us_undergrad_grad',
       },
       {
         text: '去硅谷大厂 Career Fair 活动混脸熟要内推',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 8), age: s.age + 1, message: '你加了几十位大厂校友，拿到不少内推机会。' }),
+        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 8), age: s.age + 2, message: '你加了几十位大厂校友，拿到不少内推机会，顺利拿到学位！' }),
         nextEventId: 'us_undergrad_grad',
       },
       {
         text: '躺平，在加州阳光下享受最后的青春',
-        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(25, s.charm + 5), age: s.age + 1, message: '虽然没有实习经历，但你度过了人生中最无忧无虑的一个夏天。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(25, s.charm + 5), age: s.age + 2, message: '虽然没有实习经历，但你度过了人生中最无忧无虑的高年级时光！' }),
         nextEventId: 'us_undergrad_grad',
       }
     ]
@@ -1116,7 +1116,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          const lastPromoAge = s.last_promo_age || (s.is_phd ? 24 : 22);
+          const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           
           const baseWinRate = 0.15 + (s.leetcode / 300) + (s.charm * 0.02) + (s.luck * 0.001);
@@ -1124,17 +1124,17 @@ export const events: Record<string, GameEvent> = {
 
           if (curLevel === 'L3') {
             if (s.leetcode < 30) return { health: Math.max(10, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
-            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: ' 恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
+            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
           } else if (curLevel === 'L4') {
             if (s.leetcode < 50) return { health: Math.max(10, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
-            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: ' 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
+            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
           } else if (curLevel === 'L5 (Senior)') {
-            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: ' 奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
+            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
           return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
-        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('') ? 'promo_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
@@ -1649,7 +1649,7 @@ export const events: Record<string, GameEvent> = {
             ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: ` 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
             : { health: Math.max(10, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
-        nextEventId: (s) => ((s.message || '').includes('') ? 'promo_celebration' : 'sv_daily_life'),
+        nextEventId: (s) => ((s.message || '').includes('晋升') ? 'promo_celebration' : 'sv_daily_life'),
       },
       {
         text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L5 升 L6 专属高门槛)',
@@ -1666,7 +1666,7 @@ export const events: Record<string, GameEvent> = {
             ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), last_promo_age: s.age, message: ' 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
             : { health: Math.max(10, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
         },
-        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('') ? 'promo_celebration' : 'sv_daily_life')),
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : 'sv_daily_life')),
       },
       {
         text: '准点下班，躺平拿 Meets (保重身体)',

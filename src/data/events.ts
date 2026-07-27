@@ -1141,16 +1141,16 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => {
           if (s.leetcode < 50) {
-            return { health: s.health - 20, leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
+            return { health: Math.max(10, s.health - 15), leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
           }
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
           
-          if (isFromAI) return { mid_year: true, health: s.health - 25, tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
-          if (curLevel === 'L3') return { mid_year: true, health: s.health - 25, tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
-          if (curLevel === 'L4') return { mid_year: true, health: s.health - 25, tc: s.tc + 12, level: 'L5 (Senior)', message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
-          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, health: s.health - 30, tc: s.tc + 18, level: 'L6 (Staff)', message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
-          return { mid_year: true, health: s.health - 20, tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
+          if (isFromAI) return { mid_year: true, health: Math.max(10, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
+          if (curLevel === 'L3') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
+          if (curLevel === 'L4') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
+          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
+          return { mid_year: true, health: Math.max(10, s.health - 15), tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
         nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },

@@ -212,8 +212,8 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'choose_year',
       },
       {
-        text: '【湾区海王】精通高端局社交，人脉极广且极善拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ trait_title: '湾区海王', max_charm: (s.max_charm || 25) + 5, charm: Math.min((s.max_charm || 25) + 5, s.charm + 12), network: 35, cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
+        text: '【湾区海王】精通高端局社交，人脉广且极善拿捏人心，但社交开销高昂且不善算法。',
+        effect: (s) => ({ trait_title: '湾区海王', max_charm: (s.max_charm || 25) + 5, charm: Math.min((s.max_charm || 25) + 5, s.charm + 12), network: 20, cash: Math.max(0.5, s.cash - 1.5), leetcode: Math.max(0, s.leetcode - 10), win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {

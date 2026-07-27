@@ -535,7 +535,7 @@ export default function App() {
                   <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden shadow-2xl">
                     <div className="text-xs font-mono font-medium uppercase tracking-[0.15em] text-zinc-500 mb-4 flex items-center justify-between">
                       <span>[ACHIEVED_MEDALS] 生涯荣誉里程碑与 SSR 勋章</span>
-                      <span className="tabular-nums">{gameState.year} 年 | {gameState.age} 岁</span>
+                      <span className="tabular-nums">第 {Math.max(1, gameState.age - 17)} 年 | {gameState.age} 岁</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-6">

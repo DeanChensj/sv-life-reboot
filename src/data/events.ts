@@ -843,7 +843,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 40)',
         condition: (s) => s.leetcode >= 40,
-        effect: (s) => ({ tc: s.year >= 2023 ? 60 : 26, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你披上了黑色皮衣！如果这是 2023 年，你的包裹因为股票暴涨将达到 60w 的恐怖数字！' }),
+        effect: (s) => ({ tc: s.year >= 2023 ? 60 : 26, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你披上了黑色皮衣！赶上 AI 芯片牛市狂潮，你的包裹因为股票暴涨将达到 60w 的恐怖数字！' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';

@@ -33,7 +33,7 @@ export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ ga
           <div>
             <h3 className="text-2xl font-black text-zinc-100 tracking-tight">人生重开新星</h3>
             <p className="text-xs font-mono text-emerald-400 mt-0.5 font-semibold">
-              {gameState.housing_name || '大学宿舍'} · {gameState.year} 年底入学
+              {gameState.housing_name || '大学宿舍'} · 第 1 年入学档案
             </p>
           </div>
         </div>

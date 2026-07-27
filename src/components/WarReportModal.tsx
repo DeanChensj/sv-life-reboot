@@ -115,7 +115,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     drawStatBox(415, 360, 315, 110, '峰值年薪总包 (TC)', `$${gameState.tc.toFixed(1)}w`, '#f4f4f5');
 
     drawStatBox(70, 490, 315, 110, 'LEETCODE 解题量', `${gameState.leetcode} 题`, '#fbbf24');
-    drawStatBox(415, 490, 315, 110, '最终存活年龄/年份', `${gameState.age} 岁 / ${gameState.year}`, '#a78bfa');
+    drawStatBox(415, 490, 315, 110, '存活年龄 / 奋斗时长', `${gameState.age} 岁 / 奋斗 ${Math.max(1, gameState.age - 17)} 年`, '#a78bfa');
 
     // Medals Section Header
     ctx.font = '700 20px monospace';

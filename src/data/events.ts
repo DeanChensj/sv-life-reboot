@@ -984,14 +984,6 @@ export const events: Record<string, GameEvent> = {
     title: '湾区租房',
     description: '恭喜你拿到 Offer 开启职场生涯！现在你需要在湾区租房。房租会作为你每年的固定开销。',
     choices: [
-
-      {
-        text: '领养一只布偶猫/金毛 (每年额外花费 1w)',
-        condition: (s) => s.rent >= 2, // Needs at least a 2b2b to have space
-        effect: (s) => ({ rent: s.rent + 1, charm: Math.min(25, s.charm + 5), health: Math.min(100, s.health + 20), has_housing: true, housing_name: s.housing_name || 'San Jose 公寓', has_pet: true, pet_name: '布偶猫', message: '你领养了毛孩子布偶猫！虽然每年要多花不少钱买猫粮与看兽医，但每次下班回家看到它，你的疲惫都一扫而空，而且在相亲软件上放宠物照片让你大受欢迎！' }),
-        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
-      },
-
       {
         text: '豪华 1b1b (每年 4 万美元): 环境好，心情愉悦',
         effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: 'San Jose 高级公寓', message: '你租下了带有池高级公寓，生活质量极高，相亲市场竞争力上升。' }),

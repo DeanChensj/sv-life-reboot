@@ -90,6 +90,7 @@ const midYearEventRouter = (s: GameState) => {
   const isWorking = s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
   const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
 
+  if (s.year === 2022 && Math.random() < 0.15) return 'stock_crash';
   if (rand < 0.06) return 'stock_crash';
   if (rand >= 0.06 && rand < 0.46) {
      if (!isWorking) return 'job_hunt';
@@ -148,7 +149,17 @@ const midYearEventRouter = (s: GameState) => {
       return 'startup_angel_investing';
     }
 
-    // 6. Late Game Crises (Age >= 35 or Year >= 2024 or Homeowners)
+    // 6. NVDA Surge (2023+ AI Boom)
+    if (s.year >= 2023 && Math.random() < 0.18) {
+      return 'nvidia_stock_surge';
+    }
+
+    // 7. Married Couples ONLY: bay_area_dink_vs_kids (DINK vs 鸡娃抢学区房)
+    if ((s.is_married || s.relationship_status === 'married') && Math.random() < 0.20) {
+      return 'bay_area_dink_vs_kids';
+    }
+
+    // 8. Late Game Crises (Age >= 35 or Year >= 2024 or Homeowners)
     if (s.age >= 35 && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.25) {
       return 'midlife_management_pivot';
     }
@@ -175,8 +186,8 @@ const midYearEventRouter = (s: GameState) => {
         lifeEvents.push('boardgame_dating');
     }
 
-    // Non-married players (single / matched / dating) can trigger dating_market for relationship progression
-    if (!s.is_married && s.relationship_status !== 'married' && Math.random() < 0.35) {
+    // STRICTLY NON-MARRIED ONLY for dating_market (20% rebalanced rate)
+    if (!s.is_married && s.relationship_status !== 'married' && Math.random() < 0.20) {
         return 'dating_market';
     }
 
@@ -2731,6 +2742,60 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(10, s.health - 20),
           tc: s.tc + 5,
           message: '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'bay_area_dink_vs_kids': {
+    id: 'bay_area_dink_vs_kids',
+    title: '【双码家庭抉择】DINK 丁克自由 vs 抢 10 分学区房',
+    description: '结婚几年了，湾区双职工面临终极选择：是在 Palo Alto 享受 DINK (双薪无娃) 每年开滑雪与度假，还是砸钱买 Fremont 10 分学区房准备鸡娃？',
+    choices: [
+      {
+        text: '【坚定 DINK 丁克】享受自由人生，每年去 Tahoe / 夏威夷度假',
+        effect: (s) => ({
+          cash: s.cash + 10,
+          health: Math.min(100, s.health + 15),
+          charm: Math.min(s.max_charm || 25, s.charm + 3),
+          message: '你和伴侣达成了 DINK 共识！没有育儿焦虑与学区房负担，两人每年满世界度假，生活滋润无比！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【抢学区房鸡娃】买 Fremont 10 分学区房，报名卡内基梅隆机器人夏令营',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 15),
+          health: s.health - 10,
+          rent: 4.5,
+          has_housing: true,
+          housing_name: 'Fremont 10分学区房',
+          message: '你步入了湾区老爹鸡娃正轨！社区邻居全是高强度卷 AMC10 的硅谷大佬，每天陪娃解题虽然辛苦但充实。'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'nvidia_stock_surge': {
+    id: 'nvidia_stock_surge',
+    title: '【AI 狂潮暴富】NVDA 英伟达财报暴涨 30%',
+    description: '英伟达发布爆表财报！黄教主身穿皮衣宣布 Blackwell 芯片供不应求。全球科技股与大厂 RSU 随着股价飙升狂欢！作为硅谷打工人，你面临个人资产配置调整：',
+    choices: [
+      {
+        text: '【全仓追高芯片股】把剩余流动资金全部追高 Buying NVDA / AMD',
+        effect: (s) => {
+          const win = Math.random() < 0.65;
+          return win
+            ? { cash: s.cash + 15, luck: Math.min(99, s.luck + 5), message: '英伟达股价再创历史新高！你的股票账户直接起飞，净资产暴涨！' }
+            : { cash: Math.max(0, s.cash - 5), message: '追高在阶段性山顶，大盘短期回调，你被套牢了部分现金。' };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【落袋为安抛售套现】把归属的 RSU 及时 Sell，锁住现金买国债/S&P500',
+        effect: (s) => ({
+          cash: s.cash + 8,
+          message: '你稳健落袋为安！拿着现金稳稳躺赚高息，理财心态稳如老狗。'
         }),
         nextEventId: 'sv_daily_life'
       }

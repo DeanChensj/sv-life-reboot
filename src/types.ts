@@ -9,7 +9,8 @@ export interface GameState {
   visa: VisaStatus;
   tc: number; // 万美元
   rent: number; // 万美元
-  charm: number; // 颜值 1-10 (隐藏)
+  charm: number; // 颜值 1-10
+  max_charm?: number; // 个人遗传魅力上限
   year: number; // 当前年份
   gc_progress: number; // 绿卡排期进度 0-5 年
   has_us_degree: boolean;

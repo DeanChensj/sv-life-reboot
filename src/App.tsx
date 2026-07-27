@@ -62,9 +62,10 @@ export default function App() {
     }
 
     // Clamp stats
+    const maxCharmLimit = newState.max_charm || 25;
     newState.health = Math.max(0, Math.min(100, newState.health));
     newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
-    newState.charm = Math.max(0, Math.min(25, newState.charm));
+    newState.charm = Math.max(0, Math.min(maxCharmLimit, newState.charm));
 
     // Check if health drops <= 0
     if (newState.health <= 0 && newState.status === 'playing') {

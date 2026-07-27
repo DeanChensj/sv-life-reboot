@@ -16,6 +16,7 @@ export const generateInitialState = (): GameState => {
     cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
   }
   charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
+  const max_charm = Math.min(30, Math.max(15, charm + Math.floor(Math.random() * 6) + 8));
   luck = Math.floor(Math.random() * 100);
   
   const ap = 3;
@@ -41,6 +42,7 @@ export const generateInitialState = (): GameState => {
     tc: 0,
     rent: 4,
     charm,
+    max_charm,
     year: 2018, // 默认，会被第一步覆盖
     gc_progress: 0,
     has_us_degree: false,
@@ -164,7 +166,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【湾区海王】精通高端局社交，极其擅长拿捏人心，但一看到代码就犯困。',
-        effect: (s) => ({ trait_title: '湾区海王', charm: Math.min(20, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
+        effect: (s) => ({ trait_title: '湾区海王', max_charm: (s.max_charm || 25) + 5, charm: Math.min((s.max_charm || 25) + 5, s.charm + 12), cash: Math.max(2, s.cash), leetcode: Math.max(0, s.leetcode - 5), win_threshold: 360 }),
         nextEventId: 'choose_year',
       },
       {

@@ -336,13 +336,15 @@ export default function App() {
             </button>
 
             {/* Shop Mobile Button */}
-            <button
+            {gameState.job_type !== undefined && (
+              <button
                 onClick={() => setIsShopOpen(true)}
                 className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
               >
                 <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span>商城</span>
               </button>
+            )}
 
             {/* Achievement Codex Mobile Button */}
             <button

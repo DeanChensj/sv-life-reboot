@@ -19,6 +19,8 @@ export interface GameState {
   is_phd: boolean;
   is_master?: boolean;
   has_pet: boolean;
+  has_cat?: boolean;
+  has_dog?: boolean;
   pet_name?: string;
   luck: number;
   network: number; // 人脉/关系网 0-100

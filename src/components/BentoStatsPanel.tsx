@@ -76,7 +76,7 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
                 )}
               </button>
             )}
-            {onOpenShop && (
+            {onOpenShop && gameState.job_type !== undefined && (
               <button
                 onClick={onOpenShop}
                 className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer"

@@ -89,6 +89,12 @@ export const generateInitialState = (): GameState => {
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
 const midYearEventRouter = (s: GameState) => {
+  if (s.ap <= 0) {
+    if (s.job_type === 'trader') return 'trader_annual_strategy';
+    if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
+    return 'sv_year_end_settlement';
+  }
+
   // Economy News Broadcasts
   // Bull/Bear: 14% chance per click -> ~36% chance per year -> ~2.7 years average span
   // Neutral: 5% chance per click -> ~14% chance per year -> ~7 years average span
@@ -215,9 +221,7 @@ const midYearEventRouter = (s: GameState) => {
     return lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
   }
 
-  if (s.job_type === 'trader') return 'trader_annual_strategy';
-  if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
-  return 'sv_year_end_settlement';
+  return 'sv_daily_life';
 };
 
 // Events Engine

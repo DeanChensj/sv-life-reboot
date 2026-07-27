@@ -498,6 +498,7 @@ export default function App() {
                       })
                       .map((choice, idx) => {
                       const isAvailable = !choice.condition || choice.condition(gameState);
+                      const isSSR = choice.text.includes('隐藏款') || choice.text.includes('SSR');
                       
                       // Precise badge extraction (prioritize Choice.costBadge / Choice.reqBadge if defined)
                       const costMatch = choice.costBadge || choice.text.match(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/)?.[0]?.slice(1, -1);
@@ -517,13 +518,19 @@ export default function App() {
                         key={idx}
                         onClick={() => isAvailable && handleChoice(choice)}
                         disabled={!isAvailable}
-                        className={`group w-full text-left px-4 py-3 md:px-6 md:py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 cursor-pointer ${
-                          isAvailable 
-                            ? 'bg-zinc-900 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 active:scale-[0.98]' 
-                            : 'bg-zinc-950/50 border-zinc-800/50 opacity-50 cursor-not-allowed'
+                        className={`group w-full text-left px-4 py-3 md:px-6 md:py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 cursor-pointer ${
+                          isSSR
+                            ? 'bg-gradient-to-r from-amber-950/70 via-yellow-900/50 to-amber-950/70 border-amber-400/90 shadow-[0_0_20px_rgba(245,158,11,0.35)] hover:border-yellow-300 hover:shadow-[0_0_30px_rgba(250,204,21,0.55)] hover:bg-amber-900/60 active:scale-[0.98]'
+                            : isAvailable 
+                              ? 'bg-zinc-900 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 active:scale-[0.98]' 
+                              : 'bg-zinc-950/50 border-zinc-800/50 opacity-50 cursor-not-allowed'
                         }`}
                       >
-                        <span className={`font-medium text-[15px] sm:text-base md:text-lg transition-colors ${isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'}`}>
+                        <span className={`font-medium text-[15px] sm:text-base md:text-lg transition-colors ${
+                          isSSR
+                            ? 'text-amber-200 group-hover:text-yellow-200 font-extrabold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]'
+                            : isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'
+                        }`}>
                           {mainText}
                         </span>
                         
@@ -534,7 +541,11 @@ export default function App() {
                              </span>
                           )}
                           {reqMatch && (
-                             <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-amber-500/20 text-amber-300 border border-amber-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
+                             <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${
+                               isSSR
+                                 ? 'bg-amber-400/30 text-amber-200 border border-amber-400/50 font-bold shadow-[0_0_8px_rgba(245,158,11,0.4)]'
+                                 : isAvailable ? 'bg-amber-500/20 text-amber-300 border border-amber-500/20' : 'bg-zinc-800 text-zinc-500'
+                             }`}>
                                 {reqMatch}
                              </span>
                           )}

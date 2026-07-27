@@ -115,7 +115,7 @@ const midYearEventRouter = (s: GameState) => {
      if (bigTechRand < 0.45) return 'layoff_rumor';
      if (bigTechRand < 0.60) return 'rto_wars';
      if (bigTechRand < 0.80) return 'meta_tlm';
-     if (bigTechRand < 0.90 && s.visa !== '绿卡') return 'h1b_rfe_vs_parent_nag';
+     if (bigTechRand < 0.90 && s.visa !== '绿卡' && s.visa !== '公民') return 'h1b_rfe_vs_parent_nag';
      return 'friday_pip';
   }
   if (rand >= 0.46 && rand < 0.80) {
@@ -145,7 +145,7 @@ const midYearEventRouter = (s: GameState) => {
     }
 
     // 1. Green Card Holders ONLY: japan_trip (免签自由行)
-    if (s.visa === '绿卡' && Math.random() < 0.20) {
+    if ((s.visa === '绿卡' || s.visa === '公民') && Math.random() < 0.20) {
       return 'japan_trip';
     }
 
@@ -195,7 +195,7 @@ const midYearEventRouter = (s: GameState) => {
     }
 
     // Only non-Green Card / non-US workers face visa checks
-    if (s.visa !== '绿卡' && s.visa !== '无') {
+    if (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') {
         lifeEvents.push('visa_check');
     }
 
@@ -227,6 +227,20 @@ export const events: Record<string, GameEvent> = {
     title: '重新投胎 (选择天赋)',
     description: '在转生到硅谷之前，上帝给了你一次选择天赋的机会。每个天赋都有独特的加成，也伴随着相应的代价。',
     choices: [
+      {
+        text: '【隐藏款 SSR·原生美籍】湾区二代，生在终点线！持有美国护照，终身免除 H1B 抽签、PERM 排期与 60 天失业倒计时。',
+        reqBadge: 'SSR 特权',
+        effect: (s) => ({
+          trait_title: '原生美籍',
+          visa: '公民',
+          gc_progress: 5,
+          gc_stage: 'approved',
+          network: 25,
+          charm: Math.min((s.max_charm || 25), s.charm + 6),
+          win_threshold: 400
+        }),
+        nextEventId: 'choose_year',
+      },
       {
         text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
         effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 25, health: s.health - 25, network: 5, win_threshold: 400 }),
@@ -726,7 +740,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < 0.08;
           return win 
-            ? { tc: 25, health: s.health - 20, cash: s.cash + 100, visa: s.visa === '绿卡' ? '绿卡' : 'O1 (杰出人才)', message: '天选之子！你盲狙的公司获得核心突破并由资本巨额注资，你分到了高额股票！' }
+            ? { tc: 25, health: s.health - 20, cash: s.cash + 100, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', message: '天选之子！你盲狙的公司获得核心突破并由资本巨额注资，你分到了高额股票！' }
             : { tc: 10, health: s.health - 30, message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
         },
         nextEventId: (s: GameState) => {
@@ -896,14 +910,14 @@ export const events: Record<string, GameEvent> = {
       {
         text: '被迫回国',
         effect: (s) => {
-          const reason = (s.visa === 'F1 (学生)' || s.visa === '无') ? 'OPT到期未能上岸' : ((s.visa === '绿卡' || s.visa === 'O1 (杰出人才)') ? '积蓄耗尽、心灰意冷' : 'H1B 60天失业期满未能找到新工作');
+          const reason = (s.visa === 'F1 (学生)' || s.visa === '无') ? 'OPT到期未能上岸' : ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') ? '积蓄耗尽、心灰意冷' : 'H1B 60天失业期满未能找到新工作');
           return { status: 'game_over', message: reason + '，你最终遗憾登上了回国的航班。' };
         },
         nextEventId: 'end',
       },
       {
         text: '再读一个水硕维持身份 (Day 1 CPT) - (消耗 $5w, +25 力扣)',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== 'O1 (杰出人才)' && s.cash >= 5,
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)' && s.cash >= 5,
         effect: (s) => ({ cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
         nextEventId: 'job_hunt',
       }
@@ -1570,7 +1584,7 @@ export const events: Record<string, GameEvent> = {
           if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT') && (s.h1b_attempts || 0) >= 3) {
             return 'h1b_final_crisis';
           }
-          if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
+          if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') return 'post_green_card';
           
           return 'sv_daily_life';
         },
@@ -1667,7 +1681,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
-        effect: (s) => ({ health: Math.max(10, s.health - 25), visa: s.visa === '绿卡' ? '绿卡' : 'H1B (工签)', message: '你用极具创造性的学术废话打动了移民局官员，获得了 3 年 H1B！但你的头发掉了三分之一。' }),
+        effect: (s) => ({ health: Math.max(10, s.health - 25), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', message: '你用极具创造性的学术废话打动了移民局官员，获得了 3 年 H1B！但你的头发掉了三分之一。' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -1730,7 +1744,7 @@ export const events: Record<string, GameEvent> = {
             ? { health: s.health - 30, message: '你每天工作 16 小时，终于 survive 了 PIP！但你的头发少了一半。' }
             : { health: s.health - 20, tc: 0, laid_off: true, job_type: 'unemployed', message: '你熬了几个通宵，最后还是被 Manager 找借口开除了。' };
         },
-        nextEventId: (s) => (s.tc === 0) ? ((s.visa !== '绿卡' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt') : 'sv_daily_life'
+        nextEventId: (s) => (s.tc === 0) ? ((s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt') : 'sv_daily_life'
       },
       {
         text: '直接开摆，接受 PIP 辞退结局 (无遣散费)，在家刷题',
@@ -1743,11 +1757,11 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(10, s.health - 25),
           message: '【周五 PIP 绩效开除】选择 Quiet Quitting 改进计划未通过！HR 当场收回笔记本与 Workday 权限！PIP 绩效辞退无遣散费补偿！'
         }),
-        nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
+        nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
       },
       {
         text: ' 启动 60 天 H1B Grace Period 紧急挂靠：找外包公司办理 H1B Transfer (消耗 $2w)',
-        condition: (s) => s.cash >= 2 && s.visa !== '绿卡',
+        condition: (s) => s.cash >= 2 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           cash: s.cash - 2,
           tc: Math.max(10, Math.floor(s.tc * 0.55)),
@@ -2546,7 +2560,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.22 + (s.leetcode >= 80 ? 0.18 : 0.08) + (s.charm >= 15 ? 0.05 : 0);
           const win = Math.random() < winRate;
           return win
-            ? { tc: 80, cash: s.cash + 20, health: s.health - 20, visa: s.visa === '绿卡' ? '绿卡' : 'O1 (杰出人才)', job_type: 'ai_research', level: 'MTS', message: '震撼硅谷！你攻克了 AGI 前沿推理大模型面试，OpenAI 直接用 $80w 顶配包裹和 O1 签证把我聘为核心研究员！' }
+            ? { tc: 80, cash: s.cash + 20, health: s.health - 20, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', job_type: 'ai_research', level: 'MTS', message: '震撼硅谷！你攻克了 AGI 前沿推理大模型面试，OpenAI 直接用 $80w 顶配包裹和 O1 签证把我聘为核心研究员！' }
             : { health: s.health - 20, message: 'OpenAI 核心研究员面试太残酷了！不仅手撕 Triton 算子还深考系统对齐论文，你很遗憾没能拿到 Offer。好在顶级大厂抢着要你的 PhD 光环！' };
         },
         nextEventId: (s: GameState) => {
@@ -2557,7 +2571,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '去大厂当 Applied Scientist (应用科学家)',
-        effect: (s) => ({ tc: 45, cash: s.cash + 15, visa: s.visa === '绿卡' ? '绿卡' : 'O1 (杰出人才)', job_type: 'ai_research', level: 'L5', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，生活相对安稳。' }),
+        effect: (s) => ({ tc: 45, cash: s.cash + 15, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', job_type: 'ai_research', level: 'L5', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，生活相对安稳。' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -2611,7 +2625,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < (0.55 + s.leetcode / 300);
           return win 
-            ? { tc: s.tc + 25, cash: s.cash + 30, visa: s.visa === '绿卡' ? '绿卡' : 'O1 (杰出人才)', charm: Math.min(25, s.charm + 4), health: s.health - 20, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus 并协助加急批复了 O1 签证！' }
+            ? { tc: s.tc + 25, cash: s.cash + 30, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(25, s.charm + 4), health: s.health - 20, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus 并协助加急批复了 O1 签证！' }
             : { health: s.health - 25, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
         },
         nextEventId: 'sv_daily_life',

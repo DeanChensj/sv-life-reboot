@@ -149,25 +149,27 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
         </div>
 
         {/* 2. Green Card Progress Bar (Visible during immigration phase) */}
-        {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId) && (
+        {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || gameState.visa === '公民' || (gameState.job_type && gameState.job_type !== 'unemployed')) && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId) && (
           <div className="col-span-2 md:col-span-4 bg-zinc-900/95 border border-emerald-500/30 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-lg backdrop-blur-xl">
             <div className="flex flex-row justify-between items-center mb-2">
               <div className="text-emerald-400 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-[0.18em] flex items-center gap-1.5">
                 <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                绿卡排期与 PERM 进度 (GC Progress)
+                身份与绿卡进度 (Immigration Status)
               </div>
               <div className="text-xs font-mono font-extrabold text-emerald-300 tabular-nums">
-                {gameState.visa === '绿卡' 
-                  ? '100% (已获绿卡)' 
-                  : (gameState.gc_progress || 0) > 0
-                    ? `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}% (${gameState.gc_progress || 0}/5 年排期)`
-                    : '0% (PERM 筹备中)'}
+                {gameState.visa === '公民'
+                  ? '100% (美籍公民)'
+                  : gameState.visa === '绿卡' 
+                    ? '100% (已获绿卡)' 
+                    : (gameState.gc_progress || 0) > 0
+                      ? `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}% (${gameState.gc_progress || 0}/5 年排期)`
+                      : '0% (PERM 筹备中)'}
               </div>
             </div>
             <div className="w-full bg-zinc-950 rounded-full h-2.5 overflow-hidden border border-emerald-500/20">
               <div 
                 className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-300 transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
-                style={{ width: `${gameState.visa === '绿卡' ? 100 : Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100))}%` }}
+                style={{ width: `${(gameState.visa === '绿卡' || gameState.visa === '公民') ? 100 : Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100))}%` }}
               />
             </div>
           </div>

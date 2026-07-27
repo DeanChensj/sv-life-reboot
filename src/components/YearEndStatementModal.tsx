@@ -188,11 +188,11 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
             <span className="text-zinc-400 font-mono">当前签证身份:</span>
             <span className="font-bold text-amber-300">{gameState.visa}</span>
           </div>
-          {(gameState.gc_progress > 0 || gameState.visa === '绿卡') && (
+          {(gameState.gc_progress > 0 || gameState.visa === '绿卡' || gameState.visa === '公民') && (
             <div className="flex justify-between">
-              <span className="text-zinc-400 font-mono">绿卡 (PERM/排期) 进度:</span>
+              <span className="text-zinc-400 font-mono">身份/绿卡 状态进度:</span>
               <span className="font-bold text-emerald-400 font-mono tabular-nums">
-                {gameState.visa === '绿卡' ? '100% (已获绿卡)' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}% (${gameState.gc_progress || 0}/5 年排期)`}
+                {gameState.visa === '公民' ? '100% (美籍公民)' : (gameState.visa === '绿卡' ? '100% (已获绿卡)' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}% (${gameState.gc_progress || 0}/5 年排期)`)}
               </span>
             </div>
           )}

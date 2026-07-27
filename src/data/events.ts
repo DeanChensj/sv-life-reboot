@@ -128,7 +128,7 @@ const midYearEventRouter = (s: GameState) => {
     const lifeEvents = [
       'pickleball_networking', 'dental_emergency', 'crypto_scam', 
       'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
-      'burning_man_invite', 'boardgame_dating', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
+      'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
       'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup'
     ];
     
@@ -179,7 +179,7 @@ const midYearEventRouter = (s: GameState) => {
     }
 
     // 8. Late Game Crises (Age >= 35 or Year >= 2024 or Homeowners)
-    if (s.age >= 35 && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.25) {
+    if (isWorking && s.age >= 35 && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.25) {
       return 'midlife_management_pivot';
     }
     if (s.year >= 2024 && isWorking && Math.random() < 0.20) {
@@ -572,7 +572,7 @@ export const events: Record<string, GameEvent> = {
   'college_hackathon_boom': {
     id: 'college_hackathon_boom',
     title: '【校园突发】全美 Hackathon AI 助手爆发',
-    description: '大二下学期，你组队参加全美大学黑客松。比赛倒计时 2 小时，你们的项目因为并发逻辑出现卡顿！',
+    description: '校园阶段，你组队参加全美大学黑客松。比赛倒计时 2 小时，你们的项目因为并发逻辑出现卡顿！',
     choices: [
       {
         text: '紧急接入 Claude/Cursor 重新优化 Agent 调度层',
@@ -679,23 +679,23 @@ export const events: Record<string, GameEvent> = {
       {
         text: '翘课刷题！(力扣大军)',
         effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 12, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能手撕红黑树与动态规划。' }),
-        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+        nextEventId: 'us_master_grad',
       },
       {
         text: '【量化/风控求职】准备 Wall Street Quant / 风控与投资面试',
         effect: (s) => ({ cash: s.cash + 2.5, leetcode: s.leetcode + 8, charm: Math.min(25, s.charm + 4), age: s.age + 1, message: '在 Quant 笔试与数学思维面试中顺利过关，拿到高薪 Offer！' }),
-        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+        nextEventId: 'us_master_grad',
       },
       {
         text: '疯狂赶 Due，力保全 A (4.0 GPA)',
         effect: (s) => ({ leetcode: s.leetcode + 6, health: s.health - 8, charm: Math.min(25, s.charm + 3), age: s.age + 1, message: '你拿到了 4.0 的完美绩点！展现了极其严谨的学业能力。' }),
-        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+        nextEventId: 'us_master_grad',
       },
       {
         text: '去硅谷大厂活动混脸熟要内推',
         condition: (s) => s.cash >= 1,
         effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 10), age: s.age + 1, message: '你加了 50 个大厂学长学姐的 LinkedIn，拿到了不少直通面试机会。' }),
-        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+        nextEventId: 'us_master_grad',
       }
     ]
   },
@@ -2830,8 +2830,9 @@ export const events: Record<string, GameEvent> = {
         text: '装小白疯狂给人递水，主打情绪价值',
         effect: (s) => {
           const win = Math.random() > 0.5;
+          const isMarriedNow = s.is_married || s.relationship_status === 'married';
           return win
-            ? { charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
+            ? { charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), relationship_status: isMarriedNow ? 'married' : 'dating', message: isMarriedNow ? '你全程温柔体贴，结识了几位同样在大厂的同行好友，社交氛围轻松！' : '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
             : { charm: Math.min(25, s.charm + 1), health: s.health + 5, cash: Math.max(0, s.cash - 0.2), message: '你跑前跑后伺候大家，当了一整天的“沸羊羊”，虽然交了几个普通朋友，但并没有人看上你。' };
         },
         nextEventId: 'sv_daily_life'

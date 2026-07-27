@@ -139,6 +139,14 @@ const midYearEventRouter = (s: GameState) => {
     if (isWorking) {
         lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode');
     }
+
+    if (!s.is_married) {
+        lifeEvents.push('ex_wedding_invite');
+    }
+    
+    if (s.relationship_status === 'dating' || s.is_married) {
+        lifeEvents.push('ikea_furniture_fight');
+    }
     
     // Only Big Tech folks have RSU crashes
     if (isBigTech) {
@@ -1844,69 +1852,88 @@ export const events: Record<string, GameEvent> = {
     imageUrl: 'images/boba_date.jpg',
     choices: [
       {
-        text: '【初识匹配】周末 Santana Row 喝奶茶 Coffee Date (单身 / 寻求 Match)',
+        text: '【高端局】参加南湾高阶桌游与剧本杀局',
+        reqBadge: '需 算法能力',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.leetcode >= 40,
+        effect: (s) => ({ relationship_status: 'matched', partner_type: 'engineer', message: '【匹配成功】在激烈的狼人杀中，你敏锐的逻辑吸引了同为大厂码农的 TA。双方互加微信，进入 Matched 状态！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【看展看演出】去 SF MOMA 看展或看独立乐队演出',
+        reqBadge: '需 极高魅力',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.charm >= 15,
+        effect: (s) => ({ relationship_status: 'matched', partner_type: 'artist', charm: Math.min(30, s.charm + 3), message: '【匹配成功】在昏暗的 Livehouse 里，你与一位在设计学院读书的文青对上了眼。你们聊了王家卫和坂本龙一，进入 Matched 状态！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【高端社交】混入沙丘路 VC 晚宴与红酒品鉴会',
+        reqBadge: '需 雄厚财力',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 50,
+        effect: (s) => ({ relationship_status: 'matched', partner_type: 'vc', network: s.network + 10, message: '【匹配成功】你端着香槟在沙丘路的高端晚宴上侃侃而谈，成功吸引了一位年轻有为的 VC 投资人/创业大佬，进入 Matched 状态！' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【周末交友】周末 Santana Row 喝奶茶 (Coffee Meets Bagel)',
         condition: (s) => !s.relationship_status || s.relationship_status === 'single',
         effect: (s) => {
           const winRate = 0.35 + (s.charm * 0.02) + (s.luck * 0.002) + (s.has_pet ? 0.20 : 0);
           const pass = Math.random() < winRate;
           return pass 
-            ? { relationship_status: 'matched', charm: Math.min(25, s.charm + 2), imageUrl: 'images/boba_date.jpg', message: '【CMB 匹配成功 (Matched)】因为主页挂了滑雪和宠物照片，你成功匹配到了一位大厂同行！双方加了微信，聊得非常投机，进入互称 Matched 的匹配阶段！' }
-            : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, imageUrl: 'images/boba_date.jpg', message: '连喝了三杯 Boba，对方一听你还没买房且身份未定，默默选择了 AA。你不仅花了钱还受到了真实伤害。' };
+            ? { relationship_status: 'matched', partner_type: 'random', charm: Math.min(25, s.charm + 2), message: '【匹配成功】因为主页挂了滑雪和宠物照片，你成功匹配到了一位湾区打工人！双方聊得非常投机，进入 Matched 阶段！' }
+            : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, message: '【匹配失败】连喝了三杯 Boba，对方一听你还没买房且身份未定，默默选择了 AA。你不仅花了钱还受到了真实伤害。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【情感升温】邀请匹配对象 (Matched) 一起去 Lake Tahoe 滑雪 (升温至 Dating)',
+        text: '【情感升温】邀请对方一起去 Lake Tahoe 滑雪度假 (升温至 Dating)',
         condition: (s) => s.relationship_status === 'matched',
-        reqBadge: '阶段：Matched 匹配中',
+        reqBadge: '阶段：Matched',
         effect: (s) => {
-          const pass = Math.random() < 0.65;
+          const isArtist = s.partner_type === 'artist';
+          const pass = Math.random() < (isArtist ? 0.4 : 0.7); // 文青比较难搞
           return pass
-            ? { relationship_status: 'dating', charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '【正式确立恋爱关系 (Dating)】Tahoe 的雪景与小木屋篝火让两人的感情迅速升温！你们正式官宣成为湾区甜甜蜜蜜的恋爱情侣 (Dating)！' }
-            : { relationship_status: 'single', health: s.health - 10, message: '滑雪途中因为路线分配和谁洗碗产生了严重分歧，氛围降到冰点。回到湾区后双方互删退回单身。' };
+            ? { relationship_status: 'dating', charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: `【正式确立关系】Tahoe 的雪景与小木屋篝火让两人的感情迅速升温！你们正式官宣成为湾区情侣 (Dating)！` }
+            : { relationship_status: 'single', partner_type: undefined, health: s.health - 10, message: '【分道扬镳】滑雪途中因为路线分配和谁洗碗产生了严重分歧。回到湾区后双方互删，退回单身。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【走进婚姻】与恋爱伴侣 (Dating) 在 Santa Clara 法院登记领证 (领证结婚)',
+        text: '【走进婚姻】与伴侣在 Santa Clara 法院登记领证 (领证结婚)',
         condition: (s) => s.relationship_status === 'dating',
-        reqBadge: '阶段：Dating 热恋中',
-        effect: (s) => ({
-          relationship_status: 'married',
-          is_married: true,
-          cash: s.cash + 20,
-          message: '【领证结婚 (Married)】恭喜！你们在 Santa Clara 县法院正式登记结婚！两人合并了存款与工资 (+$20w 现金)，正式晋升为湾区神仙双职工家庭！'
-        }),
-        nextEventId: 'sv_daily_life',
-      },
-      {
-        text: '【豪车米其林开局】直奔米其林，豪车接送 (直接跨越至 Dating 热恋)',
-        reqBadge: '豪车/高现金加成',
-        condition: (s) => (s.cash >= 10 && (s.car === 'porsche' || s.car === 'cybertruck' || s.cash >= 30)) && (s.relationship_status === 'single' || !s.relationship_status),
+        reqBadge: '阶段：Dating',
         effect: (s) => {
-          const hasLuxuryCar = s.car === 'porsche' || s.car === 'cybertruck';
-          const winRate = (hasLuxuryCar ? 0.75 : 0.45) + (s.charm * 0.02);
-          const pass = Math.random() < winRate;
-          return pass
-            ? { relationship_status: 'dating', cash: s.cash - 0.5, charm: Math.min(25, s.charm + 4), health: Math.min(100, s.health + 15), message: '【快速进入热恋 (Dating)】在豪华座驾与米其林的双重加持下，对方对你极其满意！两人跳过漫长拉扯，直接官宣确立了恋爱情侣关系 (Dating)！' }
-            : { cash: s.cash - 0.5, health: s.health - 10, message: '你花了重金请吃米其林，结果发现对方只是来蹭饭打卡的“湾区海王/海后”。你成为了提款机，心痛不已！' };
+          let bonusCash = 20;
+          if (s.partner_type === 'engineer') bonusCash = 30; // 码农存款多
+          if (s.partner_type === 'vc') bonusCash = 80; // 大佬超多钱
+          if (s.partner_type === 'artist') bonusCash = 5; // 文青没钱
+          
+          return {
+            relationship_status: 'married',
+            is_married: true,
+            cash: s.cash + bonusCash,
+            message: `【领证结婚】恭喜！你们在法院正式登记结婚！两人合并了存款与工资 (+$${bonusCash}w 现金)，正式晋升为合法夫妻！`
+          };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【婚姻维系】与伴侣 (Married) 享受双职工家庭生活 (已婚)',
-        condition: (s) => s.relationship_status === 'married' || s.is_married,
-        reqBadge: '阶段：Married 已婚',
-        effect: (s) => ({
-          health: Math.min(100, s.health + 20),
-          cash: s.cash + 5,
-          message: '你们关闭了工作提醒，享受了惬意的家庭时光。双职工互相扶持，家庭财务与身心状态稳步上升！'
-        }),
+        text: '【豪车开局】开豪车直接闪婚 (单身直达结婚)',
+        reqBadge: '需 保时捷/赛博皮卡',
+        condition: (s) => (s.car === 'porsche' || s.car === 'cybertruck') && (s.relationship_status === 'single' || !s.relationship_status),
+        effect: (s) => {
+          return {
+            relationship_status: 'married',
+            partner_type: 'random',
+            is_married: true,
+            health: s.health - 15,
+            message: '【豪车闪婚】你开着豪车在半月湾兜风，极高的魅力值让你在短短几个月内就完成了相识、热恋和闪婚！'
+          };
+        },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '算了吧，一个人挺好 (省钱省心)',
-        effect: (s) => ({ health: Math.min(100, s.health + 5), cash: s.cash + 0.5, message: '你卸载了交友软件，省下了周末喝奶茶和请客吃饭的钱，宅在家里打游戏，心情出奇地平静。' }),
+        text: '放弃交友，专心搞钱',
+        effect: (s) => ({ health: Math.min(100, s.health + 5), message: '觉得相亲太累，你回到家里躺着刷了一整天 YouTube，感到内心十分平静。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -3449,6 +3476,47 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash + 8,
           message: '你稳健落袋为安！拿着现金稳稳躺赚高息，理财心态稳如老狗。'
         }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'ex_wedding_invite': {
+    id: 'ex_wedding_invite',
+    title: '红色炸弹来袭',
+    description: '周末你收到了一份精致的电子请柬。你曾经暧昧过/交往过的前任下个月要在 Napa 酒庄举办盛大婚礼了。',
+    choices: [
+      {
+        text: '大方随份子钱并出席 (花费 $0.2w)',
+        condition: (s) => s.cash >= 0.2,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(30, s.charm + 1), health: s.health - 5, message: '你强颜欢笑在 Napa 酒庄吃了一顿精致但毫无味道的西餐，包了 $2000 的份子钱，心里拔凉拔凉的。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '装没看见，默默拉黑',
+        effect: (s) => ({ network: Math.max(0, s.network - 5), health: Math.min(100, s.health + 5), message: '你选择无视请柬并删除了对方的好友。圈子里传言你“格局太小”，人脉受损，但你觉得心情舒畅多了！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'ikea_furniture_fight': {
+    id: 'ikea_furniture_fight',
+    title: '周末危机：宜家家具组装',
+    description: '为了布置温馨的小家，周末你和伴侣去 IKEA 买了一个巨型衣柜。回到家后，面对一堆木板和毫无逻辑的说明书，气氛变得十分焦灼。',
+    choices: [
+      {
+        text: '自告奋勇，独自一人闷头组装 (拼体力)',
+        effect: (s) => {
+          const pass = Math.random() < 0.5;
+          return pass 
+            ? { health: s.health - 10, charm: Math.min(30, s.charm + 1), message: '花了 6 个小时，你终于把衣柜拼好了！虽然累得腰酸背痛，但伴侣对你崇拜有加，感情升温！' }
+            : { health: s.health - 15, message: '拼到一半发现一块核心木板装反了，必须要全部拆掉重来...伴侣在旁边叹气，两人不欢而散。' };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '花钱消灾，直接请 TaskRabbit 师傅 (花费 $0.1w)',
+        condition: (s) => s.cash >= 0.1,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), health: Math.min(100, s.health + 5), message: '你果断打开 TaskRabbit 花了 $1000 请了墨西哥老哥。半小时搞定，你们开开心心出门吃大餐去了。' }),
         nextEventId: 'sv_daily_life'
       }
     ]

@@ -26,6 +26,8 @@ export interface GameState {
   network: number; // 人脉/关系网 0-100
   is_married: boolean;
   relationship_status?: RelationshipStatus;
+  partner_type?: 'engineer' | 'artist' | 'vc' | 'founder' | 'random';
+  has_child?: boolean;
   win_threshold: number;
   laid_off: boolean;
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia' | 'trader' | 'startup_founder';

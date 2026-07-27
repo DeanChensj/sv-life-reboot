@@ -1356,8 +1356,8 @@ export const events: Record<string, GameEvent> = {
              if (s.job_type === 'trader' || s.job_type === 'startup_founder' || s.job_type === 'quant' || s.job_type === 'big_tech') {
                preTaxBase = s.tc; // 交易员、创始人、Quant、养老厂(big_tech) 全现金
              } else if (s.job_type === 'startup') {
-               preTaxBase = s.tc * 0.2;
-               preTaxRSU = s.tc * 0.8; // startup 期权画大饼
+               preTaxBase = s.tc * 0.5;
+               preTaxRSU = s.tc * 0.5; // startup 股权/期权 50/50
              } else if (s.job_type === 'tiktok') {
                preTaxBase = s.tc * 0.7;
                preTaxRSU = s.tc * 0.3; // 字节现金多
@@ -1380,6 +1380,19 @@ export const events: Record<string, GameEvent> = {
            currentStocks += postTaxRSU; // Vested RSUs go to stock account
            
            const netIncome = postTaxBase - totalExpense;
+           let finalCash = s.cash + netIncome;
+           let autoStockSellMsg = '';
+
+           if (finalCash < 0 && currentStocks > 0) {
+             const deficit = Math.abs(finalCash);
+             const sellAmt = Math.min(currentStocks, deficit);
+             currentStocks -= sellAmt;
+             finalCash += sellAmt;
+             if (sellAmt > 0) {
+               autoStockSellMsg = ` 【股票自动变现】因现金流不足结清账单，系统已自动卖出 $${sellAmt.toFixed(1)}w 股票持仓抵扣房租与生活支出！`;
+             }
+           }
+
            let healthDrain = 0;
            let companyMsg = '';
            if (!s.laid_off && s.job_type !== 'unemployed') {
@@ -1544,12 +1557,12 @@ export const events: Record<string, GameEvent> = {
               startup_tenure: newStartupTenure,
               gc_progress: nextGc,
               gc_stage: nextStage,
-              cash: s.cash + netIncome,
+              cash: finalCash,
               stocks: currentStocks,
               tc: updatedTC,
               health: newHealth,
               macro_economy: newEconomy,
-              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${h1bMsg}${meritMsg}` 
+              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
            };
         },
         nextEventId: (s) => {

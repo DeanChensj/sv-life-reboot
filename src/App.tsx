@@ -117,6 +117,17 @@ export default function App() {
       }
     }
 
+    // Auto Liquidate Stocks if Cash < 0 (Allow selling stocks/equity to cover rent and expenses)
+    if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {
+      const deficit = Math.abs(newState.cash);
+      const sellAmt = Math.min(newState.stocks || 0, deficit);
+      newState.stocks = (newState.stocks || 0) - sellAmt;
+      newState.cash = newState.cash + sellAmt;
+      if (sellAmt > 0) {
+        newState.message = (newState.message || '') + ` 【股票自动变现】现金流不足，系统已自动变现 $${sellAmt.toFixed(1)}w 股票持仓以缴纳房租与生活账单。`;
+      }
+    }
+
     // Check if bankrupt
     if (newState.cash < -0.001 && newState.status === 'playing') {
       newState.status = 'game_over';

@@ -955,7 +955,7 @@ export const events: Record<string, GameEvent> = {
             ? { visa: 'H1B (工签)', cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，今年H1B中签了！' }
             : { cash: s.cash, health: s.health - 10, message: '今年 H1B 没抽中！只能指望明年...' };
         },
-        nextEventId: (s) => (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'big_tech_work_no_h1b',
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '砸钱找最顶级的移民律师帮忙弄 O1 签证 (花费 8 万美元)',
@@ -967,7 +967,7 @@ export const events: Record<string, GameEvent> = {
             ? { visa: 'O1 (杰出人才)', cash: s.cash - 8, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
             : { cash: s.cash - 8, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，八万美元打了水漂。' };
         },
-        nextEventId: (s) => (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') ? 'sv_daily_life' : 'big_tech_work_no_h1b',
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '和美国公民闪婚拿绿卡 (高风险)',
@@ -975,7 +975,7 @@ export const events: Record<string, GameEvent> = {
           const fake = Math.random() > 0.7; // 30% fake marriage caught
           return fake
             ? { status: 'game_over', message: '移民局家访时发现你们是商婚，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { visa: '绿卡', cash: s.cash, message: '你通过婚姻顺利拿到了绿卡，直接跨过了最大的槛！' }
+            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash, message: '你通过婚姻顺利拿到了绿卡，直接跨过了最大的槛！' }
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
       }
@@ -1011,7 +1011,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.35 + (s.luck / 100) * 0.35;
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, gc_progress: Math.min(5, (s.gc_progress || 0) + 1), message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
+            ? { visa: 'H1B (工签)', cash: s.cash, gc_progress: 1, gc_stage: 'perm_processing', message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
             : { cash: s.cash, health: s.health - 20, message: '很遗憾，第三年 H1B 依然未中签！好在公司 HR 允许你选择外派加拿大或挂靠 Day 1 CPT。' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'h1b_fallback_options',
@@ -1054,8 +1054,8 @@ export const events: Record<string, GameEvent> = {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $50w)',
         reqBadge: '现金>=50w',
         condition: (s) => s.cash >= 50,
-        effect: (s) => ({ visa: '绿卡', cash: s.cash - 50, message: '凭雄厚资金实力，加急办妥了 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
-        nextEventId: 'sv_daily_life',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 50, message: '凭雄厚资金实力，加急办妥了 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
+        nextEventId: 'post_green_card',
       },
       {
         text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国)',
@@ -1149,11 +1149,11 @@ export const events: Record<string, GameEvent> = {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
           
-          if (isFromAI) return { mid_year: true, health: Math.max(10, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
-          if (curLevel === 'L3') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 8, level: 'L4', message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
-          if (curLevel === 'L4') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
-          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
-          return { mid_year: true, health: Math.max(10, s.health - 15), tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
+          if (isFromAI) return { mid_year: true, health: Math.max(10, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', is_new_job: true, message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
+          if (curLevel === 'L3') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 8, level: 'L4', is_new_job: true, message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
+          if (curLevel === 'L4') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', is_new_job: true, message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
+          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', is_new_job: true, message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
+          return { mid_year: true, health: Math.max(10, s.health - 15), tc: Math.floor(s.tc * 1.15), is_new_job: true, message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
         nextEventId: (s) => (((s.message || '').includes('L6 Staff') || (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
@@ -1324,15 +1324,8 @@ export const events: Record<string, GameEvent> = {
              newStartupTenure = 0;
            }
 
-           let nextGc = s.gc_progress;
-           if (s.visa === '绿卡') {
-             nextGc = s.gc_progress;
-           } else if (s.job_type === 'startup' && newStartupTenure <= 2) {
-             // Startup rule: no PERM in the first 2 years!
-             nextGc = s.gc_progress;
-           } else {
-             nextGc = s.gc_progress + 1;
-           }
+           let nextGc = s.gc_progress || 0;
+           let nextStage = s.gc_stage || 'not_started';
 
            const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || '');
            const housingExpense = s.rent !== undefined 
@@ -1398,22 +1391,121 @@ export const events: Record<string, GameEvent> = {
              else if (s.job_type === 'big_tech') { healthDrain = -5; companyMsg = ' 养老厂的 WLB 让你养精蓄锐 (健康 +5)。'; }
            }
            
-           const newHealth = Math.max(0, s.health - healthDrain);
-           
-           const gcMsg = s.visa === '绿卡' 
-             ? '你已持有美国绿卡，工作生活不受约束。' 
-             : (s.job_type === 'startup' && newStartupTenure <= 2)
-               ? `️ Startup 政策：入职前 2 年不予办理 PERM 绿卡（当前第 ${newStartupTenure} 年，排期暂未增加）。`
-               : nextGc >= 5 
-                 ? '你的绿卡排期终于到了！' 
-                 : `距离拿到绿卡还差 ${Math.max(0, 5 - nextGc)} 年。`;
+           let newHealth = Math.max(0, s.health - healthDrain);
+           let gcMsg = '';
+
+           if (s.visa === '绿卡' || s.gc_progress >= 5) {
+             nextGc = 5;
+             nextStage = 'approved';
+             gcMsg = ' 🗽 你已持有美国绿卡，工作生活不受约束。';
+           } else if (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)' || s.visa === 'L1 (外派)' || s.visa === 'Day 1 CPT') {
+              const isO1 = s.visa === 'O1 (杰出人才)';
+              const isPhd = s.is_phd;
+              const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
+
+              if (!s.job_type || s.job_type === 'unemployed' || s.laid_off) {
+                 if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {
+                    nextStage = 'not_started';
+                    nextGc = 0;
+                    gcMsg = ' 🚫 【绿卡中断】由于你目前处于失业状态，你的 PERM/I-140 申请被原公司撤回，绿卡进度惨遭清零！';
+                 } else if (nextStage === 'not_started') {
+                    gcMsg = ' ⏳ 【绿卡停滞】你目前失业，无法启动任何雇主担保的绿卡申请。';
+                 } else {
+                    gcMsg = ' ⏳ 【绿卡排期】你虽然失业，但由于你的 I-140 已经获批，Priority Date 依然为你保留，排期照常进行。';
+                 }
+              } else if (s.job_type === 'startup' && newStartupTenure <= 2) {
+                 gcMsg = ` ⏱️ Startup 政策：入职前 2 年不予办理绿卡（当前第 ${newStartupTenure} 年，排期暂未推进）。`;
+              } else {
+                 if (nextStage === 'not_started') {
+                    if (isO1 || isPhd) {
+                       nextStage = 'i140_processing';
+                       nextGc = Math.max(2, nextGc); 
+                       gcMsg = ' 📄 【绿卡进度】凭借你的杰出背景 (NIW/EB1)，律师直接为你跳过 PERM，提交了 I-140 申请！';
+                    } else {
+                       if (Math.random() < (isBigTech ? 0.7 : 0.4)) {
+                         nextStage = 'perm_processing';
+                         nextGc = Math.max(1, nextGc);
+                         gcMsg = ' 📄 【绿卡进度】公司律师正式为你启动了 PERM 打广告和 PWD 流程，漫长的绿卡长征开始了。';
+                       } else {
+                         gcMsg = ' ⏳ 【绿卡进度】HR 还在拖延你的绿卡流程，尚未正式启动 PERM...';
+                       }
+                    }
+                 } else if (nextStage === 'perm_processing') {
+                    const rand = Math.random();
+                    if (rand < 0.25) {
+                       nextStage = 'perm_audit';
+                       gcMsg = ' ⚠️ 【PERM Audit】运气不佳，你的 PERM 遇到了劳工部 Audit (抽查审计)，进度被严重拖延至少一年...';
+                    } else if (rand < 0.8) {
+                       nextStage = 'i140_processing';
+                       nextGc = Math.max(2, nextGc);
+                       gcMsg = ' 📄 【绿卡进度】你的 PERM 顺利获批！律师马不停蹄为你提交了 I-140 申请。';
+                    } else {
+                       gcMsg = ' ⏳ 【绿卡进度】劳工部处理极其缓慢，你的 PERM 仍在 pending 中...';
+                    }
+                 } else if (nextStage === 'perm_audit') {
+                    if (Math.random() < 0.6) {
+                       nextStage = 'i140_processing';
+                       nextGc = Math.max(2, nextGc);
+                       gcMsg = ' 📄 【绿卡进度】谢天谢地！经过漫长的补充材料，劳工部终于通过了你的 PERM Audit，律师已提交 I-140。';
+                    } else {
+                       gcMsg = ' ⏳ 【绿卡进度】你的 PERM Audit 仍在劳工部苦苦排队审核中...';
+                    }
+                 } else if (nextStage === 'i140_processing') {
+                    const rand = Math.random();
+                    if (rand < 0.2) {
+                       nextStage = 'i140_rfe';
+                       newHealth = Math.max(0, newHealth - 15);
+                       gcMsg = ' ⚠️ 【I-140 RFE】移民局对你的 I-140 发出了 RFE (要求补充材料)！你需要让前老板和同事帮忙写一堆推荐信，让你心力交瘁 (健康 -15)。';
+                    } else if (rand < 0.85) {
+                       nextStage = 'i140_approved';
+                       nextGc = Math.max(3, nextGc);
+                       gcMsg = ' 🎉 【I-140 获批】你的 I-140 正式获批！Priority Date (PD) 成功锁定，接下来就是漫长的等待排期了。';
+                    } else {
+                       gcMsg = ' ⏳ 【绿卡进度】你的 I-140 仍在加急处理中...';
+                    }
+                 } else if (nextStage === 'i140_rfe') {
+                    if (Math.random() < 0.75) {
+                       nextStage = 'i140_approved';
+                       nextGc = Math.max(3, nextGc);
+                       gcMsg = ' 🎉 【RFE 通过】你在最后关头凑齐了所有材料，移民局终于批准了你的 I-140！Priority Date 成功锁定。';
+                    } else {
+                       gcMsg = ' ❌ 【RFE 延期】律师表示材料依然需要润色，I-140 审核陷入了拉锯战...';
+                    }
+                 } else if (nextStage === 'i140_approved' || nextStage === 'waiting_pd') {
+                    nextStage = 'waiting_pd';
+                    const rand = Math.random();
+                    const advanceProb = (isO1 || isPhd) ? 0.45 : 0.2;
+                    
+                    if (rand < 0.12) {
+                       nextGc = Math.max(3, nextGc - 1);
+                       gcMsg = ' 📉 【排期倒退】移民局颁布了新规，本月 Visa Bulletin 遭遇史诗级 Retrogression (排期大倒退)！你的绿卡进度又变遥远了...';
+                    } else if (rand < 0.12 + advanceProb) {
+                       nextStage = 'i485_pending';
+                       nextGc = 4.5;
+                       gcMsg = ' 📬 【排期到了】天呐！这个月的 Visa Bulletin 排期竟然前进了，刚好越过了你的 PD！律师火速为你提交了 I-485。';
+                    } else {
+                       gcMsg = ' ⏳ 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
+                       if (Math.random() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
+                    }
+                 } else if (nextStage === 'i485_pending') {
+                    if (Math.random() < 0.6) {
+                       nextStage = 'approved';
+                       nextGc = 5;
+                       gcMsg = ' 🎉 【制卡成功】制卡完成，你的 I-485 正式获批！';
+                    } else {
+                       gcMsg = ' ⏳ 【制卡中】你的 I-485 正在打指纹和背景调查阶段，距离实体绿卡只有一步之遥！';
+                       nextGc = 4.8;
+                    }
+                 }
+              }
+           }
 
             // H1B 年底自动抽签逻辑
             let h1bMsg = '';
             let newVisa = s.visa;
             let newAttempts = s.h1b_attempts || 0;
 
-            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed') {
+            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT') && !s.laid_off && s.job_type && s.job_type !== 'unemployed') {
               newAttempts += 1;
               const winRate = 0.35 + (s.luck / 100) * 0.3;
               const win = Math.random() < winRate;
@@ -1450,7 +1542,8 @@ export const events: Record<string, GameEvent> = {
               visa: newVisa,
               h1b_attempts: newAttempts,
               startup_tenure: newStartupTenure,
-              gc_progress: nextGc, 
+              gc_progress: nextGc,
+              gc_stage: nextStage,
               cash: s.cash + netIncome,
               stocks: currentStocks,
               tc: updatedTC,
@@ -1461,7 +1554,7 @@ export const events: Record<string, GameEvent> = {
         },
         nextEventId: (s) => {
           if (s.status === 'win') return 'end';
-          if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
+          if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT') && (s.h1b_attempts || 0) >= 3) {
             return 'h1b_final_crisis';
           }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '无') return 'post_green_card';
@@ -1522,7 +1615,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '心理防御倒塌：“哥们，你们厂现在有 Referral 吗？包身份就行，TC 随缘！”',
-        effect: (s) => ({ tc: Math.max(10, s.tc - 5), health: s.health - 10, message: '你含泪跳槽去了一家给钱更少但至少股价底部的公司，重新开始坐 4 年股票牢。' }),
+        effect: (s) => ({ tc: Math.max(10, s.tc - 5), health: s.health - 10, is_new_job: true, message: '你含泪跳槽去了一家给钱更少但至少股价底部的公司，重新开始坐 4 年股票牢。' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -1624,7 +1717,7 @@ export const events: Record<string, GameEvent> = {
             ? { health: s.health - 30, message: '你每天工作 16 小时，终于 survive 了 PIP！但你的头发少了一半。' }
             : { health: s.health - 20, tc: 0, laid_off: true, job_type: 'unemployed', message: '你熬了几个通宵，最后还是被 Manager 找借口开除了。' };
         },
-        nextEventId: (s) => s.tc === 0 ? 'job_hunt' : 'sv_daily_life'
+        nextEventId: (s) => (s.tc === 0) ? ((s.visa !== '绿卡' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt') : 'sv_daily_life'
       },
       {
         text: '直接开摆，接受 PIP 辞退结局 (无遣散费)，在家刷题',
@@ -2014,8 +2107,8 @@ export const events: Record<string, GameEvent> = {
         text: '【钞能力自救】全额出资办理 EB-5 投资移民绿卡 (花费 $40w)',
         reqBadge: '现金>=40w',
         condition: (s) => s.cash >= 40,
-        effect: (s) => ({ visa: '绿卡', cash: s.cash - 40, message: '在绝境中你果断出资办妥 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
-        nextEventId: 'sv_daily_life',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 40, message: '在绝境中你果断出资办妥 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
+        nextEventId: 'post_green_card',
       },
       {
         text: '紧急闪婚领证 (靠公民/绿卡对象救急)',
@@ -2023,7 +2116,7 @@ export const events: Record<string, GameEvent> = {
           const fake = Math.random() > 0.8;
           return fake
             ? { status: 'game_over', message: '移民局严肃调查判定为虚假婚姻，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { visa: '绿卡', is_married: true, message: '在绝境中你与对象紧急领证结婚，顺理成章提交了婚姻绿卡申请，拯救了身份！' };
+            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, message: '在绝境中你与对象紧急领证结婚，顺理成章提交了婚姻绿卡申请，拯救了身份！' };
         },
         nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : 'post_green_card',
       },
@@ -2368,10 +2461,10 @@ export const events: Record<string, GameEvent> = {
           }
           const win = Math.random() < 0.18;
           return win 
-            ? { cash: s.cash + 300, visa: '绿卡', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
+            ? { cash: s.cash + 300, visa: '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
             : { cash: Math.max(0, s.cash - 10), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...' };
         },
-        nextEventId: (s) => (s.message || '').includes('绿卡') ? 'sv_daily_life' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
+        nextEventId: (s) => (s.visa === '绿卡') ? 'post_green_card' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
       }
     ]
   },

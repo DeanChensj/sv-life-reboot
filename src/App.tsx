@@ -73,6 +73,24 @@ export default function App() {
     if (effectResult.cash !== undefined && isNaN(effectResult.cash)) effectResult.cash = gameState.cash;
     if (effectResult.health !== undefined && isNaN(effectResult.health)) effectResult.health = gameState.health;
     
+    // Green Card Reset Middleware (Job Hopping)
+    const isNewJob = effectResult.is_new_job || 
+                     (currentEventId === 'job_hunt' && effectResult.laid_off === false) ||
+                     (effectResult.job_type && effectResult.job_type !== 'unemployed' && effectResult.job_type !== gameState.job_type) ||
+                     (effectResult.company && effectResult.company !== gameState.company);
+                     
+    if (isNewJob && (effectResult.visa || gameState.visa) !== '绿卡' && (effectResult.visa || gameState.visa) !== 'O1 (杰出人才)' && !gameState.is_phd) {
+       if (gameState.gc_stage === 'perm_processing' || gameState.gc_stage === 'perm_audit' || gameState.gc_stage === 'i140_processing' || gameState.gc_stage === 'i140_rfe') {
+           effectResult.gc_stage = 'not_started';
+           effectResult.gc_progress = 0;
+           effectResult.message = (effectResult.message || '') + ' 🚫 【绿卡重置】入职新雇主导致原公司的绿卡申请作废，PERM/I-140 进度惨遭清零！';
+       } else if (gameState.gc_stage === 'waiting_pd' || gameState.gc_stage === 'i140_approved' || gameState.gc_stage === 'i485_pending') {
+           effectResult.gc_stage = 'not_started';
+           effectResult.gc_progress = gameState.gc_progress; // Preserve accumulated PD wait time!
+           effectResult.message = (effectResult.message || '') + ' ⚠️ 【绿卡折腾】虽然 I-140 已获批保留了排期 (PD)，但新雇主仍需为你重新走一遍漫长的 PERM 流程！';
+       }
+    }
+    
     Object.assign(newState, effectResult); // Apply new effects
     
     // Auto increment year based on age difference, ONLY if year wasn't explicitly set

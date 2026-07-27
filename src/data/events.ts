@@ -872,8 +872,8 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => true,
         effect: (s) => ({
           mid_year: true,
-          health: Math.min(100, s.health + 45),
-          message: '这一年你彻底躺平，除了上班摸鱼外，回家就是打黑神话悟空。什么职场焦虑都没了，感觉重新活了过来！'
+          health: Math.min(100, s.health + 18),
+          message: '这一年你彻底躺平，除了上班摸鱼外，回家就是打黑神话悟空。什么职场焦虑都没了，身体恢复了生机！'
         }),
         nextEventId: midYearEventRouter,
       }
@@ -1688,7 +1688,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '太累了，降薪跳槽去 Google/Apple 养老',
-        effect: (s) => ({ tc: Math.max(20, s.tc - 20), company: 'google', health: s.health + 40, message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹大幅缩水，但终于有了生活。' }),
+        effect: (s) => ({ tc: Math.max(20, s.tc - 20), company: 'google', health: Math.min(100, s.health + 20), message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹大幅缩水，但终于有了生活。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -2343,7 +2343,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '一口气冲上山顶，在拔剑柱前拍 OOTD 大片',
         effect: (s) => ({
-          health: Math.min(100, s.health + 25),
+          health: Math.min(100, s.health + 15),
           charm: Math.min(25, s.charm + 3),
           message: '站在 Mission Peak 顶峰俯瞰整个旧金山湾区与 237 公路！你在拔剑柱前拍的帅气写真在朋友圈和小红书获得了上百个赞！'
         }),
@@ -2352,7 +2352,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '中途在草地上躺平休养，呼吸湾区新鲜空气',
         effect: (s) => ({
-          health: Math.min(100, s.health + 30),
+          health: Math.min(100, s.health + 18),
           message: '阳光洒在身上，看着远处的牛群与红木山谷，你久违地感受到了灵魂的放松与惬意。'
         }),
         nextEventId: 'sv_daily_life'
@@ -2368,7 +2368,7 @@ export const events: Record<string, GameEvent> = {
         text: '体验欧胡岛冲浪与火山潜水 (花费 $0.8w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.8),
-          health: Math.min(100, s.health + 35),
+          health: Math.min(100, s.health + 18),
           charm: Math.min(25, s.charm + 4),
           message: '太平洋的海浪与彩虹彻底洗去了写代码的疲惫！你的体能恢复满格，带着一身健康的阳光小麦肤色重返硅谷！'
         }),
@@ -2378,7 +2378,7 @@ export const events: Record<string, GameEvent> = {
         text: '海景酒店阳台躺平，听海浪声睡三整天 (花费 $0.4w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.4),
-          health: Math.min(100, s.health + 40),
+          health: Math.min(100, s.health + 22),
           message: '彻底关闭 Slack 和 Outlook 提醒！在海浪声中睡到了自然醒，Burnout 症状被完美治愈。'
         }),
         nextEventId: 'sv_daily_life'
@@ -2394,7 +2394,7 @@ export const events: Record<string, GameEvent> = {
         text: '银座狂买 & 奢华怀石料理/米其林 (消耗 $1.5w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1.5),
-          health: Math.min(100, s.health + 30),
+          health: Math.min(100, s.health + 15),
           charm: Math.min(25, s.charm + 5),
           message: '你享受了最高规格的日式招待！品尝了顶配和牛与怀石料理，在银座彻底放空身心！'
         }),
@@ -2404,7 +2404,7 @@ export const events: Record<string, GameEvent> = {
         text: '富士山小木屋温泉私汤连泡 5 天 (消耗 $0.8w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.8),
-          health: Math.min(100, s.health + 40),
+          health: Math.min(100, s.health + 20),
           message: '望着富士山雪景泡温泉，热气腾腾中所有的湾区职场焦虑烟消云散！'
         }),
         nextEventId: 'sv_daily_life'

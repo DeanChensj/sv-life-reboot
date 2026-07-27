@@ -36,7 +36,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
         {/* Modal Title */}
-        <div className="flex justify-between items-center border-b border-zinc-800 pb-4 mb-6">
+        <div className="flex justify-between items-center border-b border-zinc-800 pb-4 mb-5">
           <div>
             <span className="text-[11px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
               ANNUAL FINANCIAL & STATUS REPORT
@@ -49,6 +49,19 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
             {gameState.age} 岁
           </span>
         </div>
+
+        {/* Latest Mid-Year Event Outcome Banner */}
+        {gameState.message && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 mb-5 text-xs sm:text-sm flex flex-col gap-1.5 backdrop-blur-xl">
+            <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>最新行动 / 事件反馈结果</span>
+            </div>
+            <div className="text-zinc-200 font-medium leading-relaxed">
+              {gameState.message}
+            </div>
+          </div>
+        )}
 
         {/* Net Cash Banner */}
         <div className={`p-4 rounded-2xl border mb-6 flex justify-between items-center ${isNetPositive ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'}`}>

@@ -135,12 +135,16 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-800 pb-1">生活与服务 (Lifestyle)</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
-                disabled={gameState.cash < 3}
-                onClick={() => onBuy({ cash: gameState.cash - 3, health: Math.min(100, gameState.health + 20), charm: Math.min(25, gameState.charm + 2) }, '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！')}
+                disabled={gameState.cash < 3 || gameState.last_beauty_year === gameState.year}
+                onClick={() => onBuy({ cash: gameState.cash - 3, health: Math.min(100, gameState.health + 20), charm: Math.min(25, gameState.charm + 2), last_beauty_year: gameState.year }, '做全脸热玛吉，请硅谷最贵的私教。颜值和健康大幅飙升！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-pink-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-pink-400 transition-colors">医美与高端私教</div>
-                <div className="text-xs text-zinc-500 mt-1">花费: $3w | 健康 +20, 容光焕发</div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {gameState.last_beauty_year === gameState.year 
+                    ? '本年度已保养 (每年限 1 次)' 
+                    : '花费: $3w | 健康 +20, 容光焕发 (每年限 1 次)'}
+                </div>
               </button>
 
               <button

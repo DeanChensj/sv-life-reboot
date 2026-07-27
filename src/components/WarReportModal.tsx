@@ -194,6 +194,28 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     a.click();
   };
 
+  const handleShare = async () => {
+    if (!dataUrl) return;
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'SV_Life_Reboot_Report.png', { type: 'image/png' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: '硅谷人生重启 - 最终战报',
+          text: '快来看看我在《硅谷人生重启》里的最终资产！你也来挑战试试吧！',
+          files: [file]
+        });
+      } else {
+        handleDownload(); // Fallback if Web Share API doesn't support files
+      }
+    } catch (e) {
+      console.error('Sharing failed', e);
+      handleDownload(); // Fallback on error
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-2xl overflow-y-auto animate-in fade-in duration-300">
       <div className="relative w-full max-w-xl bg-zinc-900 border border-zinc-700/80 rounded-3xl p-6 shadow-2xl my-8 flex flex-col items-center">
@@ -230,14 +252,28 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
         <div className="flex gap-4 w-full max-w-md">
           <button
             onClick={handleDownload}
-            className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-bold text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+            className="flex-1 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-bold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            <span>保存战报图片到相册</span>
+            <span>保存到相册</span>
+          </button>
+          
+          <button
+            onClick={handleShare}
+            className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-bold text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span>一键分享炫耀</span>
           </button>
         </div>
       </div>

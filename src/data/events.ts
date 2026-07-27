@@ -36,11 +36,12 @@ export const generateInitialState = (): GameState => {
     }
   }
 
-  let ap = 10;
-  let max_ap = 10;
+  const ap = 3;
+  const max_ap = 3;
   
-  let bgMessage = `你出生了。你的初始魅力是 ${charm}，运气值是 ${luck}。`;
-  if (cash >= 25) bgMessage += `你出生在一个非常富裕的家庭，父母直接给了你 ${cash} 万美元的启动资金！`;
+  let bgMessage = '';
+  if (cash > 60) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';
+  else if (cash < 20) bgMessage += '你出生在一个普通家庭，预算非常吃紧。';
   else bgMessage += '你出生在一个小康家庭。';
 
   if (charm >= 9) bgMessage += ' 顺便一提，你从小就长得像大明星，走到哪里都是焦点。';

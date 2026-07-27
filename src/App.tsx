@@ -123,6 +123,17 @@ export default function App() {
     newState.charm = Math.max(0, Math.min(maxCharmLimit, newState.charm));
     newState.network = Math.max(0, Math.min(100, newState.network || 10));
 
+    // 🛡️ Global Visa Invariant Guard Middleware: Protect Citizen & Green Card status against accidental downgrades
+    if (gameState.visa === '公民') {
+      newState.visa = '公民';
+      newState.gc_progress = 5;
+      newState.gc_stage = 'approved';
+    } else if (gameState.visa === '绿卡' && newState.visa !== '公民') {
+      newState.visa = '绿卡';
+      newState.gc_progress = 5;
+      newState.gc_stage = 'approved';
+    }
+
     // Check if health drops <= 0
     if (newState.health <= 0 && newState.status === 'playing') {
       newState.status = 'game_over';
@@ -479,6 +490,17 @@ export default function App() {
                   newState.health = Math.max(0, Math.min(100, newState.health));
                   newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
                   newState.charm = Math.max(0, Math.min(25, newState.charm));
+                  
+                  // 🛡️ Global Visa Invariant Guard Middleware
+                  if (prev.visa === '公民') {
+                    newState.visa = '公民';
+                    newState.gc_progress = 5;
+                    newState.gc_stage = 'approved';
+                  } else if (prev.visa === '绿卡' && newState.visa !== '公民') {
+                    newState.visa = '绿卡';
+                    newState.gc_progress = 5;
+                    newState.gc_stage = 'approved';
+                  }
                   
                   // Check game over
                   if (newState.health <= 0 && newState.status === 'playing') {

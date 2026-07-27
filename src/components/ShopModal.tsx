@@ -27,7 +27,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             onClick={onClose}
             className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
           >
-            ✕
+            
           </button>
         </div>
 

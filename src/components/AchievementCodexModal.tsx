@@ -67,7 +67,7 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
               onClick={onClose}
               className="text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 w-9 h-9 rounded-full flex items-center justify-center font-bold border border-zinc-700 transition-all active:scale-95 cursor-pointer"
             >
-              ✕
+              
             </button>
           </div>
 
@@ -155,11 +155,11 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
 
                     {isUnlocked ? (
                       <span className="text-[10px] font-mono font-black text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full shrink-0">
-                        已收藏 ✓
+                        已收藏 
                       </span>
                     ) : (
                       <span className="text-[10px] font-mono font-bold text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full shrink-0">
-                        未解锁 🔒
+                        未解锁 
                       </span>
                     )}
                   </div>

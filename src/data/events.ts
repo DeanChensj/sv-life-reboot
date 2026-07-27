@@ -393,7 +393,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '用详实的财报模型与用户 LTV 数据沉着应对',
-        effect: (s) => ({ cash: s.cash + 1.2, charm: Math.min(25, s.charm + 6), message: '🎉 斩获金奖！评委大赞你的商业逻辑极具实战价值，当场颁发了 $1.2w 比赛项目奖金！' }),
+        effect: (s) => ({ cash: s.cash + 1.2, charm: Math.min(25, s.charm + 6), message: ' 斩获金奖！评委大赞你的商业逻辑极具实战价值，当场颁发了 $1.2w 比赛项目奖金！' }),
         nextEventId: 'cn_college_year3',
       },
       {
@@ -516,12 +516,12 @@ export const events: Record<string, GameEvent> = {
               age: s.age, 
               is_master: true,
               housing_name: '美硕 校外公寓', 
-              message: '🎉 申请成功！凭借扎实的本科算法基础与良好的背景，你成功获得了无抵押留学贷款与校内 TA 助教资格！' 
+              message: ' 申请成功！凭借扎实的本科算法基础与良好的背景，你成功获得了无抵押留学贷款与校内 TA 助教资格！' 
             };
           } else {
             return { 
               health: s.health - 10, 
-              message: '❌ 申请被拒！银行与校方审核认为你的本科 GPA/算法基础不足，无抵押贷款被驳回！你只能选择在国内打工攒钱或自筹资金。' 
+              message: ' 申请被拒！银行与校方审核认为你的本科 GPA/算法基础不足，无抵押贷款被驳回！你只能选择在国内打工攒钱或自筹资金。' 
             };
           }
         },
@@ -576,7 +576,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '紧急接入 Claude/Cursor 重新优化 Agent 调度层',
-        effect: (s) => ({ leetcode: s.leetcode + 12, cash: s.cash + 1.5, message: '🚀 逆天夺冠！你们的 AI Agent 演示震撼全场，拿下了冠军并获得了 $1.5w 奖金！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 12, cash: s.cash + 1.5, message: ' 逆天夺冠！你们的 AI Agent 演示震撼全场，拿下了冠军并获得了 $1.5w 奖金！' }),
         nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       },
       {
@@ -610,7 +610,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '用严谨的财务模型与用户增长曲线征服投资人',
-        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 5), message: '🎉 拿到种子轮支票！VC 现场为你开出了 $2w 创业启动扶持资金！' }),
+        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 5), message: ' 拿到种子轮支票！VC 现场为你开出了 $2w 创业启动扶持资金！' }),
         nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       },
       {
@@ -764,7 +764,7 @@ export const events: Record<string, GameEvent> = {
           job_type: 'big_tech',
           level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'),
           network: Math.min(100, (s.network || 0) + 5),
-          message: '🎉 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸！'
+          message: ' 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸！'
         }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
@@ -1124,17 +1124,17 @@ export const events: Record<string, GameEvent> = {
 
           if (curLevel === 'L3') {
             if (s.leetcode < 30) return { health: Math.max(10, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
-            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '🎉 恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
+            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: ' 恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
           } else if (curLevel === 'L4') {
             if (s.leetcode < 50) return { health: Math.max(10, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
-            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '🎉 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
+            if (yearsInGrade >= 1 && pass) return { health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: ' 轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
           } else if (curLevel === 'L5 (Senior)') {
-            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '🎉 奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
+            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: ' 奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
           return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
-        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('🎉') ? 'promo_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('') ? 'promo_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
@@ -1191,7 +1191,7 @@ export const events: Record<string, GameEvent> = {
           level: '全职 Trader',
           tc: 0,
           laid_off: false,
-          message: '🎉 你正式递交了离职辞呈！凭借 $50w 初始本金与绿卡自由身，开启了全职 Day Trader 操盘人生！'
+          message: ' 你正式递交了离职辞呈！凭借 $50w 初始本金与绿卡自由身，开启了全职 Day Trader 操盘人生！'
         }),
         nextEventId: 'trader_annual_strategy',
       },
@@ -1205,7 +1205,7 @@ export const events: Record<string, GameEvent> = {
           founder_stage: 'seed',
           company_valuation: 800,
           laid_off: false,
-          message: '🎉 你拒绝了稳健的大厂打工路，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+          message: ' 你拒绝了稳健的大厂打工路，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
         }),
         nextEventId: 'founder_annual_strategy',
       },
@@ -1281,7 +1281,7 @@ export const events: Record<string, GameEvent> = {
            const gcMsg = s.visa === '绿卡' 
              ? '你已持有美国绿卡，工作生活不受约束。' 
              : (s.job_type === 'startup' && newStartupTenure <= 2)
-               ? `⚠️ Startup 政策：入职前 2 年不予办理 PERM 绿卡（当前第 ${newStartupTenure} 年，排期暂未增加）。`
+               ? `️ Startup 政策：入职前 2 年不予办理 PERM 绿卡（当前第 ${newStartupTenure} 年，排期暂未增加）。`
                : nextGc >= 5 
                  ? '你的绿卡排期终于到了！' 
                  : `距离拿到绿卡还差 ${Math.max(0, 5 - nextGc)} 年。`;
@@ -1297,14 +1297,14 @@ export const events: Record<string, GameEvent> = {
               const win = Math.random() < winRate;
               if (win) {
                 newVisa = 'H1B (工签)';
-                h1bMsg = ` 🎉 人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
+                h1bMsg = `  人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
               } else {
                 if (newAttempts === 1) {
-                  h1bMsg = ' 💔 第一年 H1B 未中签！已开启 STEM OPT 2 年延期，明年还有抽签机会！';
+                  h1bMsg = '  第一年 H1B 未中签！已开启 STEM OPT 2 年延期，明年还有抽签机会！';
                 } else if (newAttempts === 2) {
-                  h1bMsg = ' 💔 第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，压力山大！';
+                  h1bMsg = '  第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，压力山大！';
                 } else {
-                  h1bMsg = ' 💥 警告：三年 H1B 抽签均未能中签！身份即将在今年到期，面临离境危机！';
+                  h1bMsg = '  警告：三年 H1B 抽签均未能中签！身份即将在今年到期，面临离境危机！';
                 }
               }
             }
@@ -1318,7 +1318,7 @@ export const events: Record<string, GameEvent> = {
             if (isWorking && Math.random() < refreshChance) {
               const refreshAmt = Math.random() < 0.3 ? (newEconomy === 'bull' ? 5.0 : 3.5) : (newEconomy === 'bear' ? 1.0 : 2.0);
               updatedTC = s.tc + refreshAmt;
-              meritMsg = ` 📈 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+              meritMsg = `  凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
             }
 
            return { 
@@ -1518,7 +1518,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
       },
       {
-        text: '🤝 启动 60 天 H1B Grace Period 紧急挂靠：找外包公司办理 H1B Transfer (消耗 $2w)',
+        text: ' 启动 60 天 H1B Grace Period 紧急挂靠：找外包公司办理 H1B Transfer (消耗 $2w)',
         condition: (s) => s.cash >= 2 && s.visa !== '绿卡',
         effect: (s) => ({
           cash: s.cash - 2,
@@ -1646,10 +1646,10 @@ export const events: Record<string, GameEvent> = {
           const tcIncrease = isL3 ? 3.5 : 6.5;
           const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
-            ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: `🎉 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
+            ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: ` 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
             : { health: Math.max(10, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
-        nextEventId: (s) => ((s.message || '').includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
+        nextEventId: (s) => ((s.message || '').includes('') ? 'promo_celebration' : 'sv_daily_life'),
       },
       {
         text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L5 升 L6 专属高门槛)',
@@ -1663,10 +1663,10 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.15 + (s.leetcode / 100) * 0.15; // 15% - 30% hard chance
           const win = Math.random() < winRate;
           return win 
-            ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), last_promo_age: s.age, message: '🎉 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
+            ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), last_promo_age: s.age, message: ' 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
             : { health: Math.max(10, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
         },
-        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('🎉') ? 'promo_celebration' : 'sv_daily_life')),
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('') ? 'promo_celebration' : 'sv_daily_life')),
       },
       {
         text: '准点下班，躺平拿 Meets (保重身体)',
@@ -1677,7 +1677,7 @@ export const events: Record<string, GameEvent> = {
   },
   'promo_celebration': {
     id: 'promo_celebration',
-    title: '🎉 职级大晋升喜报！PROMOTION UNLOCKED',
+    title: ' 职级大晋升喜报！PROMOTION UNLOCKED',
     description: '轰动部门！鉴于你在公司核心业务中的突出 Impact，晋升委员会 (Promo Committee) 官方批准了你的职级晋升！',
     choices: [
       {
@@ -1689,7 +1689,7 @@ export const events: Record<string, GameEvent> = {
   },
   'l6_staff_celebration': {
     id: 'l6_staff_celebration',
-    title: '🏆 突破硅谷天花板！晋升 L6 Staff 架构师',
+    title: ' 突破硅谷天花板！晋升 L6 Staff 架构师',
     description: '轰动全公司！你突破了 35 岁天花板与硅谷码农最大天堑，正式晋升为 L6 Staff Engineer 架构师！手握跨组技术决策权，年薪总包与期权迈入顶级行业前列。',
     choices: [
       {
@@ -1956,19 +1956,19 @@ export const events: Record<string, GameEvent> = {
     imageUrl: 'images/house.jpg',
     choices: [
       {
-        text: '🏠 抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
+        text: ' 抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
         condition: (s) => s.cash >= 45,
         effect: (s) => ({ cash: s.cash - 45, rent: 1.5, has_housing: true, housing_name: 'Sunnyvale 老破小', health: s.health + 10, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🏢 买 North San Jose 现代挑高高密度 Townhouse (首付 $40w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
+        text: ' 买 North San Jose 现代挑高高密度 Townhouse (首付 $40w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
         condition: (s) => s.cash >= 40,
         effect: (s) => ({ cash: s.cash - 40, rent: 2.5, has_housing: true, housing_name: 'North San Jose 联排', charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '🏫 攻下 Fremont Mission San Jose 9分顶配学区房 (首付 $65w, 年负担 $4.5w) - 卷二代的终极战场',
+        text: ' 攻下 Fremont Mission San Jose 9分顶配学区房 (首付 $65w, 年负担 $4.5w) - 卷二代的终极战场',
         condition: (s) => s.cash >= 65,
         effect: (s) => ({ cash: s.cash - 65, rent: 4.5, has_housing: true, housing_name: 'Fremont 学区房', charm: Math.min(25, s.charm + 4), luck: s.luck + 10, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
         nextEventId: 'sv_daily_life',
@@ -2127,7 +2127,7 @@ export const events: Record<string, GameEvent> = {
           laid_off: false,
           health: Math.min(100, s.health + 10),
           network: Math.min(100, (s.network || 0) + 5),
-          message: '🎉 人脉爆破！你的熟人总监收到求助后连夜开绿灯将你内推拉入团队，跳过倒计时直接上岸，成功保住身份！'
+          message: ' 人脉爆破！你的熟人总监收到求助后连夜开绿灯将你内推拉入团队，跳过倒计时直接上岸，成功保住身份！'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -2181,8 +2181,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const pass = (s.leetcode >= 20) || (Math.random() < 0.50 + (s.luck / 200));
           return pass
-            ? { cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: '🎉 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
-            : { health: s.health - 10, message: '❌ 申请被拒！留学贷款机构与校方评估认为你负债风险过高，贷款未获批准。你只能留在本地继续调养或打工。' };
+            ? { cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
+            : { health: s.health - 10, message: ' 申请被拒！留学贷款机构与校方评估认为你负债风险过高，贷款未获批准。你只能留在本地继续调养或打工。' };
         },
         nextEventId: (s: GameState) => (s.message || '').includes('赴美新生活') ? 'us_master_year1' : 'cn_work'
       }
@@ -2331,7 +2331,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < 0.15;
           return win 
-            ? { cash: s.cash + 400, status: 'win', message: '🎉 奇迹爆发！公司被大厂以 $20 亿美金天价收购，你的期权直接兑现 $400w！直接实现财务自由 (FIRE) 爆破通关！' }
+            ? { cash: s.cash + 400, status: 'win', message: ' 奇迹爆发！公司被大厂以 $20 亿美金天价收购，你的期权直接兑现 $400w！直接实现财务自由 (FIRE) 爆破通关！' }
             : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, job_type: 'unemployed', message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
         },
         nextEventId: (s: GameState) => s.status === 'win' ? 'end' : 'job_hunt',
@@ -2365,7 +2365,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < (0.55 + s.leetcode / 300);
           return win 
-            ? { tc: s.tc + 25, cash: s.cash + 30, visa: 'O1 (杰出人才)', charm: Math.min(25, s.charm + 4), health: s.health - 20, message: '🌟 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus 并协助加急批复了 O1 签证！' }
+            ? { tc: s.tc + 25, cash: s.cash + 30, visa: 'O1 (杰出人才)', charm: Math.min(25, s.charm + 4), health: s.health - 20, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus 并协助加急批复了 O1 签证！' }
             : { health: s.health - 25, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
         },
         nextEventId: 'sv_daily_life',
@@ -2387,7 +2387,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < 0.45;
           return win 
-            ? { cash: s.cash + 250, health: s.health - 25, message: '🚀 华尔街之狼！这波疯狂杠杆让你单月帮基金出海捕捞暴赚！老板亲手为你颁发了 $250w 美金的年终 Bonus 巨额支票！' }
+            ? { cash: s.cash + 250, health: s.health - 25, message: ' 华尔街之狼！这波疯狂杠杆让你单月帮基金出海捕捞暴赚！老板亲手为你颁发了 $250w 美金的年终 Bonus 巨额支票！' }
             : { cash: Math.max(0, s.cash - 15), health: s.health - 30, laid_off: true, tc: 0, job_type: 'unemployed', message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
         },
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : 'sv_daily_life',
@@ -2492,7 +2492,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life'
       },
       {
-        text: '🎒 终极挂壁：连夜退租！搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年)',
+        text: ' 终极挂壁：连夜退租！搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年)',
         condition: (s) => !!(s.car && s.car !== 'none'),
         effect: (s) => ({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, s.health - 15), message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
         nextEventId: 'sv_daily_life'
@@ -2524,7 +2524,7 @@ export const events: Record<string, GameEvent> = {
           return {
             cash: s.cash + profit,
             health: Math.min(100, s.health + 10),
-            message: `📈 稳健盈利！凭借严谨的风险控制与高股息收益，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${profit.toFixed(1)}w 美元)！时间自由，心态极其放松！`
+            message: ` 稳健盈利！凭借严谨的风险控制与高股息收益，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${profit.toFixed(1)}w 美元)！时间自由，心态极其放松！`
           };
         },
         nextEventId: 'sv_year_end_settlement',
@@ -2537,13 +2537,13 @@ export const events: Record<string, GameEvent> = {
             const gain = s.cash * 0.45;
             return {
               cash: s.cash + gain,
-              message: `🚀 飞天暴富！你重仓的 AI 科技巨头股价随着风口暴涨 45%！账面盈利 +${gain.toFixed(1)}w 美元！`
+              message: ` 飞天暴富！你重仓的 AI 科技巨头股价随着风口暴涨 45%！账面盈利 +${gain.toFixed(1)}w 美元！`
             };
           } else {
             const loss = s.cash * 0.18;
             return {
               cash: Math.max(10, s.cash - loss),
-              message: `📉 宏观回调！科技板块经历美联储加息回调 -18%，本金受损 -${loss.toFixed(1)}w 美元！好在你仓位稳固。`
+              message: ` 宏观回调！科技板块经历美联储加息回调 -18%，本金受损 -${loss.toFixed(1)}w 美元！好在你仓位稳固。`
             };
           }
         },
@@ -2557,20 +2557,20 @@ export const events: Record<string, GameEvent> = {
             const doubleGain = s.cash * 0.85;
             return {
               cash: s.cash + doubleGain,
-              message: `💥 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +85% (+${doubleGain.toFixed(1)}w 美元)！`
+              message: ` 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +85% (+${doubleGain.toFixed(1)}w 美元)！`
             };
           } else if (roll < 0.80) {
             const drop = s.cash * 0.35;
             return {
               cash: Math.max(5, s.cash - drop),
-              message: `😭 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -35% (-${drop.toFixed(1)}w 美元)！`
+              message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -35% (-${drop.toFixed(1)}w 美元)！`
             };
           } else {
             const bust = s.cash * 0.70;
             return {
               cash: Math.max(2, s.cash - bust),
               health: Math.max(10, s.health - 25),
-              message: `💥 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
+              message: ` 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
             };
           }
         },
@@ -2595,7 +2595,7 @@ export const events: Record<string, GameEvent> = {
               company_valuation: 2500,
               cash: s.cash + 25,
               tc: 18,
-              message: '🎉 天使轮融资大获成功！a16z 领投 $250w 天使轮支票（估值 $2500w），你成功套现 $25w 现金并为自己发放了 $18w TC 创始人薪水！'
+              message: ' 天使轮融资大获成功！a16z 领投 $250w 天使轮支票（估值 $2500w），你成功套现 $25w 现金并为自己发放了 $18w TC 创始人薪水！'
             };
           } else {
             return {
@@ -2603,7 +2603,7 @@ export const events: Record<string, GameEvent> = {
               company_valuation: 8000,
               cash: s.cash + 50,
               tc: 30,
-              message: '🚀 B 轮超级融资！红杉资本以 $8000w 估值领投，公司账上资金充沛，离 IPO 上市仅有一步之遥！'
+              message: ' B 轮超级融资！红杉资本以 $8000w 估值领投，公司账上资金充沛，离 IPO 上市仅有一步之遥！'
             };
           }
         },
@@ -2617,7 +2617,7 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash - 15,
           company_valuation: (s.company_valuation || 1000) + 1500,
           leetcode: Math.min(100, s.leetcode + 10),
-          message: '💡 团队战力爆表！大厂 Senior 大牛加盟后，研发出颠覆性的 AI Agent 产品，公司估值飙升！'
+          message: ' 团队战力爆表！大厂 Senior 大牛加盟后，研发出颠覆性的 AI Agent 产品，公司估值飙升！'
         }),
         nextEventId: 'sv_year_end_settlement',
       },
@@ -2630,13 +2630,13 @@ export const events: Record<string, GameEvent> = {
             return {
               status: 'win',
               cash: s.cash + 450,
-              message: '🏆 传奇诞生！公司成功在纳斯达克 IPO 挂牌敲钟！创始人股权套现 $450w 美元，名利双收极速达成 FIRE 终局！'
+              message: ' 传奇诞生！公司成功在纳斯达克 IPO 挂牌敲钟！创始人股权套现 $450w 美元，名利双收极速达成 FIRE 终局！'
             };
           } else {
             return {
               status: 'win',
               cash: s.cash + 320,
-              message: '🎉 成功被收购！Google/Meta 科技巨头以高额溢价并购了你们的公司，创始人获得 $320w 现金现金分红，成功财务自由！'
+              message: ' 成功被收购！Google/Meta 科技巨头以高额溢价并购了你们的公司，创始人获得 $320w 现金现金分红，成功财务自由！'
             };
           }
         },
@@ -2689,7 +2689,7 @@ export const events: Record<string, GameEvent> = {
   },
   'news_bull_market_start': {
     id: 'news_bull_market_start',
-    title: '📈 突发新闻：史诗级牛市开启！',
+    title: ' 突发新闻：史诗级牛市开启！',
     description: '手机弹出华尔街日报推送："美联储意外宣布降息 50 个基点，纳斯达克指数创历史新高！各大 AI 独角兽宣布完成百亿融资！"\n\nBlind 上的跳槽包裹满天飞，连前台都在聊股票。硅谷的空气里充满了金钱的味道。',
     choices: [
       {
@@ -2701,7 +2701,7 @@ export const events: Record<string, GameEvent> = {
   },
   'news_bear_market_crash': {
     id: 'news_bear_market_crash',
-    title: '📉 突发新闻：资本寒冬降临！',
+    title: ' 突发新闻：资本寒冬降临！',
     description: '手机弹出 Bloomberg 推送："通胀超预期，美联储宣布暴力加息！纳斯达克单日暴跌 5%！"\n\n紧接着，Blind 上传出多个大厂即将冻结招聘 (Hiring Freeze) 甚至筹备万人大裁员的风声。硅谷的资本盛宴戛然而止。',
     choices: [
       {
@@ -2713,7 +2713,7 @@ export const events: Record<string, GameEvent> = {
   },
   'news_neutral_market': {
     id: 'news_neutral_market',
-    title: '⚖️ 突发新闻：市场回归理性',
+    title: '️ 突发新闻：市场回归理性',
     description: '经历了前段时间的剧烈波动，华尔街和硅谷大厂达成了某种默契。\n\n"各大科技公司表示将专注盈利和核心业务，停止无序扩张，但也不会进行大规模裁员。" 市场情绪逐渐平稳。',
     choices: [
       {

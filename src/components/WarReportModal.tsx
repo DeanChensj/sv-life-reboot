@@ -228,7 +228,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
             onClick={onClose}
             className="text-xs text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-full font-bold border border-zinc-700 active:scale-95 transition-all cursor-pointer"
           >
-            关闭 ✕
+            关闭 
           </button>
         </div>
 

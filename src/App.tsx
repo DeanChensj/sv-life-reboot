@@ -222,7 +222,7 @@ export default function App() {
             onClick={() => setShowAchievementCodex(true)}
             className="text-xs text-purple-300 hover:text-white underline font-mono cursor-pointer"
           >
-            查看图鉴 ➔
+            查看图鉴 
           </button>
         </div>
       )}
@@ -356,7 +356,7 @@ export default function App() {
               onClick={() => setIsMobileStatsOpen(false)}
               className="text-xs text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3.5 py-1.5 rounded-full font-bold border border-zinc-700 active:scale-95 transition-all shadow-md"
             >
-              返回游戏 ✕
+              返回游戏 
             </button>
           </div>
           <BentoStatsPanel 

@@ -107,7 +107,7 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
               gameState.macro_economy === 'bear' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
               'bg-zinc-700/30 text-zinc-400 border border-zinc-600/50'
             }`}>
-              {gameState.macro_economy === 'bull' ? '📈 狂暴大牛市' : gameState.macro_economy === 'bear' ? '📉 裁员大熊市' : '⚖️ 正常震荡期'}
+              {gameState.macro_economy === 'bull' ? ' 狂暴大牛市' : gameState.macro_economy === 'bear' ? ' 裁员大熊市' : '️ 正常震荡期'}
             </div>
           )}
         </div>

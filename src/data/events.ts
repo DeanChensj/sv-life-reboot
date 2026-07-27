@@ -1233,7 +1233,7 @@ export const events: Record<string, GameEvent> = {
            const livingExpense = 3.0;
            const totalExpense = housingExpense + carExpense + livingExpense;
 
-           const preTaxTC = s.tc > 0 ? s.tc : 0;
+           const preTaxTC = (!s.laid_off && s.job_type !== 'unemployed') && s.tc > 0 ? s.tc : 0;
            const postTaxIncome = preTaxTC * 0.75; 
            const netIncome = postTaxIncome - totalExpense;
            
@@ -1469,7 +1469,7 @@ export const events: Record<string, GameEvent> = {
           const survived = Math.random() > 0.5;
           return survived
             ? { health: s.health - 30, message: '你每天工作 16 小时，终于 survive 了 PIP！但你的头发少了一半。' }
-            : { health: s.health - 20, tc: 0, laid_off: true, message: '你熬了几个通宵，最后还是被 Manager 找借口开除了。' };
+            : { health: s.health - 20, tc: 0, laid_off: true, job_type: 'unemployed', message: '你熬了几个通宵，最后还是被 Manager 找借口开除了。' };
         },
         nextEventId: (s) => s.tc === 0 ? 'job_hunt' : 'sv_daily_life'
       },
@@ -1479,6 +1479,7 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash + (s.tc / 12) * 2, 
           tc: 0, 
           laid_off: true,
+          job_type: 'unemployed',
           leetcode: s.leetcode + 15,
           health: s.health + 10,
           message: '你选择了 quiet quitting，拿着两个月遣散费每天去海边散步刷题，心情大好。'
@@ -1811,7 +1812,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < surviveRate;
           return win 
             ? { health: s.health - 20, cash: s.cash, message: '你没日没夜地干活，终于在这个裁员季活了下来，但距离 Burnout 只有一步之遥。' }
-            : { health: s.health - 10, cash: s.cash, laid_off: true, message: '不管你怎么卷，你们整个组都被端了。你被裁员了！' };
+            : { health: s.health - 10, cash: s.cash, laid_off: true, tc: 0, job_type: 'unemployed', message: '不管你怎么卷，你们整个组都被端了。你被裁员了！' };
         },
         nextEventId: (s) => s.laid_off ? 'layoff_hit' : 'sv_daily_life',
       },
@@ -2065,6 +2066,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: s.cash + 8,
           laid_off: false,
+          tc: 0,
+          job_type: 'unemployed',
           health: Math.min(100, s.health + 15),
           leetcode: Math.min(100, s.leetcode + 15),
           message: '手握绿卡无所畏惧！你拿到了 3 个月包 Severance 遣散费 (+$8w)，在家一边散步一边刷题，从容准备下一家大厂 Offer！'
@@ -2077,6 +2080,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: s.cash + 3,
           laid_off: false,
+          tc: 0,
+          job_type: 'unemployed',
           health: Math.min(100, s.health + 25),
           message: '领着加州 EDD 官方失业补贴，你顺便休假半年去 Lake Tahoe 滑雪，心态极度放松！'
         }),
@@ -2296,7 +2301,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < 0.15;
           return win 
             ? { cash: s.cash + 400, status: 'win', message: '🎉 奇迹爆发！公司被大厂以 $20 亿美金天价收购，你的期权直接兑现 $400w！直接实现财务自由 (FIRE) 爆破通关！' }
-            : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
+            : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, job_type: 'unemployed', message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
         },
         nextEventId: (s: GameState) => s.status === 'win' ? 'end' : 'job_hunt',
       },
@@ -2308,13 +2313,13 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < 0.4;
           return win
             ? { cash: s.cash + 120, tc: s.tc + 20, message: '你带资入组！公司靠你的资金撑到了 A 轮融资并估值大暴涨，你的 TC 与期权收益双双爆表！' }
-            : { cash: s.cash - 10, tc: 0, laid_off: true, health: s.health - 20, message: '砸进去的 $10w 没能挽救寒冬，公司还是倒闭了...你不仅没了工作还心痛不已。' };
+            : { cash: s.cash - 10, tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 20, message: '砸进去的 $10w 没能挽救寒冬，公司还是倒闭了...你不仅没了工作还心痛不已。' };
         },
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : 'sv_daily_life',
       },
       {
         text: '偷偷骑驴找马，准备跑路',
-        effect: (s) => ({ health: s.health - 5, tc: 0, cash: s.cash, laid_off: true, message: '你一边假装努力工作，一边偷偷刷题。不久后公司果然资金链断裂，你不得不重新找工作。' }),
+        effect: (s) => ({ health: s.health - 5, tc: 0, cash: s.cash, laid_off: true, job_type: 'unemployed', message: '你一边假装努力工作，一边偷偷刷题。不久后公司果然资金链断裂，你不得不重新找工作。' }),
         nextEventId: 'job_hunt',
       }
     ]
@@ -2352,7 +2357,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < 0.45;
           return win 
             ? { cash: s.cash + 250, health: s.health - 25, message: '🚀 华尔街之狼！这波疯狂杠杆让你单月帮基金出海捕捞暴赚！老板亲手为你颁发了 $250w 美金的年终 Bonus 巨额支票！' }
-            : { cash: Math.max(0, s.cash - 15), health: s.health - 30, laid_off: true, message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
+            : { cash: Math.max(0, s.cash - 15), health: s.health - 30, laid_off: true, tc: 0, job_type: 'unemployed', message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
         },
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : 'sv_daily_life',
       },
@@ -2624,7 +2629,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const caught = Math.random() < 0.3;
           return caught
-            ? { tc: 0, laid_off: true, health: s.health - 30, message: '你的代刷工牌行为被 HR 发现，直接以违纪名义当天开除！' }
+            ? { tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 30, message: '你的代刷工牌行为被 HR 发现，直接以违纪名义当天开除！' }
             : { cash: s.cash + 5, charm: s.charm + 2, message: '成功瞒天过海！你一边拿着加州的工资，一边享受着外州的低物价。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
@@ -2635,7 +2640,7 @@ export const events: Record<string, GameEvent> = {
           const win = s.leetcode >= 70 && Math.random() < 0.5;
           return win
             ? { tc: s.tc + 2, charm: Math.min(25, s.charm + 5), message: '由于你是团队的核心骨干（High Performer），Manager 妥协了，给你申请了特殊的 Remote Exception！' }
-            : { tc: 0, laid_off: true, message: 'Manager 冷笑一声：“现在是买方市场，门在那边。” 你被解雇了。' };
+            : { tc: 0, laid_off: true, job_type: 'unemployed', message: 'Manager 冷笑一声：“现在是买方市场，门在那边。” 你被解雇了。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
       }
@@ -2652,7 +2657,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const caught = Math.random() < 0.25;
           return caught
-            ? { tc: 0, laid_off: true, health: Math.max(10, s.health - 40), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
+            ? { tc: 0, laid_off: true, job_type: 'unemployed', health: Math.max(10, s.health - 40), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
             : { cash: s.cash + s.tc, health: Math.max(10, s.health - 30), leetcode: s.leetcode + 5, message: '你用两台电脑同时开会，成功拿到了双倍工资！但是巨大的上下文切换让你精神分裂。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
@@ -3133,7 +3138,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < 0.40;
           return win
             ? { health: s.health + 5, message: '老系统发生重大产线事故，全球只有你懂得如何救火！你成功凭借稀缺性保住了铁饭碗！' }
-            : { laid_off: true, health: s.health - 15, message: '部门最终决定整体重组裁撤！你拿着 Severance 遣散费步入了中年求职市场。' };
+            : { laid_off: true, tc: 0, job_type: 'unemployed', health: s.health - 15, message: '部门最终决定整体重组裁撤！你拿着 Severance 遣散费步入了中年求职市场。' };
         },
         nextEventId: (s) => s.laid_off ? 'layoff_hit' : 'sv_daily_life'
       }

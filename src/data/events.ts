@@ -1923,7 +1923,13 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '心在滴血，但也只能接受现实 (总包 TC 缩水 20%)',
-        effect: (s) => ({ tc: Math.floor(s.tc * 0.8), health: s.health - 15, message: '打开券商账户看了一眼，你决定今年圣诞节不去夏威夷了，改去家里蹲。' }),
+        effect: (s) => ({
+          tc: Math.floor(s.tc * 0.8),
+          stocks: Math.floor((s.stocks || 0) * 0.75),
+          macro_economy: 'bear',
+          health: s.health - 15,
+          message: '大盘大跌入熊市！打开券商账户看了一眼股票持仓蒸发 25%，你决定今年圣诞节改去家里蹲。'
+        }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -1933,8 +1939,8 @@ export const events: Record<string, GameEvent> = {
            const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%
            const win = Math.random() < winRate;
            return win 
-             ? { tc: Math.floor(s.tc * 0.8), cash: s.cash + 50, message: '虽然工资跌了，但你成功抄到底部，反弹吃满，大赚一笔！' }
-             : { tc: Math.floor(s.tc * 0.8), cash: s.cash - 25, health: s.health - 30, message: '抄底抄在半山腰，现金和工资惨遭双杀，痛不欲生。' };
+             ? { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.75), macro_economy: 'bull', cash: s.cash + 50, message: '虽然工资跌了，但你成功抄到底部带起大盘，反弹吃满，大赚一笔！' }
+             : { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.75), macro_economy: 'bear', cash: s.cash - 25, health: s.health - 30, message: '抄底抄在半山腰，现金和股票惨遭双杀，市场进入深度熊市。' };
         },
         nextEventId: 'sv_daily_life'
       }
@@ -3695,9 +3701,11 @@ export const events: Record<string, GameEvent> = {
         text: '【全仓追高芯片股】把剩余流动资金全部追高 Buying NVDA / AMD',
         effect: (s) => {
           const win = Math.random() < 0.65;
+          const currentStocks = s.stocks || 0;
+          const boostedStocks = Math.floor(currentStocks * 1.35);
           return win
-            ? { cash: s.cash + 15, luck: Math.min(99, s.luck + 5), message: '英伟达股价再创历史新高！你的股票账户直接起飞，净资产暴涨！' }
-            : { cash: Math.max(0, s.cash - 5), message: '追高在阶段性山顶，大盘短期回调，你被套牢了部分现金。' };
+            ? { cash: s.cash + 15, stocks: boostedStocks, macro_economy: 'bull', luck: Math.min(99, s.luck + 5), message: 'AI 牛市暴发！英伟达股价创历史新高，你持有的科技股账户飙升 35%！净资产暴涨！' }
+            : { cash: Math.max(0, s.cash - 5), macro_economy: 'bull', message: '追高在阶段性山顶，大盘短期回调，你被套牢了部分现金。' };
         },
         nextEventId: 'sv_daily_life'
       },
@@ -3705,6 +3713,7 @@ export const events: Record<string, GameEvent> = {
         text: '【落袋为安抛售套现】把归属的 RSU 及时 Sell，锁住现金买国债/S&P500',
         effect: (s) => ({
           cash: s.cash + 8,
+          macro_economy: 'bull',
           message: '你稳健落袋为安！拿着现金稳稳躺赚高息，理财心态稳如老狗。'
         }),
         nextEventId: 'sv_daily_life'

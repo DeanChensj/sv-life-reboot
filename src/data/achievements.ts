@@ -144,11 +144,11 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');
   }
 
-  if (msg.includes('币圈') || msg.includes('Crypto') || (state.cash >= 300 && currentEventId === 'crypto_scam')) {
+  if (msg.includes('币圈') || msg.includes('Crypto') || msg.includes('土狗币') || (state.cash >= 300 && currentEventId === 'crypto_scam' && (msg.includes('土狗币') || msg.includes('狠赚了一笔')))) {
     if (unlockAchievement('crypto_whale')) newlyUnlocked.push('crypto_whale');
   }
 
-  if (state.visa === 'L1 (外派)' || currentEventId === 'h1b_vancouver_l1' || state.l1_relocated) {
+  if (state.visa === 'L1 (外派)' || state.l1_relocated) {
     if (unlockAchievement('vancouver_l1_chill')) newlyUnlocked.push('vancouver_l1_chill');
   }
 
@@ -184,7 +184,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('day_trader_god')) newlyUnlocked.push('day_trader_god');
   }
 
-  if (state.status === 'win' && state.visa !== '绿卡') {
+  if (state.status === 'win' && state.visa !== '绿卡' && state.visa !== '公民') {
     if (unlockAchievement('no_gc_fire')) newlyUnlocked.push('no_gc_fire');
   }
 

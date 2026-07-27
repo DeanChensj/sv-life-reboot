@@ -217,7 +217,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-2xl overflow-y-auto animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 sm:p-6 bg-zinc-950/90 backdrop-blur-2xl overflow-y-auto animate-in fade-in duration-300">
       <div className="relative w-full max-w-xl bg-zinc-900 border border-zinc-700/80 rounded-3xl p-6 shadow-2xl my-8 flex flex-col items-center">
         <div className="flex justify-between items-center w-full mb-4 pb-2 border-b border-zinc-800">
           <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">

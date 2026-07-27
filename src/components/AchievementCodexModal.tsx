@@ -43,7 +43,7 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xl animate-in fade-in duration-200 overflow-y-auto">
       <div className="relative w-full max-w-3xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col font-sans">
         
         {/* Modal Header */}

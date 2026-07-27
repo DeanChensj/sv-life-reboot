@@ -88,6 +88,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: 'ending',
     description: '凭借绿卡自由身与 50 万美金本金全职操盘，在美股期权中大赚并成功 FIRE！',
     hint: '暗号：持绿卡且现金 >= $50w 开启全职 Day Trader 操盘并通关。'
+  },
+  {
+    id: 'no_gc_fire',
+    title: 'H1B 枷锁舞者',
+    icon: 'lock',
+    category: 'ending',
+    description: '在没有拿到绿卡的情况下，顶着身份压力硬核实现了硅谷财务自由！',
+    hint: '暗号：通关 FIRE 时身份仍不是绿卡。'
   }
 ];
 
@@ -158,6 +166,10 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
 
   if (state.job_type === 'trader' && state.status === 'win') {
     if (unlockAchievement('day_trader_god')) newlyUnlocked.push('day_trader_god');
+  }
+
+  if (state.status === 'win' && state.visa !== '绿卡') {
+    if (unlockAchievement('no_gc_fire')) newlyUnlocked.push('no_gc_fire');
   }
 
   return newlyUnlocked;

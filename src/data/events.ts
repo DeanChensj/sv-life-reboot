@@ -254,7 +254,7 @@ export const events: Record<string, GameEvent> = {
           visa: '公民',
           gc_progress: 5,
           gc_stage: 'approved',
-          cash: (s.cash || 0) + 15,
+          cash: Math.max(15, (s.cash || 0)),
           network: 25,
           charm: Math.min((s.max_charm || 25), s.charm + 6),
           win_threshold: 400,

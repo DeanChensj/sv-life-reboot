@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "test": "npx tsx audit.ts && npx tsx audit_all_flows.ts && npx tsx fuzz_test.ts",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },

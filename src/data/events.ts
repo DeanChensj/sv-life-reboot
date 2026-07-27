@@ -1024,6 +1024,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '参与第二轮 H1B 抽签！',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const winRate = 0.3 + (s.luck / 100) * 0.3;
           const win = Math.random() < winRate;
@@ -1042,6 +1043,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '赌上所有气运，进行这辈子最后一次 H1B 抽签！',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const winRate = 0.35 + (s.luck / 100) * 0.35;
           const win = Math.random() < winRate;
@@ -1054,20 +1056,21 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【公司外派】申请 Relocate 到温哥华/多伦多 Office (L1 签证曲线救国)',
         costBadge: '免费外派',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你转到了温哥华分公司，以 L1 身份工作。一年后公司把你调回了湾区 Headquarters，成功保住硅谷高薪！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '【学校挂靠】紧急注册 Day 1 CPT 大学 (消耗 $1.5w)',
         costBadge: '花费 $1.5w',
-        condition: (s) => s.cash >= 1.5,
+        condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '你成功挂靠了 Day 1 CPT，虽然边上班边写作业极其辛苦，但你成功留在湾区继续工作！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '【杰出人才】凭借算法功力与技术影响力，申办 O1 签证 (需算法>=50或PhD)',
         reqBadge: '算法>=50或PhD',
-        condition: (s) => s.leetcode >= 50 || s.is_phd,
+        condition: (s) => (s.leetcode >= 50 || s.is_phd) && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'O1 (杰出人才)', cash: s.cash - 4, message: '凭硬核算法与发表的硬核技术文章，移民局批复了你的 O1 杰出人才签证！彻底甩开抽签束缚！' }),
         nextEventId: 'sv_daily_life',
       }
@@ -1081,25 +1084,26 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【杰出人才自救】凭硬核算法功力/PhD 学位直接申请 O1 签证 (需算法>=60或PhD)',
         reqBadge: '算法>=60或PhD',
-        condition: (s) => s.leetcode >= 60 || s.is_phd,
+        condition: (s) => (s.leetcode >= 60 || s.is_phd) && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'O1 (杰出人才)', health: Math.max(10, s.health - 10), message: '凭硬核算法实力与发表的技术论文，移民局批复了你的 O1 杰出人才签证！成功自救！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $50w)',
         reqBadge: '现金>=50w',
-        condition: (s) => s.cash >= 50,
+        condition: (s) => s.cash >= 50 && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 50, message: '凭雄厚资金实力，加急办妥了 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
       {
         text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国)',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你外派加拿大一年后凭 L1 签证顺利调回湾区总部！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
-        condition: (s) => s.cash >= 1.5,
+        condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
         nextEventId: 'sv_daily_life',
       }
@@ -1704,11 +1708,13 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ health: Math.max(10, s.health - 25), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', message: '你用极具创造性的学术废话打动了移民局官员，获得了 3 年 H1B！但你的头发掉了三分之一。' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ health: Math.min(100, s.health + 10), charm: s.charm + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
         nextEventId: 'sv_daily_life',
       }
@@ -1761,6 +1767,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '认怂疯狂加班，证明自己的 Synergy',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const survived = Math.random() > 0.5;
           return survived
@@ -1771,6 +1778,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '直接开摆，接受 PIP 辞退结局 (无遣散费)，在家刷题',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ 
           cash: s.cash, 
           tc: 0, 
@@ -1784,7 +1792,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: ' 启动 60 天 H1B Grace Period 紧急挂靠：找外包公司办理 H1B Transfer (消耗 $2w)',
-        condition: (s) => s.cash >= 2 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => s.cash >= 2 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           cash: s.cash - 2,
           tc: Math.max(10, Math.floor(s.tc * 0.55)),
@@ -1900,8 +1908,9 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【稳扎稳打】加班抢项目 Impact (争取 L4 / L5 升职)',
         condition: (s) => {
+          const isWorking = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
           const cur = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          return cur === 'L3' || cur === 'L4';
+          return isWorking && (cur === 'L3' || cur === 'L4');
         },
         effect: (s) => {
           const win = Math.random() < 0.45;
@@ -1934,6 +1943,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '准点下班，躺平拿 Meets (保重身体)',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
         nextEventId: 'sv_daily_life',
       }
@@ -1946,6 +1956,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗 (健康 +5)',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level} 的职级头衔，包裹与职场地位同步跃升！` }),
         nextEventId: 'sv_daily_life',
       }
@@ -2065,6 +2076,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '放弃交友，专心搞钱',
+        condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '觉得相亲太累，你回到家里躺着刷了一整天 YouTube，感到内心十分平静。' }),
         nextEventId: 'sv_daily_life',
       }
@@ -2101,12 +2113,13 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '在国内每天熬夜，按美国时间远程上班',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ health: s.health - 30, cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '管他呢，直接请无薪假在国内到处旅游！',
-        condition: (s) => s.cash >= 20,
+        condition: (s) => s.cash >= 20 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ cash: s.cash - 20, health: s.health + 30, leetcode: s.leetcode - 10, imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
         nextEventId: 'sv_daily_life',
       }
@@ -2144,7 +2157,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '砸 $8w 现金找顶尖律师紧急加急办理 O1 杰出人才签证 (需要现金 >= $8w)',
-        condition: (s) => s.cash >= 8,
+        condition: (s) => s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = Math.random() < (0.65 + (s.is_phd ? 0.25 : 0) + (s.leetcode >= 60 ? 0.1 : 0));
           return pass
@@ -2156,12 +2169,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【钞能力自救】全额出资办理 EB-5 投资移民绿卡 (花费 $40w)',
         reqBadge: '现金>=40w',
-        condition: (s) => s.cash >= 40,
+        condition: (s) => s.cash >= 40 && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 40, message: '在绝境中你果断出资办妥 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
       {
         text: '紧急闪婚领证 (靠公民/绿卡对象救急)',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const fake = Math.random() > 0.8;
           return fake
@@ -2173,6 +2187,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '接受外派温哥华/多伦多 L1 办公室 (曲线救国)',
         costBadge: '免费外派',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           visa: 'L1 (外派)',
           l1_relocated: true,
@@ -2191,12 +2206,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万)',
         condition: (s) => s.cash >= 300,
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: 'Atherton 顶级豪宅', charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: 'Atherton 顶级豪宅', charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '继续在 Open House 现场观望挑房 (回到日常行动)',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -2205,8 +2220,8 @@ export const events: Record<string, GameEvent> = {
           const winProb = 0.25 + (Math.min(45, s.luck) / 150);
           const win = Math.random() < winProb;
           return win
-            ? { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
-            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
+            ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
+            : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
         },
         nextEventId: 'sv_daily_life',
       },
@@ -2333,6 +2348,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '继续卷升职 (冲击下一级别)',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const win = Math.random() > 0.3; // 70% 成功率
           return win 
@@ -2343,6 +2359,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '太累了，降薪跳槽去 Google/Apple 养老',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ tc: Math.max(20, s.tc - 20), company: 'google', health: Math.min(100, s.health + 20), message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹大幅缩水，但终于有了生活。' }),
         nextEventId: 'sv_daily_life',
       }
@@ -2969,11 +2986,13 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '老老实实搬回湾区租昂贵的公寓 (房租重置为 4w)',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ rent: 4, health: s.health - 15, message: '你极不情愿地回到了湾区，每个月的房租让你心如刀割，但至少保住了工作。' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: '淘宝买物理点击器+找同事代刷工牌 (高风险)',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const caught = Math.random() < 0.3;
           return caught
@@ -2984,6 +3003,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '硬刚 Manager：“要么让我 Remote，要么我走人！”',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const win = s.leetcode >= 70 && Math.random() < 0.5;
           return win
@@ -3130,11 +3150,13 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '逻辑拉满！强势 Carry 狂踩全场 (展现高智商)',
+        condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => ({ charm: Math.max(0, s.charm - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你逻辑严密，把全场玩伴的漏洞指得一清二楚，带领好人阵营完胜！但是大家觉得你太有压迫感了，活动结束后没一个人加你微信。' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: '装小白疯狂给人递水，主打情绪价值',
+        condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => {
           const win = Math.random() > 0.5;
           const isMarriedNow = s.is_married || s.relationship_status === 'married';
@@ -3146,6 +3168,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '发现场地的老板正在招全栈工程师，去聊聊',
+        condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => {
           const win = s.leetcode >= 50;
           return win
@@ -3379,6 +3402,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           health: Math.max(10, s.health - 15),
           message: '你白加黑倒时差工作了两周，终于等到了 Passport 带着 Stamp 寄回！成功惊险返美！'
@@ -3387,6 +3411,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '联系公司法务开具紧急加急信 (Expedite Request)',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = Math.random() < 0.55;
           return pass 

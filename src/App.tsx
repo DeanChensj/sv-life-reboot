@@ -7,6 +7,7 @@ import { YearEndStatementModal } from './components/YearEndStatementModal';
 import { WarReportModal } from './components/WarReportModal';
 import { AchievementCodexModal } from './components/AchievementCodexModal';
 import { ShopModal } from './components/ShopModal';
+import { WelcomeModal } from './components/WelcomeModal';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
 
@@ -14,6 +15,9 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
   const [currentEventId, setCurrentEventId] = useState<string>('choose_trait');
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState<boolean>(false);
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    return !localStorage.getItem('sv_life_welcome_seen');
+  });
   const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
@@ -183,6 +187,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+      {/* Welcome Intro Modal (First Boot) */}
+      {showWelcome && (
+        <WelcomeModal
+          onStart={() => {
+            setShowWelcome(false);
+            localStorage.setItem('sv_life_welcome_seen', 'true');
+          }}
+        />
+      )}
+
       {/* Character Creation Pass Modal */}
       {showCharacterPass && (
         <CharacterProfileModal

@@ -1,0 +1,75 @@
+import React from 'react';
+
+interface WelcomeModalProps {
+  onStart: () => void;
+}
+
+export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onStart }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-zinc-950/95 backdrop-blur-3xl animate-in fade-in duration-700">
+      <div className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-700/80 rounded-3xl p-8 sm:p-12 shadow-2xl overflow-hidden flex flex-col items-center text-center">
+        
+        {/* Top Decorative Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
+
+        {/* Title Section */}
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 mt-4">
+          硅谷人生重启模拟器
+        </h1>
+        <p className="text-zinc-400 text-sm sm:text-base leading-relaxed max-w-lg mb-10">
+          欢迎转生至「地球 Online」最硬核的副本——硅谷。这里有年少成名、百万包裹的造富神话，也潜伏着裁员寒冬与签证断供的至暗时刻。
+        </p>
+
+        {/* Rules Section */}
+        <div className="w-full text-left space-y-6 mb-12">
+          
+          <div className="flex gap-4 p-5 rounded-2xl bg-zinc-800/30 border border-zinc-700/50 hover:border-emerald-500/30 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20 text-emerald-400">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </div>
+            <div>
+              <h3 className="text-emerald-300 font-bold text-lg mb-1">终极目标：财务自由 (FIRE)</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                努力工作、投资或创业，不断积累你的现金财富。当你的资产达到所在阶层的门槛时，即可宣告通关，提前退休！
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 p-5 rounded-2xl bg-zinc-800/30 border border-zinc-700/50 hover:border-rose-500/30 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0 border border-rose-500/20 text-rose-400">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </div>
+            <div>
+              <h3 className="text-rose-300 font-bold text-lg mb-1">生存危机：过劳与破产</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                你的精力是有限的，<strong className="text-zinc-200">健康值降为 0 会导致过劳猝死</strong>；而硅谷高昂的物价也是无形的杀手，<strong className="text-zinc-200">现金为负将面临破产驱逐</strong>。
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 p-5 rounded-2xl bg-zinc-800/30 border border-zinc-700/50 hover:border-amber-500/30 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20 text-amber-400">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <h3 className="text-amber-300 font-bold text-lg mb-1">隐形枷锁：签证与绿卡</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                H1B 抽签与绿卡排期，是悬在第一代移民头顶的达摩克利斯之剑。只有尽早上岸，才能在无情的 PIP 与裁员潮中拥有喘息之机。
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Start Button */}
+        <button
+          onClick={onStart}
+          className="w-full sm:w-2/3 py-4 rounded-xl font-black text-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2"
+        >
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          抽取初始天赋 (开启人生)
+        </button>
+      </div>
+    </div>
+  );
+};

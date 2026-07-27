@@ -322,7 +322,7 @@ export const events: Record<string, GameEvent> = {
   'choose_school': {
     id: 'choose_school',
     title: '第一步：人生十字路口',
-    description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校的选择：',
+    description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校 Choice 的选择：',
     choices: [
       {
         text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
@@ -347,12 +347,6 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.visa !== '公民',
         effect: (s) => ({ cash: s.cash - 2, housing_name: '国内大学宿舍' }),
         nextEventId: 'cn_college_grad',
-      },
-      {
-        text: '不上大学了！拿着启动资金直接创业 (极高风险低胜率路线)',
-        reqBadge: '极低胜率',
-        effect: (s) => ({ age: s.age + 2, is_dropout: true, message: '你放弃读大学，拿着高中毕业积累的启动资金直接投身商场，感受现实的残酷。' }),
-        nextEventId: 'startup_work',
       }
     ]
   },
@@ -2495,7 +2489,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【打工攒钱】积累赴美存款 (积累 $8w 存款, 提高算法)',
-        effect: (s) => ({ health: Math.max(25, s.health - 12), cash: s.cash + 8, age: s.age + 1, leetcode: s.leetcode + 15, message: '你打工一年攒下了 8 万美金存款，算法与硬核项目经验有了显著提升！' }),
+        effect: (s) => ({ health: Math.max(25, s.health - 12), cash: s.cash + 8, age: s.age + 1, year: s.year + 1, leetcode: s.leetcode + 15, message: '你打工一年攒下了 8 万美金存款，算法与硬核项目经验有了显著提升！' }),
         nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work',
       },
       {
@@ -2514,6 +2508,7 @@ export const events: Record<string, GameEvent> = {
           laid_off: false,
           cash: s.cash + 5,
           age: s.age + 1,
+          year: s.year + 1,
           message: (s.visa === '公民' || s.visa === '绿卡')
             ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职！'
             : '陆本硬核算法发威！你拿到了外派 Offer，先以 L1 身份入职海外分公司，一年后调动回湾区总部！'
@@ -2529,7 +2524,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '公司医保大部分报销治病休养 (花费 1 万美元)',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 40), age: s.age + 1, message: '在医保绝大部分报销后，你休养了半个月恢复了健康！' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 40), age: s.age + 1, year: s.year + 1, message: '在医保绝大部分报销后，你休养了半个月恢复了健康！' }),
         nextEventId: 'cn_work'
       },
       {
@@ -2560,61 +2555,34 @@ export const events: Record<string, GameEvent> = {
   },
   'startup_work': {
     id: 'startup_work',
-    title: '高中辍学创业：商场与现实的残酷',
-    description: '没有大学文凭与专业经验，你凭着几万美金启动资金带着小团队创业。商场如战场，没有学历和技术壁垒你步履维艰。',
+    title: '初创公司风云',
+    description: '你加入了一家 Early-Stage Startup，一个人干三个人的活。现在的风向变了，关于公司的发展方向：',
     imageUrl: 'images/ai_startup.jpg',
     choices: [
       {
-        text: '坚守传统赛道 (如 App 开发 / 小软件工具)',
+        text: '坚守传统赛道 (如 SaaS / Web3 工具)',
         effect: (s) => {
-          // Brutal realistic win rate for teenage high school dropouts (5% base win rate)
-          const winRate = 0.05 + (s.luck >= 75 ? 0.05 : 0);
+          let winRate = 0.15;
+          if (s.year >= 2020 && s.year <= 2022) winRate = 0.35;
           const win = Math.random() < winRate; 
           return win 
-            ? { cash: s.cash + 80, message: '商业奇迹！你凭着极强的商业直觉打造的小工具被收购，赚到了人生第一桶金！' }
-            : { cash: Math.max(1, Math.floor(s.cash * 0.2)), health: s.health - 20, message: '经验匮乏加上资金链断裂，创业公司最终倒闭，启动资金賠掉了绝大部分。' };
+            ? { cash: s.cash + 150, message: '奇迹发生！公司靠稳扎稳打被大厂收购了，你的期权兑现了大笔现金！' }
+            : { cash: Math.max(0, s.cash - 5), health: s.health - 15, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸。' };
         },
-        nextEventId: (s) => (s.message || '').includes('收购') 
-          ? (s.visa === '公民' ? 'sv_daily_life' : 'cn_work') 
-          : 'dropout_fail',
+        nextEventId: (s) => (s.message || '').includes('收购') ? 'sv_daily_life' : 'job_hunt',
       },
       {
-        text: '跟风 Pivot (转型) 做 AI / 大模型概念套壳',
+        text: '立刻 Pivot (转型) 做 AI / 大模型架构',
         effect: (s) => {
           if (s.year < 2022) {
-            return { cash: Math.max(1, Math.floor(s.cash * 0.2)), health: s.health - 20, message: `在 ${s.year} 年盲目跟风概念缺乏研发能力，产品无人问津，启动资金迅速烧光。` };
+            return { cash: Math.max(0, s.cash - 10), health: s.health - 20, message: `在 ${s.year} 年盲目跟风 AI 概念缺乏底层研发，产品无人问津，公司资金链断裂倒闭。` };
           }
-          // Brutal 5% win rate for non-degree AI wrappers
-          const win = Math.random() < 0.05;
+          const win = Math.random() < 0.18;
           return win 
-            ? { cash: s.cash + 200, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '极小概率踩中风口！产品被海外基金高价收回，你斩获了丰厚现金与投资移民身份！' }
-            : { cash: Math.max(1, Math.floor(s.cash * 0.2)), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '缺乏硬核算法团队，你的套壳产品被开源大模型直接背刺死掉...启动资金赔掉了绝大部分。' };
+            ? { cash: s.cash + 300, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
+            : { cash: Math.max(0, s.cash - 10), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜更新简历。' };
         },
-        nextEventId: (s) => (s.message || '').includes('高价收回') 
-          ? 'post_green_card' 
-          : 'dropout_fail',
-      }
-    ]
-  },
-  'dropout_fail': {
-    id: 'dropout_fail',
-    title: '创业梦碎：人生反思',
-    description: '启动资金赔掉了九成，你深刻体会到了没有大学学历与专业技能在社会上的举步维艰。接下来的路怎么走？',
-    choices: [
-      {
-        text: '知错就改：用剩余积蓄重返大学 (开启择校路线)',
-        effect: (s) => ({ message: '你痛定思痛，决定带着剩余的存款重新报考大学，夯实专业文化与代码基础！' }),
-        nextEventId: 'choose_school',
-      },
-      {
-        text: '脚踏实地：先去基层大厂打工攒钱 (开启打工路线)',
-        effect: (s) => ({ cash: s.cash + 2, age: s.age + 1, message: '你放下架子去基层公司打工，积累实战社会工作经验。' }),
-        nextEventId: 'cn_work',
-      },
-      {
-        text: '彻底放弃：灰溜溜回家啃老',
-        effect: (s) => ({ status: 'game_over', message: '你带着失败的教训回到老家啃老，体验了人生的低谷。游戏结束。' }),
-        nextEventId: 'end',
+        nextEventId: (s) => (s.message || '').includes('杰出人才绿卡') ? 'post_green_card' : 'job_hunt',
       }
     ]
   },

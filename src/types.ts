@@ -16,6 +16,7 @@ export interface GameState {
   has_us_degree: boolean;
   school: string;
   is_phd: boolean;
+  is_master?: boolean;
   has_pet: boolean;
   pet_name?: string;
   luck: number;

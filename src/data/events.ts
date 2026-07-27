@@ -501,7 +501,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '申请美国 CS 硕士 (自筹资金 / 积蓄 $5w 即可申请)',
         condition: (s) => s.cash >= 5,
-        effect: (s) => ({ cash: s.cash - 5, visa: 'F1 (学生)', age: s.age, housing_name: '美硕 校外公寓' }),
+        effect: (s) => ({ cash: s.cash - 5, visa: 'F1 (学生)', age: s.age, is_master: true, housing_name: '美硕 校外公寓' }),
         nextEventId: 'us_master_year1',
       },
       {
@@ -514,6 +514,7 @@ export const events: Record<string, GameEvent> = {
               cash: Math.max(0, s.cash - 2), 
               visa: 'F1 (学生)', 
               age: s.age, 
+              is_master: true,
               housing_name: '美硕 校外公寓', 
               message: '🎉 申请成功！凭借扎实的本科算法基础与良好的背景，你成功获得了无抵押留学贷款与校内 TA 助教资格！' 
             };
@@ -576,12 +577,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '紧急接入 Claude/Cursor 重新优化 Agent 调度层',
         effect: (s) => ({ leetcode: s.leetcode + 12, cash: s.cash + 1.5, message: '🚀 逆天夺冠！你们的 AI Agent 演示震撼全场，拿下了冠军并获得了 $1.5w 奖金！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       },
       {
         text: '砍掉复杂并发功能，专注于写精致的前端 Demo 演示',
         effect: (s) => ({ charm: Math.min(25, s.charm + 5), cash: s.cash + 0.5, message: '演示极其流畅！评委夸赞你们具备产品经理思维，获得了最佳人气奖！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       }
     ]
   },
@@ -593,12 +594,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '通宵翻阅经典教材，用反证法完美解答压轴题',
         effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 8, message: '教授被你的硬核推导折服，期末单科拿到 A+！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       },
       {
         text: '找学霸室友通宵抱大腿，共同解出作业与例题',
         effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: s.health + 2, message: '成功靠团队协作渡过难关，保住了 3.8+ 的优异 GPA！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       }
     ]
   },
@@ -610,12 +611,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '用严谨的财务模型与用户增长曲线征服投资人',
         effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 5), message: '🎉 拿到种子轮支票！VC 现场为你开出了 $2w 创业启动扶持资金！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       },
       {
         text: '讲出动人的愿景故事，拉满现场演示舞台感染力',
         effect: (s) => ({ charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 5), message: '全场爆发出欢呼！虽然没要投资，但结识了一圈顶级投资圈高管人脉！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       }
     ]
   },
@@ -627,12 +628,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '主动邀请对方去饮品店喝 Boba 奶茶交流音乐',
         effect: (s) => ({ charm: Math.min(25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '恋爱甜度拉满！你们越聊越投机，顺理成章确立了热恋关系 (Dating)！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       },
       {
         text: '礼貌道谢：“谢谢夸奖，我还要去机房调代码”',
         effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(25, s.charm + 2), message: '高冷风范！你潇洒地背起吉他走向机房，成为了传说中的冷酷吉他手！' }),
-        nextEventId: 'us_undergrad_year3',
+        nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       }
     ]
   },
@@ -1504,17 +1505,17 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.tc === 0 ? 'job_hunt' : 'sv_daily_life'
       },
       {
-        text: '直接开摆，拿 Severance 走人，在家刷题',
+        text: '直接开摆，接受 PIP 辞退结局 (无遣散费)，在家刷题',
         effect: (s) => ({ 
-          cash: s.cash + (s.tc / 12) * 2, 
+          cash: s.cash, 
           tc: 0, 
           laid_off: true,
           job_type: 'unemployed',
-          leetcode: s.leetcode + 15,
-          health: s.health + 10,
-          message: '你选择了 quiet quitting，拿着两个月遣散费每天去海边散步刷题，心情大好。'
+          leetcode: s.leetcode + 10,
+          health: Math.max(10, s.health - 25),
+          message: '【周五 PIP 绩效开除】选择 Quiet Quitting 改进计划未通过！HR 当场收回笔记本与 Workday 权限！PIP 绩效辞退无遣散费补偿！'
         }),
-        nextEventId: 'job_hunt'
+        nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
       },
       {
         text: '🤝 启动 60 天 H1B Grace Period 紧急挂靠：找外包公司办理 H1B Transfer (消耗 $2w)',

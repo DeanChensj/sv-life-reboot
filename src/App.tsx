@@ -98,7 +98,10 @@ export default function App() {
     // Check if bankrupt
     if (newState.cash < -0.001 && newState.status === 'playing') {
       newState.status = 'game_over';
-      if (!effectResult.message) {
+      const isRealHome = newState.has_housing && newState.housing_name && !['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(newState.housing_name);
+      if (isRealHome) {
+        newState.message = '【房贷断供法拍破产】失业且资金链断裂无力还贷，加州银行正式启动房产法拍程序，个人信用彻底破产，游戏结束！';
+      } else if (!effectResult.message) {
         newState.message = '你破产了，无法支付账单，游戏结束！';
       } else {
         newState.message += ' 但由于你负债累累，资金链彻底断裂，游戏结束！';

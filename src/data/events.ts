@@ -234,12 +234,11 @@ export const events: Record<string, GameEvent> = {
     id: 'choose_school',
     title: '第一步：人生十字路口',
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校的选择：',
-    imageUrl: 'images/stanford_graduation.jpg',
     choices: [
       {
         text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
         condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', imageUrl: 'images/stanford_graduation.jpg', message: '你步入了世界计算机最高学府。' }),
+        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
@@ -306,6 +305,7 @@ export const events: Record<string, GameEvent> = {
     id: 'us_undergrad_grad',
     title: '美本毕业',
     description: '四年过去了，你顺利从美国大学毕业，目前持有 OPT。现在是找工作还是继续深造？',
+    imageUrl: 'images/stanford_graduation.jpg',
     choices: [
       {
         text: '申请北美顶尖 PhD (录取率低, 需 LeetCode >= 30)',
@@ -437,6 +437,7 @@ export const events: Record<string, GameEvent> = {
     id: 'us_master_grad',
     title: '硕士毕业',
     description: '你拿到了硕士学位，OPT 已经激活。现在必须在三个月内找到工作，否则就要被送中了。',
+    imageUrl: 'images/stanford_graduation.jpg',
     choices: [
 
       {

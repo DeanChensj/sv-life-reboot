@@ -215,7 +215,7 @@ const midYearEventRouter = (s: GameState) => {
     if (isRealHome && s.age >= 32 && Math.random() < 0.20) {
       return 'property_hoa_special_assessment';
     }
-    if (s.age >= 35 && s.health <= 60 && Math.random() < 0.25) {
+    if (isWorking && s.age >= 35 && s.health <= 60 && Math.random() < 0.25) {
       return 'health_burnout_warning';
     }
 
@@ -3614,9 +3614,10 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【轻伤不下火线】吃降压药硬抗，继续为下一个 Promotable Project 拼命',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => ({
           health: Math.max(10, s.health - 20),
-          tc: s.tc + 5,
+          tc: (s.job_type === 'unemployed' || s.laid_off) ? 0 : s.tc + 5,
           message: '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
         }),
         nextEventId: 'sv_daily_life'

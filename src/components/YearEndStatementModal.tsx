@@ -10,8 +10,32 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '');
   
   const preTaxTC = gameState.tc > 0 ? gameState.tc : 0;
-  const taxAmountNum = preTaxTC * 0.25;
-  const postTaxIncomeNum = preTaxTC * 0.75;
+  
+  let preTaxBase = 0;
+  let preTaxRSU = 0;
+  if (!gameState.laid_off && gameState.job_type !== 'unemployed' && preTaxTC > 0) {
+    if (gameState.job_type === 'trader' || gameState.job_type === 'startup_founder' || gameState.job_type === 'quant' || gameState.job_type === 'big_tech') {
+      preTaxBase = preTaxTC;
+    } else if (gameState.job_type === 'startup') {
+      preTaxBase = preTaxTC * 0.2;
+      preTaxRSU = preTaxTC * 0.8;
+    } else if (gameState.job_type === 'tiktok') {
+      preTaxBase = preTaxTC * 0.7;
+      preTaxRSU = preTaxTC * 0.3;
+    } else if (gameState.company === 'meta' || gameState.job_type === 'nvidia') {
+      preTaxBase = preTaxTC * 0.4;
+      preTaxRSU = preTaxTC * 0.6;
+    } else {
+      preTaxBase = preTaxTC * 0.5;
+      preTaxRSU = preTaxTC * 0.5;
+    }
+  }
+
+  const taxAmountNum = preTaxBase * 0.25;
+  const postTaxIncomeNum = preTaxBase * 0.75;
+  const rsuTaxAmountNum = preTaxRSU * 0.25;
+  const postTaxRSUNum = preTaxRSU * 0.75;
+  
   const taxAmount = taxAmountNum.toFixed(1);
   const postTaxIncome = postTaxIncomeNum.toFixed(1);
 
@@ -64,17 +88,34 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
         )}
 
         {/* Net Cash Banner */}
-        <div className={`p-4 rounded-2xl border mb-6 flex justify-between items-center ${isNetPositive ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'}`}>
-          <div>
-            <div className="text-xs font-mono uppercase tracking-wider opacity-80">税后预估净现金收益</div>
-            <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums mt-0.5">
-              {isNetPositive ? `+$${estNetChange}w` : `-$${Math.abs(parseFloat(estNetChange)).toFixed(1)}w`}
+        <div className="flex flex-col gap-2 mb-6">
+          <div className={`p-4 rounded-2xl border flex justify-between items-center ${isNetPositive ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'}`}>
+            <div>
+              <div className="text-xs font-mono uppercase tracking-wider opacity-80">本年预估净现金流量</div>
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums mt-0.5">
+                {isNetPositive ? `+$${estNetChange}w` : `-$${Math.abs(parseFloat(estNetChange)).toFixed(1)}w`}
+              </div>
+            </div>
+            <div className="text-right font-mono">
+              <div className="text-[10px] text-zinc-400 uppercase">现金总额</div>
+              <div className="text-xl font-bold text-zinc-100">${gameState.cash.toFixed(1)}w</div>
             </div>
           </div>
-          <div className="text-right font-mono">
-            <div className="text-[10px] text-zinc-400 uppercase">账末总结存</div>
-            <div className="text-xl font-bold text-zinc-100">${gameState.cash.toFixed(1)}w</div>
-          </div>
+
+          {(gameState.stocks !== undefined && gameState.stocks > 0) && (
+            <div className="p-4 rounded-2xl border bg-indigo-500/10 border-indigo-500/30 text-indigo-300 flex justify-between items-center">
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wider opacity-80">股票/投资组合现值</div>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums mt-0.5">
+                  ${gameState.stocks.toFixed(1)}w
+                </div>
+              </div>
+              <div className="text-right font-mono flex flex-col justify-end">
+                <div className="text-[10px] text-zinc-400 uppercase">个人净资产</div>
+                <div className="text-xl font-bold text-emerald-400">${(gameState.cash + gameState.stocks).toFixed(1)}w</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Detailed Financial Breakdown Table */}
@@ -82,19 +123,38 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
           <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
             <span className="text-zinc-400 flex items-center gap-2.5">
               <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-              {gameState.job_type === 'trader' ? '年度操盘收益 (Capital Gains)' : gameState.job_type === 'startup_founder' ? '创始人薪水/套现收入' : '年度总包 TC (含 Base + RSU)'}
+              {gameState.job_type === 'trader' ? '年度操盘收益 (Cash)' : gameState.job_type === 'startup_founder' ? '创始人薪水/套现 (Cash)' : '年度 Base 薪资 (Cash)'}
             </span>
-            <span className="font-bold text-emerald-400 tabular-nums">+${preTaxTC.toFixed(1)}w</span>
+            <span className="font-bold text-emerald-400 tabular-nums">+${preTaxBase.toFixed(1)}w</span>
           </div>
 
-          {preTaxTC > 0 && (
+          {preTaxBase > 0 && (
             <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
               <span className="text-zinc-400 flex items-center gap-2.5">
                 <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                {gameState.job_type === 'trader' ? '资本利得税 (-25% Capital Gains Tax)' : '所得税 (-25% 享 401k/Mega Roth 抵税)'}
+                {gameState.job_type === 'trader' ? '资本利得税 (-25%)' : '现金所得税 (-25%)'}
               </span>
               <span className="font-bold text-rose-400 tabular-nums">-${taxAmount}w</span>
             </div>
+          )}
+
+          {preTaxRSU > 0 && (
+            <>
+              <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+                <span className="text-zinc-400 flex items-center gap-2.5">
+                  <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  年度 RSU 归属 (转入股票资产)
+                </span>
+                <span className="font-bold text-emerald-400 tabular-nums">+${preTaxRSU.toFixed(1)}w</span>
+              </div>
+              <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+                <span className="text-zinc-400 flex items-center gap-2.5">
+                  <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  股票所得税 (-25% 补充预扣)
+                </span>
+                <span className="font-bold text-rose-400 tabular-nums">-${rsuTaxAmountNum.toFixed(1)}w</span>
+              </div>
+            </>
           )}
 
           <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">

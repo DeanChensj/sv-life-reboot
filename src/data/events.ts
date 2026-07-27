@@ -57,6 +57,7 @@ export const generateInitialState = (): GameState => {
     max_ap,
     age: 18,
     cash,
+    stocks: 0,
     health: 100,
     leetcode: 10,
     visa: '无',
@@ -1179,6 +1180,16 @@ export const events: Record<string, GameEvent> = {
         nextEventId: midYearEventRouter,
       },
       {
+        text: '【年度重心：投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
+        condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
+        effect: (s) => ({
+          mid_year: true,
+          health: s.health - 15,
+          message: '今年你花了大把时间盯盘、听财报电话会，试图在股市中加速财务自由！'
+        }),
+        nextEventId: 'stock_market_annual_gamble',
+      },
+      {
         text: '【年度重心：活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
         condition: (s) => true,
         effect: (s) => ({
@@ -1229,6 +1240,81 @@ export const events: Record<string, GameEvent> = {
       }
     ]
   },
+  'stock_market_annual_gamble': {
+    id: 'stock_market_annual_gamble',
+    title: '资产配置：股票市场操作',
+    description: '你可以自由配置你的现金和股票仓位。注意：股票资产在年终结算时会受到宏观大盘（牛市/熊市）的剧烈影响，而现金则不受波动影响。',
+    choices: [
+      {
+        text: '【买入股票】把闲置现金投资大盘 (买入 $10w)',
+        condition: (s) => s.cash >= 10,
+        effect: (s) => ({
+          cash: s.cash - 10,
+          stocks: (s.stocks || 0) + 10,
+          message: '你成功将 $10w 现金转入股票账户。'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【大举加仓】将大部分闲置现金转入股市 (买入 $50w)',
+        condition: (s) => s.cash >= 50,
+        effect: (s) => ({
+          cash: s.cash - 50,
+          stocks: (s.stocks || 0) + 50,
+          message: '你大手笔加仓，将 $50w 现金买入股票！'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【卖出套现】从股市中套现部分资金 (卖出 $10w)',
+        condition: (s) => (s.stocks || 0) >= 10,
+        effect: (s) => ({
+          cash: s.cash + 10,
+          stocks: (s.stocks || 0) - 10,
+          message: '你成功卖出了 $10w 股票，落袋为安。'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【清仓股票】一键清仓所有股票，转回现金 (全部卖出)',
+        condition: (s) => (s.stocks || 0) > 0,
+        effect: (s) => ({
+          cash: s.cash + (s.stocks || 0),
+          stocks: 0,
+          message: '你清空了所有股票仓位，目前全现金持有，防守反击！'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【梭哈期权】拼了！用小额现金炒 0DTE 末日期权 (投入 $5w)',
+        condition: (s) => s.cash >= 5,
+        effect: (s) => {
+          const hit = Math.random() < (0.15 + s.luck / 500); // Low chance
+          if (hit) {
+            return {
+              cash: s.cash + 25, // Turn 5w into 30w
+              health: s.health - 20,
+              message: '【暴富奇迹！】你赌对了非农数据日的末日期权，一夜之间 $5w 翻了 6 倍变成 $30w！截图发在群里被尊称为华尔街之狼！'
+            };
+          } else {
+            return {
+              cash: s.cash - 5, // Lose all
+              health: s.health - 25,
+              message: '【血本无归】期权在归零那刻一文不值...你的 $5w 投资瞬间蒸发。你痛苦地删掉了交易软件。'
+            };
+          }
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '按兵不动：维持目前的仓位组合进入年终结算',
+        effect: (s) => ({
+          message: '你决定什么都不做，做时间的朋友，静静等待跨年的钟声。'
+        }),
+        nextEventId: midYearEventRouter,
+      }
+    ]
+  },
   'sv_year_end_settlement': {
     id: 'sv_year_end_settlement',
     title: '年底结算',
@@ -1264,15 +1350,49 @@ export const events: Record<string, GameEvent> = {
 
            let newEconomy = s.macro_economy || 'neutral';
            let economyMsg = '';
-           // Economy shifts are now handled by explicit News Broadcast events during sv_daily_life
            
-           const marketMultiplier = newEconomy === 'bull' ? 1.3 : newEconomy === 'bear' ? 0.7 : 1.0;
-           const rsuMsg = newEconomy === 'bull' ? ' (牛市 RSU 浮盈 1.3x)' : newEconomy === 'bear' ? ' (熊市 RSU 缩水 0.7x)' : '';
-
-           const preTaxTC = (!s.laid_off && s.job_type !== 'unemployed') && s.tc > 0 ? (s.job_type === 'trader' ? s.tc : s.tc * marketMultiplier) : 0;
-           const postTaxIncome = preTaxTC * 0.75; 
-           const netIncome = postTaxIncome - totalExpense;
+           // Stock market fluctuation
+           let currentStocks = s.stocks || 0;
+           let stockFluctuation = 0;
+           if (currentStocks > 0) {
+             const stockMultiplier = newEconomy === 'bull' ? 1.25 : newEconomy === 'bear' ? 0.75 : 1.05;
+             const newStocksVal = currentStocks * stockMultiplier;
+             stockFluctuation = newStocksVal - currentStocks;
+             currentStocks = newStocksVal;
+           }
            
+           // Income split (50% base cash, 50% RSU stocks for tech workers)
+           let preTaxBase = 0;
+           let preTaxRSU = 0;
+           
+           if (!s.laid_off && s.job_type !== 'unemployed' && s.tc > 0) {
+             if (s.job_type === 'trader' || s.job_type === 'startup_founder' || s.job_type === 'quant' || s.job_type === 'big_tech') {
+               preTaxBase = s.tc; // 交易员、创始人、Quant、养老厂(big_tech) 全现金
+             } else if (s.job_type === 'startup') {
+               preTaxBase = s.tc * 0.2;
+               preTaxRSU = s.tc * 0.8; // startup 期权画大饼
+             } else if (s.job_type === 'tiktok') {
+               preTaxBase = s.tc * 0.7;
+               preTaxRSU = s.tc * 0.3; // 字节现金多
+             } else if (s.company === 'meta' || s.job_type === 'nvidia') {
+               preTaxBase = s.tc * 0.4;
+               preTaxRSU = s.tc * 0.6; // Meta/NVDA 股票多
+             } else {
+               preTaxBase = s.tc * 0.5;
+               preTaxRSU = s.tc * 0.5; // 其他大厂 50/50 (如 Amazon)
+             }
+           }
+           
+           const rsuMsg = (currentStocks > 0 || preTaxRSU > 0) 
+             ? (newEconomy === 'bull' ? ' (牛市加持股票资产增值 1.25x)' : newEconomy === 'bear' ? ' (熊市打击股票资产缩水 0.75x)' : '')
+             : '';
+             
+           const postTaxBase = preTaxBase * 0.75; 
+           const postTaxRSU = preTaxRSU * 0.75;
+           
+           currentStocks += postTaxRSU; // Vested RSUs go to stock account
+           
+           const netIncome = postTaxBase - totalExpense;
            let healthDrain = 0;
            let companyMsg = '';
            if (!s.laid_off && s.job_type !== 'unemployed') {
@@ -1339,10 +1459,11 @@ export const events: Record<string, GameEvent> = {
               startup_tenure: newStartupTenure,
               gc_progress: nextGc, 
               cash: s.cash + netIncome,
+              stocks: currentStocks,
               tc: updatedTC,
               health: newHealth,
               macro_economy: newEconomy,
-              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年净结余 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元${rsuMsg}。${economyMsg}${gcMsg}${companyMsg}${h1bMsg}${meritMsg}` 
+              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${h1bMsg}${meritMsg}` 
            };
         },
         nextEventId: (s) => {

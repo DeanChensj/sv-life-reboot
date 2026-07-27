@@ -123,14 +123,19 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
         <div className="col-span-2 md:col-span-4 bg-gradient-to-br from-zinc-900 via-zinc-900/95 to-zinc-950 border border-zinc-800 p-4 sm:p-5 rounded-3xl flex justify-between items-center relative overflow-hidden shadow-2xl backdrop-blur-xl">
           <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl -mr-14 -mt-14 pointer-events-none" />
           
-          <div className="relative z-10">
+          <div className="relative z-10 flex-1">
             <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              现金资产 (Cash)
+              总资产 (Net Worth)
             </div>
             <div className="text-3xl sm:text-4xl lg:text-5xl font-black font-mono tabular-nums tracking-tight text-emerald-400 drop-shadow-md">
-              ${gameState.cash.toFixed(1)}w
+              ${(gameState.cash + (gameState.stocks || 0)).toFixed(1)}w
             </div>
+            {(gameState.stocks !== undefined && gameState.stocks > 0) && (
+              <div className="mt-1.5 text-[10px] sm:text-xs font-mono font-bold text-zinc-500 tracking-wider">
+                现金: <span className="text-emerald-500/80">${gameState.cash.toFixed(1)}w</span> <span className="mx-1 opacity-50">|</span> 股票: <span className="text-emerald-500/80">${gameState.stocks.toFixed(1)}w</span>
+              </div>
+            )}
           </div>
 
           <div className="text-right relative z-10">

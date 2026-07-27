@@ -96,6 +96,22 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: 'ending',
     description: '在没有拿到绿卡的情况下，顶着身份压力硬核实现了硅谷财务自由！',
     hint: '暗号：通关 FIRE 时身份仍不是绿卡。'
+  },
+  {
+    id: 'wall_street_wolf',
+    title: '华尔街之狼',
+    icon: '🐺',
+    category: 'wealth',
+    description: '重仓期权或 Crypto 实现了不可思议的一夜暴富。',
+    hint: '暗号：在股市极高风险操作中获利'
+  },
+  {
+    id: 'wsb_leek',
+    title: '终极韭菜',
+    icon: '🥬',
+    category: 'fun',
+    description: '炒末日期权或土狗币血本无归，成为华尔街绿油油的韭菜。',
+    hint: '暗号：在股市极高风险操作中亏光本金'
   }
 ];
 
@@ -170,6 +186,14 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
 
   if (state.status === 'win' && state.visa !== '绿卡') {
     if (unlockAchievement('no_gc_fire')) newlyUnlocked.push('no_gc_fire');
+  }
+
+  if (msg.includes('暴富奇迹！')) {
+    if (unlockAchievement('wall_street_wolf')) newlyUnlocked.push('wall_street_wolf');
+  }
+
+  if (msg.includes('血本无归')) {
+    if (unlockAchievement('wsb_leek')) newlyUnlocked.push('wsb_leek');
   }
 
   return newlyUnlocked;

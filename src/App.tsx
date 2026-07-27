@@ -113,9 +113,9 @@ export default function App() {
     }
 
     // Check FIRE win
-    if (newState.cash >= newState.win_threshold && newState.status === 'playing') {
+    if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
       newState.status = 'win';
-      newState.message = `你的资产突破了 ${newState.win_threshold} 万美元！你正式达成了个人的 FIRE 目标（财务自由，提前退休）。你再也不需要看任何人的脸色，可以去做自己真正想做的事情了！`;
+      newState.message = `你的总资产突破了 ${newState.win_threshold} 万美元！你正式达成了个人的 FIRE 目标（财务自由，提前退休）。你再也不需要看任何人的脸色，可以去做自己真正想做的事情了！`;
     }
 
     // Sound FX logic
@@ -252,10 +252,10 @@ export default function App() {
               {gameState.age} 岁
             </span>
 
-            {/* Cash Tag */}
+            {/* Asset Tag */}
             <span className="flex items-center gap-1 font-black text-emerald-400 shrink-0 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 tabular-nums">
               <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              ${gameState.cash.toFixed(1)}w
+              ${(gameState.cash + (gameState.stocks || 0)).toFixed(1)}w
             </span>
 
             {/* TC Tag */}
@@ -422,9 +422,9 @@ export default function App() {
                   } else if (newState.cash < -0.001 && newState.status === 'playing') {
                     newState.status = 'game_over';
                     newState.message = '你破产了，无法支付账单，游戏结束！';
-                  } else if (newState.cash >= newState.win_threshold && newState.status === 'playing') {
+                  } else if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
                     newState.status = 'win';
-                    newState.message = `资产突破 ${newState.win_threshold}w！正式达成 FIRE 目标！`;
+                    newState.message = `总资产突破 ${newState.win_threshold}w！正式达成 FIRE 目标！`;
                   } else {
                     newState.message = msg;
                   }

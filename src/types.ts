@@ -4,6 +4,7 @@ export type RelationshipStatus = 'single' | 'matched' | 'dating' | 'married';
 export interface GameState {
   age: number;
   cash: number; // 万美元
+  stocks?: number; // 股票持仓 (万美元)
   health: number; // 0-100
   leetcode: number; // 0-100
   visa: VisaStatus;

@@ -85,7 +85,8 @@ const midYearEventRouter = (s: GameState) => {
     const lifeEvents = [
       'pickleball_networking', 'dental_emergency', 'crypto_scam', 
       'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
-      'burning_man_invite', 'boardgame_dating', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation'
+      'burning_man_invite', 'boardgame_dating', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
+      'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup'
     ];
     
     // Only working folks have Overemployed, blind gossips, and zoom camera off
@@ -2511,6 +2512,85 @@ export const events: Record<string, GameEvent> = {
             ? { health: Math.min(100, s.health + 5), message: '加急信生效！领事馆提早批复了你的 Visa Stamp，你顺利搭上返美航班！' }
             : { health: s.health - 10, cash: Math.max(0, s.cash - 1), message: '领事馆回复“标准审查无法加急”，你被迫在加州时间深夜远程办公，精疲力竭。' };
         },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'credit_card_churning': {
+    id: 'credit_card_churning',
+    title: '【湾区理财神器】美卡指南与开卡礼狂热',
+    description: '作为湾区精算做题家，你沉迷于美卡指南 (US Credit Card Guide)。从 Chase Sapphire Reserve 到 Amex Platinum，再到 Capital One Venture X，你迷上了 5/24 规则与开卡礼 (Sign-up Bonus)！',
+    choices: [
+      {
+        text: '【开卡礼狂魔】一口气申 4 张大额神卡，刷满开卡礼点数兑头等舱 (消耗 $0.5w, 收益 $1.2w 积分价值)',
+        effect: (s) => ({
+          cash: s.cash + 1.2,
+          charm: Math.min(25, s.charm + 3),
+          health: Math.min(100, s.health + 5),
+          message: '成功拿到了 300,000 Amex/Chase 积分！直接兑换了旧金山直飞东京的日航全平躺头等舱，精算理财智商彻底碾压同行！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【DoorDash 薅羊毛】研究 Uber Eats / DoorDash 满减优惠券',
+        effect: (s) => ({
+          cash: s.cash + 0.3,
+          message: '虽然每天在不同 App 里切账号领优惠券只省了几百刀，但薅到羊毛的成就感让你乐此不疲！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'vibe_coding_craze': {
+    id: 'vibe_coding_craze',
+    title: '【AI新纪元】Vibecoding：用 Cursor/Claude 替代手打代码',
+    description: 'AI 编程时代降临！硅谷都在传颂“Vibecoding”——不看细节，不用手打每行代码，只用自然语言和 Cursor/Claude Agent 对话，3 分钟生成全栈 App！',
+    choices: [
+      {
+        text: '【Vibecoding 狂魔】开启 Cursor Pro + Claude 3.5 Sonnet，一个人顶一个 5 人团队',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 15),
+          health: Math.min(100, s.health + 10),
+          tc: s.tc > 0 ? s.tc + 5 : s.tc,
+          message: '你成为了组里的 Vibecoding 大师！别人用两周写的功能你半天提交 PR，经理惊呼你一个人就是一支队伍！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【生成式 AI 幻觉】全信 AI 自动生成的代码，未审核直接 Push 到 Production 生产环境！',
+        effect: (s) => {
+          const win = Math.random() < 0.45;
+          return win
+            ? { luck: Math.min(45, s.luck + 5), cash: s.cash + 2, message: '产线竟然零报错无缝运行！用户量大增，领导夸赞你产出惊人！' }
+            : { health: Math.max(10, s.health - 15), message: 'AI 幻觉写出了逻辑死锁导致大厂全网宕机 2 小时！你半夜被 PagerDuty 电话叫醒去改底层 C++！' };
+        },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'ai_agent_startup': {
+    id: 'ai_agent_startup',
+    title: '【黑客松爆火】AI Agent 自动化工作流助手',
+    description: '你在周末 Hackathon 上用 AI Agent 搭建了一个全自动替工程师开 Zoom 会与自动写 Weekly Report 的 Agent 助手，在 Twitter/X 上暴火！',
+    choices: [
+      {
+        text: '【VC 争相送钱】接受 a16z / YC 的 $50w 种子轮打款',
+        effect: (s) => ({
+          cash: s.cash + 50,
+          charm: Math.min(25, s.charm + 6),
+          job_type: 'startup',
+          message: 'a16z 领投 $50 万美金！你登上了 TechCrunch 头条，成为硅谷最炙手可热的 AI Agent 创业明星！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【开源上星】在 GitHub 开源该项目，收割 15k Stars',
+        effect: (s) => ({
+          charm: Math.min(25, s.charm + 5),
+          luck: Math.min(45, s.luck + 8),
+          leetcode: Math.min(100, s.leetcode + 10),
+          message: '项目登上了 GitHub Trending 榜首！全球几万开发者给你送 Star，连 Sam Altman 都转发了你的 Tweet！'
+        }),
         nextEventId: 'sv_daily_life'
       }
     ]

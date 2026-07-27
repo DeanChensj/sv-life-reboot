@@ -352,27 +352,27 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '加入 ACM 算法集训队 (硬核代码与刷题路线)',
-        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 15, age: s.age + 1, message: '天天在机房死磕图论与动态规划，算法能力大幅提升！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 15, age: s.age + 2, message: '天天在机房死磕图论与动态规划，算法能力大幅提升！两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
       },
       {
         text: '【金融/创投】参加全国大学生商业创投挑战赛',
-        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 4), age: s.age + 1, message: '商业计划书打动了校外评委，拿到了创业鼓励金与名企实习推荐！' }),
+        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 4), age: s.age + 2, message: '商业计划书打动了校外评委，拿到了创业鼓励金与名企实习推荐！两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
       },
       {
         text: '【文娱自媒体】担任社团主唱 / 运营大学生活 VLOG',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 8), cash: s.cash + 0.8, health: Math.min(100, s.health + 5), age: s.age + 1, message: '你的网游/校园 VLOG 在 B站和小红书小火，涨粉数千并吸引了不少粉丝打赏！' }),
+        effect: (s) => ({ charm: Math.min(25, s.charm + 8), cash: s.cash + 0.8, health: Math.min(100, s.health + 5), age: s.age + 2, message: '你的网游/校园 VLOG 在 B站和小红书小火，涨粉数千并吸引了不少粉丝打赏！两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
       },
       {
         text: '加入学生会与外联部 (锻炼人际社交与组织能力)',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: s.health - 5, age: s.age + 1, message: '你在学生会拉赞助混得风生水起，结识了一圈活跃朋友。' }),
+        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: s.health - 5, age: s.age + 2, message: '你在学生会拉赞助混得风生水起，结识了一圈活跃朋友。两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
       },
       {
         text: '【大厂暑期实习】抢到了国内一线互联网大厂实习',
-        effect: (s) => ({ cash: s.cash + 2, leetcode: s.leetcode + 8, health: s.health - 8, age: s.age + 1, message: '在厂里体验了硬核工程落地，提前积累了实战经验。' }),
+        effect: (s) => ({ cash: s.cash + 2, leetcode: s.leetcode + 8, health: s.health - 8, age: s.age + 2, message: '在厂里体验了硬核工程落地，提前积累了实战经验。两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
       }
     ]
@@ -465,22 +465,22 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '报班死磕托福/GRE (准备申请美国 CS 硕士)',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 2), health: s.health - 10, age: s.age + 1, message: '付出了巨大汗水，终于考出了满意的托福/GRE 分数！' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 2), health: s.health - 10, age: s.age + 2, message: '付出了巨大汗水，终于考出了满意的托福/GRE 分数，顺利完成大三大四学业！' }),
         nextEventId: 'cn_undergrad_grad',
       },
       {
         text: '【提前批秋招】冲击国内大厂提前批 Offer',
-        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 10, age: s.age + 1, message: '凭着扎实的算法手撕，提前斩获了国内大厂的 SSP 保底 Offer！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 10, age: s.age + 2, message: '凭着扎实的算法手撕，提前斩获了国内大厂的 SSP 保底 Offer！顺利从本科毕业！' }),
         nextEventId: 'cn_undergrad_grad',
       },
       {
         text: '【金融/咨询实习】投递顶级外企咨询与券商行研实习',
-        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 6), health: s.health - 8, age: s.age + 1, message: '获得了极佳的金融行研锻炼，简历含金量大增！' }),
+        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 6), health: s.health - 8, age: s.age + 2, message: '获得了极佳的金融行研锻炼，简历含金量大增！顺利从本科毕业！' }),
         nextEventId: 'cn_undergrad_grad',
       },
       {
         text: '佛系对待，每天在寝室打黑神话悟空',
-        effect: (s) => ({ health: Math.min(100, s.health + 10), leetcode: Math.max(0, s.leetcode - 5), age: s.age + 1, message: '虽然精神很愉悦，但放慢了备战的脚步。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), leetcode: Math.max(0, s.leetcode - 5), age: s.age + 2, message: '虽然精神很愉悦，放慢了备战脚步，但最终还是顺利混到了本科毕业！' }),
         nextEventId: 'cn_undergrad_grad',
       }
     ]
@@ -714,24 +714,24 @@ export const events: Record<string, GameEvent> = {
     description: '时间紧迫！美硕只有短短一年半到两年。你一边要应付繁重的课业，一边又要准备残酷的秋招。',
     choices: [
       {
-        text: '翘课刷题！(力扣大军)',
-        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 12, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能手撕红黑树与动态规划。' }),
+        text: '选择 1.5 年加急项目，翘课刷题 (23岁毕业)',
+        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 12, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能手撕红黑树与动态规划，1.5年顺利美硕毕业！' }),
         nextEventId: 'us_master_grad',
       },
       {
-        text: '【量化/风控求职】准备 Wall Street Quant / 风控与投资面试',
-        effect: (s) => ({ cash: s.cash + 2.5, leetcode: s.leetcode + 8, charm: Math.min(25, s.charm + 4), age: s.age + 1, message: '在 Quant 笔试与数学思维面试中顺利过关，拿到高薪 Offer！' }),
+        text: '选择 2 年标准项目，准备 Wall Street Quant / 风控与投资面试 (24岁毕业)',
+        effect: (s) => ({ cash: s.cash + 2.5, leetcode: s.leetcode + 8, charm: Math.min(25, s.charm + 4), age: s.age + 2, message: '在 Quant 笔试与数学思维面试中顺利过关，2年学制美硕顺利毕业！' }),
         nextEventId: 'us_master_grad',
       },
       {
-        text: '疯狂赶 Due，力保全 A (4.0 GPA)',
-        effect: (s) => ({ leetcode: s.leetcode + 6, health: s.health - 8, charm: Math.min(25, s.charm + 3), age: s.age + 1, message: '你拿到了 4.0 的完美绩点！展现了极其严谨的学业能力。' }),
+        text: '选择 1.5 年加急项目，疯狂赶 Due 保 4.0 GPA (23岁毕业)',
+        effect: (s) => ({ leetcode: s.leetcode + 6, health: s.health - 8, charm: Math.min(25, s.charm + 3), age: s.age + 1, message: '你拿到了 4.0 的完美绩点！展现了极其严谨的学业能力，1.5年美硕顺利毕业！' }),
         nextEventId: 'us_master_grad',
       },
       {
-        text: '去硅谷大厂活动混脸熟要内推',
+        text: '选择 2 年标准项目，去硅谷大厂活动混脸熟要内推 (24岁毕业)',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 10), age: s.age + 1, message: '你加了 50 个大厂学长学姐的 LinkedIn，拿到了不少直通面试机会。' }),
+        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 10), age: s.age + 2, message: '你加了 50 个大厂学长学姐的 LinkedIn，拿到了不少直通面试机会，2年美硕顺利毕业！' }),
         nextEventId: 'us_master_grad',
       }
     ]

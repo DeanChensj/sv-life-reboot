@@ -2,26 +2,47 @@ import type { GameState, GameEvent } from '../types';
 
 // Initial State
 export const generateInitialState = (): GameState => {
+  let savedSeed: { cash: number; charm: number; max_charm: number; luck: number } | null = null;
   if (typeof localStorage !== 'undefined') {
-    localStorage.removeItem('sv_life_initial_seed');
+    try {
+      const stored = localStorage.getItem('sv_life_initial_seed');
+      if (stored) savedSeed = JSON.parse(stored);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
-  let cash, charm, luck;
-  const randCash = Math.random();
-  if (randCash < 0.6) {
-    cash = Math.floor(Math.random() * 8) + 2; // 2 - 10 万美元 (普通家庭)
-  } else if (randCash < 0.9) {
-    cash = Math.floor(Math.random() * 15) + 10; // 10 - 25 万美元 (小康中产)
+  let cash: number, charm: number, max_charm: number, luck: number;
+
+  if (savedSeed) {
+    cash = savedSeed.cash;
+    charm = savedSeed.charm;
+    max_charm = savedSeed.max_charm;
+    luck = savedSeed.luck;
   } else {
-    cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
+    const randCash = Math.random();
+    if (randCash < 0.6) {
+      cash = Math.floor(Math.random() * 8) + 2; // 2 - 10 万美元 (普通家庭)
+    } else if (randCash < 0.9) {
+      cash = Math.floor(Math.random() * 15) + 10; // 10 - 25 万美元 (小康中产)
+    } else {
+      cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
+    }
+    charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
+    max_charm = Math.min(30, Math.max(15, charm + Math.floor(Math.random() * 6) + 8));
+    luck = Math.floor(Math.random() * 100);
+
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, max_charm, luck }));
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
-  charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
-  const max_charm = Math.min(30, Math.max(15, charm + Math.floor(Math.random() * 6) + 8));
-  luck = Math.floor(Math.random() * 100);
-  
+
   const ap = 3;
   const max_ap = 3;
-  
   
   let bgMessage = '';
   if (cash > 60) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';

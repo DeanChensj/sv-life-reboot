@@ -954,9 +954,14 @@ export const events: Record<string, GameEvent> = {
   'job_hunt_fail': {
     id: 'job_hunt_fail',
     title: '求职受挫',
-    description: '由于迟迟找不到理想工作，你面临着巨大的生存和身份压力...',
+    description: '由于迟迟找不到理想工作，你面临着现实的压力...',
     choices: [
-
+      {
+        text: '【美籍/绿卡无视签证】在湾区全职闭关刷题 (消耗 $1w)',
+        condition: (s) => (s.visa === '公民' || s.visa === '绿卡') && s.cash >= 1,
+        effect: (s) => ({ cash: s.cash - 1, leetcode: Math.min(100, s.leetcode + 30), health: s.health - 5, message: '手握美籍/绿卡身份毫无遣返压力！你在家闭关狂刷 300 道 Hard 题，准备下一轮招聘季再战！' }),
+        nextEventId: 'job_hunt',
+      },
       {
         text: '去墨西哥 Tijuana 闯关重签签证 (高风险 Visa Run) - 消耗 $1w',
         condition: (s) => s.cash >= 1 && (s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)'),
@@ -975,10 +980,14 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '被迫回国',
+        text: '放弃求职 / 离开硅谷',
         effect: (s) => {
-          const reason = (s.visa === 'F1 (学生)' || s.visa === '无') ? 'OPT到期未能上岸' : ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') ? '积蓄耗尽、心灰意冷' : 'H1B 60天失业期满未能找到新工作');
-          return { status: 'game_over', message: reason + '，你最终遗憾登上了回国的航班。' };
+          const reason = (s.visa === '公民' || s.visa === '绿卡') 
+            ? '对硅谷内卷与就业市场彻底失望，你选择带上积蓄离开了加州湾区。' 
+            : ((s.visa === 'F1 (学生)' || s.visa === '无') 
+                ? 'OPT到期未能上岸，你最终遗憾登上了回国的航班。' 
+                : 'H1B 60天失业期满未能找到新工作，你最终遗憾登上了回国的航班。');
+          return { status: 'game_over', message: reason };
         },
         nextEventId: 'end',
       },
@@ -2436,8 +2445,8 @@ export const events: Record<string, GameEvent> = {
     imageUrl: 'images/layoff_box.jpg',
     choices: [
       {
-        text: '【绿卡玩家专属】领取 Severance 遣散费，全职刷题无忧备战',
-        condition: (s) => s.visa === '绿卡',
+        text: '【美籍/绿卡玩家专属】领取 Severance 遣散费，全职刷题无忧备战',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
         effect: (s) => ({
           cash: s.cash + 8,
           laid_off: true,
@@ -2445,13 +2454,13 @@ export const events: Record<string, GameEvent> = {
           job_type: 'unemployed',
           health: Math.min(100, s.health + 15),
           leetcode: Math.min(100, s.leetcode + 15),
-          message: '手握绿卡无所畏惧！你拿到了 3 个月包 Severance 遣散费 (+$8w)，在家一边散步一边刷题，从容准备下一家大厂 Offer！'
+          message: '手握美籍/绿卡无所畏惧！你拿到了 3 个月 Severance 遣散费 (+$8w)，在家一边散步一边刷题，从容准备下一家大厂 Offer！'
         }),
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【绿卡玩家专属】申请加州 EDD 失业金，休假半年放空身心',
-        condition: (s) => s.visa === '绿卡',
+        text: '【美籍/绿卡玩家专属】申请加州 EDD 失业金，休假半年放空身心',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
         effect: (s) => ({
           cash: s.cash + 3,
           laid_off: true,
@@ -2472,13 +2481,13 @@ export const events: Record<string, GameEvent> = {
           laid_off: false,
           health: Math.min(100, s.health + 10),
           network: Math.min(100, (s.network || 0) + 5),
-          message: ' 人脉爆破！你的熟人总监收到求助后连夜开绿灯将你内推拉入团队，跳过倒计时直接上岸，成功保住身份！'
+          message: ' 人脉爆破！你的熟人总监收到求助后连夜开绿灯将你内推拉入团队，跳过倒计时直接上岸！'
         }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '【工签身份】利用 60 天 H1B Grace Period 刷题限时上岸',
-        condition: (s) => s.visa !== '绿卡',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => s.leetcode > 60 
           ? { tc: 20, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '有惊无险！凭高超算法在 60 天限期内火速入职新公司保住 H1B 身份！' }
           : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，身份到期被迫登机遣返回国。' },

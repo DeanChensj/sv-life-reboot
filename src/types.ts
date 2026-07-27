@@ -43,6 +43,7 @@ export interface GameState {
   cpt_used?: boolean;
   l1_relocated?: boolean;
   mid_year?: boolean;
+  difficulty_title?: string;
 }
 
 export interface Choice {

@@ -79,6 +79,7 @@ export const generateInitialState = (): GameState => {
     has_housing: false,
     housing_name: '国内老家',
     car: 'none',
+    difficulty_title: '普通难度',
     status: 'playing',
     message: bgMessage
   };
@@ -235,23 +236,22 @@ export const events: Record<string, GameEvent> = {
   },
   'choose_year': {
     id: 'choose_year',
-    title: '选择你的时代 (难度选择)',
-    description: '宏观周期决定了个人命运。请选择你高中毕业、开启人生的年份：',
+    title: '选择游戏难度',
+    description: '宏观周期决定了个人命运。请选择你的游戏难度：',
     choices: [
-
       {
-        text: '2014年入学 (目标2018届毕业生)：黄金时代，风口起飞。',
-        effect: (s) => ({ year: 2014 }),
+        text: '简单难度 (宽松周期)：大厂招人如水漫金山，Headcount 充足。',
+        effect: (_s) => ({ year: 2014, difficulty_title: '简单难度' }),
         nextEventId: 'choose_school',
       },
       {
-        text: '2018年入学 (目标2022届毕业生)：即将经历疫情放水与过山车般的裁员潮。',
-        effect: (s) => ({ year: 2018 }),
+        text: '普通难度 (周期交替)：经历疫情放水与过山车般的裁员潮。',
+        effect: (_s) => ({ year: 2018, difficulty_title: '普通难度' }),
         nextEventId: 'choose_school',
       },
       {
-        text: '2019年入学 (目标2023届毕业生)：毕业即遇AI狂潮与地狱级卷王市场。',
-        effect: (s) => ({ year: 2019 }),
+        text: '困难难度 (AI 颠覆)：毕业即遇 AI 狂潮与地狱级 HC 锁死。',
+        effect: (_s) => ({ year: 2019, difficulty_title: '困难难度' }),
         nextEventId: 'choose_school',
       }
     ]

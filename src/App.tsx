@@ -212,10 +212,10 @@ export default function App() {
         {/* Layer 1: Year/Age, Cash, TC, Network, LeetCode, Drawer Toggle */}
         <div className="flex items-center justify-between gap-1.5 w-full">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-            {/* Age & Year Tag */}
+            {/* Age Tag */}
             <span className="flex items-center gap-1 font-bold text-[11px] text-zinc-200 bg-zinc-900 px-2 py-0.5 rounded-md shrink-0 border border-zinc-800">
               <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              {gameState.year}年·{gameState.age}岁
+              {gameState.age} 岁
             </span>
 
             {/* Cash Tag */}

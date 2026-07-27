@@ -254,12 +254,12 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
         {/* 6. Timeline Footer */}
         <div className="col-span-2 md:col-span-4 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex justify-between items-center backdrop-blur-xl">
           <div>
-            <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-0.5">当前年份</div>
-            <div className="text-lg sm:text-xl font-bold font-mono tabular-nums text-zinc-200">{gameState.year} 年</div>
+            <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-0.5">游戏难度</div>
+            <div className="text-sm sm:text-base font-bold font-mono text-emerald-300">{gameState.difficulty_title || '普通难度'}</div>
           </div>
           <div className="text-right">
-            <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-0.5">存活年龄</div>
-            <div className="text-lg sm:text-xl font-bold font-mono tabular-nums text-zinc-200">{gameState.age} 岁</div>
+            <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-0.5">当前年龄</div>
+            <div className="text-lg sm:text-xl font-bold font-mono tabular-nums text-zinc-100">{gameState.age} 岁</div>
           </div>
         </div>
 

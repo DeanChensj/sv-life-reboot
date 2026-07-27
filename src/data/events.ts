@@ -339,8 +339,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'cn_college_grad',
       },
       {
-        text: '不上大学了！拿着启动资金直接创业',
-        effect: (s) => ({ age: s.age + 2, message: '你辍学创业，体验了社会的毒打。' }),
+        text: '不上大学了！拿着启动资金直接创业 (极高风险低胜率路线)',
+        reqBadge: '极低胜率',
+        effect: (s) => ({ age: s.age + 2, is_dropout: true, message: '你放弃读大学，拿着高中毕业积累的启动资金直接投身商场，感受现实的残酷。' }),
         nextEventId: 'startup_work',
       }
     ]
@@ -2483,48 +2484,61 @@ export const events: Record<string, GameEvent> = {
   },
   'startup_work': {
     id: 'startup_work',
-    title: '初创公司风云',
-    description: '你进入了/创办了一家 Startup，每天一个人干三个人的活。现在的风向变了，关于公司的方向：',
+    title: '高中辍学创业：商场与现实的残酷',
+    description: '没有大学文凭与专业经验，你凭着几万美金启动资金带着小团队创业。商场如战场，没有学历和技术壁垒你步履维艰。',
     imageUrl: 'images/ai_startup.jpg',
     choices: [
-
       {
-        text: '坚守传统赛道 (如 SaaS / Web3)',
+        text: '坚守传统赛道 (如 App 开发 / 小软件工具)',
         effect: (s) => {
-          let winRate = 0.15;
-          if (s.year >= 2020 && s.year <= 2022) winRate = 0.35;
+          // Brutal realistic win rate for teenage high school dropouts (5% base win rate)
+          const winRate = 0.05 + (s.luck >= 75 ? 0.05 : 0);
           const win = Math.random() < winRate; 
           return win 
-            ? { cash: s.cash + 150, message: '奇迹发生！公司靠稳扎稳打被大厂收购了，你的期权兑现了大笔现金！' }
-            : { cash: Math.max(0, s.cash - 5), health: s.health - 15, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸。' };
+            ? { cash: s.cash + 80, message: '商业奇迹！你凭着极强的商业直觉打造的小工具被收购，赚到了人生第一桶金！' }
+            : { cash: Math.max(1, Math.floor(s.cash * 0.2)), health: s.health - 20, message: '经验匮乏加上资金链断裂，创业公司最终倒闭，启动资金賠掉了绝大部分。' };
         },
-        nextEventId: (s) => (s.message || '').includes('收购') ? 'sv_daily_life' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
+        nextEventId: (s) => (s.message || '').includes('收购') 
+          ? (s.visa === '公民' ? 'sv_daily_life' : 'cn_work') 
+          : 'dropout_fail',
       },
       {
-        text: '立刻 Pivot (转型) 做 AI / 大模型套壳',
+        text: '跟风 Pivot (转型) 做 AI / 大模型概念套壳',
         effect: (s) => {
           if (s.year < 2022) {
-            return { cash: s.cash - 10, health: s.health - 20, message: `现在才 ${s.year} 年，你的 AI 理念太超前了！投资人觉得你不切实际，拒绝投资，公司倒闭。` };
+            return { cash: Math.max(1, Math.floor(s.cash * 0.2)), health: s.health - 20, message: `在 ${s.year} 年盲目跟风概念缺乏研发能力，产品无人问津，启动资金迅速烧光。` };
           }
-          const win = Math.random() < 0.18;
+          // Brutal 5% win rate for non-degree AI wrappers
+          const win = Math.random() < 0.05;
           return win 
-            ? { cash: s.cash + 300, visa: '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
-            : { cash: Math.max(0, s.cash - 10), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...' };
+            ? { cash: s.cash + 200, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '极小概率踩中风口！产品被海外基金高价收回，你斩获了丰厚现金与投资移民身份！' }
+            : { cash: Math.max(1, Math.floor(s.cash * 0.2)), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '缺乏硬核算法团队，你的套壳产品被开源大模型直接背刺死掉...启动资金赔掉了绝大部分。' };
         },
-        nextEventId: (s) => (s.visa === '绿卡') ? 'post_green_card' : (s.visa === '无' ? 'dropout_fail' : 'job_hunt_fail'),
+        nextEventId: (s) => (s.message || '').includes('高价收回') 
+          ? 'post_green_card' 
+          : 'dropout_fail',
       }
     ]
   },
   'dropout_fail': {
     id: 'dropout_fail',
-    title: '创业梦碎',
-    description: '你的公司倒闭了，你不仅没有学历，也没有签证。',
+    title: '创业梦碎：人生反思',
+    description: '启动资金赔掉了九成，你深刻体会到了没有大学学历与专业技能在社会上的举步维艰。接下来的路怎么走？',
     choices: [
-
       {
-        text: '灰溜溜回国啃老',
-        effect: (s) => ({ status: 'game_over', message: '你带着失败的经历回到国内，成为了亲戚眼中的笑话。' }),
-        nextEventId: 'end'
+        text: '知错就改：用剩余积蓄重返大学 (开启择校路线)',
+        effect: (s) => ({ message: '你痛定思痛，决定带着剩余的存款重新报考大学，夯实专业文化与代码基础！' }),
+        nextEventId: 'choose_school',
+      },
+      {
+        text: '脚踏实地：先去基层大厂打工攒钱 (开启打工路线)',
+        effect: (s) => ({ cash: s.cash + 2, age: s.age + 1, message: '你放下架子去基层公司打工，积累实战社会工作经验。' }),
+        nextEventId: 'cn_work',
+      },
+      {
+        text: '彻底放弃：灰溜溜回家啃老',
+        effect: (s) => ({ status: 'game_over', message: '你带着失败的教训回到老家啃老，体验了人生的低谷。游戏结束。' }),
+        nextEventId: 'end',
       }
     ]
   },

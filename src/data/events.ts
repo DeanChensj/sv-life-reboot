@@ -3220,8 +3220,9 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => {
           const win = s.leetcode >= 50;
+          const isEmployed = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
           return win
-            ? { tc: s.tc + 3, cash: s.cash + 2, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板塞给你一份兼职外包合同，赚了点外快。' }
+            ? { tc: isEmployed ? s.tc + 3 : 0, cash: s.cash + 3, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板塞给你一份兼职外包合同与现金，赚了点外快！' }
             : { message: '你和老板聊了半天，发现对方只是想白嫖你写个订餐小程序，你礼貌地拒绝了。' };
         },
         nextEventId: 'sv_daily_life'

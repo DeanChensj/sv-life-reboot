@@ -3,11 +3,25 @@ import type { GameState, GameEvent } from '../types';
 // Initial State
 export const generateInitialState = (): GameState => {
   let savedSeed: { cash: number; charm: number; max_charm: number; luck: number } | null = null;
+  let is_ssr_unlocked = false;
+
   if (typeof localStorage !== 'undefined') {
     try {
       const stored = localStorage.getItem('sv_life_initial_seed');
       if (stored) savedSeed = JSON.parse(stored);
-    } catch (e) {}
+
+      const storedSSR = localStorage.getItem('sv_life_ssr_status');
+      if (storedSSR !== null) {
+        is_ssr_unlocked = storedSSR === '1';
+      } else {
+        is_ssr_unlocked = Math.random() < 0.08;
+        localStorage.setItem('sv_life_ssr_status', is_ssr_unlocked ? '1' : '0');
+      }
+    } catch (e) {
+      is_ssr_unlocked = Math.random() < 0.08;
+    }
+  } else {
+    is_ssr_unlocked = Math.random() < 0.08;
   }
 
   let luck: number, cash: number, charm: number, max_charm: number;
@@ -74,7 +88,7 @@ export const generateInitialState = (): GameState => {
     housing_name: '国内老家',
     car: 'none',
     difficulty_title: '普通难度',
-    is_ssr_unlocked: Math.random() < 0.08,
+    is_ssr_unlocked,
     status: 'playing',
     message: bgMessage
   };
@@ -161,7 +175,7 @@ const midYearEventRouter = (s: GameState) => {
     }
 
     // 4. Homeowners ONLY: house_warming_party (乔迁派对)
-    const isRealHome = s.has_housing && s.housing_name && !['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+    const isRealHome = s.has_housing && s.housing_name && !['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
     if (isRealHome && Math.random() < 0.20) {
       return 'house_warming_party';
     }
@@ -241,7 +255,8 @@ export const events: Record<string, GameEvent> = {
           cash: (s.cash || 0) + 15,
           network: 25,
           charm: Math.min((s.max_charm || 25), s.charm + 6),
-          win_threshold: 400
+          win_threshold: 400,
+          housing_name: '加州湾区老宅'
         }),
         nextEventId: 'choose_year',
       },
@@ -749,7 +764,7 @@ export const events: Record<string, GameEvent> = {
             : { tc: 10, health: s.health - 30, message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
         },
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       }
@@ -765,7 +780,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.school === 'cmu',
         effect: (s) => ({ health: s.health - 15, tc: 25, laid_off: false, cash: s.cash + 10, job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '学长直接把你拉进了核心组，开启了高压生活。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -789,7 +804,7 @@ export const events: Record<string, GameEvent> = {
           message: ' 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸！'
         }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -798,7 +813,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.school === 'state',
         effect: (s) => ({ tc: 15, laid_off: false, health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -822,7 +837,7 @@ export const events: Record<string, GameEvent> = {
           else if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30;
           if (s.leetcode < req) return 'job_hunt_fail';
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -831,7 +846,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 60,
         effect: (s) => ({ tc: 38, laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -839,7 +854,7 @@ export const events: Record<string, GameEvent> = {
         text: '面试普通 Startup',
         effect: (s) => ({ tc: 18, laid_off: false, health: s.health - 2, job_type: 'startup', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -849,7 +864,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 45,
         effect: (s) => ({ tc: s.year >= 2023 ? 40 : 30, laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -858,7 +873,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 30,
         effect: (s) => ({ tc: 24, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -867,7 +882,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 40,
         effect: (s) => ({ tc: s.year >= 2023 ? 60 : 26, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你披上了黑色皮衣！赶上 AI 芯片牛市狂潮，你的包裹因为股票暴涨将达到 60w 的恐怖数字！' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -883,7 +898,7 @@ export const events: Record<string, GameEvent> = {
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 40) return 'job_hunt';
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       }
@@ -2570,7 +2585,7 @@ export const events: Record<string, GameEvent> = {
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 45 && !s.job_type) return 'job_hunt';
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       },
@@ -2578,7 +2593,7 @@ export const events: Record<string, GameEvent> = {
         text: '去大厂当 Applied Scientist (应用科学家)',
         effect: (s) => ({ tc: 45, cash: s.cash + 15, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', job_type: 'ai_research', level: 'L5', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，生活相对安稳。' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
       }

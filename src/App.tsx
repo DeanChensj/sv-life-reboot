@@ -185,6 +185,7 @@ export default function App() {
 
   const resetGame = () => {
     localStorage.removeItem('sv_life_initial_seed');
+    localStorage.removeItem('sv_life_ssr_status');
     setGameState(generateInitialState());
     setCurrentEventId('choose_trait');
     setShowCharacterPass(false);

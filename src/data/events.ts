@@ -61,6 +61,7 @@ export const generateInitialState = (): GameState => {
     leetcode: 10,
     visa: '无',
     tc: 0,
+    macro_economy: 'neutral',
     rent: 4,
     charm,
     max_charm,
@@ -88,6 +89,20 @@ export const generateInitialState = (): GameState => {
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
 const midYearEventRouter = (s: GameState) => {
+  // Economy News Broadcasts
+  // Bull/Bear: 14% chance per click -> ~36% chance per year -> ~2.7 years average span
+  // Neutral: 5% chance per click -> ~14% chance per year -> ~7 years average span
+  const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
+  if (Math.random() < shiftChance) {
+    if (s.macro_economy === 'bull') {
+      return Math.random() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
+    } else if (s.macro_economy === 'bear') {
+      return Math.random() < 0.6 ? 'news_neutral_market' : 'news_bull_market_start';
+    } else {
+      return Math.random() < 0.5 ? 'news_bull_market_start' : 'news_bear_market_crash';
+    }
+  }
+
   const rand = Math.random();
   const isWorking = s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
   const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
@@ -769,15 +784,19 @@ export const events: Record<string, GameEvent> = {
         text: '面试 FLAG 大厂 (Google/Apple 等养老厂)',
         effect: (s) => {
           let req = 50;
-          if (s.year >= 2023) req = 70;
+          if (s.macro_economy === 'bull') req = 30;
+          else if (s.macro_economy === 'bear') req = 75;
+          else if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30; // 疫情放水期
           return s.leetcode >= req 
-            ? { tc: s.year >= 2023 ? 30 : 26, laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: `上岸！${s.year}年大厂要求LeetCode>${req}，你顺利通过。` }
-            : { health: s.health - 10, message: `面试被挂了！${s.year}年市场要求LeetCode>${req}。` };
+            ? { tc: s.year >= 2023 ? 30 : 26, laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: `上岸！当前市场环境要求LeetCode>${req}，你顺利通过。` }
+            : { health: s.health - 10, message: `面试被挂了！当前市场环境要求LeetCode>${req}。` };
         },
         nextEventId: (s: GameState) => {
           let req = 50;
-          if (s.year >= 2023) req = 70;
+          if (s.macro_economy === 'bull') req = 30;
+          else if (s.macro_economy === 'bear') req = 75;
+          else if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30;
           if (s.leetcode < req) return 'job_hunt_fail';
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家'].includes(s.housing_name);
@@ -832,7 +851,8 @@ export const events: Record<string, GameEvent> = {
       {
         text: '挑战顶级量化基金 (Quant) (极高门槛, 力扣>=75提高胜率)',
         effect: (s) => {
-          const winRate = 0.18 + (s.leetcode >= 75 ? 0.27 : s.leetcode >= 50 ? 0.12 : 0) + (s.luck / 100) * 0.12;
+          const econBonus = s.macro_economy === 'bull' ? 0.15 : s.macro_economy === 'bear' ? -0.15 : 0;
+          const winRate = 0.18 + (s.leetcode >= 75 ? 0.27 : s.leetcode >= 50 ? 0.12 : 0) + (s.luck / 100) * 0.12 + econBonus;
           const pass = Math.random() < winRate;
           return pass 
             ? { tc: 40, laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
@@ -1233,7 +1253,14 @@ export const events: Record<string, GameEvent> = {
            const livingExpense = 3.0;
            const totalExpense = housingExpense + carExpense + livingExpense;
 
-           const preTaxTC = (!s.laid_off && s.job_type !== 'unemployed') && s.tc > 0 ? s.tc : 0;
+           let newEconomy = s.macro_economy || 'neutral';
+           let economyMsg = '';
+           // Economy shifts are now handled by explicit News Broadcast events during sv_daily_life
+           
+           const marketMultiplier = newEconomy === 'bull' ? 1.3 : newEconomy === 'bear' ? 0.7 : 1.0;
+           const rsuMsg = newEconomy === 'bull' ? ' (牛市 RSU 浮盈 1.3x)' : newEconomy === 'bear' ? ' (熊市 RSU 缩水 0.7x)' : '';
+
+           const preTaxTC = (!s.laid_off && s.job_type !== 'unemployed') && s.tc > 0 ? (s.tc * marketMultiplier) : 0;
            const postTaxIncome = preTaxTC * 0.75; 
            const netIncome = postTaxIncome - totalExpense;
            
@@ -1285,8 +1312,10 @@ export const events: Record<string, GameEvent> = {
             let updatedTC = s.tc;
             let meritMsg = '';
             const isWorking = !s.laid_off && s.job_type && s.job_type !== 'unemployed';
-            if (isWorking && Math.random() < 0.45) {
-              const refreshAmt = Math.random() < 0.3 ? 3.5 : 2.0;
+            const refreshChance = newEconomy === 'bull' ? 0.60 : newEconomy === 'bear' ? 0.15 : 0.45;
+            
+            if (isWorking && Math.random() < refreshChance) {
+              const refreshAmt = Math.random() < 0.3 ? (newEconomy === 'bull' ? 5.0 : 3.5) : (newEconomy === 'bear' ? 1.0 : 2.0);
               updatedTC = s.tc + refreshAmt;
               meritMsg = ` 📈 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
             }
@@ -1303,7 +1332,8 @@ export const events: Record<string, GameEvent> = {
               cash: s.cash + netIncome,
               tc: updatedTC,
               health: newHealth,
-              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年净结余 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${gcMsg}${companyMsg}${h1bMsg}${meritMsg}` 
+              macro_economy: newEconomy,
+              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年净结余 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元${rsuMsg}。${economyMsg}${gcMsg}${companyMsg}${h1bMsg}${meritMsg}` 
            };
         },
         nextEventId: (s) => {
@@ -2653,6 +2683,42 @@ export const events: Record<string, GameEvent> = {
             : { tc: 0, laid_off: true, job_type: 'unemployed', message: 'Manager 冷笑一声：“现在是买方市场，门在那边。” 你被解雇了。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
+      }
+    ]
+  },
+  'news_bull_market_start': {
+    id: 'news_bull_market_start',
+    title: '📈 突发新闻：史诗级牛市开启！',
+    description: '手机弹出华尔街日报推送："美联储意外宣布降息 50 个基点，纳斯达克指数创历史新高！各大 AI 独角兽宣布完成百亿融资！"\n\nBlind 上的跳槽包裹满天飞，连前台都在聊股票。硅谷的空气里充满了金钱的味道。',
+    choices: [
+      {
+        text: '了解 (Ack)',
+        effect: (s) => ({ macro_economy: 'bull', message: '宏观经济进入【狂暴大牛市】！现在大厂疯狂扩招，面试门槛大幅降低，年底 RSU 必定暴涨！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'news_bear_market_crash': {
+    id: 'news_bear_market_crash',
+    title: '📉 突发新闻：资本寒冬降临！',
+    description: '手机弹出 Bloomberg 推送："通胀超预期，美联储宣布暴力加息！纳斯达克单日暴跌 5%！"\n\n紧接着，Blind 上传出多个大厂即将冻结招聘 (Hiring Freeze) 甚至筹备万人大裁员的风声。硅谷的资本盛宴戛然而止。',
+    choices: [
+      {
+        text: '了解 (Ack)',
+        effect: (s) => ({ macro_economy: 'bear', message: '宏观经济进入【裁员大熊市】！现在求职面试将变成地狱难度 (需要刷海量 LeetCode)，年底 RSU 也会严重缩水！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'news_neutral_market': {
+    id: 'news_neutral_market',
+    title: '⚖️ 突发新闻：市场回归理性',
+    description: '经历了前段时间的剧烈波动，华尔街和硅谷大厂达成了某种默契。\n\n"各大科技公司表示将专注盈利和核心业务，停止无序扩张，但也不会进行大规模裁员。" 市场情绪逐渐平稳。',
+    choices: [
+      {
+        text: '了解 (Ack)',
+        effect: (s) => ({ macro_economy: 'neutral', message: '宏观经济回归【正常震荡期】。一切按部就班，靠实力说话。' }),
+        nextEventId: 'sv_daily_life'
       }
     ]
   },

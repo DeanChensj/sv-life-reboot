@@ -97,9 +97,20 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
           </div>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter text-zinc-100 mb-0.5">
-          硅谷模拟人生
-        </h1>
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-1">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter text-zinc-100 mb-0.5">
+            硅谷模拟人生
+          </h1>
+          {gameState.macro_economy && (
+            <div className={`px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-mono font-bold whitespace-nowrap flex items-center shadow-sm ${
+              gameState.macro_economy === 'bull' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+              gameState.macro_economy === 'bear' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+              'bg-zinc-700/30 text-zinc-400 border border-zinc-600/50'
+            }`}>
+              {gameState.macro_economy === 'bull' ? '📈 狂暴大牛市' : gameState.macro_economy === 'bear' ? '📉 裁员大熊市' : '⚖️ 正常震荡期'}
+            </div>
+          )}
+        </div>
         <p className="text-zinc-400 text-xs sm:text-sm font-mono tracking-tight">
           Silicon Valley Survival & Career Simulator
         </p>

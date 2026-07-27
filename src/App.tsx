@@ -52,6 +52,23 @@ export default function App() {
     // 1. Calculate new state
     const newState = { ...gameState, message: '', laid_off: false, imageUrl: undefined }; // Clear old message, image and generic flags
     const effectResult = choice.effect(gameState);
+    
+    // ==========================================
+    // IMMUNE SYSTEM: STATE MIDDLEWARE 
+    // ==========================================
+    // Normalize Layoff State: If an event sets laid_off: true, force tc=0 and unemployed
+    if (effectResult.laid_off === true) {
+      effectResult.tc = 0;
+      effectResult.job_type = 'unemployed';
+    }
+    // Normalize Employment State: If an event gives a job, force laid_off: false
+    if (effectResult.job_type && effectResult.job_type !== 'unemployed') {
+      effectResult.laid_off = false;
+    }
+    // Numerical Safety Guards
+    if (effectResult.cash !== undefined && isNaN(effectResult.cash)) effectResult.cash = gameState.cash;
+    if (effectResult.health !== undefined && isNaN(effectResult.health)) effectResult.health = gameState.health;
+    
     Object.assign(newState, effectResult); // Apply new effects
     
     // Auto increment year based on age difference, ONLY if year wasn't explicitly set

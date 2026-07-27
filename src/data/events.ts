@@ -2610,6 +2610,16 @@ export const events: Record<string, GameEvent> = {
           }
         },
         nextEventId: 'end',
+      },
+      {
+        text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 3),
+          company_valuation: Math.max(100, (s.company_valuation || 1000) - 300),
+          health: Math.max(0, s.health - 10),
+          message: '资金与资源有限，你决定开源节流，挥泪解雇了一批员工。虽然度过了危机，但公司士气大跌，你的心理压力极大。'
+        }),
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },

@@ -13,26 +13,18 @@ const getLevelScaledTC = (baseTC: number, level?: string): number => {
 
 export const generateInitialState = (): GameState => {
   let savedSeed: { cash: number; charm: number; max_charm: number; luck: number } | null = null;
-  let is_ssr_unlocked = false;
 
   if (typeof localStorage !== 'undefined') {
     try {
       const stored = localStorage.getItem('sv_life_initial_seed');
       if (stored) savedSeed = JSON.parse(stored);
-
-      const storedSSR = localStorage.getItem('sv_life_ssr_status');
-      if (storedSSR !== null) {
-        is_ssr_unlocked = storedSSR === '1';
-      } else {
-        is_ssr_unlocked = Math.random() < 0.08;
-        localStorage.setItem('sv_life_ssr_status', is_ssr_unlocked ? '1' : '0');
-      }
     } catch (e) {
-      is_ssr_unlocked = Math.random() < 0.08;
+      // Ignore storage errors
     }
-  } else {
-    is_ssr_unlocked = Math.random() < 0.08;
   }
+
+  // Fresh 8% random roll for SSR Native US Citizen trait on every new game restart
+  const is_ssr_unlocked = Math.random() < 0.08;
 
   let luck: number, cash: number, charm: number, max_charm: number;
 

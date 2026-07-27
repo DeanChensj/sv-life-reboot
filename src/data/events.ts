@@ -7,24 +7,21 @@ export const generateInitialState = (): GameState => {
     try {
       const stored = localStorage.getItem('sv_life_initial_seed');
       if (stored) savedSeed = JSON.parse(stored);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) {}
   }
 
-  let cash: number, charm: number, max_charm: number, luck: number;
+  let luck: number, cash: number, charm: number, max_charm: number;
 
   if (savedSeed) {
+    luck = savedSeed.luck;
     cash = savedSeed.cash;
     charm = savedSeed.charm;
     max_charm = savedSeed.max_charm;
-    luck = savedSeed.luck;
   } else {
-    const randCash = Math.random();
-    if (randCash < 0.6) {
-      cash = Math.floor(Math.random() * 8) + 2; // 2 - 10 万美元 (普通家庭)
-    } else if (randCash < 0.9) {
-      cash = Math.floor(Math.random() * 15) + 10; // 10 - 25 万美元 (小康中产)
+    // Generate new if no seed
+    const isRich = Math.random() < 0.15; // 15% 概率富二代
+    if (!isRich) {
+      cash = Math.floor(Math.random() * 5) + 8; // 8 - 12 万美元 (中产家庭)
     } else {
       cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
     }
@@ -35,18 +32,15 @@ export const generateInitialState = (): GameState => {
     if (typeof localStorage !== 'undefined') {
       try {
         localStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, max_charm, luck }));
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
     }
   }
 
-  const ap = 3;
-  const max_ap = 3;
+  let ap = 10;
+  let max_ap = 10;
   
-  let bgMessage = '';
-  if (cash > 60) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';
-  else if (cash < 20) bgMessage += '你出生在一个普通家庭，预算非常吃紧。';
+  let bgMessage = `你出生了。你的初始魅力是 ${charm}，运气值是 ${luck}。`;
+  if (cash >= 25) bgMessage += `你出生在一个非常富裕的家庭，父母直接给了你 ${cash} 万美元的启动资金！`;
   else bgMessage += '你出生在一个小康家庭。';
 
   if (charm >= 9) bgMessage += ' 顺便一提，你从小就长得像大明星，走到哪里都是焦点。';
@@ -1087,9 +1081,9 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && !s.message.includes('Hackathon'),
         hideIfUnavailable: true,
         effect: (s) => {
-          const win = Math.random() < (0.35 + s.leetcode / 300);
+          const win = Math.random() < (0.10 + s.leetcode / 800);
           return win
-            ? { cash: s.cash + 22, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $35w 支票支持你们继续研发！' }
+            ? { cash: s.cash + 8, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
             : { cash: s.cash - 0.5, health: s.health - 15, leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
         },
         nextEventId: 'sv_daily_life',

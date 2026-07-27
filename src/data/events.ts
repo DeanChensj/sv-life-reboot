@@ -148,6 +148,20 @@ const midYearEventRouter = (s: GameState) => {
       return 'startup_angel_investing';
     }
 
+    // 6. Late Game Crises (Age >= 35 or Year >= 2024 or Homeowners)
+    if (s.age >= 35 && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.25) {
+      return 'midlife_management_pivot';
+    }
+    if (s.year >= 2024 && isWorking && Math.random() < 0.20) {
+      return 'ai_disruption_existential';
+    }
+    if (isRealHome && s.age >= 32 && Math.random() < 0.20) {
+      return 'property_hoa_special_assessment';
+    }
+    if (s.age >= 35 && s.health <= 60 && Math.random() < 0.25) {
+      return 'health_burnout_warning';
+    }
+
     // Only non-Green Card / non-US workers face visa checks
     if (s.visa !== '绿卡' && s.visa !== '无') {
         lifeEvents.push('visa_check');
@@ -2614,6 +2628,109 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(45, s.luck + 8),
           leetcode: Math.min(100, s.leetcode + 10),
           message: '项目登上了 GitHub Trending 榜首！全球几万开发者给你送 Star，连 Sam Altman 都转发了你的 Tweet！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'midlife_management_pivot': {
+    id: 'midlife_management_pivot',
+    title: '【35岁中年危机】管理岗转型与 IC 路线抉择',
+    description: '年过 35，组里新招的 00 后应届生全是会用 Vibecoding 和 AI Agent 的效率怪兽！高层推行“扁平化去除中层管理”，大老板找你谈话：要求你转型 EM 承担背指标背 PIP 的角色，或者继续做 IC 但带头做 AI 转型！',
+    choices: [
+      {
+        text: '【转型 M1/EM 管理岗】承担背指标背 PIP 责任，管理 12 人团队',
+        effect: (s) => ({
+          tc: s.tc + 15,
+          health: Math.max(10, s.health - 20),
+          charm: Math.min(s.max_charm || 25, s.charm + 3),
+          message: '你升任了 EM 管理岗！TC 飙升，但每天要在各类汇报与背 PIP 的沉重压力下度过，白头发暴增。'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【死守 IC 架构师】做纯粹的技术专家，拒绝开扯皮管理会',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 15),
+          health: Math.min(100, s.health + 10),
+          message: '你守住了纯粹技术人的尊严！虽然放弃了管理岗加薪，但工作与生活恢复了健康平衡！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'ai_disruption_existential': {
+    id: 'ai_disruption_existential',
+    title: '【AI 冲击危机】部门底层代码被 AI Agent 全面重构',
+    description: '公司全员接入最新的自研代码大模型！你过去写了 5 年的 Java/C++ 中台系统被 AI Agent 在 10 分钟内全自动用 Rust 重构并部署完成。VP 宣布部门将“精简 30% 传统开发人员”。',
+    choices: [
+      {
+        text: '【拥抱 AI 全面重构】主动领头组建 AI Agent 工作流，把所有业务线接入 LLM',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 15),
+          tc: s.tc + 10,
+          luck: Math.min(99, s.luck + 5),
+          message: '你成为了公司的 AI 转型功臣！不仅免受裁员波及，还被 VP 点名表彰带头领跑 AI 新时代！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【死守传统底层系统】强调 Legacy Code 维护的重要性与安全性',
+        effect: (s) => {
+          const win = Math.random() < 0.40;
+          return win
+            ? { health: s.health + 5, message: '老系统发生重大产线事故，全球只有你懂得如何救火！你成功凭借稀缺性保住了铁饭碗！' }
+            : { laid_off: true, health: s.health - 15, message: '部门最终决定整体重组裁撤！你拿着 Severance 遣散费步入了中年求职市场。' };
+        },
+        nextEventId: (s) => s.laid_off ? 'layoff_hit' : 'sv_daily_life'
+      }
+    ]
+  },
+  'property_hoa_special_assessment': {
+    id: 'property_hoa_special_assessment',
+    title: '【湾区房产危机】HOA 专项摊派与房屋天价大修账单',
+    description: '你名下的湾区房产收到了 HOA 业委会的紧急挂号信！由于加州暴雨与房屋地基沉降，社区需要整体更换瓦片屋顶并修缮排水管，HOA 宣布向每户发起 $3.5w 美金的 Special Assessment 专项特别摊派账单！',
+    choices: [
+      {
+        text: '【爽快缴纳全款】咬牙拿出流动资金，彻底修缮地基屋顶',
+        effect: (s) => ({
+          cash: Math.max(-0.5, s.cash - 3.5),
+          health: s.health + 5,
+          message: '你痛心地划走了 3.5 万美金！但修缮后的房子在 Zillow 上的估值立刻大涨，房屋安全性大增。'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【加入 HOA 业委会抗争】在社区业主大会上与 HOA 主席展开大战',
+        effect: (s) => ({
+          charm: Math.min(s.max_charm || 25, s.charm + 3),
+          health: Math.max(10, s.health - 15),
+          message: '你在邻居群里化身意见领袖，成功把摊派金额砍到了 $1.5w！虽然省了钱，但整整三个星期都在和业委会扯皮，身心俱疲。'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'health_burnout_warning': {
+    id: 'health_burnout_warning',
+    title: '【中年体能警报】Stanford Health 体检预警',
+    description: '在 Stanford Health 的年度体检中，医生严肃地指着你的报告：中度脂肪肝、腰椎 L4-L5 间盘突出、血压血脂双双超标。“如果你继续保持每天坐 10 个小时、高压冲刺代码的生活，5 年内猝死风险高达 40%！”',
+    choices: [
+      {
+        text: '【开启彻底保养】买升降桌、立式办公、每周 3 次皮拉提斯与私人教练 (花费 $1w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 1),
+          health: Math.min(100, s.health + 25),
+          message: '健康就是最大的财富！经过半年的体能恢复，你的身体各项指标全面回归正常，神清气爽！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【轻伤不下火线】吃降压药硬抗，继续为下一个 Promotable Project 拼命',
+        effect: (s) => ({
+          health: Math.max(10, s.health - 20),
+          tc: s.tc + 5,
+          message: '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
         }),
         nextEventId: 'sv_daily_life'
       }

@@ -820,7 +820,7 @@ export const events: Record<string, GameEvent> = {
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
           return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
-        nextEventId: (s) => ((s.message || '').includes('🎉') ? 'promo_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('🎉') ? 'promo_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
@@ -838,7 +838,7 @@ export const events: Record<string, GameEvent> = {
           if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, health: s.health - 30, tc: s.tc + 18, level: 'L6 (Staff)', message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
           return { mid_year: true, health: s.health - 20, tc: Math.floor(s.tc * 1.15), message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
       {
         text: '【年度重心：拓展副业】经营小红书与独立开发',
@@ -1294,7 +1294,7 @@ export const events: Record<string, GameEvent> = {
             ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), last_promo_age: s.age, message: '🎉 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
             : { health: Math.max(10, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
         },
-        nextEventId: (s) => ((s.message || '').includes('🎉') ? 'promo_celebration' : 'sv_daily_life'),
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : ((s.message || '').includes('🎉') ? 'promo_celebration' : 'sv_daily_life')),
       },
       {
         text: '准点下班，躺平拿 Meets (保重身体)',
@@ -1311,6 +1311,32 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗 (健康 +5)',
         effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level} 的职级头衔，包裹与职场地位同步跃升！` }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'l6_staff_celebration': {
+    id: 'l6_staff_celebration',
+    title: '🏆 突破硅谷天花板！晋升 L6 Staff 架构师',
+    description: '轰动全公司！你突破了 35 岁天花板与硅谷码农最大天堑，正式晋升为 L6 Staff Engineer 架构师！手握跨组技术决策权，年薪总包与期权迈入顶级行业前列。',
+    choices: [
+      {
+        text: '【大摆宴席】在 Santana Row 举办全组升职庆功宴 (消耗 $0.5w, 魅力/健康加成)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.5),
+          health: Math.min(100, s.health + 20),
+          charm: Math.min(25, s.charm + 5),
+          message: '全组同事与 VP 亲临现场向你祝贺！你挂上了 L6 Staff 的终极胸牌，成为了湾区技术圈里的传奇神仙！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【深藏功名】保持低调，发小红书“L5 升 L6 心得与系统架构面经”',
+        effect: (s) => ({
+          charm: Math.min(25, s.charm + 6),
+          luck: Math.min(45, s.luck + 10),
+          message: '干货面经收割了数千赞！你被尊称为小红书与 Blind 上大佬级技术导师！'
+        }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -1689,16 +1715,39 @@ export const events: Record<string, GameEvent> = {
   },
   'layoff_hit': {
     id: 'layoff_hit',
-    title: '不幸被裁',
-    description: '你还是被裁了，H1B 只有 60 天 grace period。',
+    title: '不幸被裁 (裁员风暴)',
+    description: '不幸遭遇了湾区科技公司大厂裁员潮，你抱着个人物品箱退出了 Slack。',
     imageUrl: 'images/layoff_box.jpg',
     choices: [
-
       {
-        text: '利用高超的刷题技术迅速上岸',
+        text: '【绿卡玩家专属】领取 Severance 遣散费，全职刷题无忧备战',
+        condition: (s) => s.visa === '绿卡',
+        effect: (s) => ({
+          cash: s.cash + 8,
+          laid_off: false,
+          health: Math.min(100, s.health + 15),
+          leetcode: Math.min(100, s.leetcode + 15),
+          message: '手握绿卡无所畏惧！你拿到了 3 个月包 Severance 遣散费 (+$8w)，在家一边散步一边刷题，从容准备下一家大厂 Offer！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【绿卡玩家专属】申请加州 EDD 失业金，休假半年放空身心',
+        condition: (s) => s.visa === '绿卡',
+        effect: (s) => ({
+          cash: s.cash + 3,
+          laid_off: false,
+          health: Math.min(100, s.health + 25),
+          message: '领着加州 EDD 官方失业补贴，你顺便休假半年去 Lake Tahoe 滑雪，心态极度放松！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【工签身份】利用 60 天 H1B Grace Period 刷题限时上岸',
+        condition: (s) => s.visa !== '绿卡',
         effect: (s) => s.leetcode > 60 
-          ? { tc: 20, laid_off: false, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '有惊无险，火速入职了新公司保住身份。' }
-          : { status: 'game_over', message: '没在60天内找到工作，遣返回国。' },
+          ? { tc: 20, laid_off: false, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '有惊无险！凭高超算法在 60 天限期内火速入职新公司保住 H1B 身份！' }
+          : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，身份到期被迫登机遣返回国。' },
         nextEventId: (s) => s.leetcode > 60 ? 'sv_daily_life' : 'end',
       }
     ]

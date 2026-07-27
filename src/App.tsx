@@ -528,7 +528,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {gameState.charm >= 18 && (
+                      {gameState.charm >= 24 && (
                         <div className="bg-gradient-to-r from-rose-500/15 via-zinc-900 to-zinc-900 border border-rose-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(244,63,94,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-rose-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>

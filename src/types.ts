@@ -15,6 +15,7 @@ export interface GameState {
   year: number; // 当前年份
   gc_progress: number; // 绿卡排期进度 0-5 年
   is_new_job?: boolean; // Flag to indicate a job hop happened
+  is_ssr_unlocked?: boolean; // 8% random roll for SSR Native US Citizen trait
   gc_stage?: 'not_started' | 'perm_processing' | 'perm_audit' | 'i140_processing' | 'i140_rfe' | 'i140_approved' | 'waiting_pd' | 'i485_pending' | 'approved';
   has_us_degree: boolean;
   school: string;

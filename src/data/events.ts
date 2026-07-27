@@ -74,6 +74,7 @@ export const generateInitialState = (): GameState => {
     housing_name: '国内老家',
     car: 'none',
     difficulty_title: '普通难度',
+    is_ssr_unlocked: Math.random() < 0.08,
     status: 'playing',
     message: bgMessage
   };
@@ -228,13 +229,16 @@ export const events: Record<string, GameEvent> = {
     description: '在转生到硅谷之前，上帝给了你一次选择天赋的机会。每个天赋都有独特的加成，也伴随着相应的代价。',
     choices: [
       {
-        text: '【隐藏款 SSR·原生美籍】湾区二代，生在终点线！持有美国护照，终身免除 H1B 抽签、PERM 排期与 60 天失业倒计时。',
-        reqBadge: 'SSR 特权',
+        text: '【隐藏款 SSR·原生美籍】湾区二代，生在终点线！持有美国护照，自带 $15w 留学专款，终身免除 H1B 抽签与 PERM 排期。',
+        reqBadge: '8% 概率开局刷出',
+        hideIfUnavailable: true,
+        condition: (s) => !!s.is_ssr_unlocked,
         effect: (s) => ({
           trait_title: '原生美籍',
           visa: '公民',
           gc_progress: 5,
           gc_stage: 'approved',
+          cash: (s.cash || 0) + 15,
           network: 25,
           charm: Math.min((s.max_charm || 25), s.charm + 6),
           win_threshold: 400
@@ -298,23 +302,24 @@ export const events: Record<string, GameEvent> = {
       {
         text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
         condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: s.cash - 30, visa: 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
+        effect: (s) => ({ cash: s.cash - 30, visa: s.visa === '公民' ? '公民' : 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
         text: '理工强校大U (如 UIUC/UW/UMich) (四年总开销 25 万美元)',
         condition: (s) => s.cash >= 25,
-        effect: (s) => ({ cash: s.cash - 25, visa: 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
+        effect: (s) => ({ cash: s.cash - 25, visa: s.visa === '公民' ? '公民' : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
         text: '美国普通公立大学 (四年总开销 15 万美元)',
         condition: (s) => s.cash >= 15,
-        effect: (s) => ({ cash: s.cash - 15, visa: 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + 2, housing_name: '美大U 校内宿舍', message: '你飞往美国，准备开启无忧无虑的本科生活。' }),
+        effect: (s) => ({ cash: s.cash - 15, visa: s.visa === '公民' ? '公民' : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + 2, housing_name: '美大U 校内宿舍', message: '你飞往美国，准备开启无忧无虑的本科生活。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
         text: '在国内读本科 (四年总开销 2 万美元)',
+        condition: (s) => s.visa !== '公民',
         effect: (s) => ({ cash: s.cash - 2, housing_name: '国内大学宿舍' }),
         nextEventId: 'cn_college_grad',
       },

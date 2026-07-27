@@ -912,8 +912,21 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 40,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const baseTc = s.year >= 2023 ? 60 : 26;
-          return { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: lvl, message: '你披上了黑色皮衣！赶上 AI 芯片牛市狂潮，你的包裹因为股票暴涨将达到 60w 的恐怖数字！' };
+          // Base TC is modest ($28w), but in AI Bull Market (bull), stock surge skyrockets TC to $68w!
+          const isBull = s.macro_economy === 'bull' || s.year >= 2023;
+          const baseTc = isBull ? 68 : 28;
+          return {
+            tc: getLevelScaledTC(baseTc, lvl),
+            laid_off: false,
+            health: s.health - 5,
+            cash: s.cash + 5,
+            company: 'nvidia',
+            job_type: 'nvidia',
+            level: lvl,
+            message: isBull 
+              ? '赶上 AI 芯片牛市狂潮！皮衣黄刀法精准，你的英伟达股票持仓大幅暴涨，总包爆表达到 68w 美元！' 
+              : '你加入了英伟达芯片团队，拿到了 $28w 基础薪资包裹，等待下一轮 AI 牛市风口的到来！'
+          };
         },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
@@ -921,15 +934,22 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '挑战顶级量化基金 (Quant) (极高门槛, 力扣>=75提高胜率)',
+        text: '挑战顶级量化基金 (Quant) (地狱门槛: 仅限 CS四大 或 PhD)',
+        reqBadge: '仅限 CS四大/PhD',
+        condition: (s) => (s.school === 'cmu' || s.is_phd),
         effect: (s) => {
           const econBonus = s.macro_economy === 'bull' ? 0.15 : s.macro_economy === 'bear' ? -0.15 : 0;
-          const winRate = 0.18 + (s.leetcode >= 75 ? 0.27 : s.leetcode >= 50 ? 0.12 : 0) + (s.luck / 100) * 0.12 + econBonus;
+          let winRate = 0.15 + econBonus;
+          if (s.leetcode >= 75) winRate += 0.30;
+          else if (s.leetcode >= 60) winRate += 0.15;
+          if (s.school === 'cmu' && s.is_phd) winRate += 0.20;
+          winRate += (s.luck / 100) * 0.10;
+
           const pass = Math.random() < winRate;
           const lvl = s.level ? s.level : 'Quant';
           return pass 
-            ? { tc: getLevelScaledTC(40, lvl), laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
-            : { health: s.health - 10, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你遗憾落选...' };
+            ? { tc: getLevelScaledTC(42, lvl), laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '凭顶尖四大名校与 PhD 学术背景！你击败了众多竞争者，拿下了顶级 Quant Fund 42w+ 包裹 Offer！' }
+            : { health: s.health - 12, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你的简历或面经遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 40) return 'job_hunt';

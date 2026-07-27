@@ -602,7 +602,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '领养一只布偶猫/金毛 (每年额外花费 1w)',
         condition: (s) => s.rent >= 2, // Needs at least a 2b2b to have space
-        effect: (s) => ({ rent: s.rent + 1, charm: s.charm + 10, health: s.health + 30, has_housing: true, housing_name: s.housing_name || 'San Jose 公寓', has_pet: true, message: '你领养了毛孩子！虽然每年要多花不少钱买猫粮/狗粮和看兽医，但每次下班回家看到它，你的疲惫都一扫而空，而且在相亲软件上放宠物照片让你大受欢迎！' }),
+        effect: (s) => ({ rent: s.rent + 1, charm: Math.min(25, s.charm + 5), health: Math.min(100, s.health + 20), has_housing: true, housing_name: s.housing_name || 'San Jose 公寓', has_pet: true, pet_name: '布偶猫', message: '你领养了毛孩子布偶猫！虽然每年要多花不少钱买猫粮与看兽医，但每次下班回家看到它，你的疲惫都一扫而空，而且在相亲软件上放宠物照片让你大受欢迎！' }),
         nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
 
@@ -1325,7 +1325,7 @@ export const events: Record<string, GameEvent> = {
         text: '【初识匹配】周末 Santana Row 喝奶茶 Coffee Date (单身 / 寻求 Match)',
         condition: (s) => !s.relationship_status || s.relationship_status === 'single',
         effect: (s) => {
-          const winRate = 0.35 + (s.charm * 0.02) + (s.luck * 0.002);
+          const winRate = 0.35 + (s.charm * 0.02) + (s.luck * 0.002) + (s.has_pet ? 0.20 : 0);
           const pass = Math.random() < winRate;
           return pass 
             ? { relationship_status: 'matched', charm: Math.min(25, s.charm + 2), imageUrl: 'images/boba_date.jpg', message: '【CMB 匹配成功 (Matched)】因为主页挂了滑雪和宠物照片，你成功匹配到了一位大厂同行！双方加了微信，聊得非常投机，进入互称 Matched 的匹配阶段！' }

@@ -151,6 +151,15 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 <div className="font-bold text-zinc-200 group-hover:text-purple-400 transition-colors">游艇高端局 (需要一定社交资质)</div>
                 <div className="text-xs text-zinc-500 mt-1">入场费: $5w | 高风险高回报：可能结识大佬涨 TC，也可能白扔钱扣健康。</div>
               </button>
+
+              <button
+                disabled={gameState.cash < 0.5 || gameState.has_pet}
+                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, pet_name: '日系柴犬', charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在南湾救助站领养了一只可爱的柴犬！在 CMB 个人主页挂照片后，相亲匹配成功率显著上升！')}
+                className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+              >
+                <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">领养湾区毛孩子 (柴犬/布偶猫)</div>
+                <div className="text-xs text-zinc-500 mt-1">{gameState.has_pet ? '已领养毛孩子' : '花费: $0.5w | 魅力 +3, 健康 +10, 约会/相亲成功率加成'}</div>
+              </button>
             </div>
           </section>
 

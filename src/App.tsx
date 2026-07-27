@@ -386,7 +386,7 @@ export default function App() {
 
             {/* Level Tag */}
             <span className="flex items-center gap-1 font-bold text-[11px] text-purple-300 shrink-0 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
-              <span className="text-purple-400 font-extrabold">职级</span> {gameState.level || (gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type ? '待业' : gameState.job_type === 'quant' ? 'Quant' : gameState.job_type === 'ai_research' ? 'MTS' : gameState.is_phd ? 'L4' : 'L3')}
+              <span className="text-purple-400 font-extrabold">职级</span> {gameState.level || (gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type ? '待业' : gameState.job_type === 'quant' ? 'Quant' : gameState.job_type === 'ai_research' ? 'MTS' : gameState.job_type === 'trader' ? '全职 Trader' : gameState.job_type === 'startup_founder' ? 'CEO & Founder' : gameState.is_phd ? 'L4' : 'L3')}
             </span>
 
             {/* Visa Tag */}

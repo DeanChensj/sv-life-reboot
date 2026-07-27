@@ -1,6 +1,16 @@
 import type { GameState, GameEvent } from '../types';
 
 // Initial State
+
+// Helper to scale job hunt TC based on candidate's existing engineering level
+const getLevelScaledTC = (baseTC: number, level?: string): number => {
+  if (level === 'L6 (Staff)' || level === 'Staff' || level === 'MTS') return Math.floor(baseTC * 2.1);
+  if (level === 'L5 (Senior)' || level === 'L5') return Math.floor(baseTC * 1.55);
+  if (level === 'L4') return Math.floor(baseTC * 1.25);
+  if (level === 'Quant') return Math.floor(baseTC * 1.8);
+  return baseTC; // L3 or new grad
+};
+
 export const generateInitialState = (): GameState => {
   let savedSeed: { cash: number; charm: number; max_charm: number; luck: number } | null = null;
   let is_ssr_unlocked = false;
@@ -567,7 +577,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '在国内大厂打工攒钱 (积累工作经验)',
-        effect: (s) => ({ cash: s.cash + 8, health: Math.max(30, s.health - 12), tc: 8, age: s.age + 1, housing_name: '国内 厂区单间' }),
+        effect: (s) => ({ cash: s.cash + 8, health: Math.max(30, s.health - 12), tc: 8, job_type: 'big_tech', laid_off: false, age: s.age + 1, housing_name: '国内 厂区单间' }),
         nextEventId: 'cn_work',
       }
     ]
@@ -752,7 +762,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '找ICC挂靠 (保底策略)',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, tc: 6, job_type: 'unemployed' }),
+        effect: (s) => ({ cash: s.cash - 1, tc: 6, job_type: 'startup', laid_off: false }),
         nextEventId: 'icc_work',
       },
       {
@@ -779,7 +789,10 @@ export const events: Record<string, GameEvent> = {
       {
         text: '靠 CS四大 校友黑手党内推，空降大厂',
         condition: (s) => s.school === 'cmu',
-        effect: (s) => ({ health: s.health - 15, tc: 25, laid_off: false, cash: s.cash + 10, job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '学长直接把你拉进了核心组，开启了高压生活。' }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          return { health: s.health - 15, tc: getLevelScaledTC(25, lvl), laid_off: false, cash: s.cash + 10, job_type: 'big_tech', level: lvl, message: '学长直接把你拉进了核心组，开启了高压生活。' };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -795,15 +808,19 @@ export const events: Record<string, GameEvent> = {
         text: '【强力人脉 Referral】凭借学长/熟人总监直通大厂面试 (需人脉 >= 25)',
         reqBadge: '需人脉>=25',
         condition: (s) => (s.network || 0) >= 25,
-        effect: (s) => ({
-          tc: s.year >= 2023 ? 32 : 28,
-          laid_off: false,
-          cash: s.cash + 6,
-          job_type: 'big_tech',
-          level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'),
-          network: Math.min(100, (s.network || 0) + 5),
-          message: ' 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸！'
-        }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          const baseTc = s.year >= 2023 ? 32 : 28;
+          return {
+            tc: getLevelScaledTC(baseTc, lvl),
+            laid_off: false,
+            cash: s.cash + 6,
+            job_type: 'big_tech',
+            level: lvl,
+            network: Math.min(100, (s.network || 0) + 5),
+            message: ' 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸！'
+          };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -812,7 +829,10 @@ export const events: Record<string, GameEvent> = {
       {
         text: '通过兄弟会内推，加入当地中型养老公司',
         condition: (s) => s.school === 'state',
-        effect: (s) => ({ tc: 15, laid_off: false, health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          return { tc: getLevelScaledTC(15, lvl), laid_off: false, health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', level: lvl, message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -827,8 +847,10 @@ export const events: Record<string, GameEvent> = {
           else if (s.macro_economy === 'bear') req = 75;
           else if (s.year >= 2023) req = 70;
           else if (s.year >= 2020 && s.year <= 2022) req = 30; // 疫情放水期
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          const baseTc = s.year >= 2023 ? 30 : 26;
           return s.leetcode >= req 
-            ? { tc: s.year >= 2023 ? 30 : 26, laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: `上岸！当前市场环境要求LeetCode>${req}，你顺利通过。` }
+            ? { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: lvl, message: `上岸！当前市场环境要求LeetCode>${req}，你顺利通过。` }
             : { health: s.health - 10, message: `面试被挂了！当前市场环境要求LeetCode>${req}。` };
         },
         nextEventId: (s: GameState) => {
@@ -845,7 +867,10 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Meta (传说中的卷王之王) - (需要 LeetCode >= 60)',
         condition: (s) => s.leetcode >= 60,
-        effect: (s) => ({ tc: 38, laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          return { tc: getLevelScaledTC(38, lvl), laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', level: lvl, message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -853,7 +878,10 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '面试普通 Startup',
-        effect: (s) => ({ tc: 18, laid_off: false, health: s.health - 2, job_type: 'startup', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          return { tc: getLevelScaledTC(18, lvl), laid_off: false, health: s.health - 2, job_type: 'startup', level: lvl, message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -863,7 +891,11 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 TikTok (传说中的拿命换钱) - (需要 LeetCode >= 45)',
         condition: (s) => s.leetcode >= 45,
-        effect: (s) => ({ tc: s.year >= 2023 ? 40 : 30, laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          const baseTc = s.year >= 2023 ? 40 : 30;
+          return { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', level: lvl, message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -872,7 +904,10 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Amazon (门槛较低，但入职即签生死状) - (需要 LeetCode >= 30)',
         condition: (s) => s.leetcode >= 30,
-        effect: (s) => ({ tc: 24, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          return { tc: getLevelScaledTC(24, lvl), laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', level: lvl, message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -881,7 +916,11 @@ export const events: Record<string, GameEvent> = {
       {
         text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 40)',
         condition: (s) => s.leetcode >= 40,
-        effect: (s) => ({ tc: s.year >= 2023 ? 60 : 26, laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: s.level ? s.level : (s.is_phd ? 'L4' : 'L3'), message: '你披上了黑色皮衣！赶上 AI 芯片牛市狂潮，你的包裹因为股票暴涨将达到 60w 的恐怖数字！' }),
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          const baseTc = s.year >= 2023 ? 60 : 26;
+          return { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'nvidia', job_type: 'nvidia', level: lvl, message: '你披上了黑色皮衣！赶上 AI 芯片牛市狂潮，你的包裹因为股票暴涨将达到 60w 的恐怖数字！' };
+        },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
@@ -893,8 +932,9 @@ export const events: Record<string, GameEvent> = {
           const econBonus = s.macro_economy === 'bull' ? 0.15 : s.macro_economy === 'bear' ? -0.15 : 0;
           const winRate = 0.18 + (s.leetcode >= 75 ? 0.27 : s.leetcode >= 50 ? 0.12 : 0) + (s.luck / 100) * 0.12 + econBonus;
           const pass = Math.random() < winRate;
+          const lvl = s.level ? s.level : 'Quant';
           return pass 
-            ? { tc: 40, laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
+            ? { tc: getLevelScaledTC(40, lvl), laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '数学与算法功底发威！你击败了众多常春藤金融数学 PhD，拿下了顶级 Quant Fund 百万包裹 Offer！' }
             : { health: s.health - 10, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
@@ -2396,7 +2436,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.visa === '绿卡',
         effect: (s) => ({
           cash: s.cash + 8,
-          laid_off: false,
+          laid_off: true,
           tc: 0,
           job_type: 'unemployed',
           health: Math.min(100, s.health + 15),
@@ -2410,7 +2450,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.visa === '绿卡',
         effect: (s) => ({
           cash: s.cash + 3,
-          laid_off: false,
+          laid_off: true,
           tc: 0,
           job_type: 'unemployed',
           health: Math.min(100, s.health + 25),
@@ -2424,6 +2464,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => (s.network || 0) >= 35,
         effect: (s) => ({
           tc: Math.max(20, s.tc),
+          job_type: 'big_tech',
           laid_off: false,
           health: Math.min(100, s.health + 10),
           network: Math.min(100, (s.network || 0) + 5),
@@ -2435,7 +2476,7 @@ export const events: Record<string, GameEvent> = {
         text: '【工签身份】利用 60 天 H1B Grace Period 刷题限时上岸',
         condition: (s) => s.visa !== '绿卡',
         effect: (s) => s.leetcode > 60 
-          ? { tc: 20, laid_off: false, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '有惊无险！凭高超算法在 60 天限期内火速入职新公司保住 H1B 身份！' }
+          ? { tc: 20, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '有惊无险！凭高超算法在 60 天限期内火速入职新公司保住 H1B 身份！' }
           : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，身份到期被迫登机遣返回国。' },
         nextEventId: (s) => s.leetcode > 60 ? 'sv_daily_life' : 'end',
       }
@@ -2463,6 +2504,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => ({
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'L1 (外派)',
           tc: 22,
+          job_type: 'big_tech',
+          laid_off: false,
           cash: s.cash + 5,
           age: s.age + 1,
           message: (s.visa === '公民' || s.visa === '绿卡')
@@ -3082,12 +3125,17 @@ export const events: Record<string, GameEvent> = {
         text: '【开 Cybertruck/保时捷轰鸣进场】载着顶级装备轰动全场 (需豪车)',
         reqBadge: '豪车轰鸣加成',
         condition: (s) => s.car === 'cybertruck' || s.car === 'porsche',
-        effect: (s) => ({
-          tc: s.tc + 6,
-          charm: Math.min(25, s.charm + 5),
-          health: Math.min(100, s.health + 15),
-          message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
-        }),
+        effect: (s) => {
+          const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
+          return {
+            tc: isUnemployed ? 25 : s.tc + 6,
+            job_type: isUnemployed ? 'big_tech' : s.job_type,
+            laid_off: false,
+            charm: Math.min(25, s.charm + 5),
+            health: Math.min(100, s.health + 15),
+            message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
+          };
+        },
         nextEventId: 'sv_daily_life'
       },
       {
@@ -3095,8 +3143,9 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 1,
         effect: (s) => {
           const win = Math.random() > 0.5;
+          const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
           return win
-            ? { cash: s.cash - 1, tc: s.tc + 5, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司，总包大涨！' }
+            ? { cash: s.cash - 1, tc: isUnemployed ? 20 : s.tc + 5, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司，总包大涨！' }
             : { cash: s.cash - 1, health: Math.max(10, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
         },
         nextEventId: 'sv_daily_life'
@@ -3197,9 +3246,12 @@ export const events: Record<string, GameEvent> = {
         text: '与旁边脱下镁粉袋的老哥交流动态跳跃 (尝试搭讪拓展人脉)',
         effect: (s) => {
           const win = Math.random() < 0.45;
+          const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
           return win
             ? {
-                tc: s.tc + 5,
+                tc: isUnemployed ? 20 : s.tc + 5,
+                job_type: isUnemployed ? 'big_tech' : s.job_type,
+                laid_off: false,
                 charm: Math.min(25, s.charm + 4),
                 health: Math.min(100, s.health + 15),
                 message: '聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，直通推荐你去了核心 AI 算力架构团队！TC 暴涨！'

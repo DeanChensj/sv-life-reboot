@@ -40,7 +40,7 @@ function runFuzzTest(iterations: number) {
       try {
         const effectResult = randomChoice.effect(currentState);
         
-        // 模拟 Middleware
+        // 模拟 Middleware (与 App.tsx 完全保持一致)
         if (effectResult.laid_off === true) {
           effectResult.tc = 0;
           effectResult.job_type = 'unemployed';
@@ -50,9 +50,32 @@ function runFuzzTest(iterations: number) {
         }
 
         Object.assign(currentState, effectResult);
-        
+
+        // 🛡️ Global Visa Invariant Guard Middleware (App.tsx 保持一致)
+        if (currentState.visa === '公民') {
+          currentState.visa = '公民';
+          currentState.gc_progress = 5;
+          currentState.gc_stage = 'approved';
+        } else if (currentState.visa === '绿卡' && currentState.visa !== '公民') {
+          currentState.visa = '绿卡';
+          currentState.gc_progress = 5;
+          currentState.gc_stage = 'approved';
+        }
+
+        // 数值安全断言 (Invariant Assertions)
+        if (isNaN(currentState.cash)) {
+          console.error(`❌ [状态破坏] 在事件 '${currentEventId}' 后现金变为 NaN！`);
+          errorsFound++;
+          break;
+        }
+        if (currentState.job_type === 'unemployed' && currentState.tc > 0) {
+          console.error(`❌ [状态冲突] 在事件 '${currentEventId}' 后失业但 TC > 0 (${currentState.tc}w)！`);
+          errorsFound++;
+          break;
+        }
+
         // 模拟 Game Over 判断
-        if (currentState.health <= 0 || currentState.cash < -0.001 || currentState.cash >= currentState.win_threshold) {
+        if (currentState.health <= 0 || currentState.cash < -0.001 || (currentState.cash + (currentState.stocks || 0)) >= currentState.win_threshold) {
           break; 
         }
 

@@ -42,8 +42,6 @@ export interface GameState {
   car?: 'none' | 'model_y' | 'porsche' | 'cybertruck';
   status: 'playing' | 'game_over' | 'win';
   message: string;
-  ap: number;
-  max_ap: number;
   trait_title?: string;
   trait_desc?: string;
   cpt_used?: boolean;

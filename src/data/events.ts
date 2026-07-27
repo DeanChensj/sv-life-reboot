@@ -37,7 +37,6 @@ export const generateInitialState = (): GameState => {
   }
 
   const ap = 3;
-  const max_ap = 3;
   
   let bgMessage = '';
   if (cash > 60) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';
@@ -48,8 +47,6 @@ export const generateInitialState = (): GameState => {
   else if (charm <= 3) bgMessage += ' 长相平平无奇，是个实在人。';
 
   return {
-    ap,
-    max_ap,
     age: 18,
     cash,
     stocks: 0,
@@ -85,12 +82,6 @@ export const generateInitialState = (): GameState => {
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
 const midYearEventRouter = (s: GameState) => {
-  if (s.ap <= 0) {
-    if (s.job_type === 'trader') return 'trader_annual_strategy';
-    if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
-    return 'sv_year_end_settlement';
-  }
-
   // Economy News Broadcasts
   // Bull/Bear: 14% chance per click -> ~36% chance per year -> ~2.7 years average span
   // Neutral: 5% chance per click -> ~14% chance per year -> ~7 years average span
@@ -1454,7 +1445,6 @@ export const events: Record<string, GameEvent> = {
 
            return { 
               mid_year: false,
-              ap: s.max_ap !== undefined ? s.max_ap : 3, 
               age: s.age + 1, 
               year: s.year + 1,
               visa: newVisa,
@@ -1668,15 +1658,14 @@ export const events: Record<string, GameEvent> = {
     description: '在 Atherton 的一个豪宅派对上，主人戴着三个智能指环，宣称自己把生物钟逆转到了 18 岁。他递给你一杯绿色的不明液体，说是他独家研发的“细胞级抗衰老矩阵精华”，只要 $500 一杯。',
     choices: [
       {
-        text: '报名“长寿换血抗衰老”年度会员 (消耗 $50w) - (永久 +1 精力上限，最大上限 5 AP)',
+        text: '报名“长寿换血抗衰老”年度会员 (消耗 $50w)',
         effect: (s) => ({ 
           cash: s.cash - 50, 
-          max_ap: Math.min(5, (s.max_ap || 3) + 1),
           health: 100,
           message: '你花了 50 万美元。每个月都会有私人医生上门给你注射定制干细胞。你的身体仿佛回到了 18 岁，精力极其充沛！'
         }),
         nextEventId: 'sv_daily_life',
-        condition: (s) => s.cash >= 50 && (s.max_ap || 3) < 5
+        condition: (s) => s.cash >= 50
       },
       {
         text: '买！一杯“细胞级精华” ($500) 尝尝鲜',

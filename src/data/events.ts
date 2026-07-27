@@ -292,36 +292,140 @@ export const events: Record<string, GameEvent> = {
   },
   'cn_college_grad': {
     id: 'cn_college_grad',
-    title: '陆本大一：百团大战',
-    description: '进入了国内大学，开学百团大战，各种社团招新。',
+    title: '陆本大一/大二：百团大战与多维探索',
+    description: '进入了国内大学，开学百团大战，各种社团、比赛与创业社招新。你打算如何安排这最初的两年？',
     choices: [
-
       {
-        text: '加入学生会，成为海王/海后',
-        effect: (s) => ({ charm: s.charm + 2, health: s.health - 5, age: s.age + 2, message: '你在学生会混得风生水起，天天夜宵。' }),
+        text: '加入 ACM 算法集训队 (硬核代码与刷题路线)',
+        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 15, age: s.age + 1, message: '天天在机房死磕图论与动态规划，算法能力大幅提升！' }),
+        nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '【金融/创投】参加全国大学生商业创投挑战赛',
+        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 4), age: s.age + 1, message: '商业计划书打动了校外评委，拿到了创业鼓励金与名企实习推荐！' }),
+        nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '【文娱自媒体】担任社团主唱 / 运营大学生活 VLOG',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 8), cash: s.cash + 0.8, health: Math.min(100, s.health + 5), age: s.age + 1, message: '你的网游/校园 VLOG 在 B站和小红书小火，涨粉数千并吸引了不少粉丝打赏！' }),
+        nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '加入学生会与外联部 (锻炼人际社交与组织能力)',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: s.health - 5, age: s.age + 1, message: '你在学生会拉赞助混得风生水起，结识了一圈活跃朋友。' }),
+        nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '【大厂暑期实习】抢到了国内一线互联网大厂实习',
+        effect: (s) => ({ cash: s.cash + 2, leetcode: s.leetcode + 8, health: s.health - 8, age: s.age + 1, message: '在厂里体验了硬核工程落地，提前积累了实战经验。' }),
+        nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(Math.random() * 4)],
+      }
+    ]
+  },
+
+  // 陆本随机校园事件
+  'cn_dorm_game': {
+    id: 'cn_dorm_game',
+    title: '【校园突发】寝室通宵开黑与辅导员突查',
+    description: '大二下学期，寝室四人组通宵开黑打游戏正酣，突然门外响起了辅导员查寝的敲门声！',
+    choices: [
+      {
+        text: '迅速关灯藏起电脑，假装在背四六级单词',
+        effect: (s) => ({ health: Math.min(100, s.health + 5), message: '无惊无险！辅导员夸赞你们宿舍学习氛围浓厚，安然度过查寝！' }),
         nextEventId: 'cn_college_year3',
       },
       {
-        text: '加入 ACM 算法集训队',
-        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 15, age: s.age + 2, message: '天天刷题，虽然头发掉了一些，但算法突飞猛进。' }),
+        text: '硬刚：“我们这是在做计算机图形学与网络抓包实训！”',
+        effect: (s) => {
+          const pass = s.leetcode >= 20 || Math.random() < 0.5;
+          return pass
+            ? { charm: Math.min(25, s.charm + 4), message: '你的专业术语把辅导员说蒙了，居然逃过一劫还顺手完成了抓包实验！' }
+            : { health: s.health - 10, message: '辅导员根本不信你的鬼话，寝室被通报批评，扣除当月奖学金评定资格。' };
+        },
         nextEventId: 'cn_college_year3',
       }
     ]
   },
+  'cn_acm_contest': {
+    id: 'cn_acm_contest',
+    title: '【校园突发】ACM 区域赛遭遇死锁 Bug',
+    description: '代表学校参加程序设计竞赛，比赛倒计时 15 分钟，核心题目评测机突然返回 Time Limit Exceeded (TLE)！',
+    choices: [
+      {
+        text: '冷静打印 Code，用笔手写推导复杂度',
+        effect: (s) => ({ leetcode: s.leetcode + 8, message: '你抓出了隐藏的 $O(N^2)$ 死循环！修改后封榜前压线 AC，拿到了银牌！' }),
+        nextEventId: 'cn_college_year3',
+      },
+      {
+        text: '狂换算法！重写线段树数据结构',
+        effect: (s) => {
+          const win = Math.random() < 0.45 + (s.leetcode / 200);
+          return win
+            ? { leetcode: s.leetcode + 12, cash: s.cash + 0.5, message: '逆天改命！最后一分钟提交绿色 Accepted！全队欢呼，拿下了比赛奖金！' }
+            : { health: s.health - 10, message: '心态太急写出了越界段错误 (SIGSEGV)，遗憾与奖牌失之交臂。' };
+        },
+        nextEventId: 'cn_college_year3',
+      }
+    ]
+  },
+  'cn_business_competition': {
+    id: 'cn_business_competition',
+    title: '【校园突发】“挑战杯”创投大赛终极答辩',
+    description: '作为创投项目负责人，你在“挑战杯”全国决赛答辩环节面对 VC 评委对商业变现路径的犀利连环追问！',
+    choices: [
+      {
+        text: '用详实的财报模型与用户 LTV 数据沉着应对',
+        effect: (s) => ({ cash: s.cash + 1.2, charm: Math.min(25, s.charm + 6), message: '🎉 斩获金奖！评委大赞你的商业逻辑极具实战价值，当场颁发了 $1.2w 比赛项目奖金！' }),
+        nextEventId: 'cn_college_year3',
+      },
+      {
+        text: '临场发挥讲述情怀故事，拉满现场演讲感染力',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 5), luck: Math.min(99, s.luck + 5), message: '全场响起热烈掌声！拿下了最佳台风奖，并在场外结识了多位投资界大咖！' }),
+        nextEventId: 'cn_college_year3',
+      }
+    ]
+  },
+  'cn_campus_romance': {
+    id: 'cn_campus_romance',
+    title: '【校园突发】图书馆占座与偶遇甜妹/帅哥',
+    description: '期末考试周，你在图书馆帮隔壁桌同系学妹/学长解答了一道高数难题，对方微笑着递给你一杯冰拿铁...',
+    choices: [
+      {
+        text: '顺水推舟互加微信，约对方周末去逛街看电影',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '极速脱单！你们聊得无比投机，顺理成章确立了热恋关系 (Dating)！' }),
+        nextEventId: 'cn_college_year3',
+      },
+      {
+        text: '高冷解答：“这道题用拉格朗日中值定理即可，不必客气”',
+        effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(25, s.charm + 2), message: '你保持了高冷做题家的尊严！虽然错过了恋爱，但对方直呼你是“解题考霸”！' }),
+        nextEventId: 'cn_college_year3',
+      }
+    ]
+  },
+
   'cn_college_year3': {
     id: 'cn_college_year3',
-    title: '陆本大三：迷茫期',
-    description: '大三了，周围人都在考研或出国。你的室友托福连挂三次。',
+    title: '陆本大三：迷茫期与抉择',
+    description: '大三了，周围人都在考研、秋招、准备出国或直接创业。你的室友托福连挂三次，气氛格外紧张。',
     choices: [
-
       {
-        text: '报班死磕托福/GRE (为了出国)',
-        effect: (s) => ({ cash: s.cash - 2, health: s.health - 10, age: s.age + 2, message: '考出了满意的托福成绩！' }),
+        text: '报班死磕托福/GRE (准备申请美国 CS 硕士)',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 2), health: s.health - 10, age: s.age + 1, message: '付出了巨大汗水，终于考出了满意的托福/GRE 分数！' }),
+        nextEventId: 'cn_undergrad_grad',
+      },
+      {
+        text: '【提前批秋招】冲击国内大厂提前批 Offer',
+        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 10, age: s.age + 1, message: '凭着扎实的算法手撕，提前斩获了国内大厂的 SSP 保底 Offer！' }),
+        nextEventId: 'cn_undergrad_grad',
+      },
+      {
+        text: '【金融/咨询实习】投递顶级外企咨询与券商行研实习',
+        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 6), health: s.health - 8, age: s.age + 1, message: '获得了极佳的金融行研锻炼，简历含金量大增！' }),
         nextEventId: 'cn_undergrad_grad',
       },
       {
         text: '佛系对待，每天在寝室打黑神话悟空',
-        effect: (s) => ({ health: s.health + 10, leetcode: s.leetcode - 5, age: s.age + 2, message: '虽然很爽，但荒废了学业。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), leetcode: Math.max(0, s.leetcode - 5), age: s.age + 1, message: '虽然精神很愉悦，但放慢了备战的脚步。' }),
         nextEventId: 'cn_undergrad_grad',
       }
     ]
@@ -339,7 +443,7 @@ export const events: Record<string, GameEvent> = {
           const pass = Math.random() < (0.30 + (s.school === 'cmu' ? 0.25 : 0) + (s.leetcode >= 70 ? 0.20 : 0));
           return pass 
             ? { cash: s.cash + 2, age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '大喜讯！你战胜了数千名申请者，斩获北美顶级 CS 全奖 PhD Offer！' }
-            : { health: s.health - 15, age: s.age + 1, message: '全墨惨案！今年 CS 顶校 PhD 全奖录取率不到 3%，你的推荐信被审稿人刷了，惨遭拒信。' };
+            : { health: s.health - 15, age: s.age + 1, message: '今年 CS 顶校 PhD 全奖录取率极低，你的推荐信被审稿人刷了，惨遭拒信。' };
         },
         nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'job_hunt',
       },
@@ -347,7 +451,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '直接找工作 (开始受苦)',
         effect: (s) => s.year === 2020 
-          ? { message: '疫情爆发！各大公司全面冻结招聘，应届生根本找不到工作！你只能被迫继续留在学校延长毕业一年。', health: s.health - 10, year: s.year + 1, age: s.age + 1 }
+          ? { message: '疫情爆发！各大公司全面冻结招聘，应届生找工作异常艰难！你被迫留在学校延长毕业一年。', health: s.health - 10, year: s.year + 1, age: s.age + 1 }
           : { visa: 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' },
         nextEventId: (s) => s.visa === 'F1 (学生)' ? 'us_undergrad_grad' : 'job_hunt',
       },
@@ -371,7 +475,7 @@ export const events: Record<string, GameEvent> = {
           const pass = Math.random() < (0.25 + (s.leetcode >= 80 ? 0.30 : 0));
           return pass
             ? { cash: s.cash + 2, visa: 'F1 (学生)', age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '奇迹！凭着陆本顶尖算法功底，你跨海斩获了美国 CS 全奖直博 Offer！' }
-            : { health: s.health - 15, visa: 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推，你在套磁阶段就被卡了，只能转投国内大厂或申请水硕。' };
+            : { health: s.health - 15, visa: 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
         },
         nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'cn_work',
       },
@@ -383,9 +487,26 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'us_master_year1',
       },
       {
-        text: '申请美国 CS 硕士 (无抵押留学贷款 + 校内 TA 助教，无现金门槛)',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, housing_name: '美硕 校外公寓', message: '你凭借优异的本科 GPA 与算法基础申请到了无抵押留学贷款与校内助教 TA，免除大半学费顺利赴美！' }),
-        nextEventId: 'us_master_year1',
+        text: '申请美国 CS 硕士 (无抵押留学贷款 + 校内 TA 助教，需评估算法/背景)',
+        reqBadge: '需算法/GPA评估',
+        effect: (s) => {
+          const loanPass = (s.leetcode >= 18) || (Math.random() < 0.40 + (s.luck / 200));
+          if (loanPass) {
+            return { 
+              cash: Math.max(0, s.cash - 2), 
+              visa: 'F1 (学生)', 
+              age: s.age, 
+              housing_name: '美硕 校外公寓', 
+              message: '🎉 申请成功！凭借扎实的本科算法基础与良好的背景，你成功获得了无抵押留学贷款与校内 TA 助教资格！' 
+            };
+          } else {
+            return { 
+              health: s.health - 10, 
+              message: '❌ 申请被拒！银行与校方审核认为你的本科 GPA/算法基础不足，无抵押贷款被驳回！你只能选择在国内打工攒钱或自筹资金。' 
+            };
+          }
+        },
+        nextEventId: (s: GameState) => (s.message || '').includes('申请成功') ? 'us_master_year1' : 'cn_undergrad_grad',
       },
       {
         text: '在国内大厂打工攒钱 (积累工作经验)',
@@ -396,41 +517,137 @@ export const events: Record<string, GameEvent> = {
   },
   'us_undergrad_year1': {
     id: 'us_undergrad_year1',
-    title: '美本前两年：适应期',
-    description: '刚来美国，你对一切都很新奇。你决定怎么度过最初的两年？',
+    title: '美本前两年：适应期与多元探索',
+    description: '刚来北美，你对一切都很新奇。你决定怎么度过最初的两年？',
     choices: [
       {
-        text: '加入兄弟会/姐妹会 (Frat/Sorority Party)',
+        text: '【硬核刷题】泡在图书馆死磕 GPA 和算法',
+        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 5, age: s.age + 1, message: '每天和电脑作伴，代码实力突飞猛进！' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '【华尔街探索】加入校内量化/学生投资俱乐部 (Quant & Trading Club)',
+        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 5), health: s.health - 3, age: s.age + 1, message: '在模拟盘实盘操作中大获全胜，赚到了第一笔金融交易收益！' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '【竞技体育】加入校队竞技体育 (网球/抱石/橄榄球)',
+        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(25, s.charm + 5), cash: Math.max(0, s.cash - 1), age: s.age + 1, message: '高强度体育训练拉满！体能与气场全面大爆发！' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '【音乐与社团】组建校园摇滚乐队举办草坪音乐节',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: Math.min(100, s.health + 5), cash: Math.max(0, s.cash - 1), age: s.age + 1, message: '你在音乐节上作为主唱震撼全场，成为了校园里的风云人物！' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '加入兄弟会/姐妹会 (Frat Party 社交局)',
         condition: (s) => s.cash >= 2,
-        effect: (s) => ({ cash: s.cash - 2, charm: s.charm + 10, health: s.health - 10, age: s.age + 2, message: '每周喝到断片，但在啤酒乒乓桌上认识了一堆富二代朋友。' }),
+        effect: (s) => ({ cash: s.cash - 2, charm: Math.min(25, s.charm + 8), health: s.health - 10, age: s.age + 1, message: '每周 Party，在啤酒乒乓桌上认识了一堆富二代与校友朋友。' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+      }
+    ]
+  },
+
+  // 北美大学随机事件
+  'college_hackathon_boom': {
+    id: 'college_hackathon_boom',
+    title: '【校园突发】全美 Hackathon AI 助手爆发',
+    description: '大二下学期，你组队参加全美大学黑客松。比赛倒计时 2 小时，你们的项目因为并发逻辑出现卡顿！',
+    choices: [
+      {
+        text: '紧急接入 Claude/Cursor 重新优化 Agent 调度层',
+        effect: (s) => ({ leetcode: s.leetcode + 12, cash: s.cash + 1.5, message: '🚀 逆天夺冠！你们的 AI Agent 演示震撼全场，拿下了冠军并获得了 $1.5w 奖金！' }),
         nextEventId: 'us_undergrad_year3',
       },
       {
-        text: '泡在图书馆死磕 GPA 和算法',
-        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 5, age: s.age + 2, message: '每天和电脑作伴，头发掉了不少，但代码能力突飞猛进。' }),
-        nextEventId: 'us_undergrad_year3',
-      },
-      {
-        text: '买辆二手车，周末去一号公路自驾游',
-        condition: (s) => s.cash >= 3,
-        effect: (s) => ({ cash: s.cash - 3, health: s.health + 10, charm: s.charm + 5, age: s.age + 2, message: '花了不少钱，但见识了加州的美景，心胸开阔。' }),
+        text: '砍掉复杂并发功能，专注于写精致的前端 Demo 演示',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 5), cash: s.cash + 0.5, message: '演示极其流畅！评委夸赞你们具备产品经理思维，获得了最佳人气奖！' }),
         nextEventId: 'us_undergrad_year3',
       }
     ]
   },
+  'college_gpa_crisis': {
+    id: 'college_gpa_crisis',
+    title: '【校园突发】地狱级 Hard 课 (Curves 打分)',
+    description: '教授出了地狱级期末试题，全班平均分只有 35 分！曲线打分决定你的 GPA 生死。',
+    choices: [
+      {
+        text: '通宵翻阅经典教材，用反证法完美解答压轴题',
+        effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 8, message: '教授被你的硬核推导折服，期末单科拿到 A+！' }),
+        nextEventId: 'us_undergrad_year3',
+      },
+      {
+        text: '找学霸室友通宵抱大腿，共同解出作业与例题',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: s.health + 2, message: '成功靠团队协作渡过难关，保住了 3.8+ 的优异 GPA！' }),
+        nextEventId: 'us_undergrad_year3',
+      }
+    ]
+  },
+  'college_business_pitch': {
+    id: 'college_business_pitch',
+    title: '【校园突发】校内商业 Pitch 创投大赛',
+    description: '在校园创投大赛上，你面对几位来自硅谷沙丘路 (Sand Hill Road) VC 的合伙人展示商业模型推介！',
+    choices: [
+      {
+        text: '用严谨的财务模型与用户增长曲线征服投资人',
+        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 5), message: '🎉 拿到种子轮支票！VC 现场为你开出了 $2w 创业启动扶持资金！' }),
+        nextEventId: 'us_undergrad_year3',
+      },
+      {
+        text: '讲出动人的愿景故事，拉满现场演示舞台感染力',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 5), message: '全场爆发出欢呼！虽然没要投资，但结识了一圈顶级投资圈高管人脉！' }),
+        nextEventId: 'us_undergrad_year3',
+      }
+    ]
+  },
+  'college_spring_gala': {
+    id: 'college_spring_gala',
+    title: '【校园突发】春季草坪音乐节与后台偶遇',
+    description: '春季草坪音乐节盛大开启！作为音乐节吉他手演完后，你在后台擦汗时遇到了一位赞赏你琴技的心动同学...',
+    choices: [
+      {
+        text: '主动邀请对方去饮品店喝 Boba 奶茶交流音乐',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '恋爱甜度拉满！你们越聊越投机，顺理成章确立了热恋关系 (Dating)！' }),
+        nextEventId: 'us_undergrad_year3',
+      },
+      {
+        text: '礼貌道谢：“谢谢夸奖，我还要去机房调代码”',
+        effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(25, s.charm + 2), message: '高冷风范！你潇洒地背起吉他走向机房，成为了传说中的冷酷吉他手！' }),
+        nextEventId: 'us_undergrad_year3',
+      }
+    ]
+  },
+
   'us_undergrad_year3': {
     id: 'us_undergrad_year3',
-    title: '美本大三：实习焦虑',
-    description: '转眼到了大三，周围的中国同学都在疯狂找暑期实习 (Summer Intern)。你打算怎么办？',
+    title: '美本大三：实习焦虑与方向选择',
+    description: '转眼到了大三，周围的中国同学都在疯狂准备 Summer Intern。你打算怎么办？',
     choices: [
       {
         text: '海投 500 份简历，疯狂刷 LeetCode',
-        effect: (s) => ({ leetcode: s.leetcode + 8, health: s.health - 10, age: s.age + 2, message: '你拿到了硅谷大厂的实习 Offer，为全职铺平了道路！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 10, age: s.age + 1, message: '你拿到了硅谷大厂的暑期实习 Offer，为全职转正铺平了道路！' }),
+        nextEventId: 'us_undergrad_grad',
+      },
+      {
+        text: '【华尔街/金融实习】冲击纽约投资银行/量化基金 Quant 实习',
+        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 5), health: s.health - 10, age: s.age + 1, message: '成功斩获纽约名企实习！年薪高昂，履历含金量暴涨！' }),
+        nextEventId: 'us_undergrad_grad',
+      },
+      {
+        text: '【学术科研】跟教授进 AI 实验室做 Research (冲全奖 PhD)',
+        effect: (s) => ({ leetcode: s.leetcode + 10, charm: Math.min(25, s.charm + 4), health: s.health - 8, age: s.age + 1, is_phd: true, message: '你拿到了顶尖教授的强力推荐信，具备了申请顶尖 PhD 的资本！' }),
+        nextEventId: 'us_undergrad_grad',
+      },
+      {
+        text: '去硅谷大厂 Career Fair 活动混脸熟要内推',
+        condition: (s) => s.cash >= 1,
+        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 8), age: s.age + 1, message: '你加了几十位大厂校友，拿到不少内推机会。' }),
         nextEventId: 'us_undergrad_grad',
       },
       {
         text: '躺平，在加州阳光下享受最后的青春',
-        effect: (s) => ({ health: s.health + 10, charm: s.charm + 5, age: s.age + 2, message: '没有实习经历，但你度过了人生中最无忧无虑的一个夏天。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(25, s.charm + 5), age: s.age + 1, message: '虽然没有实习经历，但你度过了人生中最无忧无虑的一个夏天。' }),
         nextEventId: 'us_undergrad_grad',
       }
     ]
@@ -442,19 +659,24 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '翘课刷题！(力扣大军)',
-        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 15, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能写出红黑树的翻转。' }),
-        nextEventId: 'us_master_grad',
+        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 12, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能手撕红黑树与动态规划。' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
+      },
+      {
+        text: '【量化/风控求职】准备 Wall Street Quant / 风控与投资面试',
+        effect: (s) => ({ cash: s.cash + 2.5, leetcode: s.leetcode + 8, charm: Math.min(25, s.charm + 4), age: s.age + 1, message: '在 Quant 笔试与数学思维面试中顺利过关，拿到高薪 Offer！' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       },
       {
         text: '疯狂赶 Due，力保全 A (4.0 GPA)',
-        effect: (s) => ({ leetcode: s.leetcode + 5, health: s.health - 10, age: s.age + 1, message: '你拿到了 4.0 的完美绩点！但是一去面试发现大厂根本不在乎成绩，只考算法。' }),
-        nextEventId: 'us_master_grad',
+        effect: (s) => ({ leetcode: s.leetcode + 6, health: s.health - 8, charm: Math.min(25, s.charm + 3), age: s.age + 1, message: '你拿到了 4.0 的完美绩点！展现了极其严谨的学业能力。' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       },
       {
         text: '去硅谷大厂活动混脸熟要内推',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, charm: s.charm + 10, age: s.age + 1, message: '你加了 50 个大厂学长学姐的 LinkedIn，虽然花了不少钱请客喝咖啡，但拿到了不少内推机会。' }),
-        nextEventId: 'us_master_grad',
+        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 10), age: s.age + 1, message: '你加了 50 个大厂学长学姐的 LinkedIn，拿到了不少直通面试机会。' }),
+        nextEventId: () => ['college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala'][Math.floor(Math.random() * 4)],
       }
     ]
   },
@@ -1837,9 +2059,15 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'cn_work'
       },
       {
-        text: '趁机申请美硕离开 (留学贷款 + TA 助教，开启赴美新旅程)',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: '你果断提交了留学生贷款与 Master 申请，开启了赴美新生活！' }),
-        nextEventId: 'us_master_year1'
+        text: '趁机申请美硕离开 (留学贷款 + TA 助教，需评估项目背景与算法)',
+        reqBadge: '需算法/背景评估',
+        effect: (s) => {
+          const pass = (s.leetcode >= 20) || (Math.random() < 0.50 + (s.luck / 200));
+          return pass
+            ? { cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: '🎉 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
+            : { health: s.health - 10, message: '❌ 申请被拒！留学贷款机构与校方评估认为你负债风险过高，贷款未获批准。你只能留在本地继续调养或打工。' };
+        },
+        nextEventId: (s: GameState) => (s.message || '').includes('赴美新生活') ? 'us_master_year1' : 'cn_work'
       }
     ]
   },

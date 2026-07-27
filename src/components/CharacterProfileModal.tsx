@@ -19,7 +19,7 @@ export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ ga
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[11px] font-mono font-bold tracking-[0.2em] text-emerald-400 uppercase">
-              SV CANDIDATE PASS // 硅谷打工人准考证
+              CANDIDATE PASS // 人生重开准考证
             </span>
           </div>
           <span className="text-xs font-mono text-zinc-500 font-medium">#SV-2026-X</span>
@@ -31,7 +31,7 @@ export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ ga
             SV
           </div>
           <div>
-            <h3 className="text-2xl font-black text-zinc-100 tracking-tight">硅谷新星玩家</h3>
+            <h3 className="text-2xl font-black text-zinc-100 tracking-tight">人生重开新星</h3>
             <p className="text-xs font-mono text-emerald-400 mt-0.5 font-semibold">
               {gameState.housing_name || '大学宿舍'} · {gameState.year} 年底入学
             </p>
@@ -64,7 +64,9 @@ export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ ga
         {/* Initial Background Story */}
         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 mb-6 text-xs leading-relaxed text-zinc-300 relative z-10">
           <span className="font-bold text-emerald-400 block mb-1 font-mono uppercase tracking-wider">📋 简历档案评语：</span>
-          {gameState.message || '你带着满腔抱负飞往旧金山湾区，开启属于你的硅谷传奇！'}
+          {gameState.message || (gameState.has_us_degree 
+            ? '你带着满腔期待与梦想，开启了属于你的大学求学生涯！' 
+            : '你在大学校园入学，准备积累扎实的计算机能力，开启属于你的人生篇章！')}
         </div>
 
         {/* Confirm Button */}
@@ -72,7 +74,7 @@ export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ ga
           onClick={onConfirm}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-base transition-all duration-200 shadow-lg shadow-emerald-500/20 active:scale-[0.985] cursor-pointer flex items-center justify-center gap-2 relative z-10"
         >
-          <span>开启硅谷打工生涯 🚀</span>
+          <span>开启人生求学篇章 🚀</span>
         </button>
       </div>
     </div>

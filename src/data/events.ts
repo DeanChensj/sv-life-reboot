@@ -107,11 +107,12 @@ const midYearEventRouter = (s: GameState) => {
   const isWorking = s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
   const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
 
-  if (s.job_type === 'trader') return 'trader_annual_strategy';
-  if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
+  if (s.job_type === 'trader' && s.cash < 10) return 'job_hunt';
   if (s.year === 2022 && Math.random() < 0.15) return 'stock_crash';
   if (rand < 0.06) return 'stock_crash';
   if (rand >= 0.06 && rand < 0.46) {
+     if (s.job_type === 'trader') return 'trader_annual_strategy';
+     if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
      if (!isWorking) return 'job_hunt';
      if (s.job_type === 'startup') return 'startup_crisis';
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
@@ -213,6 +214,9 @@ const midYearEventRouter = (s: GameState) => {
     if (s.car && s.car !== 'none' && Math.random() < 0.25) return 'car_broken';
     return lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
   }
+
+  if (s.job_type === 'trader') return 'trader_annual_strategy';
+  if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
   return 'sv_year_end_settlement';
 };
 
@@ -1113,7 +1117,7 @@ export const events: Record<string, GameEvent> = {
       // 2. 【年度重心】(点击后直接进入年底结算或对应事件流)
       {
         text: '【年度重心：疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
-        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
@@ -1138,7 +1142,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
-        condition: (s) => !!s.job_type && s.job_type !== 'unemployed',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           if (s.leetcode < 50) {
             return { health: Math.max(10, s.health - 15), leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
@@ -1261,7 +1265,7 @@ export const events: Record<string, GameEvent> = {
            const marketMultiplier = newEconomy === 'bull' ? 1.3 : newEconomy === 'bear' ? 0.7 : 1.0;
            const rsuMsg = newEconomy === 'bull' ? ' (牛市 RSU 浮盈 1.3x)' : newEconomy === 'bear' ? ' (熊市 RSU 缩水 0.7x)' : '';
 
-           const preTaxTC = (!s.laid_off && s.job_type !== 'unemployed') && s.tc > 0 ? (s.tc * marketMultiplier) : 0;
+           const preTaxTC = (!s.laid_off && s.job_type !== 'unemployed') && s.tc > 0 ? (s.job_type === 'trader' ? s.tc : s.tc * marketMultiplier) : 0;
            const postTaxIncome = preTaxTC * 0.75; 
            const netIncome = postTaxIncome - totalExpense;
            
@@ -2522,7 +2526,7 @@ export const events: Record<string, GameEvent> = {
           const gainRate = 0.12 + (s.luck / 500);
           const profit = s.cash * gainRate;
           return {
-            cash: s.cash + profit,
+            tc: parseFloat(profit.toFixed(1)),
             health: Math.min(100, s.health + 10),
             message: ` 稳健盈利！凭借严谨的风险控制与高股息收益，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${profit.toFixed(1)}w 美元)！时间自由，心态极其放松！`
           };
@@ -2536,12 +2540,13 @@ export const events: Record<string, GameEvent> = {
           if (isBoomYear) {
             const gain = s.cash * 0.45;
             return {
-              cash: s.cash + gain,
+              tc: parseFloat(gain.toFixed(1)),
               message: ` 飞天暴富！你重仓的 AI 科技巨头股价随着风口暴涨 45%！账面盈利 +${gain.toFixed(1)}w 美元！`
             };
           } else {
             const loss = s.cash * 0.18;
             return {
+              tc: 0,
               cash: Math.max(10, s.cash - loss),
               message: ` 宏观回调！科技板块经历美联储加息回调 -18%，本金受损 -${loss.toFixed(1)}w 美元！好在你仓位稳固。`
             };
@@ -2556,18 +2561,20 @@ export const events: Record<string, GameEvent> = {
           if (roll < 0.50) {
             const doubleGain = s.cash * 0.85;
             return {
-              cash: s.cash + doubleGain,
+              tc: parseFloat(doubleGain.toFixed(1)),
               message: ` 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +85% (+${doubleGain.toFixed(1)}w 美元)！`
             };
           } else if (roll < 0.80) {
             const drop = s.cash * 0.35;
             return {
+              tc: 0,
               cash: Math.max(5, s.cash - drop),
               message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -35% (-${drop.toFixed(1)}w 美元)！`
             };
           } else {
             const bust = s.cash * 0.70;
             return {
+              tc: 0,
               cash: Math.max(2, s.cash - bust),
               health: Math.max(10, s.health - 25),
               message: ` 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`

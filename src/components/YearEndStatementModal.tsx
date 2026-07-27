@@ -82,7 +82,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
           <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
             <span className="text-zinc-400 flex items-center gap-2.5">
               <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-              年度总包 TC (含 Base + RSU)
+              {gameState.job_type === 'trader' ? '年度操盘收益 (Capital Gains)' : gameState.job_type === 'startup_founder' ? '创始人薪水/套现收入' : '年度总包 TC (含 Base + RSU)'}
             </span>
             <span className="font-bold text-emerald-400 tabular-nums">+${preTaxTC.toFixed(1)}w</span>
           </div>
@@ -91,7 +91,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
             <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
               <span className="text-zinc-400 flex items-center gap-2.5">
                 <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                所得税 (-25% 享 401k/Mega Roth 抵税)
+                {gameState.job_type === 'trader' ? '资本利得税 (-25% Capital Gains Tax)' : '所得税 (-25% 享 401k/Mega Roth 抵税)'}
               </span>
               <span className="font-bold text-rose-400 tabular-nums">-${taxAmount}w</span>
             </div>

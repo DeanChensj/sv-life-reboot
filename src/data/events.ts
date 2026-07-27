@@ -1455,25 +1455,27 @@ export const events: Record<string, GameEvent> = {
                  if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {
                     nextStage = 'not_started';
                     nextGc = 0;
-                    gcMsg = ' 🚫 【绿卡中断】由于你目前处于失业状态，你的 PERM/I-140 申请被原公司撤回，绿卡进度惨遭清零！';
+                    gcMsg = ' 【绿卡中断】由于你目前处于失业状态，你的 PERM/I-140 申请被原公司撤回，绿卡进度惨遭清零！';
                  } else if (nextStage === 'not_started') {
-                    gcMsg = ' ⏳ 【绿卡停滞】你目前失业，无法启动任何雇主担保的绿卡申请。';
+                    gcMsg = ' 【绿卡停滞】你目前失业，无法启动任何雇主担保的绿卡申请。';
                  } else {
-                    gcMsg = ' ⏳ 【绿卡排期】你虽然失业，但由于你的 I-140 已经获批，Priority Date 依然为你保留，排期照常进行。';
+                    gcMsg = ' 【绿卡排期】你虽然失业，但由于你的 I-140 已经获批，Priority Date 依然为你保留，排期照常进行。';
                  }
+              } else if (s.difficulty_title === '困难难度' && s.job_type === 'startup') {
+                 gcMsg = ' 【困难模式】在当前 AI 寒冬下，初创公司 Startup 拒绝为你递交 PERM 绿卡申请！只能跳槽大厂或办 O1 签证。';
               } else if (s.job_type === 'startup' && newStartupTenure <= 2) {
-                 gcMsg = ` ⏱️ Startup 政策：入职前 2 年不予办理绿卡（当前第 ${newStartupTenure} 年，排期暂未推进）。`;
+                 gcMsg = ` Startup 政策：入职前 2 年不予办理绿卡（当前第 ${newStartupTenure} 年，排期暂未推进）。`;
               } else {
                  if (nextStage === 'not_started') {
                     if (isO1 || isPhd) {
                        nextStage = 'i140_processing';
                        nextGc = Math.max(2, nextGc); 
-                       gcMsg = ' 📄 【绿卡进度】凭借你的杰出背景 (NIW/EB1)，律师直接为你跳过 PERM，提交了 I-140 申请！';
+                       gcMsg = ' 【绿卡进度】凭借你的杰出背景 (NIW/EB1)，律师直接为你跳过 PERM，提交了 I-140 申请！';
                     } else {
                        if (Math.random() < (isBigTech ? 0.7 : 0.4)) {
                          nextStage = 'perm_processing';
                          nextGc = Math.max(1, nextGc);
-                         gcMsg = ' 📄 【绿卡进度】公司律师正式为你启动了 PERM 打广告和 PWD 流程，漫长的绿卡长征开始了。';
+                         gcMsg = ' 【绿卡进度】公司律师正式为你启动了 PERM 打广告和 PWD 流程，漫长的绿卡长征开始了。';
                        } else {
                          gcMsg = ' ⏳ 【绿卡进度】HR 还在拖延你的绿卡流程，尚未正式启动 PERM...';
                        }
@@ -1482,11 +1484,11 @@ export const events: Record<string, GameEvent> = {
                     const rand = Math.random();
                     if (rand < 0.25) {
                        nextStage = 'perm_audit';
-                       gcMsg = ' ⚠️ 【PERM Audit】运气不佳，你的 PERM 遇到了劳工部 Audit (抽查审计)，进度被严重拖延至少一年...';
+                       gcMsg = ' 【PERM Audit】运气不佳，你的 PERM 遇到了劳工部 Audit (抽查审计)，进度被严重拖延至少一年...';
                     } else if (rand < 0.8) {
                        nextStage = 'i140_processing';
                        nextGc = Math.max(2, nextGc);
-                       gcMsg = ' 📄 【绿卡进度】你的 PERM 顺利获批！律师马不停蹄为你提交了 I-140 申请。';
+                       gcMsg = ' 【绿卡进度】你的 PERM 顺利获批！律师马不停蹄为你提交了 I-140 申请。';
                     } else {
                        gcMsg = ' ⏳ 【绿卡进度】劳工部处理极其缓慢，你的 PERM 仍在 pending 中...';
                     }
@@ -1494,7 +1496,7 @@ export const events: Record<string, GameEvent> = {
                     if (Math.random() < 0.6) {
                        nextStage = 'i140_processing';
                        nextGc = Math.max(2, nextGc);
-                       gcMsg = ' 📄 【绿卡进度】谢天谢地！经过漫长的补充材料，劳工部终于通过了你的 PERM Audit，律师已提交 I-140。';
+                       gcMsg = ' 【绿卡进度】谢天谢地！经过漫长的补充材料，劳工部终于通过了你的 PERM Audit，律师已提交 I-140。';
                     } else {
                        gcMsg = ' ⏳ 【绿卡进度】你的 PERM Audit 仍在劳工部苦苦排队审核中...';
                     }
@@ -1503,11 +1505,11 @@ export const events: Record<string, GameEvent> = {
                     if (rand < 0.2) {
                        nextStage = 'i140_rfe';
                        newHealth = Math.max(0, newHealth - 15);
-                       gcMsg = ' ⚠️ 【I-140 RFE】移民局对你的 I-140 发出了 RFE (要求补充材料)！你需要让前老板和同事帮忙写一堆推荐信，让你心力交瘁 (健康 -15)。';
+                       gcMsg = ' 【I-140 RFE】移民局对你的 I-140 发出了 RFE (要求补充材料)！你需要让前老板和同事帮忙写一堆推荐信，让你心力交瘁 (健康 -15)。';
                     } else if (rand < 0.85) {
                        nextStage = 'i140_approved';
                        nextGc = Math.max(3, nextGc);
-                       gcMsg = ' 🎉 【I-140 获批】你的 I-140 正式获批！Priority Date (PD) 成功锁定，接下来就是漫长的等待排期了。';
+                       gcMsg = ' 【I-140 获批】你的 I-140 正式获批！Priority Date (PD) 成功锁定，接下来就是漫长的等待排期了。';
                     } else {
                        gcMsg = ' ⏳ 【绿卡进度】你的 I-140 仍在加急处理中...';
                     }
@@ -1515,9 +1517,9 @@ export const events: Record<string, GameEvent> = {
                     if (Math.random() < 0.75) {
                        nextStage = 'i140_approved';
                        nextGc = Math.max(3, nextGc);
-                       gcMsg = ' 🎉 【RFE 通过】你在最后关头凑齐了所有材料，移民局终于批准了你的 I-140！Priority Date 成功锁定。';
+                       gcMsg = ' 【RFE 通过】你在最后关头凑齐了所有材料，移民局终于批准了你的 I-140！Priority Date 成功锁定。';
                     } else {
-                       gcMsg = ' ❌ 【RFE 延期】律师表示材料依然需要润色，I-140 审核陷入了拉锯战...';
+                       gcMsg = ' 【RFE 延期】律师表示材料依然需要润色，I-140 审核陷入了拉锯战...';
                     }
                  } else if (nextStage === 'i140_approved' || nextStage === 'waiting_pd') {
                     nextStage = 'waiting_pd';
@@ -1526,22 +1528,22 @@ export const events: Record<string, GameEvent> = {
                     
                     if (rand < 0.12) {
                        nextGc = Math.max(3, nextGc - 1);
-                       gcMsg = ' 📉 【排期倒退】移民局颁布了新规，本月 Visa Bulletin 遭遇史诗级 Retrogression (排期大倒退)！你的绿卡进度又变遥远了...';
+                       gcMsg = ' 【排期倒退】移民局颁布了新规，本月 Visa Bulletin 遭遇史诗级 Retrogression (排期大倒退)！你的绿卡进度又变遥远了...';
                     } else if (rand < 0.12 + advanceProb) {
                        nextStage = 'i485_pending';
                        nextGc = 4.5;
-                       gcMsg = ' 📬 【排期到了】天呐！这个月的 Visa Bulletin 排期竟然前进了，刚好越过了你的 PD！律师火速为你提交了 I-485。';
+                       gcMsg = ' 【排期到了】天呐！这个月的 Visa Bulletin 排期竟然前进了，刚好越过了你的 PD！律师火速为你提交了 I-485。';
                     } else {
-                       gcMsg = ' ⏳ 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
+                       gcMsg = ' 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
                        if (Math.random() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
                     }
                  } else if (nextStage === 'i485_pending') {
                     if (Math.random() < 0.6) {
                        nextStage = 'approved';
                        nextGc = 5;
-                       gcMsg = ' 🎉 【制卡成功】制卡完成，你的 I-485 正式获批！';
+                       gcMsg = ' 【制卡成功】制卡完成，你的 I-485 正式获批！';
                     } else {
-                       gcMsg = ' ⏳ 【制卡中】你的 I-485 正在打指纹和背景调查阶段，距离实体绿卡只有一步之遥！';
+                       gcMsg = ' 【制卡中】你的 I-485 正在打指纹和背景调查阶段，距离实体绿卡只有一步之遥！';
                        nextGc = 4.8;
                     }
                  }
@@ -1553,13 +1555,13 @@ export const events: Record<string, GameEvent> = {
             let newVisa = s.visa;
             let newAttempts = s.h1b_attempts || 0;
 
-            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT') && !s.laid_off && s.job_type && s.job_type !== 'unemployed') {
+            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed') {
               newAttempts += 1;
               const winRate = 0.35 + (s.luck / 100) * 0.3;
               const win = Math.random() < winRate;
               if (win) {
                 newVisa = 'H1B (工签)';
-                h1bMsg = `  人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
+                h1bMsg = s.visa === 'L1 (外派)' ? `  外派/L1 转换中签！在第 ${newAttempts} 次 H1B 抽签中成功中签，顺利获得 H1B 工签！` : `  人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
               } else {
                 if (newAttempts === 1) {
                   h1bMsg = '  第一年 H1B 未中签！已开启 STEM OPT 2 年延期，明年还有抽签机会！';
@@ -2439,10 +2441,18 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'us_master_year1',
       },
       {
-        text: '【跨海直投】凭硬核算法直接面北美大厂 Offer (需 LeetCode >= 50)',
+        text: '【跨海直投 / 驻外调动】凭硬核技术与论文申请赴美/外派 (需算法/美籍/L1调动)',
         condition: (s) => s.leetcode >= 50,
-        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', tc: 22, cash: s.cash + 5, age: s.age + 1, message: '陆本硬核算法发威！你跨海面过了北美大厂并拿到签证 Offer，直接飞往硅谷！' }),
-        nextEventId: 'job_hunt',
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'L1 (外派)',
+          tc: 22,
+          cash: s.cash + 5,
+          age: s.age + 1,
+          message: (s.visa === '公民' || s.visa === '绿卡')
+            ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职！'
+            : '陆本硬核算法发威！你拿到了外派 Offer，先以 L1 身份入职海外分公司，一年后调动回湾区总部！'
+        }),
+        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : 'sv_daily_life',
       }
     ]
   },

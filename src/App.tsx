@@ -134,6 +134,19 @@ export default function App() {
       newState.gc_stage = 'approved';
     }
 
+    // 🛡️ Rule 2 Middleware: H1B Job Hop PERM Reset (If I-140 is NOT approved)
+    const isJobHop = gameState.job_type && gameState.job_type !== 'unemployed' && newState.job_type && newState.job_type !== 'unemployed' && newState.job_type !== gameState.job_type;
+    if (isJobHop && gameState.visa === 'H1B (工签)') {
+      const isI140Approved = ['i140_approved', 'waiting_pd', 'i485_pending', 'approved'].includes(gameState.gc_stage || '');
+      if (!isI140Approved) {
+        newState.gc_progress = 1;
+        newState.gc_stage = 'perm_processing';
+        newState.message = (newState.message || '') + ' 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队。';
+      } else {
+        newState.message = (newState.message || '') + ' 【I-140 已锁 PD】因之前 I-140 已批准，本次跳槽成功锁定原优先日期 (PD)！';
+      }
+    }
+
     // Check if health drops <= 0
     if (newState.health <= 0 && newState.status === 'playing') {
       newState.status = 'game_over';

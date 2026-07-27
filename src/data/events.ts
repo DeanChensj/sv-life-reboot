@@ -1178,7 +1178,23 @@ export const events: Record<string, GameEvent> = {
       {
         text: '结算并迎接新的一年',
         effect: (s) => {
-           const nextGc = s.visa === '绿卡' ? s.gc_progress : s.gc_progress + 1;
+           let newStartupTenure = s.startup_tenure || 0;
+           if (!s.laid_off && s.job_type === 'startup') {
+             newStartupTenure += 1;
+           } else {
+             newStartupTenure = 0;
+           }
+
+           let nextGc = s.gc_progress;
+           if (s.visa === '绿卡') {
+             nextGc = s.gc_progress;
+           } else if (s.job_type === 'startup' && newStartupTenure <= 2) {
+             // Startup rule: no PERM in the first 2 years!
+             nextGc = s.gc_progress;
+           } else {
+             nextGc = s.gc_progress + 1;
+           }
+
            const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || '');
            const housingExpense = s.rent !== undefined 
              ? s.rent 
@@ -1206,9 +1222,11 @@ export const events: Record<string, GameEvent> = {
            
            const gcMsg = s.visa === '绿卡' 
              ? '你已持有美国绿卡，工作生活不受约束。' 
-             : nextGc >= 5 
-               ? '你的绿卡排期终于到了！' 
-               : `距离拿到绿卡还差 ${Math.max(0, 5 - nextGc)} 年。`;
+             : (s.job_type === 'startup' && newStartupTenure <= 2)
+               ? `⚠️ Startup 政策：入职前 2 年不予办理 PERM 绿卡（当前第 ${newStartupTenure} 年，排期暂未增加）。`
+               : nextGc >= 5 
+                 ? '你的绿卡排期终于到了！' 
+                 : `距离拿到绿卡还差 ${Math.max(0, 5 - nextGc)} 年。`;
 
             // H1B 年底自动抽签逻辑
             let h1bMsg = '';
@@ -1250,6 +1268,7 @@ export const events: Record<string, GameEvent> = {
               year: s.year + 1,
               visa: newVisa,
               h1b_attempts: newAttempts,
+              startup_tenure: newStartupTenure,
               gc_progress: nextGc, 
               cash: s.cash + netIncome,
               tc: updatedTC,

@@ -44,6 +44,7 @@ export interface GameState {
   l1_relocated?: boolean;
   mid_year?: boolean;
   difficulty_title?: string;
+  startup_tenure?: number; // 初创公司入职年限 (前2年不办PERM)
 }
 
 export interface Choice {

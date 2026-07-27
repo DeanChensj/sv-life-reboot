@@ -507,7 +507,7 @@ export const events: Record<string, GameEvent> = {
         text: '直接找工作 (开始受苦)',
         effect: (s) => s.year === 2020 
           ? { message: '疫情爆发！各大公司全面冻结招聘，应届生找工作异常艰难！你被迫留在学校延长毕业一年。', health: s.health - 10, year: s.year + 1, age: s.age + 1 }
-          : { visa: 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' },
+          : { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' },
         nextEventId: (s) => s.visa === 'F1 (学生)' ? 'us_undergrad_grad' : 'job_hunt',
       },
       {
@@ -529,8 +529,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const pass = Math.random() < (0.25 + (s.leetcode >= 80 ? 0.30 : 0));
           return pass
-            ? { cash: s.cash + 2, visa: 'F1 (学生)', age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '奇迹！凭着陆本顶尖算法功底，你跨海斩获了美国 CS 全奖直博 Offer！' }
-            : { health: s.health - 15, visa: 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
+            ? { cash: s.cash + 2, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '奇迹！凭着陆本顶尖算法功底，你跨海斩获了美国 CS 全奖直博 Offer！' }
+            : { health: s.health - 15, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
         },
         nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'cn_work',
       },
@@ -538,7 +538,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '申请美国 CS 硕士 (自筹资金 / 积蓄 $5w 即可申请)',
         condition: (s) => s.cash >= 5,
-        effect: (s) => ({ cash: s.cash - 5, visa: 'F1 (学生)', age: s.age, is_master: true, housing_name: '美硕 校外公寓' }),
+        effect: (s) => ({ cash: s.cash - 5, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age, is_master: true, housing_name: '美硕 校外公寓' }),
         nextEventId: 'us_master_year1',
       },
       {
@@ -549,7 +549,7 @@ export const events: Record<string, GameEvent> = {
           if (loanPass) {
             return { 
               cash: Math.max(0, s.cash - 2), 
-              visa: 'F1 (学生)', 
+              visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', 
               age: s.age, 
               is_master: true,
               housing_name: '美硕 校外公寓', 
@@ -986,7 +986,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.25 + (s.luck / 100) * 0.4; // 幸运值越高越容易中签 (25% - 65%)
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，今年H1B中签了！' }
+            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，今年H1B中签了！' }
             : { cash: s.cash, health: s.health - 10, message: '今年 H1B 没抽中！只能指望明年...' };
         },
         nextEventId: 'sv_daily_life',
@@ -998,7 +998,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.6 + (s.luck / 100) * 0.35; // O1 成功率 60% - 95%
           const win = Math.random() < winRate;
           return win
-            ? { visa: 'O1 (杰出人才)', cash: s.cash - 8, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
+            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'O1 (杰出人才)', cash: s.cash - 8, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
             : { cash: s.cash - 8, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，八万美元打了水漂。' };
         },
         nextEventId: 'sv_daily_life',
@@ -1027,7 +1027,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.3 + (s.luck / 100) * 0.3;
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, message: '第二年抽签人品爆发，终于中签了！' }
+            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', cash: s.cash, message: '第二年抽签人品爆发，终于中签了！' }
             : { cash: s.cash, health: s.health - 15, message: '第二年还是没抽中...只剩最后一年 STEM OPT 机会了！' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b_final',
@@ -1045,7 +1045,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.35 + (s.luck / 100) * 0.35;
           const win = Math.random() < winRate;
           return win 
-            ? { visa: 'H1B (工签)', cash: s.cash, gc_progress: 1, gc_stage: 'perm_processing', message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
+            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', cash: s.cash, gc_progress: (s.visa === '公民' || s.visa === '绿卡') ? s.gc_progress : 1, gc_stage: (s.visa === '公民' || s.visa === '绿卡') ? s.gc_stage : 'perm_processing', message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
             : { cash: s.cash, health: s.health - 20, message: '很遗憾，第三年 H1B 依然未中签！好在公司 HR 允许你选择外派加拿大或挂靠 Day 1 CPT。' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'h1b_fallback_options',
@@ -2434,13 +2434,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【申请美硕】拿着积蓄申请美国 CS 硕士 (顺利赴美)',
         condition: (s) => s.cash >= 4,
-        effect: (s) => ({ cash: s.cash - 4, visa: 'F1 (学生)', age: s.age, message: '拿着打工攒下的第一桶金，你顺利通过签证与录取，踏上了赴美求学之路！' }),
+        effect: (s) => ({ cash: s.cash - 4, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age, message: '拿着打工攒下的第一桶金，你顺利通过签证与录取，踏上了赴美求学之路！' }),
         nextEventId: 'us_master_year1',
       },
       {
         text: '【跨海直投】凭硬核算法直接面北美大厂 Offer (需 LeetCode >= 50)',
         condition: (s) => s.leetcode >= 50,
-        effect: (s) => ({ visa: 'OPT (实习)', tc: 22, cash: s.cash + 5, age: s.age + 1, message: '陆本硬核算法发威！你跨海面过了北美大厂并拿到签证 Offer，直接飞往硅谷！' }),
+        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', tc: 22, cash: s.cash + 5, age: s.age + 1, message: '陆本硬核算法发威！你跨海面过了北美大厂并拿到签证 Offer，直接飞往硅谷！' }),
         nextEventId: 'job_hunt',
       }
     ]
@@ -2461,7 +2461,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const pass = (s.leetcode >= 20) || (Math.random() < 0.50 + (s.luck / 200));
           return pass
-            ? { cash: Math.max(0, s.cash - 2), visa: 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
+            ? { cash: Math.max(0, s.cash - 2), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
             : { health: s.health - 10, message: ' 申请被拒！留学贷款机构与校方评估认为你负债风险过高，贷款未获批准。你只能留在本地继续调养或打工。' };
         },
         nextEventId: (s: GameState) => (s.message || '').includes('赴美新生活') ? 'us_master_year1' : 'cn_work'

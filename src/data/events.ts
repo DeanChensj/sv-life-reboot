@@ -125,7 +125,7 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
      if (s.job_type === 'quant') return 'quant_stress';
 
-     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'friday_pip', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'apple_vision_pro_demo'];
+     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'friday_pip', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'apple_vision_pro_demo', 'agent_hallucination_prod_disaster'];
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
      if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
      if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
@@ -139,7 +139,7 @@ export const midYearEventRouter = (s: GameState): string => {
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
-    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'san_francisco_car_window_smash', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'tesla_fsd_unsupervised_scare'
+    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'san_francisco_car_window_smash', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'tesla_fsd_unsupervised_scare', 'mac_mini_open_claw_server', 'multi_agent_side_hustle'
   ];
 
   if (isWorking) {
@@ -3947,6 +3947,60 @@ export const events: Record<string, GameEvent> = {
         text: '自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w 现金, 健康 -10)',
         condition: (s) => s.cash >= 2.5,
         effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(10, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'agent_hallucination_prod_disaster': {
+    id: 'agent_hallucination_prod_disaster',
+    title: '【AI 幻觉事故】自主 Agent 生产环境误删数据库',
+    description: '组里尝试用自主 Agent 跑 CI/CD 自动部署，结果 Agent 产生幻觉在脚本里执行了 DROP DATABASE，把生产环境数据库给删了！',
+    choices: [
+      {
+        text: '通宵手写 SQL 脚本与备份恢复 (算法 +10, 健康 -15)',
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(10, s.health - 15), message: '凭借硬核的数据库恢复功底，你连夜恢复了绝大部分备份，保住了生产环境！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '甩锅给大模型 API 供应商，申请专项赔偿 (人脉 -2, 现金 -0.5w)',
+        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), cash: Math.max(0, s.cash - 0.5), message: '虽然倒贴了一些补偿金，但团队把主要责任交给了云端模型供应商的幻觉缺陷。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'mac_mini_open_claw_server': {
+    id: 'mac_mini_open_claw_server',
+    title: '【本地 AI 极客】买 Mac Mini 部署 OpenClaw 本地 Agent',
+    description: '为避免云端 API 账单爆表与隐私泄露，你果断花了 $2,000 美金抢购了一台 64GB 统一内存的 Mac Mini，在客厅 24 小时本地部署跑 OpenClaw / 本地自主 Agent！',
+    choices: [
+      {
+        text: '调教 Agent 替你跑抓取与总结邮件 (花费 $0.2w, 算法 +4, 健康 +5)',
+        condition: (s) => s.cash >= 0.2,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), leetcode: Math.min(100, s.leetcode + 4), health: Math.min(100, s.health + 5), message: '本地 OpenClaw 部署成功！虽然折腾 YAML 配置有点累，但 Agent 帮处理了不少琐碎爬虫与邮件任务。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '折腾三天环境，发小红书“湾区码农客厅 AI 服务器” (花费 $0.2w, 魅力 +2)',
+        condition: (s) => s.cash >= 0.2,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 2), message: '你的客厅 Mac Mini 服务器组照获得了 200+ 赞，不少极客同仁在评论区交流开源部署心得。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'multi_agent_side_hustle': {
+    id: 'multi_agent_side_hustle',
+    title: '【Multi-Agent 副业】部署无人值守 Agent 自动套利',
+    description: '你自己写了一套 Multi-Agent 架构，全网 24 小时自动化抓取美股财报、套利与量化小工具。',
+    choices: [
+      {
+        text: '定时提现副业收益 (现金 +$12w, 健康 -5)',
+        effect: (s) => ({ cash: s.cash + 12, health: Math.max(10, s.health - 5), message: 'Multi-Agent 自动套利脚本为你带来了 $12w 额外副业现金流！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '规模过大被 Cloudflare 封禁 IP，倒贴伺服器租金 (消耗 $1w)',
+        condition: (s) => s.cash >= 1,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 1), message: '频繁并发触发了云端防爬虫拦截，脚本失效并损失了一笔服务器租金。' }),
         nextEventId: 'sv_daily_life'
       }
     ]

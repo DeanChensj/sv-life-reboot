@@ -131,7 +131,7 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
      if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
      if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
-     if (s.visa !== '绿卡' && s.visa !== '公民') workEvents.push('h1b_rfe_vs_parent_nag');
+     if (s.visa !== '绿卡' && s.visa !== '公民' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
 
      return workEvents[Math.floor(Math.random() * workEvents.length)];
   }
@@ -141,11 +141,22 @@ export const midYearEventRouter = (s: GameState): string => {
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
-    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'san_francisco_car_window_smash', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'tesla_fsd_unsupervised_scare', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam', 'ex_1point3acres_expose'
+    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam'
   ];
+
+  if (s.car && s.car !== 'none') {
+      lifeEvents.push('san_francisco_car_window_smash');
+  }
+
+  if (s.car === 'model_y' || s.car === 'cybertruck') {
+      lifeEvents.push('tesla_fsd_unsupervised_scare');
+  }
 
   if (isWorking) {
       lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode');
+      if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') {
+          lifeEvents.push('ex_1point3acres_expose');
+      }
   }
 
   if (!s.is_married) {
@@ -172,8 +183,8 @@ export const midYearEventRouter = (s: GameState): string => {
     return 'luxury_car_meet';
   }
 
-  const isRealHome = s.has_housing && s.housing_name && !['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-  if (isRealHome && Math.random() < 0.25) {
+  const isHomeowner = s.has_housing && !!s.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name);
+  if (s.has_housing && Math.random() < 0.25) {
     return 'house_warming_party';
   }
 
@@ -185,11 +196,11 @@ export const midYearEventRouter = (s: GameState): string => {
     return 'bay_area_dink_vs_kids';
   }
 
-  if (isRealHome && s.cash >= 30 && Math.random() < 0.25) {
+  if (isHomeowner && s.cash >= 30 && Math.random() < 0.25) {
     return 'property_supplemental_tax_hike';
   }
 
-  if ((s.car === 'porsche' || s.car === 'cybertruck' || s.cash >= 50) && Math.random() < 0.25) {
+  if ((s.car === 'porsche' || s.car === 'cybertruck') && Math.random() < 0.25) {
     return 'luxury_car_vandalism_towing';
   }
 
@@ -197,7 +208,7 @@ export const midYearEventRouter = (s: GameState): string => {
     return 'irs_tax_audit_crisis';
   }
 
-  if (isRealHome && s.age >= 32 && Math.random() < 0.25) {
+  if (isHomeowner && s.age >= 32 && Math.random() < 0.25) {
     return 'property_hoa_special_assessment';
   }
 
@@ -3330,8 +3341,8 @@ export const events: Record<string, GameEvent> = {
   },
   'japan_trip': {
     id: 'japan_trip',
-    title: '【绿卡自由行】东京羽田/京都赏枫度假',
-    description: '彻底摆脱了 H1B 返美签 Stamp 审查与 AP 跑路纸的心理阴影，你拿到了美国绿卡，买了一张旧金山直飞东京羽田的头等舱机票！',
+    title: '【跨境自由行】东京羽田/京都赏枫度假',
+    description: '彻底摆脱了 H1B 返美签 Stamp 审查与出入境限制的心理阴影，你享受着无需为签证焦虑的自由，买了一张旧金山直飞东京羽田的头等舱机票！',
     choices: [
       {
         text: '银座狂买 & 奢华怀石料理/米其林 (消耗 $1.5w)',
@@ -3659,13 +3670,14 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life'
       },
       {
-        text: '【抢学区房鸡娃】买 Fremont 10 分学区房，报名卡内基梅隆机器人夏令营',
+        text: '【抢学区房鸡娃】买 Fremont 10 分学区房，报名卡内基梅隆机器人夏令营 (消耗 $15w 现金)',
+        condition: (s) => s.cash >= 15,
         effect: (s) => ({
-          cash: Math.max(0, s.cash - 15),
+          cash: s.cash - 15,
           health: s.health - 10,
-          rent: 4.5,
+          rent: s.housing_name === 'Atherton 顶级豪宅' ? 0 : 4.5,
           has_housing: true,
-          housing_name: 'Fremont 10分学区房',
+          housing_name: s.housing_name === 'Atherton 顶级豪宅' ? 'Atherton 顶级豪宅' : 'Fremont 10分学区房',
           message: '你步入了湾区老爹鸡娃正轨！社区邻居全是高强度卷 AMC10 的硅谷大佬，每天陪娃解题虽然辛苦但充实。'
         }),
         nextEventId: 'sv_daily_life'

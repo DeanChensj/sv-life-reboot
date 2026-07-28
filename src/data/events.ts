@@ -125,7 +125,20 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
      if (s.job_type === 'quant') return 'quant_stress';
 
-     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'friday_pip', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'apple_vision_pro_demo', 'agent_hallucination_prod_disaster'];
+     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'apple_vision_pro_demo', 'agent_hallucination_prod_disaster'];
+     
+     // 公司专属 PIP 概率区分：亚麻与 Meta 具有高强度末位淘汰 / PIP 指标，皮衣黄 Nvidia 及 Google / Apple 的 PIP 概率极低
+     const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';
+     const isLowPipCompany = s.job_type === 'nvidia' || s.company === 'nvidia' || s.company === 'google' || s.company === 'apple';
+
+     if (isHighPipCompany) {
+       workEvents.push('friday_pip', 'friday_pip', 'friday_pip', 'layoff_rumor');
+     } else if (isLowPipCompany) {
+       if (Math.random() < 0.15) workEvents.push('friday_pip');
+     } else {
+       workEvents.push('friday_pip');
+     }
+
      if (s.difficulty_title === '困难难度') workEvents.push('friday_pip', 'layoff_rumor');
      if (s.difficulty_title === '简单难度') workEvents.push('perf_review');
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
@@ -1849,7 +1862,9 @@ export const events: Record<string, GameEvent> = {
         text: '认怂疯狂加班，证明自己的 Synergy',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
-          const survived = Math.random() > 0.5;
+          const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';
+          const passProb = isHighPipCompany ? 0.35 : 0.75;
+          const survived = Math.random() < passProb;
           return survived
             ? { health: s.health - 30, message: '你每天工作 16 小时，终于 survive 了 PIP！但你的头发少了一半。' }
             : { health: s.health - 20, tc: 0, laid_off: true, job_type: 'unemployed', message: '你熬了几个通宵，最后还是被 Manager 找借口开除了。' };

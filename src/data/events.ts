@@ -480,13 +480,13 @@ export const events: Record<string, GameEvent> = {
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
       {
-        text: '申请北美顶尖 PhD (录取率低, 需 LeetCode >= 30)',
-        condition: (s) => s.leetcode >= 30,
+        text: '申请北美顶尖 PhD (录取率低, 需 LeetCode >= 50)',
+        condition: (s) => s.leetcode >= 50,
         effect: (s) => {
-          const pass = Math.random() < (0.30 + (s.school === 'cmu' ? 0.25 : 0) + (s.leetcode >= 70 ? 0.20 : 0));
+          const pass = Math.random() < (0.20 + (s.school === 'cmu' ? 0.20 : 0) + (s.leetcode >= 80 ? 0.15 : 0));
           return pass 
             ? { cash: s.cash + 2, age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '大喜讯！你战胜了数千名申请者，斩获北美顶级 CS 全奖 PhD Offer！' }
-            : { health: s.health - 15, age: s.age + 1, message: '今年 CS 顶校 PhD 全奖录取率极低，你的推荐信被审稿人刷了，惨遭拒信。' };
+            : { health: Math.max(0, s.health - 15), age: s.age + 1, message: '今年 CS 顶校 PhD 全奖录取率极低，你的推荐信被审稿人刷了，惨遭拒信。' };
         },
         nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'job_hunt',
       },
@@ -512,13 +512,13 @@ export const events: Record<string, GameEvent> = {
     description: '四年过去了，你在国内大学打下了坚实的代码基础。接下来去哪里？',
     choices: [
       {
-        text: '全奖直博美国 (录取率地狱级, 需 LeetCode >= 30)',
-        condition: (s) => s.leetcode >= 30,
+        text: '全奖直博美国 (录取率地狱级, 需 LeetCode >= 50)',
+        condition: (s) => s.leetcode >= 50,
         effect: (s) => {
-          const pass = Math.random() < (0.25 + (s.leetcode >= 80 ? 0.30 : 0));
+          const pass = Math.random() < (0.18 + (s.leetcode >= 80 ? 0.20 : 0));
           return pass
             ? { cash: s.cash + 2, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '奇迹！凭着陆本顶尖算法功底，你跨海斩获了美国 CS 全奖直博 Offer！' }
-            : { health: s.health - 15, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
+            : { health: Math.max(0, s.health - 15), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
         },
         nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'cn_work',
       },
@@ -2601,16 +2601,21 @@ export const events: Record<string, GameEvent> = {
       {
         text: '熬！硬发顶会 (耗时 2 年)',
         effect: (s) => {
-          const pass = Math.random() > 0.3;
+          const pass = Math.random() < 0.50; // 50% paper acceptance chance
           return pass 
-            ? { age: s.age + 2, health: s.health - 15, leetcode: s.leetcode + 20, message: '两年的昼夜颠倒，你的论文终于有了一些突破性的进展，老板决定带你去夏威夷参加顶级学术会议！' }
-            : { age: s.age + 2, health: s.health - 20, message: '论文被拒了无数次，实验数据全崩，你陷入了深深的自我怀疑。' };
+            ? { age: s.age + 2, health: Math.max(0, s.health - 10), leetcode: Math.min(100, s.leetcode + 20), message: '两年的昼夜颠倒，你的论文终于有了一些突破性的进展，老板决定带你去夏威夷参加顶级学术会议！' }
+            : { age: s.age + 2, health: Math.max(0, s.health - 12), message: '论文惨遭拒稿连环背刺，实验数据全崩，你陷入了深深的自我怀疑。' };
         },
         nextEventId: (s) => ((s.message || '').includes('夏威夷') ? 'phd_conference' : 'phd_life')
       },
       {
-        text: '老板太坑了，我要 Master Out (拿个硕士跑路求职)',
-        effect: (s) => ({ age: s.age + 2, health: s.health + 10, message: '你及时止损，认清了自己不适合做学术，拿着硕士学位重回求职大军。' }),
+        text: '太累了！跟导师请假去 Yosemite 营地休养放松 (健康 +15, 耗时 1 年)',
+        effect: (s) => ({ health: Math.min(100, s.health + 15), age: s.age + 1, message: '你暂时放下了科研压力，去 Yosemite 森林露营徒步，身心逐渐恢复健康！' }),
+        nextEventId: 'phd_life'
+      },
+      {
+        text: '老板太坑了，我要 Master Out (拿个硕士跑路求职, 健康 +15)',
+        effect: (s) => ({ age: s.age + 1, health: Math.min(100, s.health + 15), message: '你及时止损，认清了自己不适合做学术，拿着硕士学位重回求职大军。' }),
         nextEventId: 'job_hunt'
       }
     ]

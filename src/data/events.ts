@@ -98,7 +98,10 @@ export const generateInitialState = (): GameState => {
 
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
-const midYearEventRouter = (s: GameState) => {
+export const midYearEventRouter = (s: GameState): string => {
+  const isWorking = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+  const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
+
   // Economy News Broadcasts
   // Bull/Bear: 14% chance per click -> ~36% chance per year -> ~2.7 years average span
   // Neutral: 5% chance per click -> ~14% chance per year -> ~7 years average span
@@ -113,125 +116,97 @@ const midYearEventRouter = (s: GameState) => {
     }
   }
 
-  const rand = Math.random();
-  const isWorking = s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
-  const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
-
-  if (s.job_type === 'trader' && s.cash < 10) return 'job_hunt';
-  if (s.year === 2022 && Math.random() < 0.15) return 'stock_crash';
-  if (rand < 0.06) return 'stock_crash';
-  if (rand >= 0.06 && rand < 0.46) {
+  // Stage H1 (Spring/Summer: Career & Major Work Events)
+  if (s.season_stage === 'h1' || !s.season_stage) {
      if (s.job_type === 'trader') return 'trader_annual_strategy';
      if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
      if (!isWorking) return 'job_hunt';
      if (s.job_type === 'startup') return 'startup_crisis';
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
      if (s.job_type === 'quant') return 'quant_stress';
-     const bigTechRand = Math.random();
-     if (bigTechRand < 0.25) return 'perf_review';
-     if (bigTechRand < 0.45) return 'layoff_rumor';
-     if (bigTechRand < 0.60) return 'rto_wars';
-     if (bigTechRand < 0.80) return 'meta_tlm';
-     if (bigTechRand < 0.90 && s.visa !== '绿卡' && s.visa !== '公民') return 'h1b_rfe_vs_parent_nag';
-     return 'friday_pip';
+
+     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'friday_pip'];
+     if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
+     if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
+     if (isWorking && s.age >= 35 && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.30) workEvents.push('midlife_management_pivot');
+     if (s.visa !== '绿卡' && s.visa !== '公民') workEvents.push('h1b_rfe_vs_parent_nag');
+
+     return workEvents[Math.floor(Math.random() * workEvents.length)];
   }
-  if (rand >= 0.46 && rand < 0.80) {
-    const lifeEvents = [
-      'pickleball_networking', 'dental_emergency', 'crypto_scam', 
-      'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
-      'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
-      'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup'
-    ];
-    
-    // Only working folks have Overemployed, blind gossips, and zoom camera off
-    if (isWorking) {
-        lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode');
-    }
 
-    if (!s.is_married) {
-        lifeEvents.push('ex_wedding_invite');
-    }
-    
-    if (s.relationship_status === 'dating' || s.is_married) {
-        lifeEvents.push('ikea_furniture_fight');
-    }
-    
-    // Only Big Tech folks have RSU crashes
-    if (isBigTech) {
-        lifeEvents.push('rsu_vesting_crash');
-    }
+  // Stage H2 (Autumn/Winter: Life, Social, Travel & Lifestyle Events)
+  const lifeEvents = [
+    'pickleball_networking', 'dental_emergency', 'crypto_scam', 
+    'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
+    'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
+    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup'
+  ];
 
-    // 1. Green Card Holders ONLY: japan_trip (免签自由行)
-    if ((s.visa === '绿卡' || s.visa === '公民') && Math.random() < 0.20) {
-      return 'japan_trip';
-    }
-
-    // 2. Non-Green Card H1B/O1 Holders ONLY: h1b_visa_stamping_crisis (回国续签查水表)
-    if ((s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') && Math.random() < 0.15) {
-      return 'h1b_visa_stamping_crisis';
-    }
-
-    // 3. Luxury Car Owners ONLY: luxury_car_meet (豪车会跑山)
-    if ((s.car === 'porsche' || s.car === 'cybertruck') && Math.random() < 0.20) {
-      return 'luxury_car_meet';
-    }
-
-    // 4. Homeowners ONLY: house_warming_party (乔迁派对)
-    const isRealHome = s.has_housing && s.housing_name && !['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-    if (isRealHome && Math.random() < 0.20) {
-      return 'house_warming_party';
-    }
-
-    // 5. High Cash ($100w+) ONLY: startup_angel_investing (天使投资)
-    if (s.cash >= 100 && Math.random() < 0.20) {
-      return 'startup_angel_investing';
-    }
-
-    // 6. NVDA Surge (2023+ AI Boom)
-    if (s.year >= 2023 && Math.random() < 0.18) {
-      return 'nvidia_stock_surge';
-    }
-
-    // 7. Married Couples ONLY: bay_area_dink_vs_kids (DINK vs 鸡娃抢学区房)
-    if ((s.is_married || s.relationship_status === 'married') && Math.random() < 0.20) {
-      return 'bay_area_dink_vs_kids';
-    }
-
-    // 8. Late Game Crises (Age >= 35 or Year >= 2024 or Homeowners)
-    if (isWorking && s.age >= 35 && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.25) {
-      return 'midlife_management_pivot';
-    }
-    if (s.year >= 2024 && isWorking && Math.random() < 0.20) {
-      return 'ai_disruption_existential';
-    }
-    if (isRealHome && s.age >= 32 && Math.random() < 0.20) {
-      return 'property_hoa_special_assessment';
-    }
-    if (isWorking && s.age >= 35 && s.health <= 60 && Math.random() < 0.25) {
-      return 'health_burnout_warning';
-    }
-
-    // Only non-Green Card / non-US workers face visa checks
-    if (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') {
-        lifeEvents.push('visa_check');
-    }
-
-    // Married or Dating folks can get breakup crisis!
-    if (s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating') {
-        lifeEvents.push('breakup_crisis');
-    } else {
-        // Single / Matched / Dating folks can play boardgame dating
-        lifeEvents.push('boardgame_dating');
-    }
-
-    // STRICTLY NON-MARRIED ONLY for dating_market (20% rebalanced rate)
-    if (!s.is_married && s.relationship_status !== 'married' && Math.random() < 0.20) {
-        return 'dating_market';
-    }
-
-    if (s.car && s.car !== 'none' && Math.random() < 0.25) return 'car_broken';
-    return lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
+  if (isWorking) {
+      lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode');
   }
+
+  if (!s.is_married) {
+      lifeEvents.push('ex_wedding_invite');
+  }
+  
+  if (s.relationship_status === 'dating' || s.is_married) {
+      lifeEvents.push('ikea_furniture_fight');
+  }
+  
+  if (isBigTech) {
+      lifeEvents.push('rsu_vesting_crash');
+  }
+
+  if ((s.visa === '绿卡' || s.visa === '公民') && Math.random() < 0.25) {
+    return 'japan_trip';
+  }
+
+  if ((s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') && Math.random() < 0.18) {
+    return 'h1b_visa_stamping_crisis';
+  }
+
+  if ((s.car === 'porsche' || s.car === 'cybertruck') && Math.random() < 0.25) {
+    return 'luxury_car_meet';
+  }
+
+  const isRealHome = s.has_housing && s.housing_name && !['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
+  if (isRealHome && Math.random() < 0.25) {
+    return 'house_warming_party';
+  }
+
+  if (s.cash >= 100 && Math.random() < 0.25) {
+    return 'startup_angel_investing';
+  }
+
+  if ((s.is_married || s.relationship_status === 'married') && Math.random() < 0.25) {
+    return 'bay_area_dink_vs_kids';
+  }
+
+  if (isRealHome && s.age >= 32 && Math.random() < 0.25) {
+    return 'property_hoa_special_assessment';
+  }
+
+  if (isWorking && s.age >= 35 && s.health <= 60 && Math.random() < 0.30) {
+    return 'health_burnout_warning';
+  }
+
+  if (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') {
+      lifeEvents.push('visa_check');
+  }
+
+  if (s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating') {
+      lifeEvents.push('breakup_crisis');
+  } else {
+      lifeEvents.push('boardgame_dating');
+  }
+
+  if (!s.is_married && s.relationship_status !== 'married' && Math.random() < 0.25) {
+      return 'dating_market';
+  }
+
+  if (s.car && s.car !== 'none' && Math.random() < 0.25) return 'car_broken';
+  return lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
 
   return 'sv_daily_life';
 };
@@ -1212,16 +1187,16 @@ export const events: Record<string, GameEvent> = {
           const pass = Math.random() < Math.min(0.7, baseWinRate);
 
           if (curLevel === 'L3') {
-            if (s.leetcode < 30) return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
+            if (s.leetcode < 30) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
           } else if (curLevel === 'L4') {
-            if (s.leetcode < 50) return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
+            if (s.leetcode < 50) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
           } else if (curLevel === 'L5 (Senior)') {
-            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { mid_year: true, health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
+            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
-          return { mid_year: true, health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
         nextEventId: (s) => (s.level === 'L6 (Staff)' && (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
       },
@@ -1230,16 +1205,16 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           if (s.leetcode < 50) {
-            return { mid_year: true, health: Math.max(10, s.health - 15), leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
+            return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 15), leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
           }
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
           
-          if (isFromAI) return { mid_year: true, health: Math.max(10, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', is_new_job: true, message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
-          if (curLevel === 'L3') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 8, level: 'L4', is_new_job: true, message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
-          if (curLevel === 'L4') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', is_new_job: true, message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
-          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, health: Math.max(10, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', is_new_job: true, message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
-          return { mid_year: true, health: Math.max(10, s.health - 15), tc: Math.floor(s.tc * 1.15), is_new_job: true, message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
+          if (isFromAI) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', is_new_job: true, message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
+          if (curLevel === 'L3') return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: s.tc + 8, level: 'L4', is_new_job: true, message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
+          if (curLevel === 'L4') return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', is_new_job: true, message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
+          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', is_new_job: true, message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 15), tc: Math.floor(s.tc * 1.15), is_new_job: true, message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
         nextEventId: (s) => (((s.message || '').includes('L6 Staff') || (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
@@ -1248,14 +1223,14 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => true,
         effect: (s) => {
           if (s.leetcode >= 40 && Math.random() < (0.05 + s.luck / 500)) {
-            return { mid_year: true, cash: s.cash + 35, leetcode: s.leetcode + 5, health: s.health - 15, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
+            return { mid_year: true, season_stage: 'h1', cash: s.cash + 35, leetcode: s.leetcode + 5, health: s.health - 15, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
           }
           let winRate = s.charm >= 12 ? 0.9 : (s.charm >= 7 ? 0.6 : 0.2);
           if (Math.random() < winRate) {
-            if (s.charm >= 20 && Math.random() < 0.05) return { mid_year: true, cash: s.cash + 48, charm: Math.min(25, s.charm + 5), health: s.health - 10, message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
-            return { mid_year: true, cash: s.cash + 8, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
+            if (s.charm >= 20 && Math.random() < 0.05) return { mid_year: true, season_stage: 'h1', cash: s.cash + 48, charm: Math.min(25, s.charm + 5), health: s.health - 10, message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
+            return { mid_year: true, season_stage: 'h1', cash: s.cash + 8, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
           }
-          return { mid_year: true, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
+          return { mid_year: true, season_stage: 'h1', cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
         },
         nextEventId: midYearEventRouter,
       },
@@ -1263,7 +1238,7 @@ export const events: Record<string, GameEvent> = {
         text: '【年度重心：投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
         condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
         effect: (s) => ({
-          mid_year: true,
+          mid_year: true, season_stage: 'h1',
           health: s.health - 15,
           message: '今年你花了大把时间盯盘、听财报电话会，试图在股市中加速财务自由！'
         }),
@@ -1273,7 +1248,7 @@ export const events: Record<string, GameEvent> = {
         text: '【年度重心：活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
         condition: (s) => true,
         effect: (s) => ({
-          mid_year: true,
+          mid_year: true, season_stage: 'h1',
           health: s.health - 10,
           charm: Math.min(25, s.charm + 3),
           message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
@@ -1312,7 +1287,7 @@ export const events: Record<string, GameEvent> = {
         text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
         condition: (_s) => true,
         effect: (s) => ({
-          mid_year: true,
+          mid_year: true, season_stage: 'h1',
           health: Math.min(100, s.health + 18),
           message: '这一年你彻底躺平，除了上班摸鱼外，回家就是打黑神话悟空。什么职场焦虑都没了，身体恢复了生机！'
         }),
@@ -1638,6 +1613,7 @@ export const events: Record<string, GameEvent> = {
 
            return { 
               mid_year: false,
+              season_stage: undefined,
               age: s.age + 1, 
               year: s.year + 1,
               visa: newVisa,

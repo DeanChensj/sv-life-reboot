@@ -22,6 +22,7 @@ export interface GameState {
   is_phd: boolean;
   is_master?: boolean;
   last_beauty_year?: number;
+  season_stage?: 'h1' | 'h2';
   has_pet: boolean;
   has_cat?: boolean;
   has_dog?: boolean;

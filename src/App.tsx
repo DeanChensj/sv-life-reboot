@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { GameState, Choice } from './types';
-import { generateInitialState, events } from './data/events';
+import { generateInitialState, events, midYearEventRouter } from './data/events';
 import { BentoStatsPanel } from './components/BentoStatsPanel';
 import { CharacterProfileModal } from './components/CharacterProfileModal';
 import { YearEndStatementModal } from './components/YearEndStatementModal';
@@ -214,9 +214,15 @@ export default function App() {
         setShowCharacterPass(true);
       }
 
-      // Intercept return to daily life if we are in mid-year (so the random event routes to year end settlement)
+      // Intercept return to daily life if we are in mid-year (H1 -> H2 -> Year End Settlement)
       if (nextId === 'sv_daily_life' && newState.mid_year) {
-        nextId = 'sv_year_end_settlement';
+        if (newState.season_stage === 'h1' || !newState.season_stage) {
+          newState.season_stage = 'h2';
+          nextId = midYearEventRouter(newState);
+        } else {
+          newState.season_stage = undefined;
+          nextId = 'sv_year_end_settlement';
+        }
       }
       
       setCurrentEventId(nextId);

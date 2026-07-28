@@ -1042,16 +1042,24 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '砸钱找最顶级的移民律师帮忙弄 O1 签证 (花费 8 万美元)',
-        condition: (s) => s.cash >= 8,
+        text: '砸 $8w 现金找顶级律所申办 O1 杰出人才签证 (需现金 >= $8w, 限 PhD/AI研究员/算法>=85)',
+        reqBadge: '现金>=8w+超凡背景',
+        condition: (s) => (s.is_phd || s.job_type === 'ai_research' || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const winRate = 0.6 + (s.luck / 100) * 0.35; // O1 成功率 60% - 95%
-          const win = Math.random() < winRate;
+          const passProb = (s.is_phd || s.job_type === 'ai_research') ? 0.75 : 0.35;
+          const win = Math.random() < passProb;
           return win
-            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'O1 (杰出人才)', cash: s.cash - 8, message: '律师非常给力，成功帮你申请到了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
-            : { cash: s.cash - 8, health: s.health - 15, message: '移民局觉得你水平不够，O1 签证被拒，八万美元打了水漂。' };
+            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'O1 (杰出人才)', cash: s.cash - 8, message: '凭硬核的学术论文与顶会引用，律所成功帮你拿下了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
+            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局以“缺乏行业顶尖影响力与独创贡献”退回了你的 O1 申请！$8w 律师费彻底打了水漂。' };
         },
         nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $60w 现金)',
+        reqBadge: '现金>=60w',
+        condition: (s) => s.cash >= 60 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 60, message: '凭家里雄厚的资金实力，直接出资 $60w 办妥了 EB-5 投资移民绿卡，跳过一切工签抽签直接上岸！' }),
+        nextEventId: 'post_green_card',
       },
       {
         text: '和美国公民闪婚拿绿卡 (高风险)',
@@ -1075,13 +1083,20 @@ export const events: Record<string, GameEvent> = {
         text: '参与第二轮 H1B 抽签！',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const winRate = 0.3 + (s.luck / 100) * 0.3;
+          const winRate = 0.35 + (s.luck / 100) * 0.3;
           const win = Math.random() < winRate;
           return win 
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', cash: s.cash, message: '第二年抽签人品爆发，终于中签了！' }
-            : { cash: s.cash, health: s.health - 15, message: '第二年还是没抽中...只剩最后一年 STEM OPT 机会了！' };
+            : { cash: s.cash, health: Math.max(0, s.health - 5), message: '第二年还是没抽中...只剩最后一年 STEM OPT 机会了！' };
         },
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b_final',
+      },
+      {
+        text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $60w 现金)',
+        reqBadge: '现金>=60w',
+        condition: (s) => s.cash >= 60 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 60, message: '在第二年抽签前，你果断出资 $60w 办妥了 EB-5 投资移民绿卡！彻底解决在美身份！' }),
+        nextEventId: 'post_green_card',
       }
     ]
   },
@@ -1117,11 +1132,17 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【杰出人才】凭借算法功力与技术影响力，申办 O1 签证 (需算法>=50或PhD)',
-        reqBadge: '算法>=50或PhD',
-        condition: (s) => (s.leetcode >= 50 || s.is_phd) && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: 'O1 (杰出人才)', cash: s.cash - 4, message: '凭硬核算法与发表的硬核技术文章，移民局批复了你的 O1 杰出人才签证！彻底甩开抽签束缚！' }),
-        nextEventId: 'sv_daily_life',
+        text: '【杰出人才】申办 O1 签证 (花费 $5w 律师费, 需 PhD 或算法>=85)',
+        reqBadge: '需PhD或算法>=85',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const passProb = (s.is_phd || s.job_type === 'ai_research') ? 0.75 : 0.35;
+          const win = Math.random() < passProb;
+          return win
+            ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, message: '凭硬核学术成果与独创性架构，移民局批复了你的 O1 杰出人才签证！成功自救！' }
+            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: '移民局驳回了你的 O1 申请，认为你的行业贡献不足以达到杰出人才标准。' };
+        },
+        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
       }
     ]
   },
@@ -1131,11 +1152,17 @@ export const events: Record<string, GameEvent> = {
     description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
     choices: [
       {
-        text: '【杰出人才自救】凭硬核算法功力/PhD 学位直接申请 O1 签证 (需算法>=60或PhD)',
-        reqBadge: '算法>=60或PhD',
-        condition: (s) => (s.leetcode >= 60 || s.is_phd) && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: 'O1 (杰出人才)', health: Math.max(0, s.health - 10), message: '凭硬核算法实力与发表的技术论文，移民局批复了你的 O1 杰出人才签证！成功自救！' }),
-        nextEventId: 'sv_daily_life',
+        text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费, 需 PhD 或算法>=85)',
+        reqBadge: '需PhD或算法>=85',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const passProb = s.is_phd ? 0.75 : 0.30;
+          const win = Math.random() < passProb;
+          return win
+            ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, health: Math.max(0, s.health - 5), message: '凭硬核论文与行业大牛推荐信，移民局批复了你的 O1 杰出人才签证！成功自救！' }
+            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。' };
+        },
+        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
       },
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $50w)',
@@ -2213,13 +2240,14 @@ export const events: Record<string, GameEvent> = {
     description: '连续三年 H1B 抽签全军覆没！你的 STEM OPT 即将到期，公司 HR 和律所发来最终通知：必须在 30 天内解决合法身份，否则将被终止合同并安排外派离境！',
     choices: [
       {
-        text: '砸 $8w 现金找顶尖律师紧急加急办理 O1 杰出人才签证 (需要现金 >= $8w)',
-        condition: (s) => s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        text: '砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD 或算法>=85)',
+        reqBadge: '现金>=8w+超凡背景',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const pass = Math.random() < (0.65 + (s.is_phd ? 0.25 : 0) + (s.leetcode >= 60 ? 0.1 : 0));
+          const pass = Math.random() < (s.is_phd ? 0.70 : 0.35);
           return pass
-            ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和项目中的亮点，成功压线批准了 O1 签证！绝地求生！' }
-            : { cash: s.cash - 8, health: s.health - 20, message: '移民局驳回了 O1 申请，$8w 律师费打了水漂...' };
+            ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
+            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
         },
         nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
       },

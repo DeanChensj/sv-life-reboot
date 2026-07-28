@@ -126,6 +126,8 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'quant') return 'quant_stress';
 
      const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'friday_pip', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'apple_vision_pro_demo', 'agent_hallucination_prod_disaster'];
+     if (s.difficulty_title === '困难难度') workEvents.push('friday_pip', 'layoff_rumor');
+     if (s.difficulty_title === '简单难度') workEvents.push('perf_review');
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
      if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
      if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
@@ -282,17 +284,17 @@ export const events: Record<string, GameEvent> = {
     description: '宏观周期决定了个人命运。请选择你的游戏难度：',
     choices: [
       {
-        text: '简单难度 (宽松周期)：大厂招人如水漫金山，Headcount 充足。',
-        effect: (_s) => ({ year: 2014, difficulty_title: '简单难度' }),
+        text: '🟢 简单难度 (宽松周期)：硅谷黄金时代，Headcount 充沛，升职加薪顺水推舟。',
+        effect: (_s) => ({ year: 2014, difficulty_title: '简单难度', luck: (_s.luck || 20) + 10 }),
         nextEventId: 'choose_school',
       },
       {
-        text: '普通难度 (周期交替)：经历疫情放水与过山车般的裁员潮。',
+        text: '🟡 普通难度 (周期交替)：经历经济周期起伏，放水狂欢与裁员潮交替 (标准体验)。',
         effect: (_s) => ({ year: 2018, difficulty_title: '普通难度' }),
         nextEventId: 'choose_school',
       },
       {
-        text: '困难难度 (AI 颠覆)：毕业即遇 AI 狂潮与地狱级 HC 锁死。',
+        text: '🔴 困难难度 (地狱 AI 狂潮)：AI 颠覆性内卷，大厂 HC 极度锁死，职场高压挑战！',
         effect: (_s) => ({ year: 2019, difficulty_title: '困难难度' }),
         nextEventId: 'choose_school',
       }
@@ -306,25 +308,27 @@ export const events: Record<string, GameEvent> = {
       {
         text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
         condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: s.cash - 30, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: s.health - 5, housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 30), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 5), housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
         text: '理工强校大U (如 UIUC/UW/UMich) (四年总开销 25 万美元)',
         condition: (s) => s.cash >= 25,
-        effect: (s) => ({ cash: s.cash - 25, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 25), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '美国普通公立大学 (四年总开销 15 万美元)',
-        condition: (s) => s.cash >= 15,
-        effect: (s) => ({ cash: s.cash - 15, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + 2, housing_name: '美大U 校内宿舍', message: '你飞往美国，准备开启无忧无虑的本科生活。' }),
+        text: '美国普通公立大学 (四年总开销 15 万美元, 美籍/绿卡含州内补贴只需 5 万)',
+        condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? 5 : 15),
+        effect: (s) => {
+          const cost = (s.visa === '公民' || s.visa === '绿卡') ? 5 : 15;
+          return { cash: Math.max(0, s.cash - cost), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + 2, housing_name: '美大U 校内宿舍', message: '你飞往美国，准备开启无忧无虑的本科生活。' };
+        },
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '在国内读本科 (四年总开销 2 万美元)',
-        condition: (s) => s.visa !== '公民',
-        effect: (s) => ({ cash: s.cash - 2, housing_name: '国内大学宿舍' }),
+        text: '在国内读本科 / 中外合办大学 (四年总开销 2 万美元)',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 2), housing_name: '国内大学宿舍' }),
         nextEventId: 'cn_college_grad',
       }
     ]
@@ -1595,7 +1599,8 @@ export const events: Record<string, GameEvent> = {
 
             if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed') {
               newAttempts += 1;
-              const winRate = 0.35 + (s.luck / 100) * 0.3;
+              const baseWinRate = s.difficulty_title === '简单难度' ? 0.65 : s.difficulty_title === '困难难度' ? 0.20 : 0.40;
+              const winRate = baseWinRate + (s.luck / 100) * 0.2;
               const win = Math.random() < winRate;
               if (win) {
                 newVisa = 'H1B (工签)';

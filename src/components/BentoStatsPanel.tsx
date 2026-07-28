@@ -285,7 +285,14 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
         <div className="col-span-2 md:col-span-4 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex justify-between items-center backdrop-blur-xl">
           <div>
             <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-0.5">游戏难度</div>
-            <div className="text-sm sm:text-base font-bold font-mono text-emerald-300">{gameState.difficulty_title || '普通难度'}</div>
+            <div className="flex items-center gap-2">
+              <div className={`text-sm sm:text-base font-bold font-mono ${gameState.difficulty_title === '简单难度' ? 'text-emerald-400' : gameState.difficulty_title === '困难难度' ? 'text-rose-400' : 'text-amber-400'}`}>
+                {gameState.difficulty_title || '普通难度'}
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/60 text-zinc-300">
+                {gameState.difficulty_title === '简单难度' ? '宽松周期 · 发展顺遂' : gameState.difficulty_title === '困难难度' ? '地狱 AI · 极速内卷' : '周期交替 · 稳扎稳打'}
+              </span>
+            </div>
           </div>
           <div className="text-right">
             <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-0.5">当前年龄</div>

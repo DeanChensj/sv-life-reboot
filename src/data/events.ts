@@ -2927,12 +2927,13 @@ export const events: Record<string, GameEvent> = {
           const gainRate = 0.12 + (s.luck / 500);
           const profit = s.cash * gainRate;
           return {
+            mid_year: true, season_stage: 'h1',
             tc: parseFloat(profit.toFixed(1)),
             health: Math.min(100, s.health + 10),
             message: ` 稳健盈利！凭借严谨的风险控制与高股息收益，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${profit.toFixed(1)}w 美元)！时间自由，心态极其放松！`
           };
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       },
       {
         text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险)',
@@ -2941,19 +2942,21 @@ export const events: Record<string, GameEvent> = {
           if (isBoomYear) {
             const gain = s.cash * 0.45;
             return {
+              mid_year: true, season_stage: 'h1',
               tc: parseFloat(gain.toFixed(1)),
               message: ` 飞天暴富！你重仓的 AI 科技巨头股价随着风口暴涨 45%！账面盈利 +${gain.toFixed(1)}w 美元！`
             };
           } else {
             const loss = s.cash * 0.18;
             return {
+              mid_year: true, season_stage: 'h1',
               tc: 0,
               cash: Math.max(10, s.cash - loss),
               message: ` 宏观回调！科技板块经历美联储加息回调 -18%，本金受损 -${loss.toFixed(1)}w 美元！好在你仓位稳固。`
             };
           }
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       },
       {
         text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险)',
@@ -2962,12 +2965,14 @@ export const events: Record<string, GameEvent> = {
           if (roll < 0.50) {
             const doubleGain = s.cash * 0.85;
             return {
+              mid_year: true, season_stage: 'h1',
               tc: parseFloat(doubleGain.toFixed(1)),
               message: ` 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +85% (+${doubleGain.toFixed(1)}w 美元)！`
             };
           } else if (roll < 0.80) {
             const drop = s.cash * 0.35;
             return {
+              mid_year: true, season_stage: 'h1',
               tc: 0,
               cash: Math.max(5, s.cash - drop),
               message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -35% (-${drop.toFixed(1)}w 美元)！`
@@ -2975,6 +2980,7 @@ export const events: Record<string, GameEvent> = {
           } else {
             const bust = s.cash * 0.70;
             return {
+              mid_year: true, season_stage: 'h1',
               tc: 0,
               cash: Math.max(2, s.cash - bust),
               health: Math.max(0, s.health - 25),
@@ -2982,7 +2988,7 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       }
     ]
   },
@@ -2999,6 +3005,7 @@ export const events: Record<string, GameEvent> = {
           const stage = s.founder_stage || 'seed';
           if (stage === 'seed') {
             return {
+              mid_year: true, season_stage: 'h1',
               founder_stage: 'series_a',
               company_valuation: 2500,
               cash: s.cash + 25,
@@ -3007,6 +3014,7 @@ export const events: Record<string, GameEvent> = {
             };
           } else {
             return {
+              mid_year: true, season_stage: 'h1',
               founder_stage: 'exit',
               company_valuation: 8000,
               cash: s.cash + 50,
@@ -3015,19 +3023,20 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       },
       {
         text: '【高举高打招聘】重金从 Meta/Google 挖掘顶级大牛核心工程组 (需现金>=15w)',
         reqBadge: '现金>=15w',
         condition: (s) => s.cash >= 15,
         effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
           cash: s.cash - 15,
           company_valuation: (s.company_valuation || 1000) + 1500,
           leetcode: Math.min(100, s.leetcode + 10),
           message: ' 团队战力爆表！大厂 Senior 大牛加盟后，研发出颠覆性的 AI Agent 产品，公司估值飙升！'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       },
       {
         text: '【终局 Exit】考虑公司并购 Acq-hire 或准备 纳斯达克 IPO 敲钟上市',
@@ -3053,12 +3062,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件)',
         effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
           cash: Math.max(0, s.cash - 3),
           company_valuation: Math.max(100, (s.company_valuation || 1000) - 300),
           health: Math.max(0, s.health - 10),
           message: '资金与资源有限，你决定开源节流，挥泪解雇了一批员工。虽然度过了危机，但公司士气大跌，你的心理压力极大。'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: midYearEventRouter,
       }
     ]
   },

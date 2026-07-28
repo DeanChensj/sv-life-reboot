@@ -181,6 +181,12 @@ export default function App() {
       }
     }
 
+    // Check if Health Burnout (健康归零猝死)
+    if (newState.health <= 0 && newState.status === 'playing') {
+      newState.status = 'game_over';
+      newState.message = (newState.message ? newState.message + ' ' : '') + '【身体崩溃猝死】由于高强度高压工作与长期极度疲劳，你的健康值彻底归零，身体突发严重 Burnout 猝死，遗憾登出了硅谷人生！';
+    }
+
     // Check FIRE win
     if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
       newState.status = 'win';

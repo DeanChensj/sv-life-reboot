@@ -139,7 +139,7 @@ export const midYearEventRouter = (s: GameState): string => {
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
-    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'san_francisco_car_window_smash', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'tesla_fsd_unsupervised_scare', 'mac_mini_open_claw_server', 'multi_agent_side_hustle'
+    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'san_francisco_car_window_smash', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'tesla_fsd_unsupervised_scare', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam', 'ex_1point3acres_expose'
   ];
 
   if (isWorking) {
@@ -1119,7 +1119,7 @@ export const events: Record<string, GameEvent> = {
         text: '【杰出人才自救】凭硬核算法功力/PhD 学位直接申请 O1 签证 (需算法>=60或PhD)',
         reqBadge: '算法>=60或PhD',
         condition: (s) => (s.leetcode >= 60 || s.is_phd) && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: 'O1 (杰出人才)', health: Math.max(10, s.health - 10), message: '凭硬核算法实力与发表的技术论文，移民局批复了你的 O1 杰出人才签证！成功自救！' }),
+        effect: (s) => ({ visa: 'O1 (杰出人才)', health: Math.max(0, s.health - 10), message: '凭硬核算法实力与发表的技术论文，移民局批复了你的 O1 杰出人才签证！成功自救！' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -1199,16 +1199,16 @@ export const events: Record<string, GameEvent> = {
           const pass = Math.random() < Math.min(0.7, baseWinRate);
 
           if (curLevel === 'L3') {
-            if (s.leetcode < 30) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
+            if (s.leetcode < 30) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
           } else if (curLevel === 'L4') {
-            if (s.leetcode < 50) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
+            if (s.leetcode < 50) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
           } else if (curLevel === 'L5 (Senior)') {
-            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
+            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
-          return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
         nextEventId: (s) => (s.level === 'L6 (Staff)' && (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
       },
@@ -1217,16 +1217,16 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           if (s.leetcode < 50) {
-            return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 15), leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
+            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
           }
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
           
-          if (isFromAI) return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', is_new_job: true, message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
-          if (curLevel === 'L3') return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: s.tc + 8, level: 'L4', is_new_job: true, message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
-          if (curLevel === 'L4') return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', is_new_job: true, message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
-          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', is_new_job: true, message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
-          return { mid_year: true, season_stage: 'h1', health: Math.max(10, s.health - 15), tc: Math.floor(s.tc * 1.15), is_new_job: true, message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
+          if (isFromAI) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', is_new_job: true, message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
+          if (curLevel === 'L3') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 8, level: 'L4', is_new_job: true, message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
+          if (curLevel === 'L4') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', is_new_job: true, message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
+          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', is_new_job: true, message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: Math.floor(s.tc * 1.15), is_new_job: true, message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
         nextEventId: (s) => (((s.message || '').includes('L6 Staff') || (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
@@ -1356,12 +1356,12 @@ export const events: Record<string, GameEvent> = {
         text: '【梭哈期权】拼了！用小额现金炒 0DTE 末日期权 (投入 $5w)',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
-          const hit = Math.random() < (0.15 + s.luck / 500); // Low chance
+          const hit = Math.random() < (0.08 + s.luck / 500); // 8% base chance
           if (hit) {
             return {
-              cash: s.cash + 25, // Turn 5w into 30w
+              cash: s.cash + 20, // Turn 5w into 25w (+$20w net cash)
               health: s.health - 20,
-              message: '【暴富奇迹！】你赌对了非农数据日的末日期权，一夜之间 $5w 翻了 6 倍变成 $30w！截图发在群里被尊称为华尔街之狼！'
+              message: '【暴富奇迹！】你赌对了非农数据日的末日期权，一夜之间 $5w 变成了 $25w！截图发在群里被尊称为华尔街之狼！'
             };
           } else {
             return {
@@ -1744,7 +1744,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ health: Math.max(10, s.health - 25), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', message: '你用极具创造性的学术废话打动了移民局官员，获得了 3 年 H1B！但你的头发掉了三分之一。' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 25), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', message: '你用极具创造性的学术废话打动了移民局官员，获得了 3 年 H1B！但你的头发掉了三分之一。' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -1820,7 +1820,7 @@ export const events: Record<string, GameEvent> = {
           laid_off: true,
           job_type: 'unemployed',
           leetcode: s.leetcode + 10,
-          health: Math.max(10, s.health - 25),
+          health: Math.max(0, s.health - 25),
           message: '【周五 PIP 绩效开除】选择 Quiet Quitting 改进计划未通过！HR 当场收回笔记本与 Workday 权限！PIP 绩效辞退无遣散费补偿！'
         }),
         nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
@@ -1960,8 +1960,8 @@ export const events: Record<string, GameEvent> = {
           const tcIncrease = isL3 ? 3.5 : 6.5;
           const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
-            ? { health: Math.max(10, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: ` 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
-            : { health: Math.max(10, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
+            ? { health: Math.max(0, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: ` 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
+            : { health: Math.max(0, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
         },
         nextEventId: (s) => ((s.message || '').includes('晋升') ? 'promo_celebration' : 'sv_daily_life'),
       },
@@ -1977,8 +1977,8 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.15 + (s.leetcode / 100) * 0.15; // 15% - 30% hard chance
           const win = Math.random() < winRate;
           return win 
-            ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(10, s.health - 22), last_promo_age: s.age, message: ' 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
-            : { health: Math.max(10, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
+            ? { level: 'L6 (Staff)', tc: s.tc + 15, health: Math.max(0, s.health - 22), last_promo_age: s.age, message: ' 奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构，打破了 35 岁天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +15 万美元！' }
+            : { health: Math.max(0, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你的系统架构跨组 Impact 还不足以支撑 L6 职级。白卷了一整年。' };
         },
         nextEventId: (s) => ((s.level === 'L6 (Staff)' && (s.message || '').includes('晋升')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : 'sv_daily_life')),
       },
@@ -2327,7 +2327,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '老老实实上班，咬牙扛住房贷（进入日常行动）',
-        effect: (s) => ({ rent: 2.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(10, s.health - 5), message: '你把心安在了加州木板老破小里，虽然房贷沉重，但每次看到属于自己的草坪，干劲又回来了！' }),
+        effect: (s) => ({ rent: 2.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(0, s.health - 5), message: '你把心安在了加州木板老破小里，虽然房贷沉重，但每次看到属于自己的草坪，干劲又回来了！' }),
         nextEventId: 'sv_daily_life',
       },
       {
@@ -2335,7 +2335,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const badTenant = Math.random() > 0.65;
           return badTenant
-            ? { rent: 1.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(10, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金，但把你折腾得够呛。' }
+            ? { rent: 1.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金，但把你折腾得够呛。' }
             : { rent: 0.8, has_housing: true, housing_name: 'Sunnyvale 老破小', cash: s.cash + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，把你的实际每年房贷净支出压到了底线！' };
         },
         nextEventId: 'sv_daily_life',
@@ -2580,7 +2580,7 @@ export const events: Record<string, GameEvent> = {
           }
           const win = Math.random() < 0.18;
           return win 
-            ? { cash: s.cash + 300, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，顺便获得了 EB-1 杰出人才绿卡！' }
+            ? { cash: s.cash + 60, stocks: (s.stocks || 0) + 100, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $60w 现金与 $100w 股票资产，顺便拿到了 EB-1 绿卡！' }
             : { cash: Math.max(0, s.cash - 10), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜更新简历。' };
         },
         nextEventId: (s) => (s.message || '').includes('杰出人才绿卡') ? 'post_green_card' : 'job_hunt',
@@ -2827,13 +2827,13 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '挂壁大客厅隔间 (每年 1 万美元): 极致压低开销狂攒首付/防破产',
-        effect: (s) => ({ rent: 1, charm: Math.max(0, s.charm - 2), health: Math.max(10, s.health - 10), housing_name: '客厅屏风隔间', message: '你搬回了客厅屏风隔间，将每年固定的房租开销砍到了极致。' }),
+        effect: (s) => ({ rent: 1, charm: Math.max(0, s.charm - 2), health: Math.max(0, s.health - 10), housing_name: '客厅屏风隔间', message: '你搬回了客厅屏风隔间，将每年固定的房租开销砍到了极致。' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: ' 终极挂壁：连夜退租！搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年)',
         condition: (s) => !!(s.car && s.car !== 'none'),
-        effect: (s) => ({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, s.health - 15), message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
+        effect: (s) => ({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(0, s.health - 15), message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -2911,7 +2911,7 @@ export const events: Record<string, GameEvent> = {
             return {
               tc: 0,
               cash: Math.max(2, s.cash - bust),
-              health: Math.max(10, s.health - 25),
+              health: Math.max(0, s.health - 25),
               message: ` 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
             };
           }
@@ -3079,8 +3079,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const caught = Math.random() < 0.25;
           return caught
-            ? { tc: 0, laid_off: true, job_type: 'unemployed', health: Math.max(10, s.health - 40), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
-            : { cash: s.cash + s.tc, health: Math.max(10, s.health - 30), leetcode: s.leetcode + 5, message: '你用两台电脑同时开会，成功拿到了双倍工资！但是巨大的上下文切换让你精神分裂。' };
+            ? { tc: 0, laid_off: true, job_type: 'unemployed', health: Math.max(0, s.health - 40), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
+            : { cash: s.cash + s.tc, health: Math.max(0, s.health - 30), leetcode: s.leetcode + 5, message: '你用两台电脑同时开会，成功拿到了双倍工资！但是巨大的上下文切换让你精神分裂。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
       },
@@ -3121,7 +3121,7 @@ export const events: Record<string, GameEvent> = {
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
           return win
             ? { cash: s.cash - 1, tc: isUnemployed ? 20 : s.tc + 5, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司，总包大涨！' }
-            : { cash: s.cash - 1, health: Math.max(10, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
+            : { cash: s.cash - 1, health: Math.max(0, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
         },
         nextEventId: 'sv_daily_life'
       },
@@ -3140,7 +3140,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '和平分手，资产平分',
-        effect: (s) => ({ cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 20), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
+        effect: (s) => ({ cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 20), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -3149,8 +3149,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.5;
           return win
-            ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
-            : { cash: (s.cash - 10) * 0.3, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 70% 的资产，你直接崩溃了！' };
+            ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
+            : { cash: (s.cash - 10) * 0.3, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 70% 的资产，你直接崩溃了！' };
         },
         nextEventId: 'sv_daily_life'
       },
@@ -3160,7 +3160,7 @@ export const events: Record<string, GameEvent> = {
           const win = s.charm >= 10 && Math.random() > 0.5;
           return win
             ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
-            : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(10, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
+            : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
         },
         nextEventId: 'sv_daily_life'
       }
@@ -3364,7 +3364,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.5),
           charm: Math.min(25, s.charm + 5),
-          health: Math.max(10, s.health - 5),
+          health: Math.max(0, s.health - 5),
           message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪！'
         }),
         nextEventId: 'sv_daily_life'
@@ -3432,7 +3432,7 @@ export const events: Record<string, GameEvent> = {
         text: '在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
-          health: Math.max(10, s.health - 15),
+          health: Math.max(0, s.health - 15),
           message: '你白加黑倒时差工作了两周，终于等到了 Passport 带着 Stamp 寄回！成功惊险返美！'
         }),
         nextEventId: 'sv_daily_life'
@@ -3496,7 +3496,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < 0.45;
           return win
             ? { luck: Math.min(45, s.luck + 5), cash: s.cash + 2, message: '产线竟然零报错无缝运行！用户量大增，领导夸赞你产出惊人！' }
-            : { health: Math.max(10, s.health - 15), message: 'AI 幻觉写出了逻辑死锁导致大厂全网宕机 2 小时！你半夜被 PagerDuty 电话叫醒去改底层 C++！' };
+            : { health: Math.max(0, s.health - 15), message: 'AI 幻觉写出了逻辑死锁导致大厂全网宕机 2 小时！你半夜被 PagerDuty 电话叫醒去改底层 C++！' };
         },
         nextEventId: 'sv_daily_life'
       }
@@ -3510,10 +3510,10 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【VC 争相送钱】接受 a16z / YC 的 $50w 种子轮打款',
         effect: (s) => ({
-          cash: s.cash + 50,
+          cash: s.cash + 15,
           charm: Math.min(25, s.charm + 6),
           job_type: 'startup',
-          message: 'a16z 领投 $50 万美金！你登上了 TechCrunch 头条，成为硅谷最炙手可热的 AI Agent 创业明星！'
+          message: 'a16z 领投种子轮！获得 $15 万美金天使现金，你登上了 TechCrunch 头条，成为硅谷最炙手可热的 AI Agent 创业明星！'
         }),
         nextEventId: 'sv_daily_life'
       },
@@ -3538,7 +3538,7 @@ export const events: Record<string, GameEvent> = {
         text: '【转型 M1/EM 管理岗】承担背指标背 PIP 责任，管理 12 人团队',
         effect: (s) => ({
           tc: s.tc + 15,
-          health: Math.max(10, s.health - 20),
+          health: Math.max(0, s.health - 20),
           charm: Math.min(s.max_charm || 25, s.charm + 3),
           message: '你升任了 EM 管理岗！TC 飙升，但每天要在各类汇报与背 PIP 的沉重压力下度过，白头发暴增。'
         }),
@@ -3600,7 +3600,7 @@ export const events: Record<string, GameEvent> = {
         text: '【加入 HOA 业委会抗争】在社区业主大会上与 HOA 主席展开大战',
         effect: (s) => ({
           charm: Math.min(s.max_charm || 25, s.charm + 3),
-          health: Math.max(10, s.health - 15),
+          health: Math.max(0, s.health - 15),
           message: '你在邻居群里化身意见领袖，成功把摊派金额砍到了 $1.5w！虽然省了钱，但整整三个星期都在和业委会扯皮，身心俱疲。'
         }),
         nextEventId: 'sv_daily_life'
@@ -3625,7 +3625,7 @@ export const events: Record<string, GameEvent> = {
         text: '【轻伤不下火线】吃降压药硬抗，继续为下一个 Promotable Project 拼命',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => ({
-          health: Math.max(10, s.health - 20),
+          health: Math.max(0, s.health - 20),
           tc: (s.job_type === 'unemployed' || s.laid_off) ? 0 : s.tc + 5,
           message: '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
         }),
@@ -3739,7 +3739,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵 48 小时手写 Recovery 恢复脚本救回权重 (算法 +10, 健康 -15)',
-        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(10, s.health - 15), message: '凭借硬核的 Infra 恢复脚本，你奇迹般地挽回了 90% 的权重数据，VP 在 Slack 全员频道为你点赞！' }),
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), message: '凭借硬核的 Infra 恢复脚本，你奇迹般地挽回了 90% 的权重数据，VP 在 Slack 全员频道为你点赞！' }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -3756,12 +3756,12 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '主动约新 Manager 1:1，带上精心准备的 30 页 PPT 汇报展现价值 (人脉 +5, 健康 -10)',
-        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), health: Math.max(10, s.health - 10), message: '你的主动与专业打动了新老板，成功保住了原本的项目 Owner 身份！' }),
+        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), health: Math.max(0, s.health - 10), message: '你的主动与专业打动了新老板，成功保住了原本的项目 Owner 身份！' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: '彻底失望，借机关摄像头狂刷 LeetCode 准备跳槽 (算法 +15, 健康 -10)',
-        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 15), health: Math.max(10, s.health - 10), message: '你在摸鱼中狂刷了 50 道 Hard 题，算法功力大增，准备随时寻找下家！' }),
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 15), health: Math.max(0, s.health - 10), message: '你在摸鱼中狂刷了 50 道 Hard 题，算法功力大增，准备随时寻找下家！' }),
         nextEventId: 'sv_daily_life'
       }
     ]
@@ -3773,7 +3773,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '自告奋勇担任 Head of Spatial App 领头人 (TC +$3w, 健康 -15)',
-        effect: (s) => ({ tc: s.tc + 3, health: Math.max(10, s.health - 15), message: '你成为了公司内部空间计算的第一专家，产品上线后获得了大批关注！总包获得增长！' }),
+        effect: (s) => ({ tc: s.tc + 3, health: Math.max(0, s.health - 15), message: '你成为了公司内部空间计算的第一专家，产品上线后获得了大批关注！总包获得增长！' }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -3861,7 +3861,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '吓出一身冷汗，立刻双手接管车轮 (健康 -5, 算法 +3)',
-        effect: (s) => ({ health: Math.max(10, s.health - 5), leetcode: s.leetcode + 3, message: '你惊险避免了后车追尾！经此一役，你对自动驾驶边界条件有了更深的工程体会。' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 5), leetcode: s.leetcode + 3, message: '你惊险避免了后车追尾！经此一役，你对自动驾驶边界条件有了更深的工程体会。' }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -3922,7 +3922,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵加班重头学习最新 Infra 业务架构 (健康 -15, 算法 +10)',
-        effect: (s) => ({ health: Math.max(10, s.health - 15), leetcode: Math.min(100, s.leetcode + 10), message: '凭着硬核的学习能力，你咬牙掌握了新架构，重新站稳了团队的核心位置！' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 10), message: '凭着硬核的学习能力，你咬牙掌握了新架构，重新站稳了团队的核心位置！' }),
         nextEventId: 'sv_daily_life'
       },
       {
@@ -3946,7 +3946,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w 现金, 健康 -10)',
         condition: (s) => s.cash >= 2.5,
-        effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(10, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),
+        effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(0, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),
         nextEventId: 'sv_daily_life'
       }
     ]
@@ -3958,11 +3958,12 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵手写 SQL 脚本与备份恢复 (算法 +10, 健康 -15)',
-        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(10, s.health - 15), message: '凭借硬核的数据库恢复功底，你连夜恢复了绝大部分备份，保住了生产环境！' }),
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), message: '凭借硬核的数据库恢复功底，你连夜恢复了绝大部分备份，保住了生产环境！' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: '甩锅给大模型 API 供应商，申请专项赔偿 (人脉 -2, 现金 -0.5w)',
+        condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), cash: Math.max(0, s.cash - 0.5), message: '虽然倒贴了一些补偿金，但团队把主要责任交给了云端模型供应商的幻觉缺陷。' }),
         nextEventId: 'sv_daily_life'
       }
@@ -3994,13 +3995,66 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '定时提现副业收益 (现金 +$12w, 健康 -5)',
-        effect: (s) => ({ cash: s.cash + 12, health: Math.max(10, s.health - 5), message: 'Multi-Agent 自动套利脚本为你带来了 $12w 额外副业现金流！' }),
+        effect: (s) => ({ cash: s.cash + 12, health: Math.max(0, s.health - 5), message: 'Multi-Agent 自动套利脚本为你带来了 $12w 额外副业现金流！' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: '规模过大被 Cloudflare 封禁 IP，倒贴伺服器租金 (消耗 $1w)',
         condition: (s) => s.cash >= 1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 1), message: '频繁并发触发了云端防爬虫拦截，脚本失效并损失了一笔服务器租金。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'fashion_disaster_hoodie': {
+    id: 'fashion_disaster_hoodie',
+    title: '【湾区穿搭】洞洞鞋 + 大厂旧 Hoodie 被吐槽',
+    description: '你穿着起球的大厂旧 Hoodie、Patagonia 夹克和洞洞鞋去 Palo Alto 约会。餐桌上，朋友开玩笑吐槽：“你这一身活脱脱就是湾区油腻码农标配啊！”',
+    choices: [
+      {
+        text: '坚称“这是极客硬核文化与 WLB 的象征” (魅力 -3, 健康 +5)',
+        effect: (s) => ({ charm: Math.max(0, s.charm - 3), health: Math.min(100, s.health + 5), message: '你维持了自己的穿搭习惯，但在朋友眼里你的精致度与魅力值被扣了分。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '痛下决心，去 Santana Row 购买几套修身休闲装 (花费 $0.2w, 魅力 +3)',
+        condition: (s) => s.cash >= 0.2,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 3), message: '换上合身的新衣服后，你整个人精神焕发，颜值与魅力大幅回升！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'linkedin_cold_outreach_spam': {
+    id: 'linkedin_cold_outreach_spam',
+    title: '【人脉黑名单】LinkedIn 乱发 Cold Message 遭圈内避嫌',
+    description: '你急于拓展圈子，用自动化脚本向湾区 200 多位大厂 Director / VP 批量发送了推销自己的 Cold Message。结果被某总监截图发在 Pulse 专栏吐槽“缺乏基本职业素养”...',
+    choices: [
+      {
+        text: '在评论区与发帖总监论战维护尊严 (人脉 -5, 健康 -5)',
+        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 5), health: Math.max(0, s.health - 5), message: '你在评论区的生硬辩解招致了更多业内大佬的抵触，人脉网络受损。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '私信向对方诚恳致歉并主动关闭脚本 (人脉 -2, 魅力 +1)',
+        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), charm: Math.min(25, s.charm + 1), message: '你的诚恳态度平息了波澜，成功控制住了负面影响。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'ex_1point3acres_expose': {
+    id: 'ex_1point3acres_expose',
+    title: '【避雷爆料】一亩三分地情感版爆料帖：“湾区某大厂 L5 避雷全纪录”',
+    description: '深夜微信群被一条一亩三分地热帖刷屏，标题赫然写着《湾区某大厂 L5 避雷，分手抢搬家具 + AA 小费极品全纪录》。帖子附带了匿名聊天记录截图与你特征极度明显的描述，瞬时冲上了论坛热榜第一！',
+    choices: [
+      {
+        text: '亲自下场在论坛回复发帖与前任对撕澄清 (人脉 -5, 魅力 -4, 健康 -10)',
+        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 5), charm: Math.max(0, s.charm - 4), health: Math.max(0, s.health - 10), message: '两人的互撕引发了千人围观吃瓜，你在湾区华人圈与同组同事面前丢尽了颜面，人脉与形象重创！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '装作没看见并找论坛管理员申请隐去敏感信息 (花费 $0.1w, 人脉 -2, 魅力 -2)',
+        condition: (s) => s.cash >= 0.1,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), network: Math.max(0, (s.network || 0) - 2), charm: Math.max(0, s.charm - 2), message: '论坛管理员删除了包含个人身份的信息，虽然负面影响逐渐平息，但你依然社死休养了半个月。' }),
         nextEventId: 'sv_daily_life'
       }
     ]

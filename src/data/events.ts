@@ -1324,7 +1324,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'trader_annual_strategy',
       },
       {
-        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资',
+        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=40w)',
+        reqBadge: '需美籍/绿卡/O1或现金>=40w',
+        condition: (s) => (s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 40,
         effect: (_s) => ({
           job_type: 'startup_founder',
           company: 'AI/科技 Startup',
@@ -2823,7 +2825,7 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.01 + (Math.min(45, s.luck) / 100) * 0.15;
           const win = Math.random() < winRate;
           return win 
-            ? { cash: s.cash + 60, message: '你买的土狗币居然真的小火了一把！你在高点果断卖出提现，狠赚了一笔！' }
+            ? { cash: s.cash + 15, message: '你买的土狗币居然真的小火了一把！你在高点果断卖出提现，狠赚了一笔！' }
             : { cash: Math.max(0, s.cash - 5), health: Math.max(0, s.health - 7), imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都变成了空气币。' };
         },
         nextEventId: 'sv_daily_life'
@@ -3199,7 +3201,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() > 0.5;
           return win
             ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
-            : { cash: (s.cash - 10) * 0.3, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 70% 的资产，你直接崩溃了！' };
+            : { cash: (s.cash - 10) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产，你痛心不已！' };
         },
         nextEventId: 'sv_daily_life'
       },
@@ -3720,12 +3722,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【全仓追高芯片股】把剩余流动资金全部追高 Buying NVDA / AMD',
         effect: (s) => {
-          const win = Math.random() < 0.65;
+          const win = Math.random() < 0.45;
           const currentStocks = s.stocks || 0;
           const boostedStocks = Math.floor(currentStocks * 1.35);
+          const droppedStocks = Math.floor(currentStocks * 0.85);
           return win
             ? { cash: s.cash + 15, stocks: boostedStocks, macro_economy: 'bull', luck: Math.min(99, s.luck + 5), message: 'AI 牛市暴发！英伟达股价创历史新高，你持有的科技股账户飙升 35%！净资产暴涨！' }
-            : { cash: Math.max(0, s.cash - 5), macro_economy: 'bull', message: '追高在阶段性山顶，大盘短期回调，你被套牢了部分现金。' };
+            : { cash: Math.max(0, s.cash - 5), stocks: droppedStocks, macro_economy: 'bull', message: '追高在阶段性山顶！财报后利好出尽遭资金砸盘，你持有的科技股下跌 15%，现金被套牢。' };
         },
         nextEventId: 'sv_daily_life'
       },

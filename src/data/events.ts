@@ -125,10 +125,10 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
      if (s.job_type === 'quant') return 'quant_stress';
 
-     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'friday_pip'];
+     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'friday_pip', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'apple_vision_pro_demo'];
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
      if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
-     if (isWorking && s.age >= 35 && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.30) workEvents.push('midlife_management_pivot');
+     if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
      if (s.visa !== '绿卡' && s.visa !== '公民') workEvents.push('h1b_rfe_vs_parent_nag');
 
      return workEvents[Math.floor(Math.random() * workEvents.length)];
@@ -139,7 +139,7 @@ export const midYearEventRouter = (s: GameState): string => {
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
-    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup'
+    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'san_francisco_car_window_smash', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'tesla_fsd_unsupervised_scare'
   ];
 
   if (isWorking) {
@@ -181,6 +181,18 @@ export const midYearEventRouter = (s: GameState): string => {
 
   if ((s.is_married || s.relationship_status === 'married') && Math.random() < 0.25) {
     return 'bay_area_dink_vs_kids';
+  }
+
+  if (isRealHome && s.cash >= 30 && Math.random() < 0.25) {
+    return 'property_supplemental_tax_hike';
+  }
+
+  if ((s.car === 'porsche' || s.car === 'cybertruck' || s.cash >= 50) && Math.random() < 0.25) {
+    return 'luxury_car_vandalism_towing';
+  }
+
+  if ((s.cash >= 80 || s.tc >= 45) && Math.random() < 0.25) {
+    return 'irs_tax_audit_crisis';
   }
 
   if (isRealHome && s.age >= 32 && Math.random() < 0.25) {
@@ -1256,16 +1268,16 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
       },
       {
-        text: '【离职全职 Day Trader】凭 $50w 本金与绿卡自由身全职操盘 (需绿卡 + 现金>=50w)',
-        reqBadge: '需绿卡+现金>=50w',
-        condition: (s) => s.visa === '绿卡' && s.cash >= 50,
+        text: '【离职全职 Day Trader】凭 $50w 本金与美籍/绿卡自由身全职操盘 (需美籍/绿卡 + 现金>=50w)',
+        reqBadge: '需美籍/绿卡+现金>=50w',
+        condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50,
         effect: (_s) => ({
           job_type: 'trader',
           company: '全职 Day Trader',
           level: '全职 Trader',
           tc: 0,
           laid_off: false,
-          message: ' 你正式递交了离职辞呈！凭借 $50w 初始本金与绿卡自由身，开启了全职 Day Trader 操盘人生！'
+          message: ' 你正式递交了离职辞呈！凭借 $50w 初始本金与美籍/绿卡自由身，开启了全职 Day Trader 操盘人生！'
         }),
         nextEventId: 'trader_annual_strategy',
       },
@@ -3715,6 +3727,226 @@ export const events: Record<string, GameEvent> = {
         text: '花钱消灾，直接请 TaskRabbit 师傅 (花费 $0.1w)',
         condition: (s) => s.cash >= 0.1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), health: Math.min(100, s.health + 5), message: '你果断打开 TaskRabbit 花了 $1000 请了墨西哥老哥。半小时搞定，你们开开心心出门吃大餐去了。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  }
+,
+  'llm_datacenter_power_outage': {
+    id: 'llm_datacenter_power_outage',
+    title: '【机房事故】Santa Clara 数据中心跳闸，训练 2 周的模型中断',
+    description: '周二凌晨 2 点，PagerDuty 尖锐狂响！公司在 Santa Clara 的 AI 数据中心因为酷暑供电过载跳闸，集群全部掉线。你训了 14 天的 100B 参数大模型没有及时存 Checkpoint...',
+    choices: [
+      {
+        text: '通宵 48 小时手写 Recovery 恢复脚本救回权重 (算法 +10, 健康 -15)',
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(10, s.health - 15), message: '凭借硬核的 Infra 恢复脚本，你奇迹般地挽回了 90% 的权重数据，VP 在 Slack 全员频道为你点赞！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '果断甩锅给基础设施 Infra 部门，关掉手机继续睡觉 (健康 +10, 人脉 -3)',
+        effect: (s) => ({ health: Math.min(100, s.health + 10), network: Math.max(0, (s.network || 0) - 3), message: '第二天 Infra 组扛下了所有责任，你虽然保住了睡眠，但跟 Infra 组领队关系降到了冰点。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'meta_reorg_manager_left': {
+    id: 'meta_reorg_manager_left',
+    title: '【重组风暴】Manager 突然 Pursuing New Opportunities',
+    description: '周一例行 All-hands 会议上，你的直属 Manager 突然宣布离职。新调来的 Manager 对你过去半年的成果完全不了解，把你正在负责的核心项目划给了他的亲信...',
+    choices: [
+      {
+        text: '主动约新 Manager 1:1，带上精心准备的 30 页 PPT 汇报展现价值 (人脉 +5, 健康 -10)',
+        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), health: Math.max(10, s.health - 10), message: '你的主动与专业打动了新老板，成功保住了原本的项目 Owner 身份！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '彻底失望，借机关摄像头狂刷 LeetCode 准备跳槽 (算法 +15, 健康 -10)',
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 15), health: Math.max(10, s.health - 10), message: '你在摸鱼中狂刷了 50 道 Hard 题，算法功力大增，准备随时寻找下家！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'apple_vision_pro_demo': {
+    id: 'apple_vision_pro_demo',
+    title: '【空间计算】公司全面发力 Vision Pro 空间应用开发',
+    description: '苹果发布 Vision Pro 后，VP 要求团队立刻将主站应用重构为空间计算版本。你拿到了组里唯一一台试用设备。',
+    choices: [
+      {
+        text: '自告奋勇担任 Head of Spatial App 领头人 (TC +$3w, 健康 -15)',
+        effect: (s) => ({ tc: s.tc + 3, health: Math.max(10, s.health - 15), message: '你成为了公司内部空间计算的第一专家，产品上线后获得了大批关注！总包获得增长！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '体验完 3D 效果后吐槽“戴着颈椎酸痛”，按部就班写网页版代码 (健康 +5)',
+        effect: (s) => ({ health: Math.min(100, s.health + 5), message: '你维持了健康的生活节奏，避开了空间计算概念退潮后的热度崩塌。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'san_francisco_car_window_smash': {
+    id: 'san_francisco_car_window_smash',
+    title: '【旧金山特色】Mission 区吃 Tacos 车窗惨遭砸破',
+    description: '周六下午，你开车去旧金山 Mission 区吃网红 Tacos。停在路边仅 1 小时，回来赫然发现后车窗被打碎，后备箱里的健身包被搜刮一空...',
+    choices: [
+      {
+        text: '自认倒霉走自付费 Deductible 换玻璃 (消耗 $0.1w)',
+        condition: (s) => s.cash >= 0.1,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), health: s.health - 5, message: '你自费修好了车窗玻璃，领教到了旧金山最真实的治安“震撼”。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '拍照发小红书“旧金山治安体验”，引发热烈围观 (魅力 +3)',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: s.health - 5, message: '你的小红书帖子获得了 300+ 赞，不少湾区博主在评论区感同身受地交流防砸车经验。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'napa_wine_tasting': {
+    id: 'napa_wine_tasting',
+    title: '【中产仪式感】Napa 纳帕谷酒庄品酒周六出行',
+    description: '阳光明媚的周末，你和几位湾区同行驱车前往 Napa 纳帕谷高端酒庄。在葡萄园城堡里，侍酒师倒上了 2018 年 Cab Sauv...',
+    choices: [
+      {
+        text: '入坑购买 2 箱高端红酒并订阅 Wine Club 会员 (花费 $0.8w, 魅力 +4, 健康 +10)',
+        condition: (s) => s.cash >= 0.8,
+        effect: (s) => ({ cash: s.cash - 0.8, charm: Math.min(25, s.charm + 4), health: Math.min(100, s.health + 10), message: '你体验到了正宗的湾区中产生活方式，品味大幅上升，社交话题更加丰富！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '纯打卡拍照发朋友圈，喝葡萄汁享受阳光 (健康 +15, 魅力 +2)',
+        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(25, s.charm + 2), message: '纳帕谷的明媚阳光与绿油油的葡萄园让你极度放松，身心得到了全面滋养！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'costco_gold_bar_frenzy': {
+    id: 'costco_gold_bar_frenzy',
+    title: '【抗通胀神器】Sunnyvale Costco 排队抢购 24K 纯金条',
+    description: '消息在湾区微信群疯传：Sunnyvale Costco 突然上架了 1 盎司 Pamp 瑞士 24K 纯金条，大批码农排起长队抢购以抵御高通货膨胀！',
+    choices: [
+      {
+        text: '刷信用卡加码买入 2 块金条避险 (消耗 $0.4w 现金)',
+        condition: (s) => s.cash >= 0.4,
+        effect: (s) => ({ cash: s.cash - 0.4, luck: Math.min(99, s.luck + 2), message: '你成功抢到了两块实物金条装进保险柜，踏实感满满！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '吐槽“码农盲目跟风”，转身买了两盒烤鸡和热狗回家',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.02), health: Math.min(100, s.health + 5), message: '啃着 $4.99 美元的 Costco 烤鸡，你觉得这才是实打实的性价比自由。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'palo_alto_stanford_lecture': {
+    id: 'palo_alto_stanford_lecture',
+    title: '【硅谷大咖讲座】Stanford 斯坦福现场听 Jensen Huang 演讲',
+    description: '周五晚上，Stanford 校园礼堂举办 AI 领袖公开讲座。黄仁勋穿着皮衣登台演讲，现场挤爆了来自 Sand Hill Road 的 VC 和各大厂码农。',
+    choices: [
+      {
+        text: '讲座后抢占 Q&A 提问环节，自信展示技术见解 (人脉 +5, 魅力 +3)',
+        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), charm: Math.min(25, s.charm + 3), message: '你的提问得到了老黄的幽默点评，现场几位 VC 主动递上了名片！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '默默听完讲座，去大学路吃一碗热气腾腾的拉面 (健康 +10, 魅力 +1)',
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(25, s.charm + 1), message: '顶级思维碰撞加上一碗热拉面，让你度过了一个充实而愉快的周五夜晚。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'tesla_fsd_unsupervised_scare': {
+    id: 'tesla_fsd_unsupervised_scare',
+    title: '【FSD 惊魂】101 高速自动驾驶施工路段幽灵刹车',
+    description: '周一早高峰晚点，你在 101 高速上开启了最新版的 Tesla FSD 自动驾驶。车子在 Passing 施工路段时突然无征兆幽灵急刹...',
+    choices: [
+      {
+        text: '吓出一身冷汗，立刻双手接管车轮 (健康 -5, 算法 +3)',
+        effect: (s) => ({ health: Math.max(10, s.health - 5), leetcode: s.leetcode + 3, message: '你惊险避免了后车追尾！经此一役，你对自动驾驶边界条件有了更深的工程体会。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '把行车记录仪视频剪辑发 YouTube / B站爆火 (魅力 +4)',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 4), message: '你的幽灵刹车测试视频获得了 50,000+ 播放，吸引了大批极客粉丝关注！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  }
+,
+  'property_supplemental_tax_hike': {
+    id: 'property_supplemental_tax_hike',
+    title: '【房产重击】加州 Santa Clara 县评估员重估房屋补充房产税账单',
+    description: '周五下班回家，你打开信箱赫然发现一封来自 Santa Clara 县 Assessor 评估办公室的挂号信：由于房产评估值重估，你必须限期补缴 Supplemental Property Tax 补充房产税及加州县级附加税！',
+    choices: [
+      {
+        text: '咬牙全额缴纳补充房产税账单 (消耗 $3w 现金)',
+        condition: (s) => s.cash >= 3,
+        effect: (s) => ({ cash: s.cash - 3, health: s.health - 5, message: '你一次性补齐了 $3w 房产税账单，虽然心痛不已，但保住了房产产权。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '聘请专业 Property Tax Appeal 申诉律师写辩护书 (花费 $1w 律师费)',
+        condition: (s) => s.cash >= 1,
+        effect: (s) => {
+          const win = Math.random() < 0.5;
+          return win
+            ? { cash: s.cash - 1, charm: Math.min(25, s.charm + 2), message: '律师出面成功证明了评估值虚高，帮为你减免了绝大部分额外房产税！胜诉！' }
+            : { cash: s.cash - 4, health: s.health - 10, message: '申诉失败，你不仅补缴了 $3w 房产税，还倒贴了 $1w 律师费！痛苦加倍。' };
+        },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'luxury_car_vandalism_towing': {
+    id: 'luxury_car_vandalism_towing',
+    title: '【破财消灾】豪车 Palo Alto 街头遭遇恶意砸车与霸王拖车',
+    description: '你停在 Palo Alto 大学路旁边的保时捷 / 豪车突然被无良拖车公司强行拖走！不仅车窗被恶意损坏，恶霸拖车公司还开出了包含强制 Storage 存放费的天价赎车单...',
+    choices: [
+      {
+        text: '花钱消灾，直接缴纳天价赎车费与维修费 (消耗 $2w 现金)',
+        condition: (s) => s.cash >= 2,
+        effect: (s) => ({ cash: s.cash - 2, health: s.health - 5, message: '你一次性掏出 $2w 赎回了豪车并修好了大灯。高阶玩家的烦恼往往就是这么朴实无华。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '找律师控诉并录制视频发小红书/YouTube 曝光 (消耗 $0.5w 现金, 魅力 +3)',
+        condition: (s) => s.cash >= 0.5,
+        effect: (s) => ({ cash: s.cash - 0.5, health: s.health - 10, charm: Math.min(25, s.charm + 3), message: '你的曝光视频引发了舆论关注，拖车公司迫于压力退还了赎车费，但你折腾得精疲力竭。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'high_level_reorg_domain_loss': {
+    id: 'high_level_reorg_domain_loss',
+    title: '【高阶重组】VP 换人导致 Architecture 推翻，Domain Knowledge 清零',
+    description: '公司高层爆发权斗，新上任的 VP 带来了自己的亲信。你带领团队搭建了三年的核心系统架构被宣布“全盘废弃，全面拥抱新架构”！多年积累的领域知识 (Domain Knowledge) 一夕沉没...',
+    choices: [
+      {
+        text: '通宵加班重头学习最新 Infra 业务架构 (健康 -15, 算法 +10)',
+        effect: (s) => ({ health: Math.max(10, s.health - 15), leetcode: Math.min(100, s.leetcode + 10), message: '凭着硬核的学习能力，你咬牙掌握了新架构，重新站稳了团队的核心位置！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '极度挫败！因长期未手写底层代码，算法实力与热情下滑 (算法 -15, 健康 +5)',
+        effect: (s) => ({ leetcode: Math.max(20, s.leetcode - 15), health: Math.min(100, s.health + 5), message: '长期从事高层画饼与 PPT 汇报，导致你的手写算法功力大幅生疏，算法实力下滑。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'irs_tax_audit_crisis': {
+    id: 'irs_tax_audit_crisis',
+    title: '【国税局查账】收到 IRS CP2000 稽查信与 FBAR 审计',
+    description: '周一信箱赫然出现一封盖着 IRS 标志的加急信！美国国税局对你过去三年的股票股票解禁、副业收入以及海外账户 (FBAR) 进行了严格查账，要求补充完整证明或缴纳补税与滞纳金。',
+    choices: [
+      {
+        text: '聘请顶级 CPA 注册会计师与税务律师处理 (消耗 $4w 现金)',
+        condition: (s) => s.cash >= 4,
+        effect: (s) => ({ cash: s.cash - 4, message: '顶级 CPA 出面帮你处理了所有复杂的税务审计纠纷，彻底平息了 IRS 查账危机！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w 现金, 健康 -10)',
+        condition: (s) => s.cash >= 2.5,
+        effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(10, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),
         nextEventId: 'sv_daily_life'
       }
     ]

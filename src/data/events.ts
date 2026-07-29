@@ -154,8 +154,13 @@ export const midYearEventRouter = (s: GameState): string => {
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
-    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam'
+    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
+    'hair_loss_and_slouch', 'social_withdrawal_burnout'
   ];
+
+  if (s.charm && s.charm >= 15 && s.job_type !== 'unemployed') {
+    lifeEvents.push('rednote_influencer_side_hustle');
+  }
 
   if (s.car && s.car !== 'none') {
       lifeEvents.push('san_francisco_car_window_smash');
@@ -1863,10 +1868,17 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';
-          const passProb = isHighPipCompany ? 0.35 : 0.75;
+          const hasNetworkProtection = (s.network || 0) >= 30;
+          const passProb = hasNetworkProtection ? 0.95 : (isHighPipCompany ? 0.35 : 0.75);
           const survived = Math.random() < passProb;
           return survived
-            ? { health: s.health - 30, message: '你每天工作 16 小时，终于 survive 了 PIP！但你的头发少了一半。' }
+            ? { 
+                health: s.health - 20, 
+                network: Math.min(100, (s.network || 0) + 2),
+                message: hasNetworkProtection 
+                  ? '人脉发威！组里多位熟人大佬与总监联名向上层打包票，判定你成功走出 PIP！' 
+                  : '你每天工作 16 小时，终于 survive 了 PIP！但你的头发少了一半。' 
+              }
             : { health: s.health - 20, tc: 0, laid_off: true, job_type: 'unemployed', message: '你熬了几个通宵，最后还是被 Manager 找借口开除了。' };
         },
         nextEventId: (s) => (s.tc === 0) ? ((s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt') : 'sv_daily_life'
@@ -4133,6 +4145,59 @@ export const events: Record<string, GameEvent> = {
         text: '装作没看见并找论坛管理员申请隐去敏感信息 (花费 $0.1w)',
         condition: (s) => s.cash >= 0.1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), network: Math.max(0, (s.network || 0) - 2), charm: Math.max(0, s.charm - 2), message: '论坛管理员删除了包含个人身份的信息，虽然负面影响逐渐平息，但你依然社死休养了半个月。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'hair_loss_and_slouch': {
+    id: 'hair_loss_and_slouch',
+    title: '【职业病危机】发际线后移与湾区体态衰退',
+    description: '长期 996 熬夜死磕代码与高压 Oncall，你无意中照镜子惊恐地发现自己的发际线急剧后移，且出现了严重的倒三角龟脖与弯腰驼背体态！',
+    choices: [
+      {
+        text: '无视它，“程序员靠硬核算法实力说话，不靠颜值”',
+        effect: (s) => ({ charm: Math.max(0, s.charm - 4), health: Math.max(0, s.health - 5), message: '你放任了体态衰退，虽然省下了精力，但在同龄社交局中显得愈发沧桑。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '预约土耳其植发与高端体态矫正普拉提 (花费 $0.5w)',
+        condition: (s) => s.cash >= 0.5,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '植发与体态矫正效果显著！你的精气神与个人吸引力大幅度恢复！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'social_withdrawal_burnout': {
+    id: 'social_withdrawal_burnout',
+    title: '【社交退化】闭门不出与社恐自我隔离',
+    description: '近两年来你除了在 Pantry 拿气泡水外几乎没进行过工作以外的社交，感觉自己的口头表达能力与圈子广度急剧退化...',
+    choices: [
+      {
+        text: '继续宅在宿舍/家里，下班打单机游戏',
+        effect: (s) => ({ charm: Math.max(0, s.charm - 3), network: Math.max(0, (s.network || 0) - 3), health: Math.min(100, s.health + 5), message: '你沉浸在宅家快乐中，但你的社交朋友圈与个人形象进一步萎缩。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '强迫自己报名湾区狼人杀局与攀岩圈 (花费 $0.05w)',
+        condition: (s) => s.cash >= 0.05,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), charm: Math.min(25, s.charm + 2), network: Math.min(100, (s.network || 0) + 3), message: '在桌游与攀岩中你结识了多位开朗的新朋友，重新找回了社交节奏！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'rednote_influencer_side_hustle': {
+    id: 'rednote_influencer_side_hustle',
+    title: '【网红副业】小红书/自媒体高形象变现',
+    description: '由于你出众的形象与湾区大厂生活 Vlog，你在小红书和 YouTube 积累了数万粉丝，多家品牌方发来商业广告邀约！',
+    choices: [
+      {
+        text: '接下品牌商业植入推广，开启副业变现！',
+        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 1), message: ' 爆款变现！商业合作广告大获成功，你轻松斩获 $2w 美元额外副业收益！' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '保持纯粹，只分享生活日常，拒绝硬广洗脑',
+        effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 5), message: '你的真实与接地气圈粉无数，获得了绝佳的粉丝口碑！' }),
         nextEventId: 'sv_daily_life'
       }
     ]

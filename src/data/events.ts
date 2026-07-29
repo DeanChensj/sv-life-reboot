@@ -1363,7 +1363,8 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
           health: Math.min(100, s.health + 18),
-          message: '这一年你彻底躺平，除了上班摸鱼外，回家就是打黑神话悟空。什么职场焦虑都没了，身体恢复了生机！'
+          leetcode: Math.max(0, s.leetcode - 8),
+          message: '这一年你彻底躺平摸鱼，除了完成最低限度工作外就是打黑神话悟空。身体逐渐恢复了生机，但由于长期不写硬核代码，你的算法手感与面试反应明显下滑！'
         }),
         nextEventId: midYearEventRouter,
       }

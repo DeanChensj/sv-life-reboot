@@ -155,7 +155,7 @@ export const midYearEventRouter = (s: GameState): string => {
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
     'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
-    'hair_loss_and_slouch', 'social_withdrawal_burnout'
+    'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy'
   ];
 
   if (s.charm && s.charm >= 15 && s.job_type !== 'unemployed') {
@@ -2883,7 +2883,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '去大厂食堂薅羊毛拿免费气泡水',
-        effect: (s) => ({ health: s.health + 2, cash: s.cash + 0.1, message: '你拒绝被消费主义洗脑。周末假装去公司加班，从 Pantry 顺走了两罐 La Croix 气泡水和几包零食，完美解决下午茶。' }),
+        effect: (s) => ({ health: s.health + 2, cash: s.cash + 0.1, message: '你拒绝被消费主义洗脑。周末假装去公司加班，从 MicroKitchen (MK) 顺走了两罐 La Croix 气泡水和几包零食，完美解决下午茶。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -4171,7 +4171,7 @@ export const events: Record<string, GameEvent> = {
   'social_withdrawal_burnout': {
     id: 'social_withdrawal_burnout',
     title: '【社交退化】闭门不出与社恐自我隔离',
-    description: '近两年来你除了在 Pantry 拿气泡水外几乎没进行过工作以外的社交，感觉自己的口头表达能力与圈子广度急剧退化...',
+    description: '近两年来你除了在 MicroKitchen (MK) 拿气泡水外几乎没进行过工作以外的社交，感觉自己的口头表达能力与圈子广度急剧退化...',
     choices: [
       {
         text: '继续宅在宿舍/家里，下班打单机游戏',
@@ -4199,6 +4199,59 @@ export const events: Record<string, GameEvent> = {
       {
         text: '保持纯粹，只分享生活日常，拒绝硬广洗脑',
         effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 5), message: '你的真实与接地气圈粉无数，获得了绝佳的粉丝口碑！' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'parents_us_visit': {
+    id: 'parents_us_visit',
+    title: '【爸妈探亲】B2 签证赴美与中西文化碰撞',
+    description: '爸妈拿着 10 年 B2 签证飞抵旧金山 SFO！老两口打算在湾区住上三个月。老爸每天在小区后院尝试种韭菜养鸡被 HOA 警告，老妈则带你在 99 大华超市狂购并吐槽湾区天价中餐...',
+    choices: [
+      {
+        text: '全程陪同！请假带爸妈自驾一号公路去 17 Mile 与 Napa 品酒 (花费 $0.3w)',
+        condition: (s) => s.cash >= 0.3,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.3), health: Math.min(100, s.health + 5), charm: Math.min(25, s.charm + 2), network: Math.min(100, (s.network || 0) + 2), message: '虽然老妈一路吐槽加州紫外线强且嫌纳帕红酒贵，但看到朋友圈晒满照片并收获老家亲戚数百赞，你感受到了久违的家庭温暖。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '给爸妈报华人大巴老年团，让他们自己去黄石公园与大峡谷 (花费 $0.15w)',
+        condition: (s) => s.cash >= 0.15,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.15), health: Math.min(100, s.health + 5), message: '老两口在大巴团里结识了一圈同龄阿姨叔叔，每天聊得热火朝天，顺便还帮你拉到了几个潜在相亲对象的信息。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '工作太忙无暇陪同，让爸妈自己在 South Bay 散步看戏',
+        effect: (s) => ({ health: Math.max(0, s.health - 5), message: '老爸因后院翻土种韭菜遭到了 HOA 邻居联名警告，老妈抱怨湾区除了大超市啥都没有像大农村，老两口带着满腹牢骚提前回国了。' }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'boba_opening_frenzy': {
+    id: 'boba_opening_frenzy',
+    title: '【湾区网红潮】南湾新开爆款奶茶店排队狂潮',
+    description: '南湾 Westfield 购物中心新开了一家号称“国内顶流”的网红奶茶烘焙店，朋友圈与小红书被全网刷爆，连湾区大厂码农和网红都在烈日下排起了长龙！',
+    choices: [
+      {
+        text: '跟风排队！周末烈日下排队 2 小时打卡并发小红书 (花费 $0.02w)',
+        condition: (s) => s.cash >= 0.02,
+        effect: (s) => {
+          const win = Math.random() < 0.70;
+          return win
+            ? { cash: Math.max(0, s.cash - 0.02), charm: Math.min(25, s.charm + 2), health: Math.max(0, s.health - 3), message: '排队 2.5 小时终于喝到了！随手加了滤镜发小红书获得了 200+ 点赞，极大满足了湾区潮人的虚荣心！' }
+            : { cash: Math.max(0, s.cash - 0.02), health: Math.max(0, s.health - 6), message: '排队两小时，一口喝下去发现又甜又贵纯纯智商税！不仅被加州阳光晒脱皮，还因高糖奶茶腹泻了半天。' };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '闪送黄牛代排！多花钱找跑腿黄牛送至办公室 (花费 $0.08w)',
+        condition: (s) => s.cash >= 0.08,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.08), charm: Math.min(25, s.charm + 1), message: '多花了几万韩元/跑腿费免去了排队晒太阳之苦，你在办公室悠闲地喝着网红奶茶，收获了同事羡慕的目光。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '清流拒绝！去大厂 MicroKitchen (MK) 薅免费 LaCroix 气泡水',
+        effect: (s) => ({ health: Math.min(100, s.health + 5), cash: s.cash + 0.05, message: '你拒绝了消费主义洗脑。周末假装去公司加班，从 MicroKitchen (MK) 顺走了两罐气泡水与坚果，省钱又健康！' }),
         nextEventId: 'sv_daily_life'
       }
     ]

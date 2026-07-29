@@ -690,7 +690,7 @@ export default function App() {
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-rose-400 text-zinc-950 shadow-md uppercase tracking-wider">SR</span>
                           <div>
                             <div className="font-bold text-rose-300 text-sm">【南湾顶流名流】</div>
-                            <div className="text-xs text-zinc-400 mt-0.5">魅力值爆表，Santana Row 相亲收割机</div>
+                            <div className="text-xs text-zinc-400 mt-0.5">风采绝伦，Santana Row 相亲收割机</div>
                           </div>
                         </div>
                       )}

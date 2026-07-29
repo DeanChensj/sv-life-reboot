@@ -166,7 +166,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">领养一只小狗 (日系柴犬)</div>
-                <div className="text-xs text-zinc-500 mt-1">{gameState.has_dog ? '已领养柴犬' : '花费: $0.5w | 魅力 +3, 健康 +10, 约会/相亲成功率加成'}</div>
+                <div className="text-xs text-zinc-500 mt-1">{gameState.has_dog ? '已领养柴犬' : '花费: $0.5w | 健康 +10, 约会/相亲成功率加成'}</div>
               </button>
 
               <button
@@ -175,7 +175,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">领养一只小猫 (布偶猫)</div>
-                <div className="text-xs text-zinc-500 mt-1">{gameState.has_cat ? '已领养布偶猫' : '花费: $0.5w | 魅力 +3, 健康 +10, 约会/相亲成功率加成'}</div>
+                <div className="text-xs text-zinc-500 mt-1">{gameState.has_cat ? '已领养布偶猫' : '花费: $0.5w | 健康 +10, 约会/相亲成功率加成'}</div>
               </button>
             </div>
           </section>

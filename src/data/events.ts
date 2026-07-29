@@ -806,8 +806,8 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'startup_work',
       },
       {
-        text: '【强力人脉 Referral】凭借学长/熟人总监直通大厂面试 (需人脉 >= 25)',
-        reqBadge: '需人脉>=25',
+        text: '【强力人脉 Referral】凭借学长/熟人总监直通大厂面试',
+        reqBadge: '需广阔人脉关系',
         condition: (s) => (s.network || 0) >= 25,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
@@ -1055,7 +1055,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '砸 $8w 现金找顶级律所申办 O1 杰出人才签证 (需现金 >= $8w, 限 PhD/AI研究员/算法>=85)',
+        text: '砸 $8w 现金找顶级律所申办 O1 杰出人才签证 (需现金 >= $8w, 限 PhD/AI研究员/硬核算法背景)',
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.job_type === 'ai_research' || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
@@ -1145,8 +1145,8 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【杰出人才】申办 O1 签证 (花费 $5w 律师费, 需 PhD 或算法>=85)',
-        reqBadge: '需PhD或算法>=85',
+        text: '【杰出人才】申办 O1 签证 (花费 $5w 律师费)',
+        reqBadge: '需PhD或硬核算法背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const passProb = (s.is_phd || s.job_type === 'ai_research') ? 0.75 : 0.35;
@@ -1165,8 +1165,8 @@ export const events: Record<string, GameEvent> = {
     description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
     choices: [
       {
-        text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费, 需 PhD 或算法>=85)',
-        reqBadge: '需PhD或算法>=85',
+        text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
+        reqBadge: '需PhD或硬核算法背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const passProb = s.is_phd ? 0.75 : 0.30;
@@ -2104,7 +2104,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【看展看演出】去 SF MOMA 看展或看独立乐队演出',
-        reqBadge: '需 极高魅力',
+        reqBadge: '需 出众形象',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.charm >= 15,
         effect: (s) => ({ relationship_status: 'matched', partner_type: 'artist', charm: Math.min(30, s.charm + 3), message: '【匹配成功】在昏暗的 Livehouse 里，你与一位在设计学院读书的文青对上了眼。你们聊了王家卫和坂本龙一，进入 Matched 状态！' }),
         nextEventId: 'sv_daily_life',
@@ -2170,7 +2170,7 @@ export const events: Record<string, GameEvent> = {
             partner_type: 'random',
             is_married: true,
             health: s.health - 15,
-            message: '【豪车闪婚】你开着豪车在半月湾兜风，极高的魅力值让你在短短几个月内就完成了相识、热恋和闪婚！'
+            message: '【豪车闪婚】你开着豪车在半月湾兜风，出众的个人吸引力让你在短短几个月内就完成了相识、热恋和闪婚！'
           };
         },
         nextEventId: 'sv_daily_life',
@@ -2257,7 +2257,7 @@ export const events: Record<string, GameEvent> = {
     description: '连续三年 H1B 抽签全军覆没！你的 STEM OPT 即将到期，公司 HR 和律所发来最终通知：必须在 30 天内解决合法身份，否则将被终止合同并安排外派离境！',
     choices: [
       {
-        text: '砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD 或算法>=85)',
+        text: '砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD或硬核算法背景)',
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
@@ -2521,8 +2521,8 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【强力人脉救援】联系 LinkedIn 熟人总监直通内部免试 referral 上岸 (需人脉 >= 35)',
-        reqBadge: '需人脉>=35',
+        text: '【强力人脉救援】联系 LinkedIn 熟人总监直通内部免试 referral 上岸',
+        reqBadge: '需深厚熟人关系',
         condition: (s) => (s.network || 0) >= 35,
         effect: (s) => ({
           tc: Math.max(20, s.tc),
@@ -2998,8 +2998,8 @@ export const events: Record<string, GameEvent> = {
     description: '作为初创公司 CEO，你手下带着十几名员工，烧钱率与公司生命线全掌握在你手里。请决定本年度的核心战略：',
     choices: [
       {
-        text: '前往 Sand Hill Road (沙丘路) 向顶级 VC 演示 Pitch 寻求融资 (需人脉>=20 或 魅力>=18)',
-        reqBadge: '需人脉>=20或魅力>=18',
+        text: '前往 Sand Hill Road (沙丘路) 向顶级 VC 演示 Pitch 寻求融资',
+        reqBadge: '需丰富人脉或出众形象',
         condition: (s) => (s.network || 0) >= 20 || (s.charm || 0) >= 18,
         effect: (s) => {
           const stage = s.founder_stage || 'seed';
@@ -4040,7 +4040,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life'
       },
       {
-        text: '甩锅给大模型 API 供应商，申请专项赔偿 (人脉 -2, 现金 -0.5w)',
+        text: '甩锅给大模型 API 供应商，申请专项赔偿 (消耗 $0.5w)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), cash: Math.max(0, s.cash - 0.5), message: '虽然倒贴了一些补偿金，但团队把主要责任交给了云端模型供应商的幻觉缺陷。' }),
         nextEventId: 'sv_daily_life'
@@ -4091,13 +4091,13 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '坚称“这是极客硬核文化与 WLB 的象征”',
-        effect: (s) => ({ charm: Math.max(0, s.charm - 3), health: Math.min(100, s.health + 5), message: '你维持了自己的穿搭习惯，但在朋友眼里你的精致度与魅力值被扣了分。' }),
+        effect: (s) => ({ charm: Math.max(0, s.charm - 3), health: Math.min(100, s.health + 5), message: '你维持了自己的穿搭习惯，但在朋友眼里你的精致度与个人形象有所减分。' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: '痛下决心，去 Santana Row 购买几套修身休闲装 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 3), message: '换上合身的新衣服后，你整个人精神焕发，颜值与魅力大幅回升！' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 3), message: '换上合身的新衣服后，你整个人精神焕发，颜值与个人吸引力大幅提升！' }),
         nextEventId: 'sv_daily_life'
       }
     ]

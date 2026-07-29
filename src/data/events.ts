@@ -1200,6 +1200,12 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
         nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【绿卡/公民身份】已有绿卡或公民身份，直接跳过抽签困境',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
+        effect: (s) => ({ message: '你拥有绿卡/公民身份，完全不受抽签限制，继续专注于工作与生活！' }),
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -2946,7 +2952,7 @@ export const events: Record<string, GameEvent> = {
             message: ` 稳健盈利！凭借严谨的风险控制与高股息收益，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${profit.toFixed(1)}w 美元)！时间自由，心态极其放松！`
           };
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险)',
@@ -2969,7 +2975,7 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险)',
@@ -3001,7 +3007,7 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -3036,7 +3042,7 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '【高举高打招聘】重金从 Meta/Google 挖掘顶级大牛核心工程组 (需现金>=15w)',
@@ -3049,7 +3055,7 @@ export const events: Record<string, GameEvent> = {
           leetcode: Math.min(100, s.leetcode + 10),
           message: ' 团队战力爆表！大厂 Senior 大牛加盟后，研发出颠覆性的 AI Agent 产品，公司估值飙升！'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '【终局 Exit】考虑公司并购 Acq-hire 或准备 纳斯达克 IPO 敲钟上市',
@@ -3081,7 +3087,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 10),
           message: '资金与资源有限，你决定开源节流，挥泪解雇了一批员工。虽然度过了危机，但公司士气大跌，你的心理压力极大。'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -3984,6 +3990,12 @@ export const events: Record<string, GameEvent> = {
             : { cash: s.cash - 4, health: s.health - 10, message: '申诉失败，你不仅补缴了 $3w 房产税，还倒贴了 $1w 律师费！痛苦加倍。' };
         },
         nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '现金吃紧，向县政府申请税款延期与分期还款协议 (健康 -10)',
+        condition: (s) => s.cash < 1,
+        effect: (s) => ({ health: Math.max(0, s.health - 10), message: '在复杂的延期申诉流程后，你成功申请了税款分期，暂时化解了滞纳金危机。' }),
+        nextEventId: 'sv_daily_life'
       }
     ]
   },
@@ -4002,6 +4014,12 @@ export const events: Record<string, GameEvent> = {
         text: '找律师控诉并录制视频发小红书/YouTube 曝光 (消耗 $0.5w 现金)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: s.cash - 0.5, health: s.health - 10, charm: Math.min(25, s.charm + 3), message: '你的曝光视频引发了舆论关注，拖车公司迫于压力退还了赎车费，但你折腾得精疲力竭。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '现金不足，强行刷信用卡透支支付赎车费 (健康 -10)',
+        condition: (s) => s.cash < 0.5,
+        effect: (s) => ({ health: Math.max(0, s.health - 10), cash: s.cash - 0.5, message: '在现金彻底见底的情况下，你不得不信用卡透支结清拖车费赎回了车辆。' }),
         nextEventId: 'sv_daily_life'
       }
     ]
@@ -4039,6 +4057,12 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 2.5,
         effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(0, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),
         nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '资金吃紧，向 IRS 申请分期付款协议 (IA Plan) 并配合补交材料 (健康 -15)',
+        condition: (s) => s.cash < 2.5,
+        effect: (s) => ({ health: Math.max(0, s.health - 15), message: '经过漫长的电话排队与表格递交，你成功与 IRS 达成了分期付款协议。' }),
+        nextEventId: 'sv_daily_life'
       }
     ]
   },
@@ -4075,6 +4099,12 @@ export const events: Record<string, GameEvent> = {
         text: '折腾三天环境，发小红书“湾区码农客厅 AI 服务器” (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 2), message: '你的客厅 Mac Mini 服务器组照获得了 200+ 赞，不少极客同仁在评论区交流开源部署心得。' }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '资金吃紧，改在旧电脑上配置免费开源 Local Model 尝试轻量测试',
+        condition: (s) => s.cash < 0.2,
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 2), message: '你在旧设备上搭建了轻量版本地 Agent，虽然算力有限但体验了本地 AI 的乐趣。' }),
         nextEventId: 'sv_daily_life'
       }
     ]

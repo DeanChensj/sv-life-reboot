@@ -100,7 +100,7 @@ export default function App() {
            effectResult.gc_stage = 'not_started';
            effectResult.gc_progress = 0;
            effectResult.message = (effectResult.message || '') + ' 🚫 【绿卡重置】入职新雇主导致原公司的绿卡申请作废，PERM/I-140 进度惨遭清零！';
-       } else if (gameState.gc_stage === 'waiting_pd' || gameState.gc_stage === 'i140_approved' || gameState.gc_stage === 'i485_pending') {
+       } else if (gameState.gc_stage === 'waiting_pd' || gameState.gc_stage === 'i140_approved') {
            effectResult.gc_stage = 'not_started';
            effectResult.gc_progress = gameState.gc_progress; // Preserve accumulated PD wait time!
            effectResult.message = (effectResult.message || '') + ' ⚠️ 【绿卡折腾】虽然 I-140 已获批保留了排期 (PD)，但新雇主仍需为你重新走一遍漫长的 PERM 流程！';

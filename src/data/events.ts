@@ -977,9 +977,14 @@ export const events: Record<string, GameEvent> = {
     description: '由于迟迟找不到理想工作，你面临着现实的压力...',
     choices: [
       {
-        text: '【美籍/绿卡无视签证】在湾区全职闭关刷题 (消耗 $1w)',
-        condition: (s) => (s.visa === '公民' || s.visa === '绿卡') && s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, leetcode: Math.min(100, s.leetcode + 30), health: s.health - 5, message: '手握美籍/绿卡身份毫无遣返压力！你在家闭关狂刷 300 道 Hard 题，准备下一轮招聘季再战！' }),
+        text: '【身份保障无视遣返】在湾区全职闭关刷题再战 (无身份倒计时压力)',
+        condition: (s) => s.visa === '公民' || s.visa === '绿卡' || s.gc_stage === 'i485_pending',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 1),
+          leetcode: Math.min(100, s.leetcode + 25),
+          health: Math.max(0, s.health - 5),
+          message: '手握绿卡/EAD Combo 身份毫无遣返压力！你在家闭关狂刷算法题，准备下一轮招聘季再战！'
+        }),
         nextEventId: 'job_hunt',
       },
       {
@@ -1914,6 +1919,21 @@ export const events: Record<string, GameEvent> = {
           message: '外包中介急用低薪码农，连夜为你开具了紧急 Offer 办理了 H1B Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
         }),
         nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【钞能力 EB-5 自救】掏出 $100w 办理 EB-5 并双递交 (I-485)，拿 EAD Combo 卡解除 PIP 危机！',
+        reqBadge: '需现金>=100w+无绿卡',
+        condition: (s) => s.cash >= 100 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        effect: (s) => ({
+          cash: s.cash - 100,
+          gc_progress: 4.5,
+          gc_stage: 'i485_pending',
+          tc: 0,
+          laid_off: true,
+          job_type: 'unemployed',
+          message: '【EB-5 双递交成功】你不伺候了！直接出资 $100w 办理 EB-5 投资移民并 Concurrent Filing 递交 I-485。3 个月内顺利拿到 EAD Combo 自由工卡！虽然正式实体绿卡尚在调查制卡（进入 I-485 Pending），但你已彻底解除 60 天离境警报，拥有自由合法身份！'
+        }),
+        nextEventId: 'job_hunt'
       }
     ]
   },
@@ -3541,6 +3561,15 @@ export const events: Record<string, GameEvent> = {
             ? { health: Math.min(100, s.health + 5), message: '加急信生效！领事馆提早批复了你的 Visa Stamp，你顺利搭上返美航班！' }
             : { health: s.health - 10, cash: Math.max(0, s.cash - 1), message: '领事馆回复“标准审查无法加急”，你被迫在加州时间深夜远程办公，精疲力竭。' };
         },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【Advance Parole 避坑】展示 AP Combo 回美证直接入境，免去 Check 烦恼',
+        condition: (s) => s.gc_stage === 'i485_pending',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 5),
+          message: '你手握 I-485 附带的 Advance Parole (AP) Combo 回美卡，在海关 CBP 轻松查验直接入境，无需经历领事馆面签与 Check 煎熬！'
+        }),
         nextEventId: 'sv_daily_life'
       }
     ]

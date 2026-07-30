@@ -568,6 +568,7 @@ export default function App() {
                     <img 
                       src={getImgSrc(gameState.imageUrl || currentEvent.imageUrl || '')} 
                       alt="Event Scene" 
+                      onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                       className="w-full h-32 sm:h-48 md:h-72 object-cover rounded-2xl mb-4 md:mb-8 shadow-2xl border border-zinc-700/50 transition-all duration-500 ease-out"
                     />
                   )}
@@ -596,7 +597,7 @@ export default function App() {
                         .replace(/\((?:需要|需|算法|高魅力|现金).*?\)/g, '')
                         .trim();
                       
-                      if (mainText.endsWith('-')) {
+                      if (mainText.endsWith('-') || mainText.endsWith('：') || mainText.endsWith(':')) {
                         mainText = mainText.slice(0, -1).trim();
                       }
                       
@@ -663,6 +664,7 @@ export default function App() {
                       <img 
                         src={getImgSrc(gameState.imageUrl)} 
                         alt="Ending Scene" 
+                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                         className="w-full h-52 md:h-72 object-cover rounded-2xl mb-6 shadow-2xl border border-zinc-700/50"
                       />
                     )}

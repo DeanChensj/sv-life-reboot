@@ -78,10 +78,19 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               <button
                 disabled={gameState.cash < 4 || gameState.car === 'model_y' || gameState.car === 'porsche' || gameState.car === 'cybertruck'}
                 onClick={() => onBuy({ cash: gameState.cash - 4, car: 'model_y', charm: gameState.charm + 4 }, '你提了一台白色的 Model Y。去 Cupertino 买奶茶按半天钥匙开错别人的车门。')}
-                className="flex justify-between items-center text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+                className={`flex justify-between items-center text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
+                  gameState.car === 'model_y' 
+                    ? 'border-blue-500/80 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
+                    : 'border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800'
+                }`}
               >
                 <div>
-                  <div className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">Tesla Model Y</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">Tesla Model Y</span>
+                    {gameState.car === 'model_y' && (
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">已拥有</span>
+                    )}
+                  </div>
                   <div className="text-xs text-zinc-500 mt-1">售价: $4w | 增加社交好感</div>
                 </div>
                 <div className="text-blue-400/50 text-xl font-black">Y</div>
@@ -99,10 +108,19 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                     leetcode: gameState.leetcode + 5 
                   }, `置换抵扣了 $${tradeInCredit}w 后，你换上了多边形赛博皮卡！开在 237 公路上所有人都以为你是刚拿到 A 轮的 AI Founder！`);
                 }}
-                className="flex justify-between items-center text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+                className={`flex justify-between items-center text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
+                  gameState.car === 'cybertruck' 
+                    ? 'border-amber-400/80 bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.15)]' 
+                    : 'border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800'
+                }`}
               >
                 <div>
-                  <div className="font-bold text-zinc-200 group-hover:text-zinc-300 transition-colors">Tesla Cybertruck</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-zinc-200 group-hover:text-zinc-300 transition-colors">Tesla Cybertruck</span>
+                    {gameState.car === 'cybertruck' && (
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">已拥有</span>
+                    )}
+                  </div>
                   <div className="text-xs text-zinc-500 mt-1">售价: $9w (支持旧车抵扣) | LeetCode +5，极大幅增强气场</div>
                 </div>
                 <div className="text-zinc-500 text-xl font-black">CT</div>
@@ -119,10 +137,19 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                     health: Math.min(100, gameState.health + 10) 
                   }, `抵扣了 $${tradeInCredit}w 后，开上了全新保时捷！感觉自己脱离了普通码农范畴，CMB 约会匹配率飙升！`);
                 }}
-                className="flex justify-between items-center text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+                className={`flex justify-between items-center text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
+                  gameState.car === 'porsche' 
+                    ? 'border-red-500/80 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.15)]' 
+                    : 'border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800'
+                }`}
               >
                 <div>
-                  <div className="font-bold text-zinc-200 group-hover:text-red-400 transition-colors">Porsche 911 / Taycan</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-zinc-200 group-hover:text-red-400 transition-colors">Porsche 911 / Taycan</span>
+                    {gameState.car === 'porsche' && (
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40">已拥有</span>
+                    )}
+                  </div>
                   <div className="text-xs text-zinc-500 mt-1">售价: $12w (支持旧车抵扣) | 健康 +10，极大提升社交吸引力</div>
                 </div>
                 <div className="text-red-900/50 text-xl font-black">P</div>
@@ -163,18 +190,36 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               <button
                 disabled={gameState.cash < 0.5 || gameState.has_dog}
                 onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_dog: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与日系柴犬` : '日系柴犬'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在南湾救助站领养了一只可爱的柴犬！在 CMB 个人主页挂照片后，相亲匹配成功率显著上升！')}
-                className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+                className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
+                  gameState.has_dog 
+                    ? 'border-amber-500/80 bg-amber-500/10' 
+                    : 'border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50'
+                }`}
               >
-                <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">领养一只小狗 (日系柴犬)</div>
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">领养一只小狗 (日系柴犬)</div>
+                  {gameState.has_dog && (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">已领养</span>
+                  )}
+                </div>
                 <div className="text-xs text-zinc-500 mt-1">{gameState.has_dog ? '已领养柴犬' : '花费: $0.5w | 健康 +10, 约会/相亲成功率加成'}</div>
               </button>
 
               <button
                 disabled={gameState.cash < 0.5 || gameState.has_cat}
                 onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_cat: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与布偶猫` : '布偶猫'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在收容所带回了一只黏人的布偶猫！从此再也不怕湾区的深夜孤独了。')}
-                className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+                className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
+                  gameState.has_cat 
+                    ? 'border-blue-500/80 bg-blue-500/10' 
+                    : 'border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-blue-500/50'
+                }`}
               >
-                <div className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">领养一只小猫 (布偶猫)</div>
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">领养一只小猫 (布偶猫)</div>
+                  {gameState.has_cat && (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">已领养</span>
+                  )}
+                </div>
                 <div className="text-xs text-zinc-500 mt-1">{gameState.has_cat ? '已领养布偶猫' : '花费: $0.5w | 健康 +10, 约会/相亲成功率加成'}</div>
               </button>
             </div>

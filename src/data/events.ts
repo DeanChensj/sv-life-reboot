@@ -193,7 +193,7 @@ export const midYearEventRouter = (s: GameState): string => {
     return 'japan_trip';
   }
 
-  if ((s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)') && Math.random() < 0.18) {
+  if (s.visa === 'H1B (工签)' && Math.random() < 0.18) {
     return 'h1b_visa_stamping_crisis';
   }
 
@@ -1561,10 +1561,10 @@ export const events: Record<string, GameEvent> = {
            let newHealth = Math.max(0, s.health - healthDrain);
            let gcMsg = '';
 
-           if (s.visa === '绿卡' || s.gc_progress >= 5) {
+           if (s.visa === '绿卡' || s.visa === '公民' || s.gc_progress >= 5) {
              nextGc = 5;
              nextStage = 'approved';
-             gcMsg = ' 🗽 你已持有美国绿卡，工作生活不受约束。';
+             gcMsg = s.visa === '公民' ? ' 🗽 你已是美国公民，工作生活不受任何排期与抽签约束。' : ' 🗽 你已持有美国绿卡，工作生活不受约束。';
            } else if (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)' || s.visa === 'L1 (外派)' || s.visa === 'Day 1 CPT') {
               const isO1 = s.visa === 'O1 (杰出人才)';
               const isPhd = s.is_phd;
@@ -2378,19 +2378,19 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const success = s.leetcode >= 50 && Math.random() < 0.3;
           return success
-            ? { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
-            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
+            ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
+            : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
         text: '不再唯唯诺诺，开始在职场上重拳出击',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
         nextEventId: 'office_politics',
       },
       {
         text: '彻底摆烂，佛系上班',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
         nextEventId: 'sv_daily_life',
       }
     ]

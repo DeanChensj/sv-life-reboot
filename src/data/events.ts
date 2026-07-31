@@ -144,7 +144,7 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
      if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
      if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
-     if (s.visa !== '绿卡' && s.visa !== '公民' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
+     if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
 
      return workEvents[Math.floor(Math.random() * workEvents.length)];
   }
@@ -1078,10 +1078,10 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $60w 现金)',
-        reqBadge: '现金>=60w',
-        condition: (s) => s.cash >= 60 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 60, message: '凭家里雄厚的资金实力，直接出资 $60w 办妥了 EB-5 投资移民绿卡，跳过一切工签抽签直接上岸！' }),
+        text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $80w 现金)',
+        reqBadge: '现金>=80w',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭家里雄厚的资金实力，直接出资 $80w 办妥了新法 EB-5 投资移民绿卡，跳过一切工签抽签直接上岸！' }),
         nextEventId: 'post_green_card',
       },
       {
@@ -1115,10 +1115,10 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b_final',
       },
       {
-        text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $60w 现金)',
-        reqBadge: '现金>=60w',
-        condition: (s) => s.cash >= 60 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 60, message: '在第二年抽签前，你果断出资 $60w 办妥了 EB-5 投资移民绿卡！彻底解决在美身份！' }),
+        text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $80w 现金)',
+        reqBadge: '现金>=80w',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在第二年抽签前，你果断出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底解决在美身份！' }),
         nextEventId: 'post_green_card',
       }
     ]
@@ -1188,10 +1188,10 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
       },
       {
-        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $50w)',
-        reqBadge: '现金>=50w',
-        condition: (s) => s.cash >= 50 && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 50, message: '凭雄厚资金实力，加急办妥了 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
+        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w)',
+        reqBadge: '现金>=80w',
+        condition: (s) => s.cash >= 80 && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
       {
@@ -1353,19 +1353,26 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'trader_annual_strategy',
       },
       {
-        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=40w)',
-        reqBadge: '需美籍/绿卡/O1或现金>=40w',
-        condition: (s) => (s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 40,
-        effect: (_s) => ({
-          job_type: 'startup_founder',
-          company: 'AI/科技 Startup',
-          level: 'CEO & Founder',
-          tc: 10,
-          founder_stage: 'seed',
-          company_valuation: 800,
-          laid_off: false,
-          message: ' 你拒绝了稳健的大厂打工路，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
-        }),
+        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=45w办理O1创业工签)',
+        reqBadge: '需美籍/绿卡/O1或现金>=45w',
+        condition: (s) => (s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45,
+        effect: (s) => {
+          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
+          return {
+            job_type: 'startup_founder',
+            company: 'AI/科技 Startup',
+            level: 'CEO & Founder',
+            tc: 10,
+            founder_stage: 'seed',
+            company_valuation: 800,
+            laid_off: false,
+            cash: needsO1 ? s.cash - 5 : s.cash,
+            visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
+            message: needsO1
+              ? ' 你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+              : ' 你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+          };
+        },
         nextEventId: 'founder_annual_strategy',
       },
       {
@@ -1818,13 +1825,13 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ health: Math.max(0, s.health - 25), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', message: '你用极具创造性的学术废话打动了移民局官员，获得了 3 年 H1B！但你的头发掉了三分之一。' }),
+        condition: (s) => s.visa === 'H1B (工签)',
+        effect: (s) => ({ health: Math.max(0, s.health - 25), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => s.visa === 'H1B (工签)',
         effect: (s) => ({ health: Math.min(100, s.health + 10), charm: s.charm + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
         nextEventId: 'sv_daily_life',
       }
@@ -1896,16 +1903,16 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.tc === 0) ? ((s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt') : 'sv_daily_life'
       },
       {
-        text: '直接开摆，接受 PIP 辞退结局 (无遣散费)，在家刷题',
+        text: '选择拿钱走人 (Pivot / Buyout 离职包)，领 2 个月 Severance 在家刷题',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ 
-          cash: s.cash, 
+          cash: s.cash + 4, 
           tc: 0, 
           laid_off: true,
           job_type: 'unemployed',
-          leetcode: s.leetcode + 10,
-          health: Math.max(0, s.health - 25),
-          message: '【周五 PIP 绩效开除】选择 Quiet Quitting 改进计划未通过！HR 当场收回笔记本与 Workday 权限！PIP 绩效辞退无遣散费补偿！'
+          leetcode: s.leetcode + 15,
+          health: Math.min(100, s.health + 10),
+          message: '【选择 Pivot 离职包】你不再和主管理论内耗，果断签字拿了 2 个月 Buyout 离职包 (+$4w) 体面走人！不再卷 PIP，压力瞬间释放！'
         }),
         nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
       },
@@ -1921,17 +1928,17 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life'
       },
       {
-        text: '【钞能力 EB-5 自救】掏出 $100w 办理 EB-5 并双递交 (I-485)，拿 EAD Combo 卡解除 PIP 危机！',
-        reqBadge: '需现金>=100w+无绿卡',
-        condition: (s) => s.cash >= 100 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        text: '【钞能力 EB-5 自救】掏出 $80w 办理新法 EB-5 并双递交 (I-485)，拿 EAD Combo 卡解除 PIP 危机！',
+        reqBadge: '需现金>=80w+无绿卡',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
-          cash: s.cash - 100,
+          cash: s.cash - 80,
           gc_progress: 4.5,
           gc_stage: 'i485_pending',
           tc: 0,
           laid_off: true,
           job_type: 'unemployed',
-          message: '【EB-5 双递交成功】你不伺候了！直接出资 $100w 办理 EB-5 投资移民并 Concurrent Filing 递交 I-485。3 个月内顺利拿到 EAD Combo 自由工卡！虽然正式实体绿卡尚在调查制卡（进入 I-485 Pending），但你已彻底解除 60 天离境警报，拥有自由合法身份！'
+          message: '【EB-5 双递交成功】你不伺候了！直接出资 $80w 办理新法 EB-5 投资移民并 Concurrent Filing 递交 I-485。3 个月内顺利拿到 EAD Combo 自由工卡！虽然正式实体绿卡尚在调查制卡（进入 I-485 Pending），但你已彻底解除 60 天离境警报，拥有自由合法身份！'
         }),
         nextEventId: 'job_hunt'
       }
@@ -2033,8 +2040,8 @@ export const events: Record<string, GameEvent> = {
            const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%
            const win = Math.random() < winRate;
            return win 
-             ? { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.75), macro_economy: 'bull', cash: s.cash + 50, message: '虽然工资跌了，但你成功抄到底部带起大盘，反弹吃满，大赚一笔！' }
-             : { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.75), macro_economy: 'bear', cash: s.cash - 25, health: s.health - 30, message: '抄底抄在半山腰，现金和股票惨遭双杀，市场进入深度熊市。' };
+             ? { tc: Math.floor(s.tc * 0.9), stocks: Math.floor((s.stocks || 0) * 1.15), cash: s.cash + 35, message: '虽然宏观大盘熊市让基本薪酬受压，但你精准在最低点抄底了 AI 龙头，逆势吃到反弹波段大赚 $35w，股票市值也有所增值！' }
+             : { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.70), cash: s.cash - 25, health: s.health - 30, message: '抄底抄在半山腰，现金和股票惨遭双杀，市场继续在深度熊市中煎熬。' };
         },
         nextEventId: 'sv_daily_life'
       }
@@ -2308,10 +2315,10 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
       },
       {
-        text: '【钞能力自救】全额出资办理 EB-5 投资移民绿卡 (花费 $40w)',
-        reqBadge: '现金>=40w',
-        condition: (s) => s.cash >= 40 && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 40, message: '在绝境中你果断出资办妥 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
+        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w)',
+        reqBadge: '现金>=80w',
+        condition: (s) => s.cash >= 80 && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
       {
@@ -2460,7 +2467,7 @@ export const events: Record<string, GameEvent> = {
     description: '周五下午 3:15，Slack 上的 #skiing 频道与微信群全炸了：“Tahoe 今晚开大雪，明早 Pow 天雪质爆满！”你急忙合上电脑，把滑雪板扣进车顶箱狂飙出门。然而刚到 Truckee，I-80 公路突然由于暴雪启动了 Chain Control (强制雪链停摆检查)，成千上万台 Tesla 和斯巴鲁卡在雪堆里动弹不得。',
     choices: [
       {
-        text: '硬着头皮睡后备箱！启动特斯拉营地模式把暖气拉满硬扛',
+        text: '硬着头皮睡车里！启动特斯拉营地模式或开足暖气在车厢睡袋硬扛',
         effect: (s) => ({
           health: Math.max(15, s.health - 10),
           cash: Math.max(0, s.cash - 0.2),
@@ -3217,13 +3224,23 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.car === 'cybertruck' || s.car === 'porsche',
         effect: (s) => {
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
+          const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
+          if (isUnemployed && !canLandJob) {
+            return {
+              charm: Math.min(25, s.charm + 5),
+              health: Math.min(100, s.health + 15),
+              message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！有投资人给你推了独角兽面试，但你太久不练算法，白板编程没有通过面试。'
+            };
+          }
           return {
-            tc: isUnemployed ? 25 : s.tc + 6,
+            tc: isUnemployed ? 22 : s.tc + 6,
             job_type: isUnemployed ? 'big_tech' : s.job_type,
             laid_off: false,
             charm: Math.min(25, s.charm + 5),
             health: Math.min(100, s.health + 15),
-            message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
+            message: isUnemployed
+              ? '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人引荐你去 AI 独角兽，你扎实的算法基础顺利通过面试，空降高薪 Offer (+$22w)！'
+              : '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
           };
         },
         nextEventId: 'sv_daily_life'
@@ -3234,6 +3251,10 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() > 0.5;
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
+          const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
+          if (win && isUnemployed && !canLandJob) {
+            return { cash: s.cash - 1, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档并获推面试，但算法生疏未能拿到 Offer。' };
+          }
           return win
             ? { cash: s.cash - 1, tc: isUnemployed ? 20 : s.tc + 5, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司，总包大涨！' }
             : { cash: s.cash - 1, health: Math.max(0, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
@@ -3338,6 +3359,14 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < 0.45;
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
+          const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
+          if (win && isUnemployed && !canLandJob) {
+            return {
+              charm: Math.min(25, s.charm + 4),
+              health: Math.min(100, s.health + 15),
+              message: '老哥极为欣赏你的解题节奏并为你推荐了 AI 团队面试，可惜你长期没练算法没能通过白板面试。'
+            };
+          }
           return win
             ? {
                 tc: isUnemployed ? 20 : s.tc + 5,

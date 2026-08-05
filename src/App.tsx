@@ -26,6 +26,7 @@ export default function App() {
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
   const [hasUnlockedShopToast, setHasUnlockedShopToast] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
+  const [isCoolingDown, setIsCoolingDown] = useState<boolean>(false);
 
   const handleToggleSound = () => {
     setIsMuted(sound.toggleMute());
@@ -58,15 +59,104 @@ export default function App() {
   }, [gameState, currentEventId]);
 
   useEffect(() => {
-    const cardEl = document.getElementById('event-decision-card');
-    if (cardEl && window.innerWidth < 1024) {
-      cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setIsCoolingDown(true);
+    const timer = setTimeout(() => setIsCoolingDown(false), 220);
+    const targetEl = document.getElementById('event-container') || document.getElementById('event-decision-card');
+    if (targetEl && window.innerWidth < 1024) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    return () => clearTimeout(timer);
   }, [currentEventId]);
 
   const currentEvent = events[currentEventId];
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+
+      if (showWelcome || showCharacterPass || showWarReport || showAchievementCodex || isShopOpen) {
+        if (e.key === 'Escape') {
+          if (isShopOpen) setIsShopOpen(false);
+          else if (showAchievementCodex) setShowAchievementCodex(false);
+          else if (showWarReport) setShowWarReport(false);
+          else if (showCharacterPass) setShowCharacterPass(false);
+          else if (showWelcome) {
+            setShowWelcome(false);
+            localStorage.setItem('sv_life_welcome_seen', 'true');
+          }
+        }
+        return;
+      }
+
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing') {
+          e.preventDefault();
+          handleYearEndContinue();
+          return;
+        }
+      }
+
+      if (['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+        if (gameState.status === 'playing' && currentEvent && !isCoolingDown) {
+          const choiceIndex = parseInt(e.key, 10) - 1;
+          const availableChoices = currentEvent.choices.filter((choice) => {
+            const isAvail = !choice.condition || choice.condition(gameState);
+            if (!isAvail && (choice.hideIfUnavailable || choice.text.includes('今年限时机会'))) {
+              return false;
+            }
+            return true;
+          });
+          const targetChoice = availableChoices[choiceIndex];
+          if (targetChoice) {
+            const isAvail = !targetChoice.condition || targetChoice.condition(gameState);
+            if (isAvail) {
+              e.preventDefault();
+              handleChoice(targetChoice);
+            }
+          }
+        }
+        return;
+      }
+
+      if (e.key.toLowerCase() === 's') {
+        if (gameState.job_type !== undefined) {
+          e.preventDefault();
+          handleOpenShop();
+        }
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        setShowAchievementCodex(true);
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'r') {
+        if (gameState.status !== 'playing') {
+          e.preventDefault();
+          resetGame();
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    gameState,
+    currentEventId,
+    currentEvent,
+    isCoolingDown,
+    showWelcome,
+    showCharacterPass,
+    showWarReport,
+    showAchievementCodex,
+    isShopOpen,
+  ]);
 
   const handleChoice = (choice: Choice) => {
     // 1. Calculate new state
@@ -551,15 +641,16 @@ export default function App() {
           {/* Right Column: Event Narrative & Decisions */}
           <div className="col-span-1 lg:col-span-7 flex flex-col justify-center min-h-[65vh] lg:min-h-[80vh] lg:pl-8 xl:pl-16">
             
-            {/* Message Banner */}
-            {gameState.message && (
-              <div aria-live="polite" role="status" className="border-l-2 border-emerald-500 bg-emerald-500/10 text-emerald-300 px-4 py-3 md:px-5 md:py-4 rounded-r-lg mb-4 md:mb-8 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
-                {gameState.message}
-              </div>
-            )}
+            <div id="event-container" className="scroll-mt-24 lg:scroll-mt-12">
+              {/* Message Banner */}
+              {gameState.message && (
+                <div aria-live="polite" role="status" className="border-l-2 border-emerald-500 bg-emerald-500/10 text-emerald-300 px-4 py-3 md:px-5 md:py-4 rounded-r-lg mb-4 md:mb-8 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+                  {gameState.message}
+                </div>
+              )}
 
-            {/* Event Card */}
-            <div key={currentEventId} id="event-decision-card" className="scroll-mt-14 bg-zinc-900/40 rounded-3xl p-5 sm:p-6 md:p-12 border border-zinc-800 backdrop-blur-md transition-all duration-300 shadow-2xl animate-in fade-in duration-500 slide-in-from-bottom-2">
+              {/* Event Card */}
+              <div key={currentEventId} id="event-decision-card" className="bg-zinc-900/40 rounded-3xl p-5 sm:p-6 md:p-12 border border-zinc-800 backdrop-blur-md transition-all duration-300 shadow-2xl animate-in fade-in duration-500 slide-in-from-bottom-2">
               {gameState.status === 'playing' && currentEvent ? (
                 <>
                   <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-3 md:mb-6">{currentEvent.title}</h2>
@@ -604,8 +695,8 @@ export default function App() {
                       return (
                       <button
                         key={idx}
-                        onClick={() => isAvailable && handleChoice(choice)}
-                        disabled={!isAvailable}
+                        onClick={() => isAvailable && !isCoolingDown && handleChoice(choice)}
+                        disabled={!isAvailable || isCoolingDown}
                         className={`group w-full text-left px-4 py-3 md:px-6 md:py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 cursor-pointer ${
                           isSSR
                             ? 'bg-gradient-to-r from-amber-950/70 via-yellow-900/50 to-amber-950/70 border-amber-400/90 shadow-[0_0_20px_rgba(245,158,11,0.35)] hover:border-yellow-300 hover:shadow-[0_0_30px_rgba(250,204,21,0.55)] hover:bg-amber-900/60 active:scale-[0.98]'
@@ -614,12 +705,15 @@ export default function App() {
                               : 'bg-zinc-950/50 border-zinc-800/50 opacity-50 cursor-not-allowed'
                         }`}
                       >
-                        <span className={`font-medium text-[15px] sm:text-base md:text-lg transition-colors ${
+                        <span className={`font-medium text-[15px] sm:text-base md:text-lg transition-colors flex items-center gap-2.5 ${
                           isSSR
                             ? 'text-amber-200 group-hover:text-yellow-200 font-extrabold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]'
                             : isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'
                         }`}>
-                          {mainText}
+                          <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 shrink-0 group-hover:border-emerald-500/40 group-hover:text-zinc-200">
+                            [{idx + 1}]
+                          </span>
+                          <span>{mainText}</span>
                         </span>
                         
                         <div className="flex flex-wrap gap-2 items-center">
@@ -787,6 +881,7 @@ export default function App() {
                   </div>
                 </div>
               )}
+            </div>
             </div>
           </div>
 

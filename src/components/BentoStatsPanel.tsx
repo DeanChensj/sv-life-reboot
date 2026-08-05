@@ -47,6 +47,19 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
 
   const displayHousing = gameState.housing_name || (gameState.has_housing ? '湾区自购房产' : '国内老家 / 未购房');
 
+  const getGcStationIndex = () => {
+    if (gameState.visa === '公民' || gameState.visa === '绿卡') return 5;
+    const stage = gameState.gc_stage || 'not_started';
+    const prog = gameState.gc_progress || 0;
+    if (stage === 'i485_pending' || stage === 'approved' || prog >= 4.5) return 5;
+    if (stage === 'waiting_pd' || prog >= 3.5) return 4;
+    if (stage === 'i140_processing' || stage === 'i140_rfe' || stage === 'i140_approved' || prog >= 2) return 3;
+    if (stage === 'perm_audit' || prog >= 1.5) return 2;
+    if (stage === 'perm_processing' || prog > 0) return 1;
+    return 0;
+  };
+  const gcStation = getGcStationIndex();
+
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
       {/* Header Title Section */}
@@ -84,7 +97,7 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
                 className="relative px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/40 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/10 active:scale-95 transition-all cursor-pointer group"
               >
                 <svg className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                <span>商城</span>
+                <span>[S] 商城</span>
                 {!hasOpenedShop && (
                   <>
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute -top-0.5 -right-0.5" />
@@ -99,7 +112,7 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
                 className="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/10 active:scale-95 transition-all cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
-                <span>图鉴</span>
+                <span>[C] 图鉴</span>
               </button>
             )}
           </div>
@@ -179,6 +192,39 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
                 className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-300 transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
                 style={{ width: `${(gameState.visa === '绿卡' || gameState.visa === '公民') ? 100 : Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100))}%` }}
               />
+            </div>
+
+            {/* 5-Station American Green Card Subway Line Tracker */}
+            <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between gap-1 text-[10px] sm:text-[11px] font-mono">
+              {[
+                { label: 'PERM广告', station: 1 },
+                { label: '劳工部获批', station: 2 },
+                { label: 'I-140锁PD', station: 3 },
+                { label: '排期等待', station: 4 },
+                { label: 'I-485制卡', station: 5 },
+              ].map((step, idx, arr) => {
+                const isDone = gameState.visa === '公民' || gameState.visa === '绿卡' || gcStation > step.station;
+                const isActive = !isDone && gcStation === step.station;
+                return (
+                  <React.Fragment key={step.label}>
+                    <div className={`flex items-center gap-1 shrink-0 ${isDone ? 'text-emerald-400 font-bold' : isActive ? 'text-amber-300 font-extrabold' : 'text-zinc-500'}`}>
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono border ${
+                        isDone 
+                          ? 'bg-emerald-500 text-zinc-950 border-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.5)]' 
+                          : isActive 
+                            ? 'bg-amber-400/20 text-amber-300 border-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.6)]' 
+                            : 'bg-zinc-800 text-zinc-500 border-zinc-700'
+                      }`}>
+                        {isDone ? '✓' : step.station}
+                      </span>
+                      <span className="hidden xl:inline">{step.label}</span>
+                    </div>
+                    {idx < arr.length - 1 && (
+                      <div className={`h-[1px] flex-1 mx-0.5 ${isDone ? 'bg-emerald-500/60' : 'bg-zinc-800'}`} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
         )}

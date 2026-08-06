@@ -1348,13 +1348,25 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【大厂 WLB 漫步】享受充裕生活平衡，申请内部 Transfer 探索前沿大模型组',
-        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
+        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !s.transferred_to_ai,
         hideIfUnavailable: true,
         effect: (s) => {
           const pass = s.leetcode >= 30 || Math.random() < 0.6;
           return pass
-            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, message: '【成功转岗】顺利 Transfer 到了前沿 AI 研发组！既拥有神仙级的 WLB 作息，又接触到了顶尖行业架构！' }
+            ? { mid_year: true, season_stage: 'h1', transferred_to_ai: true, health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, message: '【成功转岗】顺利 Transfer 到了前沿 AI 研发组！既拥有神仙级的 WLB 作息，又接触到了顶尖行业架构！' }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【安稳养老】原组 Manager 极力挽留，你继续享受着下午 5 点准时下班的惬意大厂时光。' };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【前沿 AI 团队攻坚】主导大模型低延迟推理架构落地，兼顾神仙级 WLB',
+        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !!s.transferred_to_ai,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const pass = s.leetcode >= 40 || Math.random() < 0.7;
+          return pass
+            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评，工作与生活达到完美平衡！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【惬意养老】AI 组内节奏舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客。' };
         },
         nextEventId: midYearEventRouter,
       },

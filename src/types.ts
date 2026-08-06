@@ -58,6 +58,7 @@ export interface GameState {
   company_valuation?: number; // 公司估值 (万美元)
   macro_economy?: 'bull' | 'bear' | 'neutral'; // 宏观经济周期
   transferred_to_ai?: boolean; // 是否已内部转岗至前沿大模型组
+  last_limited_opp_year?: number; // 记录上一次参与湾区限时机会的年份 (防同一年度重复点击)
 }
 
 export interface Choice {

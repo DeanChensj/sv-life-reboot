@@ -1236,24 +1236,25 @@ export const events: Record<string, GameEvent> = {
     title: '湾区日常 (行动面板)',
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
-      // 1. 【今年限时机会】 (不消耗年度重心，直接执行)
+      // 1. 【今年限时机会】 (每年限参与 1 次，不消耗年度重心)
       {
         text: '【限时机会】 Stanford 师兄/师姐拉你组队冲 AI Hackathon ($0.5w)',
-        condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && !(s.message || '').includes('Hackathon'),
+        condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
           const win = Math.random() < (0.10 + s.leetcode / 800);
           return win
-            ? { cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
-            : { cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
+            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
+            : { last_limited_opp_year: s.year, cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
         text: '【限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场见皮衣黄 ($1.5w)',
-        condition: (s) => s.cash >= 1.5 && (s.year % 6 === 1) && !(s.message || '').includes('GTC'),
+        condition: (s) => s.cash >= 1.5 && (s.year % 6 === 1) && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
+          last_limited_opp_year: s.year,
           cash: s.cash - 1.5,
           charm: Math.min(25, (s.charm || 10) + 6),
           luck: Math.min(99, (s.luck || 20) + 15),
@@ -1263,9 +1264,10 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【限时机会】 火人节 (Burning Man) 极客大迁徙与灵性放空 ($1.2w)',
-        condition: (s) => s.cash >= 1.2 && (s.year % 6 === 2) && !(s.message || '').includes('火人节'),
+        condition: (s) => s.cash >= 1.2 && (s.year % 6 === 2) && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
+          last_limited_opp_year: s.year,
           cash: s.cash - 1.2,
           health: Math.min(100, s.health + 8),
           charm: Math.min(25, (s.charm || 10) + 4),
@@ -1276,19 +1278,21 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【限时机会】 抢注爆火 AI Agent 域名并发布顶流测评视频 ($0.8w)',
-        condition: (s) => s.cash >= 0.8 && (s.year % 6 === 4) && !(s.message || '').includes('测评'),
+        condition: (s) => s.cash >= 0.8 && (s.year % 6 === 4) && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
           const winRate = 0.40 + ((s.charm || 10) / 50) + ((s.luck || 20) / 500);
           const isViral = Math.random() < Math.min(0.85, winRate);
           return isViral
             ? {
+                last_limited_opp_year: s.year,
                 cash: s.cash + 3.5,
                 health: Math.max(0, s.health - 5),
                 charm: Math.min(25, (s.charm || 10) + 4),
                 message: '【测评爆火】你连续肝夜剪出的 AI Agent 深度评测视频在 YouTube 和小红书大爆！收割了 $4.3w 广告赞助 (净赚 $3.5w)！'
               }
             : {
+                last_limited_opp_year: s.year,
                 cash: s.cash - 0.8,
                 health: Math.max(0, s.health - 5),
                 charm: Math.min(25, (s.charm || 10) + 2),
@@ -1299,21 +1303,22 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (需 LeetCode >= 35)',
-        condition: (s) => s.leetcode >= 35 && (s.year % 6 === 5) && !(s.message || '').includes('漏洞'),
+        condition: (s) => s.leetcode >= 35 && (s.year % 6 === 5) && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
           const success = Math.random() < 0.25;
           return success
-            ? { cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
-            : { health: Math.max(0, s.health - 10), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
+            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
+            : { last_limited_opp_year: s.year, health: Math.max(0, s.health - 10), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
         },
         nextEventId: 'sv_daily_life',
       },
       {
         text: '【限时机会】 考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
-        condition: (s) => s.cash >= 2.5 && (s.year % 5 === 2) && !(s.message || '').includes('飞行执照'),
+        condition: (s) => s.cash >= 2.5 && (s.year % 5 === 2) && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
+          last_limited_opp_year: s.year,
           cash: s.cash - 2.5,
           charm: Math.min(25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 6),

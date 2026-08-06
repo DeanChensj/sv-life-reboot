@@ -376,7 +376,7 @@ export const events: Record<string, GameEvent> = {
   },
   'cn_college_grad': {
     id: 'cn_college_grad',
-    title: '陆本大一/大二：百团大战与多维探索',
+    title: '大学前期：百团大战与多维探索',
     description: '进入了国内大学，开学百团大战，各种社团、比赛与创业社招新。你打算如何安排这最初的两年？',
     choices: [
       {
@@ -489,7 +489,7 @@ export const events: Record<string, GameEvent> = {
 
   'cn_college_year3': {
     id: 'cn_college_year3',
-    title: '陆本大三：迷茫期与抉择',
+    title: '大三抉择：保研、秋招与留学',
     description: '大三了，周围人都在考研、秋招、准备出国或直接创业。你的室友托福连挂三次，气氛格外紧张。',
     choices: [
       {
@@ -516,7 +516,7 @@ export const events: Record<string, GameEvent> = {
   },
   'us_undergrad_grad': {
     id: 'us_undergrad_grad',
-    title: '美本毕业',
+    title: '走出象牙塔：何去何从',
     description: '四年过去了，你顺利从美国大学毕业，目前持有 OPT。现在是找工作还是继续深造？',
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
@@ -549,7 +549,7 @@ export const events: Record<string, GameEvent> = {
   },
   'cn_undergrad_grad': {
     id: 'cn_undergrad_grad',
-    title: '陆本毕业',
+    title: '走出象牙塔：何去何从',
     description: '四年过去了，你在国内大学打下了坚实的代码基础。接下来去哪里？',
     choices: [
       {
@@ -602,7 +602,7 @@ export const events: Record<string, GameEvent> = {
   },
   'us_undergrad_year1': {
     id: 'us_undergrad_year1',
-    title: '美本前两年：适应期与多元探索',
+    title: '初入北美：文化冲击与多元探索',
     description: '刚来北美，你对一切都很新奇。你决定怎么度过最初的两年？',
     choices: [
       {
@@ -706,7 +706,7 @@ export const events: Record<string, GameEvent> = {
 
   'us_undergrad_year3': {
     id: 'us_undergrad_year3',
-    title: '美本大三与大四：实习与毕业冲刺',
+    title: '高年级冲刺：Intern 与求职季',
     description: '转眼到了大三和大四，周围的中国同学都在疯狂准备 Summer Intern 与全职 Offer。你打算怎么办？',
     choices: [
       {

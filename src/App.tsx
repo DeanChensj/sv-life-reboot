@@ -182,6 +182,10 @@ export default function App() {
     // Normalize Employment State: If an event gives a job, force laid_off: false
     if (effectResult.job_type && effectResult.job_type !== 'unemployed') {
       effectResult.laid_off = false;
+      // If player enters the workforce on an F-1 student visa, transition to OPT
+      if ((gameState.visa === 'F1 (学生)' || !gameState.visa || gameState.visa === '无') && !effectResult.visa) {
+        effectResult.visa = 'OPT (实习)';
+      }
     }
     // Numerical Safety Guards
     if (effectResult.cash !== undefined && isNaN(effectResult.cash)) effectResult.cash = gameState.cash;

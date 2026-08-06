@@ -765,13 +765,13 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '海投简历，疯狂刷题',
-        effect: (s) => ({ health: s.health - 10, leetcode: s.leetcode + 12 }),
+        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', health: s.health - 10, leetcode: s.leetcode + 12 }),
         nextEventId: 'job_hunt',
       },
       {
         text: '找ICC挂靠 (保底策略)',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, tc: 6, job_type: 'startup', laid_off: false }),
+        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', cash: s.cash - 1, tc: 6, job_type: 'startup', laid_off: false }),
         nextEventId: 'icc_work',
       },
       {
@@ -781,7 +781,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < 0.08;
           return win 
             ? { tc: 25, health: s.health - 20, cash: s.cash + 100, job_type: 'startup', laid_off: false, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', message: '天选之子！你盲狙的公司获得核心突破并由资本巨额注资，你分到了高额股票！' }
-            : { tc: 0, health: s.health - 30, laid_off: true, job_type: 'unemployed', message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
+            : { tc: 0, health: s.health - 30, laid_off: true, job_type: 'unemployed', visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'OPT (实习)', message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
         },
         nextEventId: (s: GameState) => {
           if (s.laid_off) return 'job_hunt';
@@ -1179,7 +1179,19 @@ export const events: Record<string, GameEvent> = {
     description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
     choices: [
       {
-        text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
+        text: '【婚姻绿卡自救】与伴侣领证结婚，递交 I-130/I-485 婚姻绿卡',
+        condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married || (s.charm || 10) >= 15) && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const hasRealPartner = s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married;
+          const win = hasRealPartner || Math.random() < 0.75;
+          return win
+            ? { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', message: '【婚姻绿卡获批】在身份绝境中，伴侣坚定地与你领证结婚并递交了 I-130/I-485 双递交申请，顺利拿下婚姻绿卡，彻底解决留美身份！' }
+            : { status: 'game_over', message: '移民局严肃调查判定为虚假婚姻，你被当场遣返回国并终身禁入美国，游戏结束！' };
+        },
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
+      },
+      {
+        text: '【杰出人才自救】申办 O1 签证 (花费 w 律师费)',
         reqBadge: '需PhD或硬核算法背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
@@ -1192,10 +1204,10 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
       },
       {
-        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w)',
+        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 w)',
         reqBadge: '现金>=80w',
         condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
       {
@@ -1205,7 +1217,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
+        text: '紧急挂靠 Day 1 CPT 水硕 (花费 .5w)',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
         nextEventId: 'sv_daily_life',
@@ -1312,7 +1324,7 @@ export const events: Record<string, GameEvent> = {
       // 2. 【情境定制动态专属】 (根据公司、婚姻、财富阶层动态生成)
       {
         text: '【大厂战时冲刺】主动认领 S-Level 核心架构重构，硬抗高压冲刺顶格 Perf',
-        condition: (s) => (s.company === 'meta' || s.job_type === 'tiktok' || s.job_type === 'nvidia') && !s.laid_off,
+        condition: (s) => (s.company === 'meta' || s.job_type === 'tiktok' || s.job_type === 'nvidia' || s.company === 'amazon' || s.job_type === 'amazon') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         hideIfUnavailable: true,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
@@ -1336,7 +1348,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【大厂 WLB 漫步】享受充裕生活平衡，申请内部 Transfer 探索前沿大模型组',
-        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off,
+        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         hideIfUnavailable: true,
         effect: (s) => {
           const pass = s.leetcode >= 30 || Math.random() < 0.6;
@@ -1831,7 +1843,11 @@ export const events: Record<string, GameEvent> = {
                 } else if (newAttempts === 2) {
                   h1bMsg = '  第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，压力山大！';
                 } else {
-                  h1bMsg = '  警告：三年 H1B 抽签均未能中签！身份即将在今年到期，面临离境危机！';
+                  if (s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') {
+                    h1bMsg = `  第 ${newAttempts} 次 H1B 抽签未能中签！好在有 ${s.visa} 身份保底维持合法工作，明年继续参与抽签！`;
+                  } else {
+                    h1bMsg = '  警告：三年 H1B 抽签均未能中签！STEM OPT 身份即将到期，面临离境危机！';
+                  }
                 }
               }
             }
@@ -1868,7 +1884,7 @@ export const events: Record<string, GameEvent> = {
         },
         nextEventId: (s) => {
           if (s.status === 'win') return 'end';
-          if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT') && (s.h1b_attempts || 0) >= 3) {
+          if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
             return 'h1b_final_crisis';
           }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') return 'post_green_card';
@@ -2059,15 +2075,31 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
       },
       {
-        text: '启动 60 天 H1B Grace Period 紧急挂靠：找外包公司办理 H1B Transfer (消耗 $2w)',
-        condition: (s) => s.cash >= 2 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        text: '【工签紧急挂靠】启动 60 天 Grace Period 找外包公司办理 H1B Transfer (消耗 $2w)',
+        condition: (s) => s.cash >= 2 && (s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)') && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           cash: s.cash - 2,
           tc: Math.max(10, Math.floor(s.tc * 0.55)),
           health: s.health - 15,
-          message: '外包中介急用低薪码农，连夜为你开具了紧急 Offer 办理了 H1B Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
+          message: '外包中介急用低薪码农，连夜为你开具了紧急 Offer 办理了工签 Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
         }),
         nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【OPT / 工签转学自救】注册 Day 1 CPT 大学维持合法留美身份并刷题 (消耗 $1.5w)',
+        condition: (s) => s.cash >= 1.5 && (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'H1B (工签)') && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        effect: (s) => ({
+          visa: 'Day 1 CPT',
+          cash: s.cash - 1.5,
+          tc: 0,
+          laid_off: true,
+          job_type: 'unemployed',
+          cpt_used: true,
+          leetcode: s.leetcode + 15,
+          health: Math.min(100, s.health + 5),
+          message: '【无缝转 Day 1 CPT】面对裁员与身份压力，你果断注册了 Day 1 CPT 大学维持合法学生身份并全职刷题准备下一轮求职，完全不受 60 天工签遣返威胁！'
+        }),
+        nextEventId: 'job_hunt'
       },
       {
         text: '【钞能力 EB-5 自救】掏出 $80w 办理新法 EB-5 并双递交 (I-485)，拿 EAD Combo 卡解除 PIP 危机！',
@@ -2450,34 +2482,46 @@ export const events: Record<string, GameEvent> = {
     description: '连续三年 H1B 抽签全军覆没！你的 STEM OPT 即将到期，公司 HR 和律所发来最终通知：必须在 30 天内解决合法身份，否则将被终止合同并安排外派离境！',
     choices: [
       {
-        text: '砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD或硬核算法背景)',
+        text: '【婚姻绿卡自救】与伴侣领证结婚，递交 I-130/I-485 婚姻绿卡',
+        condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married || (s.charm || 10) >= 15) && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const hasRealPartner = s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married;
+          const win = hasRealPartner || Math.random() < 0.75;
+          return win
+            ? { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', message: '【婚姻绿卡获批】在绝境中你与伴侣正式领证结婚并提交了婚姻绿卡申请，彻底解除了身份危机！' }
+            : { status: 'game_over', message: '移民局严肃调查判定为虚假婚姻，你被当场遣返回国并终身禁入美国，游戏结束！' };
+        },
+        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : 'post_green_card',
+      },
+      {
+        text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 .5w)',
+        condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({
+          visa: 'Day 1 CPT',
+          cash: s.cash - 1.5,
+          cpt_used: true,
+          message: '【无缝接轨 Day 1 CPT】虽然 STEM OPT 耗尽，但你成功挂靠了 Day 1 CPT 大学，白天写代码晚上交作业，成功维持合法留美身份并继续抽签！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '砸 w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= w, 限 PhD或硬核算法背景)',
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = Math.random() < (s.is_phd ? 0.70 : 0.35);
           return pass
             ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
-            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
+            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，w 律师费彻底打了水漂...' };
         },
         nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
       },
       {
-        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w)',
+        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 w)',
         reqBadge: '现金>=80w',
         condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
         nextEventId: 'post_green_card',
-      },
-      {
-        text: '紧急闪婚领证 (靠公民/绿卡对象救急)',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => {
-          const fake = Math.random() > 0.8;
-          return fake
-            ? { status: 'game_over', message: '移民局严肃调查判定为虚假婚姻，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, message: '在绝境中你与对象紧急领证结婚，顺理成章提交了婚姻绿卡申请，拯救了身份！' };
-        },
-        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : 'post_green_card',
       },
       {
         text: '接受外派温哥华/多伦多 L1 办公室 (曲线救国)',
@@ -2670,7 +2714,6 @@ export const events: Record<string, GameEvent> = {
     title: '职场宫心计 (Office Politics)',
     description: '没了绿卡约束，你决定在公司大干一场。现在公司空出了一个 Director 的位子，你的竞争对手是深谙 PPT 之道的印度同事 Raj。',
     choices: [
-
       {
         text: '疯狂写代码，用硬实力说话',
         effect: (s) => ({ health: Math.max(0, s.health - 20), charm: Math.max(0, (s.charm || 10) - 2), message: 'Raj 用你写的硬核代码做了一份精美的 PPT 向上汇报，他获得了晋升。虽然你被边缘化，但你依然手握绿卡拿着高薪大包稳坐工位。' }),
@@ -2678,9 +2721,10 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '放下 IDE，打开 PPT 开始高强度向上管理',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => s.charm >= 12
-          ? { tc: s.tc + 15, cash: s.cash + 15, charm: Math.min(25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功升职加薪！' }
-          : { health: s.health - 25, charm: Math.max(0, s.charm - 2), message: '缺乏社交情商，你的汇报被对手挑出毛病，功劳全被同事占了。' },
+          ? { tc: (s.tc || 0) + 15, cash: s.cash + 15, charm: Math.min(25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功升职加薪！' }
+          : { health: Math.max(0, s.health - 25), charm: Math.max(0, s.charm - 2), message: '缺乏社交情商，你的汇报被对手挑出毛病，功劳全被同事占了。' },
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -2688,7 +2732,7 @@ export const events: Record<string, GameEvent> = {
   'layoff_hit': {
     id: 'layoff_hit',
     title: '不幸被裁 (裁员风暴)',
-    description: '不幸遭遇了湾区科技公司大厂裁员潮，你抱着个人物品箱退出了 Slack。',
+    description: '不幸遭遇了湾区科技公司大厂裁员潮，你抱着个人物品箱退出了 Slack。面对突如其来的失业与身份倒计时，请选择你的应对策略：',
     imageUrl: 'images/layoff_box.jpg',
     choices: [
       {
@@ -2723,7 +2767,7 @@ export const events: Record<string, GameEvent> = {
         reqBadge: '需深厚熟人关系',
         condition: (s) => (s.network || 0) >= 35,
         effect: (s) => ({
-          tc: Math.max(20, s.tc),
+          tc: Math.max(20, s.tc || 20),
           job_type: 'big_tech',
           laid_off: false,
           health: Math.min(100, s.health + 10),
@@ -2733,12 +2777,99 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【工签身份】利用 60 天 H1B Grace Period 刷题限时上岸',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => s.leetcode > 60 
-          ? { tc: 20, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '有惊无险！凭高超算法在 60 天限期内火速入职新公司保住 H1B 身份！' }
-          : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，身份到期被迫登机遣返回国。' },
-        nextEventId: (s) => s.leetcode > 60 ? 'sv_daily_life' : 'end',
+        text: '【F-1 / OPT 身份】利用 90/150 天失业期额度疯狂刷题，火速投递 E-Verify 新公司',
+        condition: (s) => s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)',
+        effect: (s) => {
+          const pass = s.leetcode >= 45 || Math.random() < 0.55;
+          return pass
+            ? { tc: 20, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: '【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer，成功延续 OPT 身份！' }
+            : { status: 'game_over', message: '90 天 OPT 失业期耗尽，且未能及时挂靠转学，SEVIS 状态失效被迫登机回国。' };
+        },
+        nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
+      },
+      {
+        text: '【F-1 / OPT 转学自救】失业期告急，紧急注册 Day 1 CPT 大学维持 SEVIS 身份 (消耗 $1.5w)',
+        condition: (s) => (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && s.cash >= 1.5,
+        effect: (s) => ({
+          visa: 'Day 1 CPT',
+          cash: s.cash - 1.5,
+          laid_off: true,
+          tc: 0,
+          job_type: 'unemployed',
+          cpt_used: true,
+          leetcode: s.leetcode + 15,
+          health: Math.min(100, s.health + 5),
+          message: '【无缝转 Day 1 CPT】面对 OPT 失业期倒计时，你果断注册了 Day 1 CPT 大学维持合法留美学生身份，从容全职刷题准备下一轮跳槽面试！'
+        }),
+        nextEventId: 'job_hunt',
+      },
+      {
+        text: '【H-1B 工签身份】利用 60 天 H1B Grace Period 极限刷题办理 H1B Transfer',
+        condition: (s) => s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)',
+        effect: (s) => {
+          const pass = s.leetcode >= 55 || Math.random() < 0.50;
+          return pass
+            ? { tc: 22, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 20), message: '【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司并成功办理 H1B Transfer 保住工签！' }
+            : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，工签身份到期被迫登机离境。' };
+        },
+        nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
+      },
+      {
+        text: '【工签紧急挂靠】60 天倒计时逼近，找外包 ICC 公司办理 H1B Transfer 挂靠 (消耗 $2w)',
+        condition: (s) => (s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)') && s.cash >= 2,
+        effect: (s) => ({
+          cash: s.cash - 2,
+          tc: 14,
+          laid_off: false,
+          job_type: 'big_tech',
+          health: Math.max(0, s.health - 10),
+          message: '外包中介连夜为你开具了紧急 Offer 办理了 H1B Transfer！虽然总包大打折扣，但你的 60 天工签遣返警报成功解除！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【工签转 Day 1 CPT】转为学生身份就读 Day 1 CPT 避险，全职备战大厂 (消耗 $1.5w)',
+        condition: (s) => (s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)') && s.cash >= 1.5,
+        effect: (s) => ({
+          visa: 'Day 1 CPT',
+          cash: s.cash - 1.5,
+          laid_off: true,
+          tc: 0,
+          job_type: 'unemployed',
+          cpt_used: true,
+          leetcode: s.leetcode + 15,
+          message: '你将身份转为 Day 1 CPT 维持合法停留，解除 60 天遣返倒计时，开始全职闭关刷题！'
+        }),
+        nextEventId: 'job_hunt',
+      },
+      {
+        text: '【Day 1 CPT 专属】学籍在册无离境倒计时压力，边上课边全职刷题求职',
+        condition: (s) => s.visa === 'Day 1 CPT',
+        effect: (s) => ({
+          laid_off: true,
+          tc: 0,
+          job_type: 'unemployed',
+          leetcode: s.leetcode + 15,
+          health: Math.min(100, s.health + 5),
+          message: '【学籍保护】由于你早已挂靠在 Day 1 CPT 大学，完全不受 60 天工签驱逐威胁！你按部就班上课并全职刷题准备下一家面试。'
+        }),
+        nextEventId: 'job_hunt',
+      },
+      {
+        text: '【钞能力 EB-5 自救】全额出资申办 EB-5 投资移民并递交 I-485 拿 Combo 卡 (花费 $80w)',
+        reqBadge: '现金>=80w',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({
+          visa: '绿卡',
+          gc_progress: 5,
+          gc_stage: 'approved',
+          cash: s.cash - 80,
+          laid_off: true,
+          tc: 0,
+          job_type: 'unemployed',
+          message: '凭雄厚资金实力，全额出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁，自由留美找工！'
+        }),
+        nextEventId: 'post_green_card',
       }
     ]
   },

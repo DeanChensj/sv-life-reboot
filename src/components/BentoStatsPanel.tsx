@@ -60,6 +60,76 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   };
   const gcStation = getGcStationIndex();
 
+  const getDisplayVisa = () => {
+    if (gameState.visa === '公民') {
+      return {
+        label: '美籍公民 (SSR)',
+        className: 'text-blue-300 bg-blue-500/15 border-blue-500/30 shadow-[0_0_8px_rgba(59,130,246,0.25)] font-bold',
+      };
+    }
+    if (gameState.visa === '绿卡') {
+      return {
+        label: '美国绿卡 (PR)',
+        className: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.25)] font-bold',
+      };
+    }
+    if (gameState.gc_stage === 'i485_pending') {
+      return {
+        label: 'I-485 Pending (EAD)',
+        className: 'text-teal-300 bg-teal-500/15 border-teal-500/30 font-bold',
+      };
+    }
+    if (gameState.visa === 'O1 (杰出人才)') {
+      return {
+        label: 'O-1 (杰出人才)',
+        className: 'text-purple-300 bg-purple-500/15 border-purple-500/30 font-bold',
+      };
+    }
+    if (gameState.visa === 'L1 (外派)') {
+      return {
+        label: 'L-1 (跨国外派)',
+        className: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30 font-bold',
+      };
+    }
+    if (gameState.visa === 'Day 1 CPT') {
+      return {
+        label: 'Day 1 CPT (学籍)',
+        className: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30 font-bold',
+      };
+    }
+    if (gameState.visa === 'H1B (工签)') {
+      const isLocked = ['i140_approved', 'waiting_pd'].includes(gameState.gc_stage || '');
+      return {
+        label: isLocked ? 'H-1B (已锁PD)' : 'H-1B (工作签证)',
+        className: 'text-amber-300 bg-amber-500/15 border-amber-500/30 font-bold',
+      };
+    }
+    if (gameState.visa === 'OPT (实习)') {
+      const isStem = (gameState.h1b_attempts || 0) >= 1;
+      return {
+        label: isStem ? 'STEM OPT (延期)' : 'Initial OPT (1年)',
+        className: 'text-amber-400 bg-amber-400/10 border-amber-400/20 font-semibold',
+      };
+    }
+    if (gameState.visa === 'F1 (学生)') {
+      return {
+        label: 'F-1 (在读学生)',
+        className: 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-semibold',
+      };
+    }
+    if (!gameState.visa || gameState.visa === '无') {
+      return {
+        label: gameState.has_us_degree ? '待定身份' : '暂无 (未赴美)',
+        className: 'text-zinc-400 bg-zinc-800/60 border-zinc-700 font-medium',
+      };
+    }
+    return {
+      label: gameState.visa,
+      className: 'text-amber-400 bg-amber-400/10 border-amber-400/20 font-semibold',
+    };
+  };
+  const visaDisplay = getDisplayVisa();
+
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
       {/* Header Title Section */}
@@ -278,8 +348,8 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
         <div className="col-span-1 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex justify-between items-center backdrop-blur-xl">
           <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em]">签证身份</div>
-          <div className="text-xs font-semibold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-            {gameState.visa}
+          <div className={`text-xs px-3 py-1 rounded-full border ${visaDisplay.className}`}>
+            {visaDisplay.label}
           </div>
         </div>
 

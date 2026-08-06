@@ -801,7 +801,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.school === 'cmu',
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          return { health: s.health - 15, tc: getLevelScaledTC(25, lvl), laid_off: false, cash: s.cash + 10, job_type: 'big_tech', level: lvl, message: '学长直接把你拉进了核心组，开启了高压生活。' };
+          return { health: s.health - 15, tc: getLevelScaledTC(25, lvl), laid_off: false, cash: s.cash + 10, job_type: 'big_tech', level: lvl, message: '校友学长/学姐直接把你拉进了核心组，开启了高压生活。' };
         },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
@@ -815,7 +815,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'startup_work',
       },
       {
-        text: '【强力人脉 Referral】凭借学长/熟人总监直通大厂面试',
+        text: '【强力人脉 Referral】凭借学长学姐/熟人总监直通大厂面试',
         reqBadge: '需广阔人脉关系',
         condition: (s) => (s.network || 0) >= 25,
         effect: (s) => {
@@ -837,7 +837,7 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '通过兄弟会内推，加入当地中型养老公司',
+        text: '通过兄弟会/姐妹会/校友会内推，加入当地中型养老公司',
         condition: (s) => s.school === 'state',
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
@@ -1225,7 +1225,7 @@ export const events: Record<string, GameEvent> = {
     choices: [
       // 1. 【今年限时机会】 (不消耗年度重心，直接执行)
       {
-        text: '【限时机会】 Stanford 师兄拉你组队冲 AI Hackathon ($0.5w)',
+        text: '【限时机会】 Stanford 师兄/师姐拉你组队冲 AI Hackathon ($0.5w)',
         condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && !(s.message || '').includes('Hackathon'),
         hideIfUnavailable: true,
         effect: (s) => {

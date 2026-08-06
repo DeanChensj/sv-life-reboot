@@ -38,6 +38,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   
   const taxAmount = taxAmountNum.toFixed(1);
   const postTaxIncome = postTaxIncomeNum.toFixed(1);
+  const rentalIncomeNum = gameState.rental_income || 0;
 
   // Expenses matched with App.tsx handleYearEndContinue
   const housingExpenseNum = gameState.rent !== undefined 
@@ -52,7 +53,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   const petExpense = petExpenseNum.toFixed(1);
 
   const totalExpense = housingExpenseNum + carExpenseNum + livingExpenseNum + petExpenseNum;
-  const estNetChange = (postTaxIncomeNum - totalExpense).toFixed(1);
+  const estNetChange = (postTaxIncomeNum + rentalIncomeNum - totalExpense).toFixed(1);
   const isNetPositive = parseFloat(estNetChange) >= 0;
 
   return (
@@ -157,6 +158,16 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
                 <span className="font-bold text-rose-400 tabular-nums">-${rsuTaxAmountNum.toFixed(1)}w</span>
               </div>
             </>
+          )}
+
+          {rentalIncomeNum > 0 && (
+            <div className="flex justify-between items-center p-3.5 bg-emerald-950/30 rounded-2xl border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]">
+              <span className="text-emerald-300 flex items-center gap-2.5 font-bold">
+                <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                房产出租净租金收益 (ADU/投资房)
+              </span>
+              <span className="font-bold text-emerald-400 tabular-nums">+${rentalIncomeNum.toFixed(1)}w</span>
+            </div>
           )}
 
           <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">

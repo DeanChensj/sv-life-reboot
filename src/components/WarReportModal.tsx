@@ -135,7 +135,9 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     if (gameState.charm >= 24) medals.push({ tag: 'SOC', title: '【南湾顶流名流】', desc: '风采绝伦，Santana Row 社交收割机', rarity: 'SR', color: '#f43f5e' });
     if (gameState.relationship_status === 'married' || gameState.is_married) medals.push({ tag: 'REL', title: '【湾区神仙眷侣】', desc: '成功领证结婚，组成大厂双职工家庭', rarity: 'SR', color: '#f43f5e' });
     else if (gameState.relationship_status === 'dating') medals.push({ tag: 'REL', title: '【湾区甜蜜热恋】', desc: '告别单身内卷，享受温暖的情侣生活', rarity: 'R', color: '#fb7185' });
-    if (gameState.cash >= 300 || ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')) medals.push({ tag: 'EST', title: '【Atherton 征服者】', desc: '积攒重金，成功跨越硅谷阶级门槛', rarity: 'SSR', color: '#10b981' });
+    if ((gameState.rental_income || 0) >= 10.0 || (gameState.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')) medals.push({ tag: 'FIRE', title: '【终极包租公 / 现金流之王】', desc: '手握 4-Plex/多套投资房，年租金现金流超 $10w+！', rarity: 'SSR', color: '#34d399' });
+    else if ((gameState.rental_income || 0) > 0) medals.push({ tag: 'RENT', title: '【硅谷包租公】', desc: `配置投资不动产，每年稳坐收租 +$${(gameState.rental_income || 0).toFixed(1)}w/年`, rarity: 'SR', color: '#10b981' });
+    else if (gameState.cash >= 300 || ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')) medals.push({ tag: 'EST', title: '【Atherton 征服者】', desc: '积攒重金，成功跨越硅谷阶级门槛', rarity: 'SSR', color: '#10b981' });
     if (gameState.car === 'porsche') medals.push({ tag: 'LUX', title: '【脱离民工车鄙视链】', desc: '开上保时捷 Porsche 震撼全场', rarity: 'SR', color: '#c084fc' });
     if (gameState.car === 'cybertruck') medals.push({ tag: 'RAW', title: '【赛博朋克硬核族】', desc: '驾驶多边形皮卡征服 237 号公路', rarity: 'SR', color: '#22d3ee' });
     if (gameState.visa === '公民') medals.push({ tag: 'SSR', title: '【出生在终点线】', desc: '天生具备美国国籍，不知 H1B 与排期为何物', rarity: 'SSR', color: '#fbbf24' });

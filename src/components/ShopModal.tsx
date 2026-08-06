@@ -50,7 +50,14 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
           
           {/* Section: Housing */}
           <section>
-            <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-800 pb-1">置业与居住 (Housing)</h4>
+            <div className="flex justify-between items-center mb-3 border-b border-zinc-800 pb-1">
+              <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest">置业与居住 (Housing)</h4>
+              {(gameState.rental_income !== undefined && gameState.rental_income > 0) && (
+                <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  被动租金: +${gameState.rental_income.toFixed(1)}w/年
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 disabled={totalAssets < 40 || isHomeowner}
@@ -58,7 +65,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative overflow-hidden"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">参加抢房大战 (首付 $40w+ · 可用股票)</div>
-                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已拥有一套房产' : '进入买房事件流，挑选湾区房产 (支持股票自动变现)'}</div>
+                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已拥有一套自住房产' : '进入买房事件流，挑选湾区房产 (支持股票自动变现)'}</div>
               </button>
               
               <button
@@ -77,6 +84,108 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               >
                 <div className="font-bold text-zinc-400">挂壁退租睡车顶 (房租归零)</div>
                 <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法退租' : '要求：总资产 < $10w 且当前有房租。健康大幅下降。'}</div>
+              </button>
+            </div>
+          </section>
+
+          {/* Section: Real Estate Investment & Passive Income */}
+          <section>
+            <div className="flex justify-between items-center mb-3 border-b border-zinc-800 pb-1">
+              <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest">房产投资与被动现金流 (Rental & Cash Flow)</h4>
+              <button
+                onClick={() => { onClose(); onTriggerEvent('manage_rental_properties'); }}
+                className="text-xs text-amber-400 hover:text-amber-300 font-mono flex items-center gap-1 transition-colors"
+              >
+                <span>进入房产管理中心</span>
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* ADU / House Hacking */}
+              <button
+                disabled={!isHomeowner || gameState.has_adu_rented || totalAssets < 1.5}
+                onClick={() => onBuy({
+                  cash: gameState.cash - 1.5,
+                  has_adu_rented: true,
+                  rental_income: (gameState.rental_income || 0) + 2.0,
+                }, '【ADU 改造出租】你改造了后院独立套间并出租给大厂实习生！每年被动收入 +$2.0w！')}
+                className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">自住房 ADU 出租</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$2.0w/年 租金</span>
+                </div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {gameState.has_adu_rented 
+                    ? '✅ 已完成改造并持续收租中' 
+                    : isHomeowner 
+                      ? '改造费用: $1.5w | 将自住房次卧/后院独立 ADU 挂牌招租' 
+                      : '需先拥有一套湾区自住房'}
+                </div>
+              </button>
+
+              {/* Austin Remote Rental */}
+              <button
+                disabled={totalAssets < 25 || (gameState.investment_properties || []).includes('Austin 远程独栋屋')}
+                onClick={() => onBuy({
+                  cash: gameState.cash - 25,
+                  rental_income: (gameState.rental_income || 0) + 2.2,
+                  investment_properties: [...(gameState.investment_properties || []), 'Austin 远程独栋屋'],
+                }, '【外州资产配置】购入德州 Austin 核心科技园区精装独栋屋！每年被动租金净现金流 +$2.2w！')}
+                className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">Austin 远程独栋投资房</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$2.2w/年 租金</span>
+                </div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {(gameState.investment_properties || []).includes('Austin 远程独栋屋')
+                    ? '✅ 已持有该投资房'
+                    : '首付: $25w (支持股票抵扣) | 全美远程托管，无惧科技裁员'}
+                </div>
+              </button>
+
+              {/* Hayward Single Family Rental */}
+              <button
+                disabled={totalAssets < 45 || (gameState.investment_properties || []).includes('Hayward 独立投资房')}
+                onClick={() => onBuy({
+                  cash: gameState.cash - 45,
+                  rental_income: (gameState.rental_income || 0) + 3.8,
+                  investment_properties: [...(gameState.investment_properties || []), 'Hayward 独立投资房'],
+                }, '【湾区核心资产】拿下东湾优质独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$3.8w 租金现金流！')}
+                className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">东湾 Hayward 独栋投资房</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$3.8w/年 租金</span>
+                </div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {(gameState.investment_properties || []).includes('Hayward 独立投资房')
+                    ? '✅ 已持有该投资房'
+                    : '首付: $45w (支持股票抵扣) | 湾区核心通勤圈，抗通胀现金流'}
+                </div>
+              </button>
+
+              {/* Sunnyvale 4-Plex Commercial / Residential */}
+              <button
+                disabled={totalAssets < 120 || (gameState.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')}
+                onClick={() => onBuy({
+                  cash: gameState.cash - 120,
+                  rental_income: (gameState.rental_income || 0) + 11.0,
+                  investment_properties: [...(gameState.investment_properties || []), 'Sunnyvale 4-Plex 公寓楼'],
+                  charm: Math.min(25, (gameState.charm || 10) + 5),
+                }, '【加州大地主登顶】拿下 Sunnyvale 核心区 4-Plex 公寓楼！每年躺赚 +$11.0w 净租金流，直接达成财务自由！')}
+                className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-400/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">Sunnyvale 4-Plex 公寓楼</span>
+                  <span className="text-[11px] font-mono text-amber-400 font-bold">+$11.0w/年 巨额租金</span>
+                </div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {(gameState.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')
+                    ? '👑 已晋升为硅谷核心大地主'
+                    : '首付: $120w (支持股票抵扣) | 4套联排全出租，终极 FIRE 神器'}
+                </div>
               </button>
             </div>
           </section>

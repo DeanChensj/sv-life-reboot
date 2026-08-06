@@ -32,7 +32,15 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: 'house',
     category: 'wealth',
     description: '在湾区手握 Atherton/Sunnyvale/Fremont 等多套房产，靠收租即可财务自由！',
-    hint: '暗号：拥有房产且总资产达到 $200w 以上。'
+    hint: '暗号：拥有自住房或投资房，且产生被动租金收益。'
+  },
+  {
+    id: 'passive_cashflow_king',
+    title: '现金流之王 (躺平收租)',
+    icon: 'crown',
+    category: 'wealth',
+    description: '购置 Sunnyvale 4-Plex 公寓楼或多套投资房，年租金被动现金流达到 $10w+/年！',
+    hint: '暗号：年房产出租被动净现金流达到 $10.0w/年以上。'
   },
   {
     id: 'boba_power_couple',
@@ -153,8 +161,13 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('vancouver_l1_chill')) newlyUnlocked.push('vancouver_l1_chill');
   }
 
-  if (state.has_housing && state.cash >= 200 && (state.housing_name?.includes('豪宅') || state.housing_name?.includes('学区房') || state.housing_name?.includes('老破小'))) {
-    if (unlockAchievement('bay_area_landlord')) newlyUnlocked.push('bay_area_landlord');
+  if (state.has_housing || (state.rental_income || 0) > 0 || (state.investment_properties || []).length > 0) {
+    if ((state.rental_income || 0) >= 2.0 || ((state.cash + (state.stocks || 0)) >= 200 && state.has_housing)) {
+      if (unlockAchievement('bay_area_landlord')) newlyUnlocked.push('bay_area_landlord');
+    }
+    if ((state.rental_income || 0) >= 10.0 || (state.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')) {
+      if (unlockAchievement('passive_cashflow_king')) newlyUnlocked.push('passive_cashflow_king');
+    }
   }
 
   if (state.is_married && (msg.includes('双职工') || currentEventId === 'dating_market')) {

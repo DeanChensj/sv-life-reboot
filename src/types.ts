@@ -44,6 +44,9 @@ export interface GameState {
   has_housing: boolean;
   parents_helped_house?: boolean;
   housing_name?: string;
+  rental_income?: number; // 房产出租被动现金流 (万美元/年)
+  investment_properties?: string[]; // 投资房产清单
+  has_adu_rented?: boolean; // 是否已出租自住房次卧/ADU
   car?: 'none' | 'model_y' | 'porsche' | 'cybertruck';
   status: 'playing' | 'game_over' | 'win';
   message: string;

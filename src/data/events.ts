@@ -1717,7 +1717,9 @@ export const events: Record<string, GameEvent> = {
            
            currentStocks += postTaxRSU; // Vested RSUs go to stock account
            
-           const netIncome = postTaxBase - totalExpense;
+           const rentalIncome = s.rental_income || 0;
+            const rentalMsg = rentalIncome > 0 ? ` 【房产被动现金流】名下出租房产/ADU 带来净租金收益 +$${rentalIncome.toFixed(1)}w！` : '';
+            const netIncome = postTaxBase + rentalIncome - totalExpense;
            let finalCash = s.cash + netIncome;
            let autoStockSellMsg = '';
 
@@ -1904,7 +1906,7 @@ export const events: Record<string, GameEvent> = {
               tc: updatedTC,
               health: newHealth,
               macro_economy: newEconomy,
-              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
+              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
            };
         },
         nextEventId: (s) => {
@@ -2661,12 +2663,12 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '把次卧与车库偷偷出租给转码留学生（每年回血 $1.5w 外快）',
+        text: '把次卧与车库偷偷出租给转码留学生（每年回血 $1.5w 被动现金流）',
         effect: (s) => {
           const badTenant = Math.random() > 0.65;
           return badTenant
-            ? { rent: 1.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金，但把你折腾得够呛。' }
-            : { rent: 0.8, has_housing: true, housing_name: 'Sunnyvale 老破小', cash: s.cash + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，把你的实际每年房贷净支出压到了底线！' };
+            ? { rent: 1.2, has_housing: true, housing_name: 'Sunnyvale 老破小', has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.0, health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$1.0w/年)，但把你折腾得够呛。' }
+            : { rent: 0.8, has_housing: true, housing_name: 'Sunnyvale 老破小', has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+1.5w/年)！' };
         },
         nextEventId: 'sv_daily_life',
       },
@@ -2684,7 +2686,69 @@ export const events: Record<string, GameEvent> = {
       }
     ]
   },
-    'tahoe_ski_blizzard': {
+  'manage_rental_properties': {
+    id: 'manage_rental_properties',
+    title: '房产投资与资产管理中心',
+    description: '在硅谷与全美优质学区配置投资性不动产，打造无惧科技裁员周期的终极被动现金流（Passive Rental Income）！',
+    imageUrl: 'images/house.jpg',
+    choices: [
+      {
+        text: '【自住房改造】搭建后院 ADU 独立套间并出租 (耗费 $1.5w · 产生 +$2.0w/年 租金净流)',
+        costBadge: '花费 $1.5w',
+        condition: (s) => s.has_housing && !s.has_adu_rented && (s.cash + (s.stocks || 0)) >= 1.5 && ['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房', 'Atherton 顶级豪宅'].includes(s.housing_name || ''),
+        effect: (s) => ({
+          cash: s.cash - 1.5,
+          has_adu_rented: true,
+          rental_income: (s.rental_income || 0) + 2.0,
+          message: '【ADU 改造完成】你在后院建起了一套带独立卫浴的预制 ADU，挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$2.0w 净租金流！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【外州远程投资】购入 Austin/Seattle 精装独栋别墅 (首付 $25w · 产生 +$2.2w/年 租金净流)',
+        costBadge: '首付 $25w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 25 && !(s.investment_properties || []).includes('Austin 远程独栋屋'),
+        effect: (s) => ({
+          cash: s.cash - 25,
+          rental_income: (s.rental_income || 0) + 2.2,
+          investment_properties: [...(s.investment_properties || []), 'Austin 远程独栋屋'],
+          message: '【外州资产配置】借助全美远程物业托管，你在德州 Austin 核心科技园区拿下了一套独栋屋，租给 Tesla/Apple 工程师，每年被动落袋 +$2.2w 纯现金流！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【湾区核心投资】购入东湾 Hayward/Fremont 独栋出租房 (首付 $45w · 产生 +$3.8w/年 租金净流)',
+        costBadge: '首付 $45w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 45 && !(s.investment_properties || []).includes('Hayward 独立投资房'),
+        effect: (s) => ({
+          cash: s.cash - 45,
+          rental_income: (s.rental_income || 0) + 3.8,
+          investment_properties: [...(s.investment_properties || []), 'Hayward 独立投资房'],
+          message: '【湾区核心资产】拿下东湾优质通勤独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$3.8w 租金现金流！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【大地主终极资产】全款/杠杆拿下 Sunnyvale 4-Plex 核心多户公寓楼 (首付 $120w · 产生 +$11.0w/年 巨额租金)',
+        costBadge: '首付 $120w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 120 && !(s.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼'),
+        effect: (s) => ({
+          cash: s.cash - 120,
+          rental_income: (s.rental_income || 0) + 11.0,
+          investment_properties: [...(s.investment_properties || []), 'Sunnyvale 4-Plex 公寓楼'],
+          charm: Math.min(25, (s.charm || 10) + 5),
+          message: '【加州大地主登顶】你拿下了 Sunnyvale 黄金地段 4 套相连的公寓楼！光靠收租每年就能躺赚 +$11.0w 净现金流，彻底告别打工内卷！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '返回日常行动',
+        effect: () => ({ message: '你审视了名下的资产组合与租金收益，决定稳健经营现金流。' }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'tahoe_ski_blizzard': {
     id: 'tahoe_ski_blizzard',
     title: '【冬日浩劫】 Tahoe 暴雪警报与 I-80 公路 9 小时生死大堵车',
     description: '周五下午 3:15，Slack 上的 #skiing 频道与微信群全炸了：“Tahoe 今晚开大雪，明早 Pow 天雪质爆满！”你急忙合上电脑，把滑雪板扣进车顶箱狂飙出门。然而刚到 Truckee，I-80 公路突然由于暴雪启动了 Chain Control (强制雪链停摆检查)，成千上万台 Tesla 和斯巴鲁卡在雪堆里动弹不得。',

@@ -772,10 +772,11 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < 0.08;
           return win 
-            ? { tc: 25, health: s.health - 20, cash: s.cash + 100, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', message: '天选之子！你盲狙的公司获得核心突破并由资本巨额注资，你分到了高额股票！' }
-            : { tc: 10, health: s.health - 30, message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
+            ? { tc: 25, health: s.health - 20, cash: s.cash + 100, job_type: 'startup', laid_off: false, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', message: '天选之子！你盲狙的公司获得核心突破并由资本巨额注资，你分到了高额股票！' }
+            : { tc: 0, health: s.health - 30, laid_off: true, job_type: 'unemployed', message: '公司烧光了投资人的钱，不到半年就倒闭了。期权变成了废纸，你只能连夜更新简历。' };
         },
         nextEventId: (s: GameState) => {
+          if (s.laid_off) return 'job_hunt';
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
@@ -1214,16 +1215,16 @@ export const events: Record<string, GameEvent> = {
     title: '湾区日常 (行动面板)',
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
-      // 1. 【今年限时机会】 (不消耗年度重心)
+      // 1. 【今年限时机会】 (不消耗年度重心，直接执行)
       {
         text: '【限时机会】 Stanford 师兄拉你组队冲 AI Hackathon ($0.5w)',
-        condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && !s.message.includes('Hackathon'),
+        condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && !(s.message || '').includes('Hackathon'),
         hideIfUnavailable: true,
         effect: (s) => {
           const win = Math.random() < (0.10 + s.leetcode / 800);
           return win
-            ? { cash: s.cash + 8, leetcode: s.leetcode + 10, charm: s.charm + 3, message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
-            : { cash: s.cash - 0.5, health: s.health - 15, leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
+            ? { cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
+            : { cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
         },
         nextEventId: 'sv_daily_life',
       },
@@ -1240,6 +1241,42 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
+        text: '【限时机会】 火人节 (Burning Man) 极客大迁徙与灵性放空 ($1.2w)',
+        condition: (s) => s.cash >= 1.2 && (s.year % 6 === 2) && !(s.message || '').includes('火人节'),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          cash: s.cash - 1.2,
+          health: Math.min(100, s.health + 8),
+          charm: Math.min(25, (s.charm || 10) + 4),
+          luck: Math.min(99, (s.luck || 20) + 8),
+          message: '【火人节洗礼】你在黑石城沙漠参加了 Burning Man，虽然风沙与昼夜狂欢有些耗费体力，但灵性觉醒彻底清空了精神内耗，并结识了一批硅谷前沿极客！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【限时机会】 抢注爆火 AI Agent 域名并发布顶流测评视频 ($0.8w)',
+        condition: (s) => s.cash >= 0.8 && (s.year % 6 === 4) && !(s.message || '').includes('测评'),
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const winRate = 0.40 + ((s.charm || 10) / 50) + ((s.luck || 20) / 500);
+          const isViral = Math.random() < Math.min(0.85, winRate);
+          return isViral
+            ? {
+                cash: s.cash + 3.5,
+                health: Math.max(0, s.health - 5),
+                charm: Math.min(25, (s.charm || 10) + 4),
+                message: '【测评爆火】你连续肝夜剪出的 AI Agent 深度评测视频在 YouTube 和小红书大爆！收割了 $4.3w 广告赞助 (净赚 $3.5w)！'
+              }
+            : {
+                cash: s.cash - 0.8,
+                health: Math.max(0, s.health - 5),
+                charm: Math.min(25, (s.charm || 10) + 2),
+                message: '【流量平平】视频遭遇了平台算法限流，虽然熬夜没能回本，但积累了宝贵的自媒体剪辑与运营经验。'
+              };
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
         text: '【限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (需 LeetCode >= 35)',
         condition: (s) => s.leetcode >= 35 && (s.year % 6 === 5) && !(s.message || '').includes('漏洞'),
         hideIfUnavailable: true,
@@ -1247,12 +1284,118 @@ export const events: Record<string, GameEvent> = {
           const success = Math.random() < 0.25;
           return success
             ? { cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
-            : { health: s.health - 10, message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
+            : { health: Math.max(0, s.health - 10), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
         },
         nextEventId: 'sv_daily_life',
       },
+      {
+        text: '【限时机会】 考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
+        condition: (s) => s.cash >= 2.5 && (s.year % 5 === 2) && !(s.message || '').includes('飞行执照'),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          cash: s.cash - 2.5,
+          charm: Math.min(25, (s.charm || 10) + 5),
+          luck: Math.min(99, (s.luck || 20) + 6),
+          message: '【考取飞行执照】你成功通过 FAA 单飞考核拿到了私人飞行员执照！周末开着塞斯纳俯瞰金门大桥，在湾区社交圈名声大噪！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
 
-      // 2. 【年度重心】(点击后直接进入年底结算或对应事件流)
+      // 2. 【情境定制动态专属】 (根据公司、婚姻、财富阶层动态生成)
+      {
+        text: '【大厂战时冲刺】主动认领 S-Level 核心架构重构，硬抗高压冲刺顶格 Perf',
+        condition: (s) => (s.company === 'meta' || s.job_type === 'tiktok' || s.job_type === 'nvidia') && !s.laid_off,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const lastPromoAge = s.last_promo_age ?? (s.age - 1);
+          const yearsInGrade = s.age - lastPromoAge;
+          const winRate = 0.35 + (s.leetcode / 300) + ((s.charm || 10) * 0.01) + ((s.luck || 20) * 0.001);
+          const pass = Math.random() < Math.min(0.80, winRate);
+
+          if (pass) {
+            if (curLevel === 'L3' && yearsInGrade >= 1) {
+              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 4.5, level: 'L4', last_promo_age: s.age, message: '【战时冲刺成功】你带领组员重构了核心服务！拿下顶级 Top Perf 并直接破格晋升至 L4！总包大幅调升！' };
+            }
+            if (curLevel === 'L4' && yearsInGrade >= 1) {
+              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 7.0, level: 'L5 (Senior)', last_promo_age: s.age, message: '【战时冲刺成功】扛下千亿流量大促！顺利通过升职委员会，正式晋升为 L5 Senior！总包调升 +$7w！' };
+            }
+            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 4.0, message: '【战时冲刺成功】你带领组员连续数周通宵重构了底层核心服务，拿下了年度 Top Perf 与 +$4w 顶格绩效大包！' };
+          }
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 1.0, message: '【高压内卷苦战】虽然抗住了高强度 Oncall，但因为大厂组织架构调整，功劳被大领导收割，只拿到了普调。' };
+        },
+        nextEventId: (s) => (s.level === 'L6 (Staff)' && (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
+      },
+      {
+        text: '【大厂 WLB 漫步】享受充裕生活平衡，申请内部 Transfer 探索前沿大模型组',
+        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const pass = s.leetcode >= 30 || Math.random() < 0.6;
+          return pass
+            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, message: '【成功转岗】顺利 Transfer 到了前沿 AI 研发组！既拥有神仙级的 WLB 作息，又接触到了顶尖行业架构！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【安稳养老】原组 Manager 极力挽留，你继续享受着下午 5 点准时下班的惬意大厂时光。' };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
+        condition: (s) => s.job_type === 'startup' && !s.laid_off,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const winRate = 0.20 + (s.leetcode / 400) + ((s.luck || 20) / 400);
+          const win = Math.random() < Math.min(0.65, winRate);
+          return win
+            ? { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), cash: s.cash + 5, stocks: (s.stocks || 0) + 10, message: '【融资大捷】公司顺利拿下 A 轮千万美金融资！你的期权估值大涨并分到了 $5w 现金绩效奖金！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), leetcode: s.leetcode + 5, message: '【技术硬仗】一人干完了三人的全栈活，虽然融资推迟，但全套云原生与 Agent 架构让你技术实力全面蜕变。' };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【家庭生活：Napa 酒庄度假】带伴侣前往 Napa 谷品酒度假，优化家庭双职工理财',
+        condition: (s) => s.relationship_status === 'married' || s.is_married || s.relationship_status === 'dating',
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const isMarriedNow = s.relationship_status === 'married' || s.is_married;
+          return {
+            mid_year: true, season_stage: 'h1',
+            health: Math.min(100, s.health + 10),
+            cash: isMarriedNow ? s.cash + 1.5 : Math.max(0, s.cash - 0.5),
+            charm: Math.min(25, (s.charm || 10) + 2),
+            message: isMarriedNow 
+              ? '【家庭甜度与财富双收】打卡 Napa 米其林与酒庄，夫妻双方合理规划了家庭 401k 与 Backdoor Roth IRA，家庭净资产稳健增长！'
+              : '【浪漫热恋周末】在 Napa 阳光与葡萄藤下度过了浪漫周末，两人感情迅速升温，职场疲惫一扫而空！'
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【沙丘路私享会】受邀参加 Sand Hill Road 闭门华人天使投资人沙龙 ($1.0w)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 200 && s.cash >= 1.0,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          cash: s.cash - 1.0,
+          charm: Math.min(25, (s.charm || 10) + 3),
+          luck: Math.min(99, (s.luck || 20) + 6),
+          message: '【拓展顶层人脉】在沙丘路红木私宅里结识了数位顶级 VC 合伙人与独角兽创始人，手握核心行业内幕与优质天使跟投名额！'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【湾区省钱作战】打卡大华 99 特价便当与 CostCo 拼单，极限降低生活能耗',
+        condition: (s) => s.cash < 15 && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          cash: s.cash + 0.8,
+          health: Math.min(100, s.health + 3),
+          message: '【极简挂壁大作战】凭借 CostCo 烤鸡与超市特价便当，今年成功省下 $0.8w 生活开支，磨砺了坚韧的极简生存心态！'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+
+      // 3. 【常规年度重心】 (点击后进入年中/年底结算)
       {
         text: '【年度重心：疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
@@ -1261,7 +1404,7 @@ export const events: Record<string, GameEvent> = {
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           
-          const baseWinRate = 0.15 + (s.leetcode / 300) + (s.charm * 0.02) + (s.luck * 0.001);
+          const baseWinRate = 0.15 + (s.leetcode / 300) + ((s.charm || 10) * 0.02) + ((s.luck || 20) * 0.001);
           const pass = Math.random() < Math.min(0.7, baseWinRate);
 
           if (curLevel === 'L3') {
@@ -1300,15 +1443,15 @@ export const events: Record<string, GameEvent> = {
         text: '【年度重心：拓展副业】经营小红书与独立开发',
         condition: (s) => true,
         effect: (s) => {
-          if (s.leetcode >= 40 && Math.random() < (0.05 + s.luck / 500)) {
-            return { mid_year: true, season_stage: 'h1', cash: s.cash + 35, leetcode: s.leetcode + 5, health: s.health - 15, message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
+          if (s.leetcode >= 40 && Math.random() < (0.05 + (s.luck || 20) / 500)) {
+            return { mid_year: true, season_stage: 'h1', cash: s.cash + 35, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 15), message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
           }
-          let winRate = s.charm >= 12 ? 0.9 : (s.charm >= 7 ? 0.6 : 0.2);
+          let winRate = (s.charm || 10) >= 12 ? 0.9 : ((s.charm || 10) >= 7 ? 0.6 : 0.2);
           if (Math.random() < winRate) {
-            if (s.charm >= 20 && Math.random() < 0.05) return { mid_year: true, season_stage: 'h1', cash: s.cash + 48, charm: Math.min(25, s.charm + 5), health: s.health - 10, message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
-            return { mid_year: true, season_stage: 'h1', cash: s.cash + 8, charm: s.charm + 2, health: s.health - 15, message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
+            if ((s.charm || 10) >= 20 && Math.random() < 0.05) return { mid_year: true, season_stage: 'h1', cash: s.cash + 48, charm: Math.min(25, (s.charm || 10) + 5), health: Math.max(0, s.health - 10), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
+            return { mid_year: true, season_stage: 'h1', cash: s.cash + 8, charm: Math.min(25, (s.charm || 10) + 2), health: Math.max(0, s.health - 15), message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
           }
-          return { mid_year: true, season_stage: 'h1', cash: Math.max(0, s.cash - 2), health: s.health - 20, message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
+          return { mid_year: true, season_stage: 'h1', cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 20), message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
         },
         nextEventId: midYearEventRouter,
       },
@@ -1317,7 +1460,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
-          health: s.health - 15,
+          health: Math.max(0, s.health - 15),
           message: '今年你花了大把时间盯盘、听财报电话会，试图在股市中加速财务自由！'
         }),
         nextEventId: 'stock_market_annual_gamble',
@@ -1327,8 +1470,8 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => true,
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
-          health: s.health - 10,
-          charm: Math.min(25, s.charm + 3),
+          health: Math.max(0, s.health - 10),
+          charm: Math.min(25, (s.charm || 10) + 3),
           message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
         }),
         nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
@@ -1343,7 +1486,7 @@ export const events: Record<string, GameEvent> = {
           level: '全职 Trader',
           tc: 0,
           laid_off: false,
-          message: ' 你正式递交了离职辞呈！凭借 $50w 初始本金与美籍/绿卡自由身，开启了全职 Day Trader 操盘人生！'
+          message: '你正式递交了离职辞呈！凭借 $50w 初始本金与美籍/绿卡自由身，开启了全职 Day Trader 操盘人生！'
         }),
         nextEventId: 'trader_annual_strategy',
       },
@@ -1364,8 +1507,8 @@ export const events: Record<string, GameEvent> = {
             cash: needsO1 ? s.cash - 5 : s.cash,
             visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
             message: needsO1
-              ? ' 你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
-              : ' 你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+              ? '你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+              : '你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
           };
         },
         nextEventId: 'founder_annual_strategy',

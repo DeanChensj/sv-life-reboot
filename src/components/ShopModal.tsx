@@ -187,6 +187,26 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                     : '首付: $120w (支持股票抵扣) | 4套联排全出租，终极 FIRE 神器'}
                 </div>
               </button>
+
+              {/* Instant FIRE Retirement for achieved players */}
+              {(gameState.has_reached_initial_fire || totalAssets >= gameState.win_threshold) && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onBuy({ status: 'win' }, `【正式退休】恭喜！你在 ${gameState.age} 岁正式宣布提前退休 (FIRE)！以胜利者姿态结束硅谷打拼！`);
+                  }}
+                  className="col-span-1 sm:col-span-2 flex justify-between items-center text-left p-4 rounded-2xl border border-amber-500/50 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 transition-all shadow-lg shadow-amber-500/10 group cursor-pointer animate-in fade-in"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-amber-300 group-hover:text-amber-200 transition-colors text-sm sm:text-base">🏖️ 随时申请 FIRE 提前退休</span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-400 text-zinc-950 uppercase">已达标</span>
+                    </div>
+                    <div className="text-xs text-zinc-400 mt-1">你已具备财务自由资质！点击立即登出硅谷内卷，进入生涯荣誉与战报结算。</div>
+                  </div>
+                  <div className="text-amber-400 font-mono font-bold text-sm shrink-0 pl-2">进入结算 →</div>
+                </button>
+              )}
             </div>
           </section>
 

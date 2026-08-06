@@ -2748,6 +2748,61 @@ export const events: Record<string, GameEvent> = {
       }
     ]
   },
+  'fire_milestone_choice': {
+    id: 'fire_milestone_choice',
+    title: '🎉 硅谷奇迹：达成财务自由 (FIRE)',
+    description: '看着银行账户与股票投资组合上的数字突破了既定目标，你深吸了一口气。曾经在 LeetCode 上死磕的深夜、在工位上焦灼等待 H1B/PERM 排期的日子，终于在此刻结出了丰硕的果实。你已经拥有了随时登出硅谷内卷的底气！接下来，你打算怎么选择？',
+    imageUrl: 'images/house.jpg',
+    choices: [
+      {
+        text: '🏖️【见好就收 · 立即退休】宣布提前退休，正式登出硅谷内卷（进入人生胜利结算）',
+        costBadge: '终局胜利',
+        effect: (s) => ({
+          status: 'win',
+          message: `【FIRE 胜利退休】你在 ${s.age} 岁正式宣布提前退休！总资产达到 $${(s.cash + (s.stocks || 0)).toFixed(1)}w，再也不需要看任何 Manager 与排期的脸色，开启了环游世界与自由探索的璀璨余生！`
+        }),
+        nextEventId: 'end',
+      },
+      {
+        text: '🚀【继续生活 · 探索舒适 FIRE 目标 ($800w)】留在硅谷享受生活，配置不动产与高端资产',
+        condition: (s) => (s.cash + (s.stocks || 0)) < 800,
+        effect: (s) => ({
+          has_reached_initial_fire: true,
+          win_threshold: 800,
+          fire_tier: 'comfortable',
+          health: Math.min(100, s.health + 20),
+          message: '【进入自由探索模式】你决定留在湾区继续享受生活与打拼！新的阶梯目标设定为 $800w 舒适 FIRE（尽情体验跑车豪宅、投资房与多元人生）。'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '👑【登顶硅谷 · 冲刺奢华 FIRE 目标 ($1500w+)】追逐顶级独角兽与 Atherton 庄园',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 800,
+        effect: (s) => ({
+          has_reached_initial_fire: true,
+          win_threshold: 1500,
+          fire_tier: 'luxury',
+          health: Math.min(100, s.health + 20),
+          message: '【豪门巨鳄模式】你的雄心已超越普通打工人！向着 $1500w 奢华 FIRE 与硅谷顶层名流进军！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '💡【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 200,
+        effect: (s) => ({
+          has_reached_initial_fire: true,
+          win_threshold: 1500,
+          fire_tier: 'luxury',
+          job_type: 'startup_founder',
+          laid_off: false,
+          health: Math.min(100, s.health + 10),
+          message: '【创办独角兽】你拿着充裕的启动资金辞职创业，正式成立 AI Agent 独角兽公司，开启传奇创始人之路！'
+        }),
+        nextEventId: 'startup_work',
+      }
+    ]
+  },
   'tahoe_ski_blizzard': {
     id: 'tahoe_ski_blizzard',
     title: '【冬日浩劫】 Tahoe 暴雪警报与 I-80 公路 9 小时生死大堵车',

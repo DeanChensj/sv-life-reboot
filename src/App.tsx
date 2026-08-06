@@ -279,10 +279,13 @@ export default function App() {
       newState.message = (newState.message ? newState.message + ' ' : '') + '【身体崩溃猝死】由于高强度高压工作与长期极度疲劳，你的健康值彻底归零，身体突发严重 Burnout 猝死，遗憾登出了硅谷人生！';
     }
 
-    // Check FIRE win
+    // Check FIRE milestone
+    let triggerFireMilestone = false;
     if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
-      newState.status = 'win';
-      newState.message = `你的总资产突破了 ${newState.win_threshold} 万美元！你正式达成了个人的 FIRE 目标（财务自由，提前退休）。你再也不需要看任何人的脸色，可以去做自己真正想做的事情了！`;
+      if (currentEventId !== 'fire_milestone_choice' && currentEventId !== 'end') {
+        triggerFireMilestone = true;
+        sound.play('win');
+      }
     }
 
     // Sound FX logic
@@ -304,6 +307,8 @@ export default function App() {
     // 2. Transition to next event
     if (newState.status !== 'playing') {
       setCurrentEventId('end');
+    } else if (triggerFireMilestone) {
+      setCurrentEventId('fire_milestone_choice');
     } else {
       let nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
       
@@ -640,8 +645,9 @@ export default function App() {
                       newState.message = '你破产了，无法支付账单，游戏结束！';
                       setCurrentEventId('end');
                     } else if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
-                      newState.status = 'win';
-                      newState.message = `总资产突破 ${newState.win_threshold}w！正式达成 FIRE 目标！`;
+                      newState.message = `总资产突破 $${newState.win_threshold}w！达成财务自由里程碑！`;
+                      setCurrentEventId('fire_milestone_choice');
+                    } else if (newState.status === 'win') {
                       setCurrentEventId('end');
                     } else {
                       newState.message = msg;

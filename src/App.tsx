@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import type { GameState, Choice } from './types';
 import { generateInitialState, events, midYearEventRouter } from './data/events';
 import { BentoStatsPanel } from './components/BentoStatsPanel';
-import { CharacterProfileModal } from './components/CharacterProfileModal';
-import { YearEndStatementModal } from './components/YearEndStatementModal';
-import { WarReportModal } from './components/WarReportModal';
-import { AchievementCodexModal } from './components/AchievementCodexModal';
-import { ShopModal } from './components/ShopModal';
-import { WelcomeModal } from './components/WelcomeModal';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
 import { safeStorage } from './utils/safeStorage';
+
+// Lazy loaded heavy modals for optimized code splitting
+const CharacterProfileModal = lazy(() => import('./components/CharacterProfileModal').then(m => ({ default: m.CharacterProfileModal })));
+const YearEndStatementModal = lazy(() => import('./components/YearEndStatementModal').then(m => ({ default: m.YearEndStatementModal })));
+const WarReportModal = lazy(() => import('./components/WarReportModal').then(m => ({ default: m.WarReportModal })));
+const AchievementCodexModal = lazy(() => import('./components/AchievementCodexModal').then(m => ({ default: m.AchievementCodexModal })));
+const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
+const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
@@ -349,46 +351,49 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* Welcome Intro Modal (First Boot) */}
-      {showWelcome && (
-        <WelcomeModal
-          onStart={() => {
-            setShowWelcome(false);
-            safeStorage.setItem('sv_life_welcome_seen', 'true');
-          }}
-        />
-      )}
+      {/* Modals with Lazy Suspense */}
+      <Suspense fallback={null}>
+        {/* Welcome Intro Modal (First Boot) */}
+        {showWelcome && (
+          <WelcomeModal
+            onStart={() => {
+              setShowWelcome(false);
+              safeStorage.setItem('sv_life_welcome_seen', 'true');
+            }}
+          />
+        )}
 
-      {/* Character Creation Pass Modal */}
-      {showCharacterPass && (
-        <CharacterProfileModal
-          gameState={gameState}
-          onConfirm={() => setShowCharacterPass(false)}
-        />
-      )}
+        {/* Character Creation Pass Modal */}
+        {showCharacterPass && (
+          <CharacterProfileModal
+            gameState={gameState}
+            onConfirm={() => setShowCharacterPass(false)}
+          />
+        )}
 
-      {/* Year End Settlement Modal */}
-      {currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing' && (
-        <YearEndStatementModal
-          gameState={gameState}
-          onContinue={handleYearEndContinue}
-        />
-      )}
+        {/* Year End Settlement Modal */}
+        {currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing' && (
+          <YearEndStatementModal
+            gameState={gameState}
+            onContinue={handleYearEndContinue}
+          />
+        )}
 
-      {/* War Report Canvas Modal */}
-      {showWarReport && (
-        <WarReportModal
-          gameState={gameState}
-          onClose={() => setShowWarReport(false)}
-        />
-      )}
+        {/* War Report Canvas Modal */}
+        {showWarReport && (
+          <WarReportModal
+            gameState={gameState}
+            onClose={() => setShowWarReport(false)}
+          />
+        )}
 
-      {/* Achievement Codex Modal */}
-      {showAchievementCodex && (
-        <AchievementCodexModal
-          onClose={() => setShowAchievementCodex(false)}
-        />
-      )}
+        {/* Achievement Codex Modal */}
+        {showAchievementCodex && (
+          <AchievementCodexModal
+            onClose={() => setShowAchievementCodex(false)}
+          />
+        )}
+      </Suspense>
 
       {/* Unlock Notification Toast */}
       {achievementToast && (
@@ -583,66 +588,68 @@ export default function App() {
           </div>
 
           {/* Modals */}
-          {isShopOpen && (
-            <ShopModal 
-              gameState={gameState}
-              onClose={() => setIsShopOpen(false)}
-              onTriggerEvent={(eventId) => {
-                setCurrentEventId(eventId);
-              }}
-              onBuy={(effect, msg) => {
-                setGameState(prev => {
-                  const newState = { ...prev, imageUrl: undefined, ...effect };
-                  // Apply clamping
-                  newState.health = Math.max(0, Math.min(100, newState.health));
-                  newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
-                  newState.charm = Math.max(0, Math.min(newState.max_charm || 25, newState.charm));
-                  
-                  // 🛡️ Global Visa Invariant Guard Middleware
-                  if (prev.visa === '公民') {
-                    newState.visa = '公民';
-                    newState.gc_progress = 5;
-                    newState.gc_stage = 'approved';
-                  } else if (prev.visa === '绿卡' && newState.visa !== '公民') {
-                    newState.visa = '绿卡';
-                    newState.gc_progress = 5;
-                    newState.gc_stage = 'approved';
-                  }
-                  
-                  // 🛡️ Auto Liquidate Stocks if Cash < 0 on Shop Purchase
-                  if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {
-                    const deficit = Math.abs(newState.cash);
-                    const sellAmt = Math.min(newState.stocks || 0, deficit);
-                    newState.stocks = (newState.stocks || 0) - sellAmt;
-                    newState.cash = newState.cash + sellAmt;
-                    if (sellAmt > 0) {
-                      msg += ` 【股票自动变现】现金流不足，系统已自动变现 $${sellAmt.toFixed(1)}w 股票持仓以支付商城开销。`;
+          <Suspense fallback={null}>
+            {isShopOpen && (
+              <ShopModal 
+                gameState={gameState}
+                onClose={() => setIsShopOpen(false)}
+                onTriggerEvent={(eventId) => {
+                  setCurrentEventId(eventId);
+                }}
+                onBuy={(effect, msg) => {
+                  setGameState(prev => {
+                    const newState = { ...prev, imageUrl: undefined, ...effect };
+                    // Apply clamping
+                    newState.health = Math.max(0, Math.min(100, newState.health));
+                    newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
+                    newState.charm = Math.max(0, Math.min(newState.max_charm || 25, newState.charm));
+                    
+                    // 🛡️ Global Visa Invariant Guard Middleware
+                    if (prev.visa === '公民') {
+                      newState.visa = '公民';
+                      newState.gc_progress = 5;
+                      newState.gc_stage = 'approved';
+                    } else if (prev.visa === '绿卡' && newState.visa !== '公民') {
+                      newState.visa = '绿卡';
+                      newState.gc_progress = 5;
+                      newState.gc_stage = 'approved';
                     }
-                  }
+                    
+                    // 🛡️ Auto Liquidate Stocks if Cash < 0 on Shop Purchase
+                    if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {
+                      const deficit = Math.abs(newState.cash);
+                      const sellAmt = Math.min(newState.stocks || 0, deficit);
+                      newState.stocks = (newState.stocks || 0) - sellAmt;
+                      newState.cash = newState.cash + sellAmt;
+                      if (sellAmt > 0) {
+                        msg += ` 【股票自动变现】现金流不足，系统已自动变现 $${sellAmt.toFixed(1)}w 股票持仓以支付商城开销。`;
+                      }
+                    }
 
-                  // Check game over & win
-                  if (newState.health <= 0 && newState.status === 'playing') {
-                    newState.status = 'game_over';
-                    newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
-                    setCurrentEventId('end');
-                  } else if (newState.cash < -0.001 && newState.status === 'playing') {
-                    newState.status = 'game_over';
-                    newState.message = '你破产了，无法支付账单，游戏结束！';
-                    setCurrentEventId('end');
-                  } else if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
-                    newState.status = 'win';
-                    newState.message = `总资产突破 ${newState.win_threshold}w！正式达成 FIRE 目标！`;
-                    setCurrentEventId('end');
-                  } else {
-                    newState.message = msg;
-                  }
-                  return newState;
-                });
-                sound.play('coin');
-                setIsShopOpen(false);
-              }}
-            />
-          )}
+                    // Check game over & win
+                    if (newState.health <= 0 && newState.status === 'playing') {
+                      newState.status = 'game_over';
+                      newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
+                      setCurrentEventId('end');
+                    } else if (newState.cash < -0.001 && newState.status === 'playing') {
+                      newState.status = 'game_over';
+                      newState.message = '你破产了，无法支付账单，游戏结束！';
+                      setCurrentEventId('end');
+                    } else if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
+                      newState.status = 'win';
+                      newState.message = `总资产突破 ${newState.win_threshold}w！正式达成 FIRE 目标！`;
+                      setCurrentEventId('end');
+                    } else {
+                      newState.message = msg;
+                    }
+                    return newState;
+                  });
+                  sound.play('coin');
+                  setIsShopOpen(false);
+                }}
+              />
+            )}
+          </Suspense>
 
           {/* Right Column: Event Narrative & Decisions */}
           <div className="col-span-1 lg:col-span-7 flex flex-col justify-center min-h-[65vh] lg:min-h-[80vh] lg:pl-8 xl:pl-16">

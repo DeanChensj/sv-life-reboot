@@ -11,7 +11,7 @@ interface BentoStatsPanelProps {
   hasOpenedShop?: boolean;
 }
 
-export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
+const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   gameState,
   currentEventId,
   onOpenCodex,
@@ -350,3 +350,5 @@ export const BentoStatsPanel: React.FC<BentoStatsPanelProps> = ({
     </div>
   );
 };
+
+export const BentoStatsPanel = React.memo(BentoStatsPanelComponent);

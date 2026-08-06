@@ -1270,16 +1270,16 @@ export const events: Record<string, GameEvent> = {
           const pass = Math.random() < Math.min(0.7, baseWinRate);
 
           if (curLevel === 'L3') {
-            if (s.leetcode < 30) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 30), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
+            if (s.leetcode < 30) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
           } else if (curLevel === 'L4') {
-            if (s.leetcode < 50) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 35), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
+            if (s.leetcode < 50) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
           } else if (curLevel === 'L5 (Senior)') {
-            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 45), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
+            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 30), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
-          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
         nextEventId: (s) => (s.level === 'L6 (Staff)' && (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
       },
@@ -1555,6 +1555,7 @@ export const events: Record<string, GameEvent> = {
              else if (s.company === 'meta') { healthDrain = 8; companyMsg = ' Meta 的 PSC 压力让你掉光了头发 (健康 -8)。'; }
              else if (s.job_type === 'amazon') { healthDrain = 5; companyMsg = ' 亚麻的 PIP 文化让你每天提心吊胆 (健康 -5)。'; }
              else if (s.job_type === 'startup') { healthDrain = 5; companyMsg = ' 创业公司的混乱让你心力交瘁 (健康 -5)。'; }
+             else if (s.job_type === 'startup_founder') { healthDrain = 8; companyMsg = ' 创业公司 CEO 烧钱找融资与管理团队的压力让你身心俱疲 (健康 -8)。'; }
              else if (s.job_type === 'big_tech') { healthDrain = -5; companyMsg = ' 养老厂的 WLB 让你养精蓄锐 (健康 +5)。'; }
            }
            
@@ -2671,10 +2672,10 @@ export const events: Record<string, GameEvent> = {
         text: '坚守传统赛道 (如 SaaS / Web3 工具)',
         effect: (s) => {
           let winRate = 0.15;
-          if (s.year >= 2020 && s.year <= 2022) winRate = 0.35;
+          if (s.year >= 2020 && s.year <= 2022) winRate = 0.30;
           const win = Math.random() < winRate; 
           return win 
-            ? { cash: s.cash + 150, message: '奇迹发生！公司靠稳扎稳打被大厂收购了，你的期权兑现了大笔现金！' }
+            ? { cash: s.cash + 60, message: '稳扎稳打！公司被大厂收购了，你的期权兑现了 $60w 现金！' }
             : { cash: Math.max(0, s.cash - 5), health: s.health - 15, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸。' };
         },
         nextEventId: (s) => (s.message || '').includes('收购') ? 'sv_daily_life' : 'job_hunt',
@@ -2687,10 +2688,10 @@ export const events: Record<string, GameEvent> = {
           }
           const win = Math.random() < 0.18;
           return win 
-            ? { cash: s.cash + 60, stocks: (s.stocks || 0) + 100, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $60w 现金与 $100w 股票资产，顺便拿到了 EB-1 绿卡！' }
-            : { cash: Math.max(0, s.cash - 10), health: s.health - 25, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜更新简历。' };
+            ? { cash: s.cash + 35, stocks: (s.stocks || 0) + 45, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产，顺便拿到了 EB-1 绿卡！' }
+            : { cash: Math.max(0, s.cash - 10), health: s.health - 20, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜更新简历。' };
         },
-        nextEventId: (s) => (s.message || '').includes('杰出人才绿卡') ? 'post_green_card' : 'job_hunt',
+        nextEventId: (s) => (s.message || '').includes('绿卡') ? 'post_green_card' : 'job_hunt',
       }
     ]
   },
@@ -2778,23 +2779,23 @@ export const events: Record<string, GameEvent> = {
     description: '你的 Startup 最近融资不太顺利，账上的钱只够发 3 个月工资了。',
     choices: [
       {
-        text: '相信老板的 PPT，自愿降薪换取更多期权 (15% 概率获得天价收购)',
+        text: '相信老板的 PPT，自愿降薪换取更多期权 (博取小概率收购变现)',
         effect: (s) => {
-          const win = Math.random() < 0.15;
+          const win = Math.random() < 0.05;
           return win 
-            ? { cash: s.cash + 400, status: 'win', message: ' 奇迹爆发！公司被大厂以 $20 亿美金天价收购，你的期权直接兑现 $400w！直接实现财务自由 (FIRE) 爆破通关！' }
+            ? { cash: s.cash + 150, message: ' 奇迹爆发！公司被大厂以数亿美元溢价收购，你的早期期权直接兑现 $150w 现金！' }
             : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, job_type: 'unemployed', message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
         },
-        nextEventId: (s: GameState) => s.status === 'win' ? 'end' : 'job_hunt',
+        nextEventId: (s: GameState) => (s.message || '').includes('收购') ? 'sv_daily_life' : 'job_hunt',
       },
       {
         text: '【带资领投】自己掏 $10w 领投公司 Seed 轮自救',
         reqBadge: '现金>=10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => {
-          const win = Math.random() < 0.4;
+          const win = Math.random() < 0.25;
           return win
-            ? { cash: s.cash + 120, tc: s.tc + 20, message: '你带资入组！公司靠你的资金撑到了 A 轮融资并估值大暴涨，你的 TC 与期权收益双双爆表！' }
+            ? { cash: s.cash + 60, tc: s.tc + 10, message: '你带资入组！公司靠你的资金撑到了 A 轮融资并估值大暴涨，你的 TC 与期权收益双双上涨！' }
             : { cash: s.cash - 10, tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 20, message: '砸进去的 $10w 没能挽救寒冬，公司还是倒闭了...你不仅没了工作还心痛不已。' };
         },
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : 'sv_daily_life',
@@ -3049,24 +3050,52 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => (s.network || 0) >= 20 || (s.charm || 0) >= 18,
         effect: (s) => {
           const stage = s.founder_stage || 'seed';
-          if (stage === 'seed') {
-            return {
-              mid_year: true, season_stage: 'h1',
-              founder_stage: 'series_a',
-              company_valuation: 2500,
-              cash: s.cash + 25,
-              tc: 18,
-              message: ' 天使轮融资大获成功！a16z 领投 $250w 天使轮支票（估值 $2500w），你成功套现 $25w 现金并为自己发放了 $18w TC 创始人薪水！'
-            };
+          const ecoBonus = s.macro_economy === 'bull' ? 0.20 : s.macro_economy === 'bear' ? -0.20 : 0;
+          const networkBonus = Math.min(0.20, (s.network || 0) / 100);
+          const charmBonus = Math.min(0.15, (s.charm || 0) / 100);
+          const successChance = Math.max(0.25, Math.min(0.80, 0.45 + ecoBonus + networkBonus + charmBonus));
+          const pass = Math.random() < successChance;
+
+          if (pass) {
+            if (stage === 'seed') {
+              return {
+                mid_year: true, season_stage: 'h1',
+                founder_stage: 'series_a',
+                company_valuation: 2500,
+                cash: s.cash + 25,
+                tc: 18,
+                health: Math.max(0, s.health - 5),
+                message: ' 融资大获成功！顶级 VC 领投 $250w 支票（估值 $2500w），你成功套现 $25w 现金并为自己发放了 $18w TC 创始人薪水！'
+              };
+            } else {
+              return {
+                mid_year: true, season_stage: 'h1',
+                founder_stage: 'exit',
+                company_valuation: 7000,
+                cash: s.cash + 45,
+                tc: 28,
+                health: Math.max(0, s.health - 5),
+                message: ' B 轮超级融资！红杉资本以 $7000w 估值领投，公司账上资金充沛，离 IPO 上市仅有一步之遥！'
+              };
+            }
           } else {
-            return {
-              mid_year: true, season_stage: 'h1',
-              founder_stage: 'exit',
-              company_valuation: 8000,
-              cash: s.cash + 50,
-              tc: 30,
-              message: ' B 轮超级融资！红杉资本以 $8000w 估值领投，公司账上资金充沛，离 IPO 上市仅有一步之遥！'
-            };
+            const isDownRound = Math.random() < 0.4;
+            if (isDownRound) {
+              return {
+                mid_year: true, season_stage: 'h1',
+                cash: Math.max(0, s.cash - 5),
+                company_valuation: Math.max(200, (s.company_valuation || 800) - 300),
+                health: Math.max(0, s.health - 15),
+                message: ' 估值倒挂 (Down Round)！资本寒冬下 VC 极度挑剔，只肯给折价过桥贷款，严苛的对赌协议让你彻夜难眠，自己垫付了 $5w 现金。'
+              };
+            } else {
+              return {
+                mid_year: true, season_stage: 'h1',
+                cash: Math.max(0, s.cash - 3),
+                health: Math.max(0, s.health - 12),
+                message: ' 融资遇冷！沙丘路跑了 20 家 VC 均表示“赛道拥挤、继续观察”，未能发出 Term Sheet。公司只能继续靠现有资金死撑。'
+              };
+            }
           }
         },
         nextEventId: 'sv_daily_life',
@@ -3075,43 +3104,80 @@ export const events: Record<string, GameEvent> = {
         text: '【高举高打招聘】重金从 Meta/Google 挖掘顶级大牛核心工程组 (需现金>=15w)',
         reqBadge: '现金>=15w',
         condition: (s) => s.cash >= 15,
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          cash: s.cash - 15,
-          company_valuation: (s.company_valuation || 1000) + 1500,
-          leetcode: Math.min(100, s.leetcode + 10),
-          message: ' 团队战力爆表！大厂 Senior 大牛加盟后，研发出颠覆性的 AI Agent 产品，公司估值飙升！'
-        }),
+        effect: (s) => {
+          const success = Math.random() < 0.70;
+          if (success) {
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: s.cash - 15,
+              company_valuation: (s.company_valuation || 1000) + 1200,
+              leetcode: Math.min(100, s.leetcode + 10),
+              message: ' 团队战力爆表！大厂 Senior 大牛加盟后研发出颠覆性的 AI Agent 产品，公司估值飙升！'
+            };
+          } else {
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: s.cash - 15,
+              company_valuation: (s.company_valuation || 1000) + 300,
+              health: Math.max(0, s.health - 10),
+              message: ' 文化磨合受挫！空降大牛与早期团队理念冲突，消耗了大笔安家费预算但交付延期，公司估值增长有限。'
+            };
+          }
+        },
         nextEventId: 'sv_daily_life',
       },
       {
         text: '【终局 Exit】考虑公司并购 Acq-hire 或准备 纳斯达克 IPO 敲钟上市',
         condition: (s) => (s.company_valuation || 0) >= 2000,
         effect: (s) => {
-          const isIPO = Math.random() < 0.55;
-          if (isIPO) {
+          const roll = Math.random();
+          if (roll < 0.35) {
+            // 35% IPO Win
             return {
               status: 'win',
-              cash: s.cash + 450,
-              message: ' 传奇诞生！公司成功在纳斯达克 IPO 挂牌敲钟！创始人股权套现 $450w 美元，名利双收极速达成 FIRE 终局！'
+              cash: s.cash + 400,
+              message: ' 传奇诞生！公司成功在纳斯达克 IPO 挂牌敲钟！创始人股权套现 $400w 美元，名利双收极速达成 FIRE 终局！'
+            };
+          } else if (roll < 0.75) {
+            // 40% Acqui-hire / Trade Sale (Safe landing with solid cash & Staff position)
+            return {
+              cash: s.cash + 120,
+              job_type: 'big_tech',
+              level: 'L6 (Staff)',
+              company: 'google',
+              tc: 55,
+              laid_off: false,
+              founder_stage: undefined,
+              company_valuation: 0,
+              health: Math.max(0, s.health - 5),
+              message: ' 成功被收购！Google/Meta 科技巨头以溢价并购了你们的公司。扣除 VC 清算优先权后，创始人获得 $120w 现金分成，并受聘为大厂 L6 Staff 架构师！'
             };
           } else {
+            // 25% Fire Sale (Liquidation preference wipes out valuation)
             return {
-              status: 'win',
-              cash: s.cash + 320,
-              message: ' 成功被收购！Google/Meta 科技巨头以高额溢价并购了你们的公司，创始人获得 $320w 现金现金分红，成功财务自由！'
+              cash: s.cash + 20,
+              job_type: 'unemployed',
+              company: undefined,
+              level: '待业',
+              laid_off: true,
+              founder_stage: undefined,
+              company_valuation: 0,
+              tc: 0,
+              health: Math.max(0, s.health - 15),
+              network: (s.network || 0) + 8,
+              message: ' 折价清算！市场行情急转直下，公司被低价贱卖清盘。VC 拿走清算优先权后，你仅分得 $20w 离场费。创业虽败，但你积累了宝贵的人脉与创始人经历！'
             };
           }
         },
-        nextEventId: 'end',
+        nextEventId: (s) => s.status === 'win' ? 'end' : (s.laid_off ? 'job_hunt' : 'sv_daily_life'),
       },
       {
         text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件)',
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
           cash: Math.max(0, s.cash - 3),
-          company_valuation: Math.max(100, (s.company_valuation || 1000) - 300),
-          health: Math.max(0, s.health - 10),
+          company_valuation: Math.max(100, (s.company_valuation || 1000) - 350),
+          health: Math.max(0, s.health - 12),
           message: '资金与资源有限，你决定开源节流，挥泪解雇了一批员工。虽然度过了危机，但公司士气大跌，你的心理压力极大。'
         }),
         nextEventId: 'sv_daily_life',

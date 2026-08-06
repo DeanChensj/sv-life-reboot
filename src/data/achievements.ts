@@ -140,7 +140,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
   const newlyUnlocked: string[] = [];
   const msg = state.message || '';
 
-  if (state.job_type === 'ai_research' && state.status === 'win' && state.cash >= 350) {
+  if (((state.job_type === 'ai_research' || state.job_type === 'startup_founder') && state.status === 'win') || (msg.includes('IPO 挂牌敲钟') || msg.includes('纳斯达克 IPO'))) {
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');
   }
 

@@ -17,8 +17,8 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
     if (gameState.job_type === 'trader' || gameState.job_type === 'startup_founder' || gameState.job_type === 'quant' || gameState.job_type === 'big_tech') {
       preTaxBase = preTaxTC;
     } else if (gameState.job_type === 'startup') {
-      preTaxBase = preTaxTC * 0.2;
-      preTaxRSU = preTaxTC * 0.8;
+      preTaxBase = preTaxTC * 0.5;
+      preTaxRSU = preTaxTC * 0.5;
     } else if (gameState.job_type === 'tiktok') {
       preTaxBase = preTaxTC * 0.7;
       preTaxRSU = preTaxTC * 0.3;

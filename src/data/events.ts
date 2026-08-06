@@ -138,6 +138,7 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.difficulty_title === '简单难度') workEvents.push('perf_review');
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
      if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
+     if (isWorking && Math.random() < 0.25) workEvents.push('influencer_vp_drama');
      if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
      if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
 
@@ -148,7 +149,7 @@ export const midYearEventRouter = (s: GameState): string => {
   const lifeEvents = [
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
-    'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation',
+    'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation', 'bay_area_pop_concert',
     'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
     'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy'
   ];
@@ -157,8 +158,15 @@ export const midYearEventRouter = (s: GameState): string => {
     lifeEvents.push('rednote_influencer_side_hustle');
   }
 
+  if ((s.charm || 0) >= 22 && !s.is_married && s.relationship_status !== 'married' && s.relationship_status !== 'dating') {
+    lifeEvents.push('bay_area_heart_signal');
+    if ((s.charm || 0) >= 25) {
+      lifeEvents.push('bay_area_heart_signal'); // Higher probability for top-tier charm
+    }
+  }
+
   if (s.car && s.car !== 'none') {
-      lifeEvents.push('san_francisco_car_window_smash');
+    lifeEvents.push('san_francisco_car_window_smash');
   }
 
   if (s.car === 'model_y' || s.car === 'cybertruck') {
@@ -1625,7 +1633,8 @@ export const events: Record<string, GameEvent> = {
              : (isHomeowner ? (s.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0) : 4.0);
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
            const livingExpense = 3.0;
-           const totalExpense = housingExpense + carExpense + livingExpense;
+           const petExpense = s.has_pet ? 0.3 : 0;
+           const totalExpense = housingExpense + carExpense + livingExpense + petExpense;
 
            let newEconomy = s.macro_economy || 'neutral';
            let economyMsg = '';
@@ -1697,7 +1706,14 @@ export const events: Record<string, GameEvent> = {
              else if (s.job_type === 'big_tech') { healthDrain = -5; companyMsg = ' 养老厂的 WLB 让你养精蓄锐 (健康 +5)。'; }
            }
            
-           let newHealth = Math.max(0, s.health - healthDrain);
+           let petHealthBoost = 0;
+           let petMsg = '';
+           if (s.has_pet) {
+             petHealthBoost = 3;
+             petMsg = ` 【宠物陪伴】家里的${s.pet_name || '宠物'}每天治愈着你的心神 (健康 +3，宠物抚养支出 -$0.3w)。`;
+           }
+
+           let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost));
            let gcMsg = '';
 
            if (s.visa === '绿卡' || s.visa === '公民' || s.gc_progress >= 5) {
@@ -1748,49 +1764,37 @@ export const events: Record<string, GameEvent> = {
                        nextGc = Math.max(2, nextGc);
                        gcMsg = ' 【绿卡进度】你的 PERM 顺利获批！律师马不停蹄为你提交了 I-140 申请。';
                     } else {
-                       gcMsg = ' ⏳ 【绿卡进度】劳工部处理极其缓慢，你的 PERM 仍在 pending 中...';
+                       gcMsg = ' 【绿卡进度】PERM 广告与审理流程仍在进行中...';
                     }
                  } else if (nextStage === 'perm_audit') {
                     if (Math.random() < 0.6) {
                        nextStage = 'i140_processing';
                        nextGc = Math.max(2, nextGc);
-                       gcMsg = ' 【绿卡进度】谢天谢地！经过漫长的补充材料，劳工部终于通过了你的 PERM Audit，律师已提交 I-140。';
+                       gcMsg = ' 【Audit通过】经历漫长的劳工部审计，你的 PERM 奇迹般顺利自证清白并获批！律师已提交 I-140。';
                     } else {
-                       gcMsg = ' ⏳ 【绿卡进度】你的 PERM Audit 仍在劳工部苦苦排队审核中...';
+                       gcMsg = ' 【Audit持续】劳工部仍在严审你的职位薪水与合规材料，本年度进度停滞。';
                     }
                  } else if (nextStage === 'i140_processing') {
                     const rand = Math.random();
-                    if (rand < 0.2) {
+                    if (rand < 0.20 && !isO1 && !isPhd) {
                        nextStage = 'i140_rfe';
-                       newHealth = Math.max(0, newHealth - 15);
-                       gcMsg = ' 【I-140 RFE】移民局对你的 I-140 发出了 RFE (要求补充材料)！你需要让前老板和同事帮忙写一堆推荐信，让你心力交瘁 (健康 -15)。';
-                    } else if (rand < 0.85) {
-                       nextStage = 'i140_approved';
-                       nextGc = Math.max(3, nextGc);
-                       gcMsg = ' 【I-140 获批】你的 I-140 正式获批！Priority Date (PD) 成功锁定，接下来就是漫长的等待排期了。';
+                       gcMsg = ' 【I-140 RFE】移民局对你的学历与技能发出了补件通知 (RFE)，需追加技术证明材料！';
                     } else {
-                       gcMsg = ' ⏳ 【绿卡进度】你的 I-140 仍在加急处理中...';
+                       nextStage = 'i140_approved';
+                       nextGc = 3;
+                       gcMsg = ' 【I-140获批】大喜讯！你的 I-140 移民申请正式获批！你的 Priority Date (PD) 已永久锁定，正式进入漫长排期队列！';
                     }
                  } else if (nextStage === 'i140_rfe') {
-                    if (Math.random() < 0.75) {
-                       nextStage = 'i140_approved';
-                       nextGc = Math.max(3, nextGc);
-                       gcMsg = ' 【RFE 通过】你在最后关头凑齐了所有材料，移民局终于批准了你的 I-140！Priority Date 成功锁定。';
-                    } else {
-                       gcMsg = ' 【RFE 延期】律师表示材料依然需要润色，I-140 审核陷入了拉锯战...';
-                    }
-                 } else if (nextStage === 'i140_approved' || nextStage === 'waiting_pd') {
-                    nextStage = 'waiting_pd';
-                    const rand = Math.random();
-                    const advanceProb = (isO1 || isPhd) ? 0.45 : 0.2;
-                    
-                    if (rand < 0.12) {
-                       nextGc = Math.max(3, nextGc - 1);
-                       gcMsg = ' 【排期倒退】移民局颁布了新规，本月 Visa Bulletin 遭遇史诗级 Retrogression (排期大倒退)！你的绿卡进度又变遥远了...';
-                    } else if (rand < 0.12 + advanceProb) {
+                    nextStage = 'i140_approved';
+                    nextGc = 3;
+                    gcMsg = ' 【RFE通过】补充材料顺利打消了移民局疑虑，你的 I-140 成功获批并锁定 PD！';
+                 } else if (nextStage === 'i140_approved') {
+                    const currentYear = s.year;
+                    const canFile485 = (currentYear >= 2024 && (isO1 || isPhd)) || (nextGc >= 4);
+                    if (canFile485) {
                        nextStage = 'i485_pending';
                        nextGc = 4.5;
-                       gcMsg = ' 【排期到了】天呐！这个月的 Visa Bulletin 排期竟然前进了，刚好越过了你的 PD！律师火速为你提交了 I-485。';
+                       gcMsg = ' 【排期大前进】排期到了！律师已火速为你递交 I-485 身份调整申请，进入最后制卡冲刺阶段！';
                     } else {
                        gcMsg = ' 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
                        if (Math.random() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
@@ -1859,7 +1863,7 @@ export const events: Record<string, GameEvent> = {
               tc: updatedTC,
               health: newHealth,
               macro_economy: newEconomy,
-              message: `扣除所得税、房租/房贷与生活账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
+              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
            };
         },
         nextEventId: (s) => {
@@ -3617,6 +3621,160 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 10),
           charm: Math.min(25, s.charm + 2),
           message: '打完球后大家在场边喝电解质水，搭档大佬随口指点了你几只算力概念股，你果断跟进，随后获得了 $4w 美金的短期投资回报！'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'bay_area_heart_signal': {
+    id: 'bay_area_heart_signal',
+    title: '【湾区恋综】受邀录制湾区版《心动的信号》',
+    description: '凭借出众的高颜值魅力与优秀的行业背景，你收到了小红书与头部华人 MCN 联合打造的现象级恋综《心动的信号·硅谷篇》男神/女神首发嘉宾邀约！录制地点在 Los Altos 山顶豪华独栋别墅，同组嘉宾包括斯坦福美女博主、沙丘路年轻 VC 合伙人与大厂 L6 架构师...',
+    choices: [
+      {
+        text: '【真诚直球路线】在厨房做饭交流真情实感，不争不抢展现真实自我',
+        effect: (s) => {
+          const baseRate = 0.52;
+          const charmBonus = ((s.charm || 22) - 20) * 0.04;
+          const luckBonus = ((s.luck || 20) / 300);
+          const winRate = Math.min(0.78, Math.max(0.40, baseRate + charmBonus + luckBonus));
+          const pass = Math.random() < winRate;
+
+          return pass
+            ? {
+                charm: Math.min(25, (s.charm || 10) + 3),
+                health: Math.min(100, s.health + 12),
+                relationship_status: 'dating',
+                partner_type: 'random',
+                message: '【终极告白牵手】你的真诚、沉稳与厨艺打动了心动嘉宾！在告白夜双向奔赴牵手成功 (进入 Dating 状态)，全网嗑糖破百万播放！'
+              }
+            : {
+                charm: Math.min(25, (s.charm || 10) + 2),
+                health: Math.min(100, s.health + 6),
+                message: '【体面错付与遗憾】虽然在厨房的交心十分温馨，但心动嘉宾最终在告白夜被另一位进攻性更强的嘉宾打动。你体面送上祝福，真诚克制的表现为你在全网赢得了极佳路人缘。'
+              };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【大厂硬核炫技】约会时在白板上手撕红黑树与分布式一致性协议，疯狂输出 TC 与大厂光环',
+        effect: (s) => ({
+          cash: s.cash + 3,
+          charm: Math.min(25, (s.charm || 10) + 2),
+          leetcode: Math.min(100, s.leetcode + 5),
+          message: '【硬核出圈】“约会手撕分布式系统”的名场面直接登顶全网热搜！虽然没能牵手成功，但你被奉为“硅谷最纯粹的硬核做题家码农”，疯狂恰饭赚到了 $3w 品牌代言费！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【顶级海王拉扯】在多个嘉宾之间若即若离，疯狂互发匿名心动短信制造修罗场',
+        effect: (s) => {
+          const win = Math.random() < (0.50 + ((s.luck || 20) / 200));
+          return win
+            ? {
+                charm: Math.min(25, (s.charm || 10) + 6),
+                cash: s.cash + 2,
+                relationship_status: 'dating',
+                partner_type: 'vc',
+                message: '【修罗场赢家】你的极限拉扯让全网嗑生嗑死！最终在万人瞩目下成功牵手年轻 VC 嘉宾 (Dating)，商业价值与颜值魅力拉满！'
+              }
+            : {
+                health: Math.max(0, s.health - 15),
+                charm: Math.max(10, (s.charm || 10) - 2),
+                message: '【全网被冲】你的多线操作被节目组恶意剪辑成了“湾区海王翻车特辑”，在一亩三分地与小红书被疯狂吃瓜讨论，身心俱疲。'
+              };
+        },
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'bay_area_pop_concert': {
+    id: 'bay_area_pop_concert',
+    title: '【湾区抢票狂潮】Levi\'s Stadium 顶流巨星巡演抢票',
+    description: '泰勒·斯威夫特 (Taylor Swift) / 周杰伦世界巡回演唱会加州站空降圣克拉拉 Levi\'s Stadium！全湾区的华人码农和社交圈瞬间沸腾，Ticketmaster 被各路自动化抢票脚本挤爆，StubHub 黄牛票直接炒到了上千刀一张...',
+    choices: [
+      {
+        text: '【手写并发脚本】用 Python 配合代理池手搓自动化抢票脚本，原价抢下前排 VIP 内场票 ($0.4w)',
+        condition: (s) => s.leetcode >= 30 && s.cash >= 0.4,
+        effect: (s) => ({
+          cash: s.cash - 0.4,
+          charm: Math.min(25, (s.charm || 10) + 4),
+          health: Math.min(100, s.health + 15),
+          message: '【VIP 内场狂欢】你的高并发抢票脚本在 0.1 秒内秒杀下两张内场票！在 Levi\'s Stadium 烟火下全场大合唱，身心得到极致释放，朋友圈点赞破 300！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【黄牛高溢价买单】不想费脑子，直接在 StubHub 豪掷千金买下山顶看台票 ($0.8w)',
+        condition: (s) => s.cash >= 0.8,
+        effect: (s) => ({
+          cash: s.cash - 0.8,
+          health: Math.min(100, s.health + 10),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          message: '【千金难买心头好】虽然黄牛溢价让人肉疼，但现场全场挥舞荧光棒的震撼合唱让你彻底忘却了本季度的 Perf 焦虑。'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【做黄牛转手套利】用脚本抢下 4 张内场票后直接挂在二手群加价转手，狠赚一笔',
+        condition: (s) => s.leetcode >= 25 && s.cash >= 1.0,
+        effect: (s) => ({
+          cash: s.cash + 2.5,
+          charm: Math.max(10, (s.charm || 10) - 1),
+          message: '【理财奇才】抢到的门票转手被南湾富二代高价秒抢，净赚 $2.5w 零花钱！虽然被朋友吐槽为“黄牛码农”，但实打实的现金落袋为安。'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '理智消费：在体育场外草坪“挂壁”听免费漏音',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 5),
+          message: '你带着折叠椅和野餐垫坐在场外草坪上，吹着加州晚风听着里面的合唱，一分钱没花也感受到了现场的欢乐。'
+        }),
+        nextEventId: 'sv_daily_life'
+      }
+    ]
+  },
+  'influencer_vp_drama': {
+    id: 'influencer_vp_drama',
+    title: '【组织震荡】公司空降百万粉自媒体网红担任业务线 VP',
+    description: '管理层为了追求“AI 时代的品牌破圈”，从外部重金空降了一位拥有百万粉丝的小红书/LinkedIn 科技网红出任你们业务线 VP。新官上任三把火：不仅把所有周会改成全员直播录播客，还要求技术组全部配合他的“营销概念 Demo”，引发老工程师群体强烈不满...',
+    choices: [
+      {
+        text: '【迎合向上管理】通宵帮 VP 定制炫酷的 Agent 营销 Demo，在全网发布会为他站台',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 3),
+          tc: s.tc + 3.0,
+          health: Math.max(0, s.health - 15),
+          message: '【成为嫡系】Demo 在社交平台爆火百万转发，VP 逢人便夸你是他的核心技术心腹，年底直接为你破格申请了 +$3w 调薪！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【硬核技术死磕】在架构评审会上当众用指标与延迟打脸 VP 的花架子 PPT',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
+        effect: (s) => {
+          const win = s.leetcode >= 45 || Math.random() < 0.45;
+          return win
+            ? {
+                tc: s.tc + 2.0,
+                charm: Math.min(25, (s.charm || 10) + 4),
+                message: '【技术派胜利】你的专业驳斥被更高层 CTO 听到了！CTO 叫停了形式主义项目并将技术决策权重新交还给你，你在组员中威望极高！'
+              }
+            : {
+                health: Math.max(0, s.health - 12),
+                message: '【惨遭穿小鞋】网红 VP 表面微笑着说“Very good feedback”，私下却把最脏最累的 Oncall 维护活全部分配给了你。'
+              };
+        },
+        nextEventId: 'sv_daily_life'
+      },
+      {
+        text: '【冷眼吃瓜刷题】在会议室关麦静音，一边看 VP 吹水一边狂刷 LeetCode 备战跳槽',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 8),
+          health: Math.min(100, s.health + 5),
+          message: '【以静制动】你看着 VP 在 PPT 里堆砌各种虚假 AI 概念，内心毫无波澜地刷完了 5 道 Hard 题，随时准备拿着大包跳槽脱离苦海。'
         }),
         nextEventId: 'sv_daily_life'
       }

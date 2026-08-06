@@ -48,8 +48,10 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   const carExpense = carExpenseNum.toFixed(1);
   const livingExpenseNum = 3.0;
   const livingExpense = livingExpenseNum.toFixed(1);
+  const petExpenseNum = gameState.has_pet ? 0.3 : 0;
+  const petExpense = petExpenseNum.toFixed(1);
 
-  const totalExpense = housingExpenseNum + carExpenseNum + livingExpenseNum;
+  const totalExpense = housingExpenseNum + carExpenseNum + livingExpenseNum + petExpenseNum;
   const estNetChange = (postTaxIncomeNum - totalExpense).toFixed(1);
   const isNetPositive = parseFloat(estNetChange) >= 0;
 
@@ -180,6 +182,16 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
             </span>
             <span className="font-bold text-zinc-300 tabular-nums">-${livingExpense}w</span>
           </div>
+
+          {gameState.has_pet && (
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z"/><path d="M7 14.5a4.5 4.5 0 0 0-3 4.2V21a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2.3a4.5 4.5 0 0 0-3-4.2"/></svg>
+                {`宠物抚养与医疗 (${gameState.pet_name || '宠物'})`}
+              </span>
+              <span className="font-bold text-amber-300 tabular-nums">-${petExpense}w</span>
+            </div>
+          )}
         </div>
 
         {/* Visa & Life Status Summary */}

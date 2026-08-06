@@ -138,6 +138,13 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
       };
     }
 
+    if (gameState.company === 'icc') {
+      return {
+        label: 'ICC 外包 (挂靠)',
+        className: 'text-amber-400 bg-amber-950/40 border-amber-600/30 font-bold',
+      };
+    }
+
     if (gameState.job_type === 'startup_founder') {
       const stageName = gameState.founder_stage === 'exit' ? '上市独角兽' : gameState.founder_stage === 'series_a' ? 'A轮独角兽' : 'AI 独角兽';
       return {

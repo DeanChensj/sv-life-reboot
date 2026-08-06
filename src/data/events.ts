@@ -771,7 +771,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '找ICC挂靠 (保底策略)',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', cash: s.cash - 1, tc: 6, job_type: 'startup', laid_off: false }),
+        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', cash: s.cash - 1, tc: 6, company: 'icc', job_type: 'startup', laid_off: false, message: '你找了一家印裔 ICC 外包公司挂靠，拿着微薄薪水并等待 Client 派遣。' }),
         nextEventId: 'icc_work',
       },
       {
@@ -2088,13 +2088,15 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
       },
       {
-        text: '【工签紧急挂靠】启动 60 天 Grace Period 找外包公司办理 H1B Transfer (消耗 $2w)',
+        text: '【工签紧急挂靠】启动 60 天 Grace Period 找外包公司办理 H1B Transfer (消耗 w)',
         condition: (s) => s.cash >= 2 && (s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)') && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           cash: s.cash - 2,
+          company: 'icc',
+          job_type: 'startup',
           tc: Math.max(10, Math.floor(s.tc * 0.55)),
           health: s.health - 15,
-          message: '外包中介急用低薪码农，连夜为你开具了紧急 Offer 办理了工签 Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
+          message: '外包中介连夜为你开具了紧急 Offer 办理了工签 Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
         }),
         nextEventId: 'sv_daily_life'
       },
@@ -2828,13 +2830,14 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
       },
       {
-        text: '【工签紧急挂靠】60 天倒计时逼近，找外包 ICC 公司办理 H1B Transfer 挂靠 (消耗 $2w)',
+        text: '【工签紧急挂靠】60 天倒计时逼近，找外包 ICC 公司办理 H1B Transfer 挂靠 (消耗 w)',
         condition: (s) => (s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)') && s.cash >= 2,
         effect: (s) => ({
           cash: s.cash - 2,
+          company: 'icc',
           tc: 14,
           laid_off: false,
-          job_type: 'big_tech',
+          job_type: 'startup',
           health: Math.max(0, s.health - 10),
           message: '外包中介连夜为你开具了紧急 Offer 办理了 H1B Transfer！虽然总包大打折扣，但你的 60 天工签遣返警报成功解除！'
         }),
@@ -2944,6 +2947,204 @@ export const events: Record<string, GameEvent> = {
       }
     ]
   },
+  'job_hop_market': {
+    id: 'job_hop_market',
+    title: '湾区跳槽季：多重 Offer 抉择',
+    description: '经历了数轮密集的 Onsite 面试与薪酬谈判 (Negotiation)，猎头与各大厂 HR 陆续向你发来了意向沟通。\n\n【注意】若你的 I-140 尚未批准，跳槽将导致当前 PERM 废弃重办；刚跳槽大厂通常伴随高压 Ramp-up 考验。请根据当前宏观市场与自身状态慎重抉择：',
+    choices: [
+      {
+        text: '【跳槽 Google】降压养老，享受顶尖 WLB、美味食堂与稳健股票 (需算法达标)',
+        condition: (s) => s.company !== 'google',
+        effect: (s) => {
+          const req = s.macro_economy === 'bear' ? 60 : s.macro_economy === 'bull' ? 35 : 45;
+          const passProb = s.leetcode >= req ? 0.85 : (0.35 + (s.leetcode / 120));
+          const pass = Math.random() < Math.min(0.90, passProb);
+
+          if (!pass) {
+            return {
+              health: Math.max(0, s.health - 12),
+              message: `【面试遗憾折戟】当前市场环境要求算法>=${req}。Google 最后一轮 Hiring Committee 认为你的架构设计深度略有欠缺，未发 Offer。你只能留任原厂。`
+            };
+          }
+
+          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
+          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel;
+          const baseBand = nextLvl === 'L5 (Senior)' ? 42 : nextLvl === 'L4' ? 30 : 22;
+          const econMultiplier = s.macro_economy === 'bull' ? 1.15 : s.macro_economy === 'bear' ? 0.90 : 1.0;
+          const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
+
+          return {
+            company: 'google',
+            job_type: 'big_tech',
+            level: nextLvl,
+            tc: newTC,
+            health: Math.min(100, s.health + 12),
+            is_new_job: true,
+            message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级调整至 ${nextLvl}，总包锁定为 ${newTC}w！`
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【跳槽 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package (需算法>=60)',
+        condition: (s) => s.company !== 'meta',
+        effect: (s) => {
+          const req = s.macro_economy === 'bear' ? 75 : s.macro_economy === 'bull' ? 50 : 60;
+          const passProb = s.leetcode >= req ? 0.80 : (0.25 + (s.leetcode / 150));
+          const pass = Math.random() < Math.min(0.85, passProb);
+
+          if (!pass) {
+            return {
+              health: Math.max(0, s.health - 18),
+              message: `【Meta 面试被挂】当前市场环境要求算法>=${req}。在 Meta 严苛的 45 分钟两道 Hard 题极限编码中遇到 Bug 卡壳，面试未过。你只能留任原公司。`
+            };
+          }
+
+          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
+          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel;
+          const baseBand = nextLvl === 'L6 (Staff)' ? 65 : nextLvl === 'L5 (Senior)' ? 48 : nextLvl === 'L4' ? 34 : 25;
+          const econMultiplier = s.macro_economy === 'bull' ? 1.20 : s.macro_economy === 'bear' ? 0.90 : 1.0;
+          const newTC = Math.max(s.tc + 8, Math.floor(baseBand * econMultiplier));
+
+          return {
+            company: 'meta',
+            job_type: 'big_tech',
+            level: nextLvl,
+            tc: newTC,
+            cash: s.cash + (s.macro_economy === 'bull' ? 8 : 4),
+            health: Math.max(0, s.health - 18),
+            is_new_job: true,
+            message: `【卷入 Meta 核心架构】手握硬核代码通过委员会审核！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -18)。`
+          };
+        },
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
+      },
+      {
+        text: '【跳槽 NVIDIA】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
+        condition: (s) => s.company !== 'nvidia',
+        effect: (s) => {
+          const req = s.macro_economy === 'bear' ? 65 : 45;
+          const passProb = s.leetcode >= req ? 0.80 : 0.40;
+          const pass = Math.random() < passProb;
+
+          if (!pass) {
+            return {
+              health: Math.max(0, s.health - 12),
+              message: '【英伟达面试未过】芯片底层驱动与 CUDA 并行加速系统设计问题未能打动面试官，遗憾被拒。你继续留任原职。'
+            };
+          }
+
+          const isBull = s.macro_economy === 'bull' || s.year >= 2023;
+          const boost = isBull ? 24 : 10;
+          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
+          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel;
+
+          return {
+            company: 'nvidia',
+            job_type: 'nvidia',
+            level: nextLvl,
+            tc: s.tc + boost,
+            cash: s.cash + (isBull ? 6 : 2),
+            is_new_job: true,
+            message: isBull
+              ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到的 NVIDIA 股票价值暴涨，年薪总包飙升至 ${(s.tc + boost).toFixed(1)}w！`
+              : `【入职英伟达】成功入职芯片团队，拿到稳健的软硬件结合包裹 (+${boost}w TC)！`
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【跳槽 TikTok / 字节】接手中美跨时区核心业务，拿顶格现金包裹',
+        condition: (s) => s.company !== 'tiktok',
+        effect: (s) => {
+          const req = s.macro_economy === 'bear' ? 55 : 40;
+          const pass = (s.leetcode >= req) || Math.random() < 0.65;
+
+          if (!pass) {
+            return {
+              health: Math.max(0, s.health - 10),
+              message: '【字节面试未过】高并发高可用系统场景设计被考官挑出单点故障漏洞，未能拿到 Offer。'
+            };
+          }
+
+          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
+          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel;
+          const boost = 14;
+
+          return {
+            company: 'tiktok',
+            job_type: 'tiktok',
+            level: nextLvl,
+            tc: s.tc + boost,
+            cash: s.cash + 10,
+            health: Math.max(0, s.health - 18),
+            is_new_job: true,
+            message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！总包提升至 ${(s.tc + boost).toFixed(1)}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -18)。`
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【跳槽 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹 (需算法>=75 或 PhD)',
+        condition: (s) => s.company !== 'openai',
+        effect: (s) => {
+          const isEligible = s.leetcode >= 75 || s.is_phd;
+          if (!isEligible) {
+            return {
+              health: Math.max(0, s.health - 15),
+              message: '【门槛不足】OpenAI 简历筛选极度严苛，要求顶会论文背景或 80+ 极致算法，你的简历在初筛阶段被拒。'
+            };
+          }
+
+          const passProb = (s.is_phd ? 0.70 : 0.40) + (s.macro_economy === 'bull' ? 0.15 : 0);
+          const pass = Math.random() < passProb;
+
+          if (!pass) {
+            return {
+              health: Math.max(0, s.health - 15),
+              message: '【终面惜败】在关于大模型 MoE 路由与分布式通信优化的终极架构面试中遗憾惜败，未能入职 OpenAI。'
+            };
+          }
+
+          return {
+            company: 'openai',
+            job_type: 'ai_research',
+            level: 'MTS',
+            tc: Math.max(s.tc + 22, 68),
+            cash: s.cash + 8,
+            health: Math.max(0, s.health - 10),
+            is_new_job: true,
+            message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！`
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【跳槽 AI Startup 初创团队】降薪赌一把早期核心员工期权大饼 (高风险高回报)',
+        condition: (s) => s.job_type !== 'startup',
+        effect: (s) => ({
+          company: 'startup',
+          job_type: 'startup',
+          stocks: (s.stocks || 0) + 18,
+          tc: Math.max(16, Math.floor(s.tc * 0.85)),
+          health: Math.max(0, s.health - 10),
+          is_new_job: true,
+          message: '【加入 AI Startup】你接受了一家顶级风投领投的早期初创团队 Offer！虽然现金略微下调，但分到了极其丰厚的早期期权股份！'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',
+        effect: (s) => ({
+          tc: s.tc + 4.5,
+          health: Math.min(100, s.health + 5),
+          message: '【成功 Counter-Offer】老板为了挽留你连夜向 HR 申请了特别加薪 (+4.5w TC)！你零搬迁成本、零 PERM 重置风险，继续在原厂稳步发展！'
+        }),
+        nextEventId: midYearEventRouter,
+      }
+    ]
+  },
+
   'icc_work': {
     id: 'icc_work',
     title: 'ICC 挂靠',

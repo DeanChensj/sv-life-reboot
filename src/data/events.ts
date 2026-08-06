@@ -1019,7 +1019,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '再读一个水硕维持身份 (Day 1 CPT) - (消耗 $5w)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)' && s.cash >= 5,
-        effect: (s) => ({ cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
+        effect: (s) => ({ visa: 'Day 1 CPT', cpt_used: true, cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
         nextEventId: 'job_hunt',
       }
     ]
@@ -1190,7 +1190,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w)',
         reqBadge: '现金>=80w',
-        condition: (s) => s.cash >= 80 && s.visa !== '公民',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
@@ -1238,8 +1238,8 @@ export const events: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: (s) => ({
           cash: s.cash - 1.5,
-          charm: Math.min(25, s.charm + 6),
-          luck: Math.min(45, s.luck + 15),
+          charm: Math.min(25, (s.charm || 10) + 6),
+          luck: Math.min(99, (s.luck || 20) + 15),
           message: '【参加 GTC】你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！玄学气运值大增，接下来的投资和求职将获得强运加持！'
         }),
         nextEventId: 'sv_daily_life',
@@ -1797,7 +1797,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '死扛信仰！每天去大华超市买促销打折盒饭，熬到中东主权基金收购',
-        effect: (s) => ({ health: s.health - 12, luck: Math.min(45, s.luck + 8), message: '你开启了硅谷极简苦行僧模式，胃功能下降了，但心智磨砺得坚不可催。' }),
+        effect: (s) => ({ health: s.health - 12, luck: Math.min(99, (s.luck || 20) + 8), message: '你开启了硅谷极简苦行僧模式，胃功能下降了，但心智磨砺得坚不可催。' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -2127,8 +2127,8 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【深藏功名】保持低调，发小红书“L5 升 L6 心得与系统架构面经”',
         effect: (s) => ({
-          charm: Math.min(25, s.charm + 6),
-          luck: Math.min(45, s.luck + 10),
+          charm: Math.min(25, (s.charm || 10) + 6),
+          luck: Math.min(99, (s.luck || 20) + 10),
           message: '干货面经收割了数千赞！你被尊称为小红书与 Blind 上大佬级技术导师！'
         }),
         nextEventId: 'sv_daily_life',
@@ -2322,7 +2322,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w)',
         reqBadge: '现金>=80w',
-        condition: (s) => s.cash >= 80 && s.visa !== '公民',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
@@ -2481,7 +2481,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.max(15, s.health - 10),
           cash: Math.max(0, s.cash - 0.2),
-          luck: Math.min(45, s.luck + 6),
+          luck: Math.min(99, (s.luck || 20) + 6),
           message: '你在后备箱睡袋里吃着打折冷蛋白棒堵了整整 9 个小时。第二天早晨 7:30 铲雪车终于打通道路，你抢到了 Heavenly 缆车头把梯，在大草海滑到了无痕绝美头粉！'
         }),
         nextEventId: 'sv_daily_life'
@@ -2531,8 +2531,8 @@ export const events: Record<string, GameEvent> = {
 
       {
         text: '疯狂写代码，用硬实力说话',
-        effect: (s) => ({ health: s.health - 30, message: 'Raj 用你写的代码做了一份精美的 PPT 向上汇报，他获得了晋升。你被边缘化了。', status: 'game_over' }),
-        nextEventId: 'end',
+        effect: (s) => ({ health: Math.max(0, s.health - 20), charm: Math.max(0, (s.charm || 10) - 2), message: 'Raj 用你写的硬核代码做了一份精美的 PPT 向上汇报，他获得了晋升。虽然你被边缘化，但你依然手握绿卡拿着高薪大包稳坐工位。' }),
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '放下 IDE，打开 PPT 开始高强度向上管理',
@@ -2685,7 +2685,7 @@ export const events: Record<string, GameEvent> = {
           const win = Math.random() < winRate; 
           return win 
             ? { cash: s.cash + 60, message: '稳扎稳打！公司被大厂收购了，你的期权兑现了 $60w 现金！' }
-            : { cash: Math.max(0, s.cash - 5), health: s.health - 15, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸。' };
+            : { cash: Math.max(0, s.cash - 5), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸，你不得不重新进入求职市场。' };
         },
         nextEventId: (s) => (s.message || '').includes('收购') ? 'sv_daily_life' : 'job_hunt',
       },
@@ -2693,12 +2693,12 @@ export const events: Record<string, GameEvent> = {
         text: '立刻 Pivot (转型) 做 AI / 大模型架构',
         effect: (s) => {
           if (s.year < 2022) {
-            return { cash: Math.max(0, s.cash - 10), health: s.health - 20, message: `在 ${s.year} 年盲目跟风 AI 概念缺乏底层研发，产品无人问津，公司资金链断裂倒闭。` };
+            return { cash: Math.max(0, s.cash - 10), health: s.health - 20, laid_off: true, job_type: 'unemployed', tc: 0, message: `在 ${s.year} 年盲目跟风 AI 概念缺乏底层研发，产品无人问津，公司资金链断裂倒闭，你重新失业。` };
           }
           const win = Math.random() < 0.18;
           return win 
             ? { cash: s.cash + 35, stocks: (s.stocks || 0) + 45, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产，顺便拿到了 EB-1 绿卡！' }
-            : { cash: Math.max(0, s.cash - 10), health: s.health - 20, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜更新简历。' };
+            : { cash: Math.max(0, s.cash - 10), health: s.health - 20, laid_off: true, job_type: 'unemployed', tc: 0, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜抱起铺盖重新刷题求职。' };
         },
         nextEventId: (s) => (s.message || '').includes('绿卡') ? 'post_green_card' : 'job_hunt',
       }
@@ -3605,8 +3605,8 @@ export const events: Record<string, GameEvent> = {
       {
         text: '拍摄全套 Home Decor 发小红书“湾区买房心得”',
         effect: (s) => ({
-          charm: Math.min(25, s.charm + 5),
-          luck: Math.min(45, s.luck + 5),
+          charm: Math.min(25, (s.charm || 10) + 5),
+          luck: Math.min(99, (s.luck || 20) + 5),
           message: '爆款文章收割了上千点赞！你成为了小红书湾区家居/房产圈的顶流 Blogger！'
         }),
         nextEventId: 'sv_daily_life'
@@ -3719,7 +3719,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < 0.45;
           return win
-            ? { luck: Math.min(45, s.luck + 5), cash: s.cash + 2, message: '产线竟然零报错无缝运行！用户量大增，领导夸赞你产出惊人！' }
+            ? { luck: Math.min(99, (s.luck || 20) + 5), cash: s.cash + 2, message: '产线竟然零报错无缝运行！用户量大增，领导夸赞你产出惊人！' }
             : { health: Math.max(0, s.health - 15), message: 'AI 幻觉写出了逻辑死锁导致大厂全网宕机 2 小时！你半夜被 PagerDuty 电话叫醒去改底层 C++！' };
         },
         nextEventId: 'sv_daily_life'
@@ -3735,7 +3735,7 @@ export const events: Record<string, GameEvent> = {
         text: '【VC 争相送钱】接受 a16z / YC 的 $50w 种子轮打款',
         effect: (s) => ({
           cash: s.cash + 15,
-          charm: Math.min(25, s.charm + 6),
+          charm: Math.min(25, (s.charm || 10) + 6),
           job_type: 'startup',
           message: 'a16z 领投种子轮！获得 $15 万美金天使现金，你登上了 TechCrunch 头条，成为硅谷最炙手可热的 AI Agent 创业明星！'
         }),
@@ -3744,8 +3744,8 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【开源上星】在 GitHub 开源该项目，收割 15k Stars',
         effect: (s) => ({
-          charm: Math.min(25, s.charm + 5),
-          luck: Math.min(45, s.luck + 8),
+          charm: Math.min(25, (s.charm || 10) + 5),
+          luck: Math.min(99, (s.luck || 20) + 8),
           leetcode: Math.min(100, s.leetcode + 10),
           message: '项目登上了 GitHub Trending 榜首！全球几万开发者给你送 Star，连 Sam Altman 都转发了你的 Tweet！'
         }),

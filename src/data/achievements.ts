@@ -1,4 +1,5 @@
 import type { Achievement, GameState } from '../types';
+import { safeStorage } from '../utils/safeStorage';
 
 export const ACHIEVEMENTS: Achievement[] = [
   {
@@ -100,7 +101,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'wall_street_wolf',
     title: '华尔街之狼',
-    icon: '🐺',
+    icon: 'wolf',
     category: 'wealth',
     description: '重仓期权或 Crypto 实现了不可思议的一夜暴富。',
     hint: '暗号：在股市极高风险操作中获利'
@@ -108,7 +109,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'wsb_leek',
     title: '终极韭菜',
-    icon: '🥬',
+    icon: 'leek',
     category: 'fun',
     description: '炒末日期权或土狗币血本无归，成为华尔街绿油油的韭菜。',
     hint: '暗号：在股市极高风险操作中亏光本金'
@@ -117,7 +118,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 export function getUnlockedAchievements(): string[] {
   try {
-    const saved = localStorage.getItem('sv_life_achievements');
+    const saved = safeStorage.getItem('sv_life_achievements');
     return saved ? JSON.parse(saved) : [];
   } catch (e) {
     return [];
@@ -129,7 +130,7 @@ export function unlockAchievement(id: string): boolean {
     const unlocked = getUnlockedAchievements();
     if (!unlocked.includes(id)) {
       unlocked.push(id);
-      localStorage.setItem('sv_life_achievements', JSON.stringify(unlocked));
+      safeStorage.setItem('sv_life_achievements', JSON.stringify(unlocked));
       return true; // Newly unlocked!
     }
   } catch (e) {}

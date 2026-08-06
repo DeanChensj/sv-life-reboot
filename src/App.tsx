@@ -187,15 +187,18 @@ export default function App() {
                      (effectResult.job_type && effectResult.job_type !== 'unemployed' && effectResult.job_type !== gameState.job_type) ||
                      (effectResult.company && effectResult.company !== gameState.company);
                      
-    if (isNewJob && (effectResult.visa || gameState.visa) !== '绿卡' && (effectResult.visa || gameState.visa) !== 'O1 (杰出人才)' && !gameState.is_phd) {
+    const currentVisa = gameState.visa;
+    const targetVisa = effectResult.visa || currentVisa;
+    const isPermanentResidentOrCitizen = currentVisa === '绿卡' || currentVisa === '公民' || targetVisa === '绿卡' || targetVisa === '公民';
+
+    if (isNewJob && !isPermanentResidentOrCitizen && targetVisa !== 'O1 (杰出人才)' && !gameState.is_phd) {
+       const isI140Approved = ['i140_approved', 'waiting_pd', 'i485_pending', 'approved'].includes(gameState.gc_stage || '');
        if (gameState.gc_stage === 'perm_processing' || gameState.gc_stage === 'perm_audit' || gameState.gc_stage === 'i140_processing' || gameState.gc_stage === 'i140_rfe') {
-           effectResult.gc_stage = 'not_started';
-           effectResult.gc_progress = 0;
-           effectResult.message = (effectResult.message || '') + ' 🚫 【绿卡重置】入职新雇主导致原公司的绿卡申请作废，PERM/I-140 进度惨遭清零！';
-       } else if (gameState.gc_stage === 'waiting_pd' || gameState.gc_stage === 'i140_approved') {
-           effectResult.gc_stage = 'not_started';
-           effectResult.gc_progress = gameState.gc_progress; // Preserve accumulated PD wait time!
-           effectResult.message = (effectResult.message || '') + ' ⚠️ 【绿卡折腾】虽然 I-140 已获批保留了排期 (PD)，但新雇主仍需为你重新走一遍漫长的 PERM 流程！';
+           effectResult.gc_stage = 'perm_processing';
+           effectResult.gc_progress = 1;
+           effectResult.message = (effectResult.message || '') + ' 🚫 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队。';
+       } else if (isI140Approved) {
+           effectResult.message = (effectResult.message || '') + ' 【I-140 已锁 PD】因之前 I-140 已批准，本次跳槽成功锁定原优先日期 (PD)！';
        }
     }
     
@@ -224,19 +227,6 @@ export default function App() {
       newState.visa = '绿卡';
       newState.gc_progress = 5;
       newState.gc_stage = 'approved';
-    }
-
-    // 🛡️ Rule 2 Middleware: H1B Job Hop PERM Reset (If I-140 is NOT approved)
-    const isJobHop = gameState.job_type && gameState.job_type !== 'unemployed' && newState.job_type && newState.job_type !== 'unemployed' && newState.job_type !== gameState.job_type;
-    if (isJobHop && gameState.visa === 'H1B (工签)') {
-      const isI140Approved = ['i140_approved', 'waiting_pd', 'i485_pending', 'approved'].includes(gameState.gc_stage || '');
-      if (!isI140Approved) {
-        newState.gc_progress = 1;
-        newState.gc_stage = 'perm_processing';
-        newState.message = (newState.message || '') + ' 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队。';
-      } else {
-        newState.message = (newState.message || '') + ' 【I-140 已锁 PD】因之前 I-140 已批准，本次跳槽成功锁定原优先日期 (PD)！';
-      }
     }
 
     // Check if health drops <= 0

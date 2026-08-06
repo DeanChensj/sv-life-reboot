@@ -10,13 +10,14 @@ import { ShopModal } from './components/ShopModal';
 import { WelcomeModal } from './components/WelcomeModal';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
+import { safeStorage } from './utils/safeStorage';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
   const [currentEventId, setCurrentEventId] = useState<string>('choose_trait');
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState<boolean>(false);
   const [showWelcome, setShowWelcome] = useState<boolean>(() => {
-    return !localStorage.getItem('sv_life_welcome_seen');
+    return !safeStorage.getItem('sv_life_welcome_seen');
   });
   const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
@@ -77,15 +78,16 @@ export default function App() {
       const target = e.target as HTMLElement;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
 
-      if (showWelcome || showCharacterPass || showWarReport || showAchievementCodex || isShopOpen) {
+      if (showWelcome || showCharacterPass || showWarReport || showAchievementCodex || isShopOpen || isMobileStatsOpen) {
         if (e.key === 'Escape') {
-          if (isShopOpen) setIsShopOpen(false);
+          if (isMobileStatsOpen) setIsMobileStatsOpen(false);
+          else if (isShopOpen) setIsShopOpen(false);
           else if (showAchievementCodex) setShowAchievementCodex(false);
           else if (showWarReport) setShowWarReport(false);
           else if (showCharacterPass) setShowCharacterPass(false);
           else if (showWelcome) {
             setShowWelcome(false);
-            localStorage.setItem('sv_life_welcome_seen', 'true');
+            safeStorage.setItem('sv_life_welcome_seen', 'true');
           }
         }
         return;
@@ -326,8 +328,8 @@ export default function App() {
   };
 
   const resetGame = () => {
-    localStorage.removeItem('sv_life_initial_seed');
-    localStorage.removeItem('sv_life_ssr_status');
+    safeStorage.removeItem('sv_life_initial_seed');
+    safeStorage.removeItem('sv_life_ssr_status');
     setGameState(generateInitialState());
     setCurrentEventId('choose_trait');
     setShowCharacterPass(false);
@@ -342,10 +344,6 @@ export default function App() {
       handleChoice(settlementChoice);
     }
   };
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentEventId]);
 
   const getImgSrc = (url: string) => {
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -362,7 +360,7 @@ export default function App() {
         <WelcomeModal
           onStart={() => {
             setShowWelcome(false);
-            localStorage.setItem('sv_life_welcome_seen', 'true');
+            safeStorage.setItem('sv_life_welcome_seen', 'true');
           }}
         />
       )}
@@ -604,7 +602,7 @@ export default function App() {
                   // Apply clamping
                   newState.health = Math.max(0, Math.min(100, newState.health));
                   newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
-                  newState.charm = Math.max(0, Math.min(25, newState.charm));
+                  newState.charm = Math.max(0, Math.min(newState.max_charm || 25, newState.charm));
                   
                   // 🛡️ Global Visa Invariant Guard Middleware
                   if (prev.visa === '公民') {
@@ -617,16 +615,30 @@ export default function App() {
                     newState.gc_stage = 'approved';
                   }
                   
-                  // Check game over
+                  // 🛡️ Auto Liquidate Stocks if Cash < 0 on Shop Purchase
+                  if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {
+                    const deficit = Math.abs(newState.cash);
+                    const sellAmt = Math.min(newState.stocks || 0, deficit);
+                    newState.stocks = (newState.stocks || 0) - sellAmt;
+                    newState.cash = newState.cash + sellAmt;
+                    if (sellAmt > 0) {
+                      msg += ` 【股票自动变现】现金流不足，系统已自动变现 $${sellAmt.toFixed(1)}w 股票持仓以支付商城开销。`;
+                    }
+                  }
+
+                  // Check game over & win
                   if (newState.health <= 0 && newState.status === 'playing') {
                     newState.status = 'game_over';
                     newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
+                    setCurrentEventId('end');
                   } else if (newState.cash < -0.001 && newState.status === 'playing') {
                     newState.status = 'game_over';
                     newState.message = '你破产了，无法支付账单，游戏结束！';
+                    setCurrentEventId('end');
                   } else if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
                     newState.status = 'win';
                     newState.message = `总资产突破 ${newState.win_threshold}w！正式达成 FIRE 目标！`;
+                    setCurrentEventId('end');
                   } else {
                     newState.message = msg;
                   }

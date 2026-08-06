@@ -1,16 +1,15 @@
 // Lightweight Web Audio API Sound Synthesizer for Silicon Valley Life Reboot
+import { safeStorage } from './safeStorage';
 
 class SoundManager {
   private audioCtx: AudioContext | null = null;
   private isMuted: boolean = false;
 
   constructor() {
-    // Load mute preference from localStorage if available
-    if (typeof localStorage !== 'undefined') {
-      const savedMute = localStorage.getItem('sv_sound_muted');
-      if (savedMute !== null) {
-        this.isMuted = savedMute === 'true';
-      }
+    // Load mute preference safely
+    const savedMute = safeStorage.getItem('sv_sound_muted');
+    if (savedMute !== null) {
+      this.isMuted = savedMute === 'true';
     }
   }
 
@@ -29,9 +28,7 @@ class SoundManager {
 
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('sv_sound_muted', String(this.isMuted));
-    }
+    safeStorage.setItem('sv_sound_muted', String(this.isMuted));
     if (!this.isMuted) {
       this.play('click');
     }

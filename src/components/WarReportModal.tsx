@@ -87,7 +87,10 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
         ctx.fillText(line, 95, y);
         line = words[n];
         y += 26;
-        if (y > 310) break;
+        if (y > 310) {
+          line += '...';
+          break;
+        }
       } else {
         line = testLine;
       }
@@ -111,11 +114,14 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
       ctx.fillText(val, x + 20, y + 80);
     };
 
-    drawStatBox(70, 360, 315, 110, '最终现金资产 (CASH)', `$${gameState.cash.toFixed(1)}w`, '#34d399');
-    drawStatBox(415, 360, 315, 110, '峰值年薪总包 (TC)', `$${gameState.tc.toFixed(1)}w`, '#f4f4f5');
+    const finalCash = typeof gameState.cash === 'number' ? (gameState.cash + (gameState.stocks || 0)).toFixed(1) : '0.0';
+    const finalTC = typeof gameState.tc === 'number' ? gameState.tc.toFixed(1) : '0.0';
 
-    drawStatBox(70, 490, 315, 110, 'LEETCODE 解题量', `${gameState.leetcode} 题`, '#fbbf24');
-    drawStatBox(415, 490, 315, 110, '存活年龄 / 奋斗时长', `${gameState.age} 岁 / 奋斗 ${Math.max(1, gameState.age - 17)} 年`, '#a78bfa');
+    drawStatBox(70, 360, 315, 110, '最终净资产 (NET WORTH)', `$${finalCash}w`, '#34d399');
+    drawStatBox(415, 360, 315, 110, '峰值年薪总包 (TC)', `$${finalTC}w`, '#f4f4f5');
+
+    drawStatBox(70, 490, 315, 110, 'LEETCODE 解题量', `${gameState.leetcode ?? 0} 题`, '#fbbf24');
+    drawStatBox(415, 490, 315, 110, '存活年龄 / 奋斗时长', `${gameState.age ?? 18} 岁 / 奋斗 ${Math.max(1, (gameState.age || 18) - 17)} 年`, '#a78bfa');
 
     // Medals Section Header
     ctx.font = '700 20px monospace';
@@ -136,8 +142,10 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     else if (gameState.visa === '绿卡') medals.push({ tag: 'PR', title: '【上岸自由身】', desc: '彻底甩开 USCIS 抽签与签证枷锁', rarity: 'SSR', color: '#60a5fa' });
     if (medals.length === 0) medals.push({ tag: 'SURV', title: '【硅谷打工特种兵】', desc: '在湾区高压环境中顽强奋斗', rarity: 'R', color: '#9ca3af' });
 
+    // 限制最多渲染前 4 枚高稀有度勋章，防止底部溢出重叠
+    const displayMedals = medals.slice(0, 4);
     let medalY = 680;
-    medals.forEach((m) => {
+    displayMedals.forEach((m) => {
       ctx.fillStyle = '#18181b';
       ctx.fillRect(70, medalY, 660, 65);
       ctx.strokeStyle = m.color;
@@ -157,7 +165,8 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
 
       ctx.font = '400 14px sans-serif';
       ctx.fillStyle = '#a1a1aa';
-      ctx.fillText(m.desc, 340, medalY + 38);
+      const cleanDesc = m.desc.length > 25 ? m.desc.slice(0, 24) + '...' : m.desc;
+      ctx.fillText(cleanDesc, 340, medalY + 38);
 
       medalY += 75;
     });

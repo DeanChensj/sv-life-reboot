@@ -1832,8 +1832,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
-        condition: (s) => s.visa === 'H1B (工签)',
-        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: s.charm + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: (s.charm || 10) + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -2258,7 +2257,6 @@ export const events: Record<string, GameEvent> = {
     title: 'H1B 被 Check',
     description: '你回国探亲，顺便去大使馆签证，结果喜提行政审查 (Check)，签证官冷漠地扔给你一张黄条。',
     choices: [
-
       {
         text: '在国内每天熬夜，按美国时间远程上班',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
@@ -2269,6 +2267,12 @@ export const events: Record<string, GameEvent> = {
         text: '管他呢，直接请无薪假在国内到处旅游！',
         condition: (s) => s.cash >= 20 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ cash: s.cash - 20, health: s.health + 30, leetcode: s.leetcode - 10, imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【绿卡/公民免检】出示美国护照/绿卡，免除检查直接入境',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
+        effect: () => ({ message: '海关人员核验了你的永久居民/公民身份，热情祝你生活愉快！' }),
         nextEventId: 'sv_daily_life',
       }
     ]
@@ -2425,6 +2429,11 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.cash < 45 && !s.parents_helped_house,
         effect: (s) => ({ cash: 0, has_housing: true, housing_name: 'Sunnyvale 老破小', health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
         nextEventId: 'house_slave',
+      },
+      {
+        text: '资金暂时不足 / 观望行情，先返回日常行动攒钱',
+        effect: () => ({ message: '你看了一眼加价疯狂且竞争白热化的湾区房市，决定等现金流更充裕时再做打算。' }),
+        nextEventId: 'sv_daily_life',
       }
     ]
   },
@@ -3376,25 +3385,22 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '逻辑拉满！强势 Carry 狂踩全场 (展现高智商)',
-        condition: (s) => !s.is_married && s.relationship_status !== 'married',
-        effect: (s) => ({ charm: Math.max(0, s.charm - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你逻辑严密，把全场玩伴的漏洞指得一清二楚，带领好人阵营完胜！但是大家觉得你太有压迫感了，活动结束后没一个人加你微信。' }),
+        effect: (s) => ({ charm: Math.max(0, (s.charm || 10) - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你逻辑严密，把全场玩伴的漏洞指得一清二楚，带领好人阵营完胜！但是大家觉得你太有压迫感了，活动结束后没一个人加你微信。' }),
         nextEventId: 'sv_daily_life'
       },
       {
         text: '装小白疯狂给人递水，主打情绪价值',
-        condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => {
           const win = Math.random() > 0.5;
           const isMarriedNow = s.is_married || s.relationship_status === 'married';
           return win
-            ? { charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), relationship_status: isMarriedNow ? 'married' : 'dating', message: isMarriedNow ? '你全程温柔体贴，结识了几位同样在大厂的同行好友，社交氛围轻松！' : '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
-            : { charm: Math.min(25, s.charm + 1), health: s.health + 5, cash: Math.max(0, s.cash - 0.2), message: '你跑前跑后伺候大家，当了一整天的“沸羊羊”，虽然交了几个普通朋友，但并没有人看上你。' };
+            ? { charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3), health: Math.min(100, s.health + 10), relationship_status: isMarriedNow ? 'married' : 'dating', message: isMarriedNow ? '你全程温柔体贴，结识了几位同样在大厂的同行好友，社交氛围轻松！' : '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
+            : { charm: Math.min(s.max_charm || 25, (s.charm || 10) + 1), health: s.health + 5, cash: Math.max(0, s.cash - 0.2), message: '你跑前跑后伺候大家，当了一整天的“沸羊羊”，虽然交了几个普通朋友，但并没有人看上你。' };
         },
         nextEventId: 'sv_daily_life'
       },
       {
         text: '发现场地的老板正在招全栈工程师，去聊聊',
-        condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => {
           const win = s.leetcode >= 50;
           const isEmployed = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
@@ -3659,11 +3665,10 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life'
       },
       {
-        text: '【Advance Parole 避坑】展示 AP Combo 回美证直接入境，免去 Check 烦恼',
-        condition: (s) => s.gc_stage === 'i485_pending',
-        effect: (s) => ({
-          health: Math.min(100, s.health + 5),
-          message: '你手握 I-485 附带的 Advance Parole (AP) Combo 回美卡，在海关 CBP 轻松查验直接入境，无需经历领事馆面签与 Check 煎熬！'
+        text: '【永久居民 / AP 回美证免签】出示美国护照/绿卡或 AP Combo 卡直接入境',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民' || s.gc_stage === 'i485_pending' || s.gc_stage === 'approved',
+        effect: () => ({
+          message: '你手握美国绿卡/护照或 I-485 附带的 Advance Parole (AP) Combo 回美卡，在海关 CBP 轻松查验直接入境，无需经历领事馆面签与 Check 煎熬！'
         }),
         nextEventId: 'sv_daily_life'
       }

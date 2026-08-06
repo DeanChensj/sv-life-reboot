@@ -130,6 +130,113 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   };
   const visaDisplay = getDisplayVisa();
 
+  const getDisplayCompany = () => {
+    if (gameState.laid_off || gameState.job_type === 'unemployed') {
+      return {
+        label: '待业求职中',
+        className: 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold',
+      };
+    }
+
+    if (gameState.job_type === 'startup_founder') {
+      const stageName = gameState.founder_stage === 'exit' ? '上市独角兽' : gameState.founder_stage === 'series_a' ? 'A轮独角兽' : 'AI 独角兽';
+      return {
+        label: `${stageName} Founder`,
+        className: 'text-purple-300 bg-purple-500/15 border-purple-500/30 shadow-[0_0_8px_rgba(168,85,247,0.25)] font-bold',
+      };
+    }
+
+    if (gameState.job_type === 'quant' || gameState.company === 'two_sigma' || gameState.company === 'citadel' || gameState.company === 'jane_street') {
+      return {
+        label: 'Top Quant (量化)',
+        className: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 font-bold',
+      };
+    }
+
+    if (gameState.job_type === 'ai_research' || gameState.company === 'openai' || gameState.company === 'anthropic') {
+      return {
+        label: 'OpenAI / MTS',
+        className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold',
+      };
+    }
+
+    if (gameState.job_type === 'trader') {
+      return {
+        label: '全职 Trader',
+        className: 'text-amber-300 bg-amber-500/10 border-amber-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'google') {
+      return {
+        label: 'Google (谷歌)',
+        className: 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'meta') {
+      return {
+        label: 'Meta (卷王)',
+        className: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'nvidia' || gameState.job_type === 'nvidia') {
+      return {
+        label: 'NVIDIA (英伟达)',
+        className: 'text-lime-400 bg-lime-500/10 border-lime-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'tiktok' || gameState.job_type === 'tiktok') {
+      return {
+        label: 'TikTok (字节)',
+        className: 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'apple') {
+      return {
+        label: 'Apple (苹果)',
+        className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
+      };
+    }
+
+    if (gameState.company === 'amazon' || gameState.job_type === 'amazon') {
+      return {
+        label: 'Amazon (亚麻)',
+        className: 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold',
+      };
+    }
+
+    if (gameState.job_type === 'startup') {
+      return {
+        label: 'AI Startup (初创)',
+        className: 'text-orange-400 bg-orange-500/10 border-orange-500/20 font-bold',
+      };
+    }
+
+    if (gameState.job_type === 'big_tech') {
+      return {
+        label: '硅谷科技大厂',
+        className: 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold',
+      };
+    }
+
+    if (!gameState.job_type) {
+      return {
+        label: '学生在读',
+        className: 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-medium',
+      };
+    }
+
+    return {
+      label: '科技公司',
+      className: 'text-zinc-300 bg-zinc-800/60 border-zinc-700 font-semibold',
+    };
+  };
+  const companyDisplay = getDisplayCompany();
+
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
       {/* Header Title Section */}
@@ -338,39 +445,70 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           </div>
         </div>
 
-        {/* 4. Status Badges (Level, Visa, Relationship) */}
-        <div className="col-span-1 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex justify-between items-center backdrop-blur-xl">
-          <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em]">当前职级</div>
-          <div className="text-xs font-bold text-purple-300 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
-            {displayLevel}
+        {/* 4. Status Badges (Company, Level, Visa, Relationship) */}
+        {/* Card 1: 当前雇主 */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-zinc-700 min-h-[76px] sm:min-h-[82px]">
+          <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em] mb-1.5 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            <span>当前雇主</span>
+          </div>
+          <div className="flex items-center">
+            <span className={`text-xs sm:text-[13px] px-2.5 py-0.5 rounded-lg border font-bold ${companyDisplay.className}`}>
+              {companyDisplay.label}
+            </span>
           </div>
         </div>
 
-        <div className="col-span-1 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex justify-between items-center backdrop-blur-xl">
-          <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em]">签证身份</div>
-          <div className={`text-xs px-3 py-1 rounded-full border ${visaDisplay.className}`}>
-            {visaDisplay.label}
+        {/* Card 2: 当前职级 */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-zinc-700 min-h-[76px] sm:min-h-[82px]">
+          <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em] mb-1.5 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-purple-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>当前职级</span>
+          </div>
+          <div className="flex items-center">
+            <span className="text-xs sm:text-[13px] font-bold text-purple-300 bg-purple-500/10 px-2.5 py-0.5 rounded-lg border border-purple-500/20">
+              {displayLevel}
+            </span>
           </div>
         </div>
 
-        <div className="col-span-2 md:col-span-4 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex justify-between items-center backdrop-blur-xl">
-          <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em]">婚恋与感情状态</div>
-          <div className={`text-xs font-bold px-3.5 py-1 rounded-full border ${
-            gameState.relationship_status === 'married' || gameState.is_married
-              ? 'text-pink-300 bg-pink-500/10 border-pink-500/20'
-              : gameState.relationship_status === 'dating'
-                ? 'text-rose-300 bg-rose-500/10 border-rose-500/20'
-                : gameState.relationship_status === 'matched'
-                  ? 'text-purple-300 bg-purple-500/10 border-purple-500/20'
-                  : 'text-zinc-400 bg-zinc-800/50 border-zinc-700/50'
-          }`}>
-            {gameState.relationship_status === 'married' || gameState.is_married
-              ? '已婚双职工'
-              : gameState.relationship_status === 'dating'
-                ? '热恋中'
-                : gameState.relationship_status === 'matched'
-                  ? '相亲匹配中'
-                  : '单身'}
+        {/* Card 3: 签证身份 */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-zinc-700 min-h-[76px] sm:min-h-[82px]">
+          <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em] mb-1.5 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="13" y2="12"/></svg>
+            <span>签证身份</span>
+          </div>
+          <div className="flex items-center">
+            <span className={`text-xs sm:text-[13px] px-2.5 py-0.5 rounded-lg border font-bold ${visaDisplay.className}`}>
+              {visaDisplay.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Card 4: 婚恋与感情状态 */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-zinc-700 min-h-[76px] sm:min-h-[82px]">
+          <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em] mb-1.5 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-pink-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span>感情状态</span>
+          </div>
+          <div className="flex items-center">
+            <span className={`text-xs sm:text-[13px] font-bold px-2.5 py-0.5 rounded-lg border ${
+              gameState.relationship_status === 'married' || gameState.is_married
+                ? 'text-pink-300 bg-pink-500/10 border-pink-500/20'
+                : gameState.relationship_status === 'dating'
+                  ? 'text-rose-300 bg-rose-500/10 border-rose-500/20'
+                  : gameState.relationship_status === 'matched'
+                    ? 'text-purple-300 bg-purple-500/10 border-purple-500/20'
+                    : 'text-zinc-400 bg-zinc-800/50 border-zinc-700/50'
+            }`}>
+              {gameState.relationship_status === 'married' || gameState.is_married
+                ? '已婚双职工'
+                : gameState.relationship_status === 'dating'
+                  ? '热恋中'
+                  : gameState.relationship_status === 'matched'
+                    ? '相亲中'
+                    : '单身'}
+            </span>
           </div>
         </div>
 

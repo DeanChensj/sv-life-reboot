@@ -825,10 +825,11 @@ export const events: Record<string, GameEvent> = {
             tc: getLevelScaledTC(baseTc, lvl),
             laid_off: false,
             cash: s.cash + 6,
+            company: 'google',
             job_type: 'big_tech',
             level: lvl,
             network: Math.min(100, (s.network || 0) + 5),
-            message: ' 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸！'
+            message: ' 凭借强大人脉网络 (Referral)，熟人总监直接将你推荐给了 Hiring Manager，免除第一轮简历筛选无缝上岸 Google！'
           };
         },
         nextEventId: (s: GameState) => {
@@ -841,7 +842,7 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.school === 'state',
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          return { tc: getLevelScaledTC(15, lvl), laid_off: false, health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', level: lvl, message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' };
+          return { tc: getLevelScaledTC(15, lvl), laid_off: false, company: 'apple', health: s.health + 10, charm: s.charm + 2, job_type: 'big_tech', level: lvl, message: '工作轻松，每天下午 4 点下班去冲浪，但这辈子的 TC 估计也就这样了。' };
         },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
@@ -860,7 +861,7 @@ export const events: Record<string, GameEvent> = {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
           const baseTc = s.year >= 2023 ? 30 : 26;
           return s.leetcode >= req 
-            ? { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, cash: s.cash + 5, health: s.health - 5, job_type: 'big_tech', level: lvl, message: `上岸！当前市场环境要求LeetCode>${req}，你顺利通过。` }
+            ? { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, cash: s.cash + 5, health: s.health - 5, company: 'google', job_type: 'big_tech', level: lvl, message: `上岸！当前市场环境要求LeetCode>${req}，你顺利通过入职 Google。` }
             : { health: s.health - 10, message: `面试被挂了！当前市场环境要求LeetCode>${req}。` };
         },
         nextEventId: (s: GameState) => {
@@ -890,7 +891,7 @@ export const events: Record<string, GameEvent> = {
         text: '面试普通 Startup',
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          return { tc: getLevelScaledTC(18, lvl), laid_off: false, health: s.health - 2, job_type: 'startup', level: lvl, message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' };
+          return { tc: getLevelScaledTC(18, lvl), laid_off: false, health: s.health - 2, company: 'startup', job_type: 'startup', level: lvl, message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' };
         },
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);

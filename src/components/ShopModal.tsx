@@ -191,7 +191,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
 
               <button
                 disabled={gameState.cash < 0.5 || gameState.has_dog}
-                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_dog: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与日系柴犬` : '日系柴犬'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在南湾救助站领养了一只可爱的柴犬！在 CMB 挂照片相亲脱单率 +20%，每年陪伴治愈回血 (健康 +3，年开销 $0.3w)！')}
+                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_dog: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与日系柴犬` : '日系柴犬'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在南湾救助站领养了一只可爱的柴犬！周末遛狗心情大好，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
                 className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.has_dog 
                     ? 'border-amber-500/80 bg-amber-500/10' 
@@ -204,12 +204,12 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">已领养</span>
                   )}
                 </div>
-                <div className="text-xs text-zinc-500 mt-1">{gameState.has_dog ? '已领养柴犬 (每年健康 +3, 年开销 $0.3w, 脱单率 +20%)' : '花费: $0.5w | 初始健康 +10, 每年健康 +3, 每年开销 $0.3w, 约会/相亲脱单率 +20%'}</div>
+                <div className="text-xs text-zinc-500 mt-1">{gameState.has_dog ? '已领养柴犬 | 每年健康 +2, 每年开销 $0.3w' : '花费: $0.5w | 初始健康 +10, 每年健康 +2, 每年开销 $0.3w'}</div>
               </button>
 
               <button
                 disabled={gameState.cash < 0.5 || gameState.has_cat}
-                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_cat: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与布偶猫` : '布偶猫'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在收容所带回了一只黏人的布偶猫！在 CMB 挂照片相亲脱单率 +20%，每年陪伴治愈回血 (健康 +3，年开销 $0.3w)！')}
+                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_cat: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与布偶猫` : '布偶猫'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在收容所带回了一只黏人的布偶猫！从此再也不怕湾区的深夜孤独了，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
                 className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.has_cat 
                     ? 'border-blue-500/80 bg-blue-500/10' 
@@ -222,7 +222,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">已领养</span>
                   )}
                 </div>
-                <div className="text-xs text-zinc-500 mt-1">{gameState.has_cat ? '已领养布偶猫 (每年健康 +3, 年开销 $0.3w, 脱单率 +20%)' : '花费: $0.5w | 初始健康 +10, 每年健康 +3, 每年开销 $0.3w, 约会/相亲脱单率 +20%'}</div>
+                <div className="text-xs text-zinc-500 mt-1">{gameState.has_cat ? '已领养布偶猫 | 每年健康 +2, 每年开销 $0.3w' : '花费: $0.5w | 初始健康 +10, 每年健康 +2, 每年开销 $0.3w'}</div>
               </button>
             </div>
           </section>

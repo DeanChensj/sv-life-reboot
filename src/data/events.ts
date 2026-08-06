@@ -1709,8 +1709,8 @@ export const events: Record<string, GameEvent> = {
            let petHealthBoost = 0;
            let petMsg = '';
            if (s.has_pet) {
-             petHealthBoost = 3;
-             petMsg = ` 【宠物陪伴】家里的${s.pet_name || '宠物'}每天治愈着你的心神 (健康 +3，宠物抚养支出 -$0.3w)。`;
+             petHealthBoost = 2;
+             petMsg = ` 【宠物陪伴】家里的${s.pet_name || '宠物'}每天治愈着你的心神 (健康 +2，宠物抚养支出 -$0.3w)。`;
            }
 
            let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost));

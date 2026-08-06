@@ -63,7 +63,7 @@ export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ ga
 
         {/* Initial Background Story */}
         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 mb-6 text-xs leading-relaxed text-zinc-300 relative z-10">
-          <span className="font-bold text-emerald-400 block mb-1 font-mono uppercase tracking-wider"> 简历档案评语：</span>
+          <span className="font-bold text-emerald-400 block mb-1 font-mono uppercase tracking-wider">简历档案评语：</span>
           {gameState.message || (gameState.has_us_degree 
             ? '你带着满腔期待与梦想，开启了属于你的大学求学生涯！' 
             : '你在大学校园入学，准备积累扎实的计算机能力，开启属于你的人生篇章！')}
@@ -74,7 +74,7 @@ export const CharacterProfileModal: React.FC<CharacterProfileModalProps> = ({ ga
           onClick={onConfirm}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-base transition-all duration-200 shadow-lg shadow-emerald-500/20 active:scale-[0.985] cursor-pointer flex items-center justify-center gap-2 relative z-10"
         >
-          <span>开启人生求学篇章 </span>
+          <span>开启人生求学篇章</span>
         </button>
       </div>
     </div>

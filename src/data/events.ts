@@ -284,8 +284,8 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'choose_year',
       },
       {
-        text: '【卷王之王】天生做题家，算法天赋极高，但体质较弱，极易过劳猝死。',
-        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 25, health: s.health - 25, network: 5, win_threshold: 400 }),
+        text: '【卷王之王】天生做题家，算法天赋极高（初始刷题+35），拥有极强的抗压耐受力，大厂内卷与跳槽如鱼得水。',
+        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 35, health: Math.max(90, s.health - 8), network: 15, win_threshold: 380 }),
         nextEventId: 'choose_year',
       },
       {
@@ -1336,19 +1336,21 @@ export const events: Record<string, GameEvent> = {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
-          const winRate = 0.35 + (s.leetcode / 300) + ((s.charm || 10) * 0.01) + ((s.luck || 20) * 0.001);
-          const pass = Math.random() < Math.min(0.80, winRate);
+          const isKingOfRoll = s.trait_title === '卷王之王';
+          const drain = isKingOfRoll ? 8 : 14;
+          const winRate = 0.38 + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.15 : 0);
+          const pass = Math.random() < Math.min(0.85, winRate);
 
           if (pass) {
             if (curLevel === 'L3' && yearsInGrade >= 1) {
-              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 4.5, level: 'L4', last_promo_age: s.age, message: '【战时冲刺成功】你带领组员重构了核心服务！拿下顶级 Top Perf 并直接破格晋升至 L4！总包大幅调升！' };
+              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 4.5, level: 'L4', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】卷王之王神功大成！你凭借硬核架构交付拿下 Top Perf 破格晋升至 L4！' : '【战时冲刺成功】你带领组员重构了核心服务！拿下顶级 Top Perf 并直接破格晋升至 L4！总包大幅调升！' };
             }
             if (curLevel === 'L4' && yearsInGrade >= 1) {
-              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 7.0, level: 'L5 (Senior)', last_promo_age: s.age, message: '【战时冲刺成功】扛下千亿流量大促！顺利通过升职委员会，正式晋升为 L5 Senior！总包调升 +$7w！' };
+              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 7.0, level: 'L5 (Senior)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】抗下千亿流量重构！卷王底蕴爆发，全票通过晋升委员会晋级 L5 Senior！' : '【战时冲刺成功】扛下千亿流量大促！顺利通过升职委员会，正式晋升为 L5 Senior！总包调升 +$7w！' };
             }
-            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 4.0, message: '【战时冲刺成功】你带领组员连续数周通宵重构了底层核心服务，拿下了年度 Top Perf 与 +$4w 顶格绩效大包！' };
+            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 4.0, message: '【战时冲刺成功】你带领组员连续攻关底层核心服务，拿下了年度 Top Perf 与 +$4w 顶格绩效大包！' };
           }
-          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 1.0, message: '【高压内卷苦战】虽然抗住了高强度 Oncall，但因为大厂组织架构调整，功劳被大领导收割，只拿到了普调。' };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 1.0, message: '【高压内卷苦战】虽然抗住了高强度 Oncall，但因为大厂组织架构调整，功劳被大领导收割，只拿到了普调。' };
         },
         nextEventId: (s) => (s.level === 'L6 (Staff)' && (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
       },
@@ -1441,21 +1443,23 @@ export const events: Record<string, GameEvent> = {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
+          const isKingOfRoll = s.trait_title === '卷王之王';
+          const drain = isKingOfRoll ? 8 : 14;
           
-          const baseWinRate = 0.15 + (s.leetcode / 300) + ((s.charm || 10) * 0.02) + ((s.luck || 20) * 0.001);
-          const pass = Math.random() < Math.min(0.7, baseWinRate);
+          const baseWinRate = 0.20 + (s.leetcode / 250) + ((s.charm || 10) * 0.02) + (isKingOfRoll ? 0.15 : 0);
+          const pass = Math.random() < Math.min(0.78, baseWinRate);
 
           if (curLevel === 'L3') {
-            if (s.leetcode < 30) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
+            if (s.leetcode < 30) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实，建议多提升技术硬实力。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: isKingOfRoll ? '【卷王破格晋升】做题家底蕴彻底释放，你的 Perf 拿下顶格 EE 绩效破格晋升至 L4！' : '恭喜！你的 Perf 拿下 EE 绩效，成功晋升至 L4 工程师！总包调薪 +$3.5w！' };
           } else if (curLevel === 'L4') {
-            if (s.leetcode < 50) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
-            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 25), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
+            if (s.leetcode < 50) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别。' };
+            if (yearsInGrade >= 1 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你顺利通过升职委员会评审，正式晋升为 L5 Senior！' };
           } else if (curLevel === 'L5 (Senior)') {
-            if (s.leetcode >= 70 && s.health >= 40 && s.tc >= 30 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 30), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
+            if (s.leetcode >= 65 && s.health >= 35 && s.tc >= 30 && pass) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(10, drain + 5)), tc: s.tc + 15, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破了硅谷码农最大天堑，成功晋升为 L6 Staff 架构师！' };
           }
           const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
-          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + meritBonus, message: `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + meritBonus, message: isKingOfRoll ? `【卷王日常高产】你高质高效交付了核心模块，拿到了项目奖金 (+${meritBonus}w TC)！` : `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年大厂升职 Quota 紧张，明年一定为你申请！”` };
         },
         nextEventId: (s) => (s.level === 'L6 (Staff)' && (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
       },
@@ -1463,17 +1467,20 @@ export const events: Record<string, GameEvent> = {
         text: '【年度重心：闭关修炼】死磕算法与系统设计，尝试跳槽拿大包',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
-          if (s.leetcode < 50) {
-            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), leetcode: s.leetcode + 15, message: '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
+          const isKingOfRoll = s.trait_title === '卷王之王';
+          const drain = isKingOfRoll ? 6 : 12;
+          const leetBonus = isKingOfRoll ? 20 : 15;
+          if (s.leetcode < 45) {
+            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), leetcode: s.leetcode + leetBonus, message: isKingOfRoll ? '【卷王刷题神速】你拒绝所有无效社交，狂刷 200 题算法真经，做题储备突飞猛进！' : '你拒绝了所有社交，疯狂刷题一整年。虽然面了几家都挂了，但算法突飞猛进。' };
           }
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const isFromAI = curLevel === 'MTS' || s.job_type === 'ai_research';
           
-          if (isFromAI) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', is_new_job: true, message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
-          if (curLevel === 'L3') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 8, level: 'L4', is_new_job: true, message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
-          if (curLevel === 'L4') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 12, level: 'L5 (Senior)', is_new_job: true, message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
-          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 18, level: 'L6 (Staff)', is_new_job: true, message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
-          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: Math.floor(s.tc * 1.15), is_new_job: true, message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
+          if (isFromAI) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: Math.max(s.tc + 25, 65), level: 'L6 (Staff)', job_type: 'big_tech', is_new_job: true, message: '顶级光环！你带着 OpenAI/AI 实验室背景跳槽大厂，对方直接送上 L6 Staff 包裹！TC 暴涨！' };
+          if (curLevel === 'L3') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 8, level: 'L4', is_new_job: true, message: '跳槽成功！凭借硬核算法面试，斩获 L4 Offer，TC +$8w！' };
+          if (curLevel === 'L4') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 12, level: 'L5 (Senior)', is_new_job: true, message: '跳槽成功！拿下了对方大厂的 Senior 岗位，顺利跳槽升至 L5 (Senior)！' };
+          if (curLevel === 'L5 (Senior)' || curLevel === 'L5') return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 18, level: 'L6 (Staff)', is_new_job: true, message: '跳槽爆拉！凭借多年系统架构积累与算法表现，拿到 L6 Staff 包裹！' };
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: Math.floor(s.tc * 1.15), is_new_job: true, message: '跳槽成功！你跳到了另一家大厂，获得了 15% 的 package 提升！' };
         },
         nextEventId: (s) => (((s.message || '').includes('L6 Staff') || (s.message || '').includes('晋升为 L6')) ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
@@ -2563,8 +2570,8 @@ export const events: Record<string, GameEvent> = {
     choices: [
 
       {
-        text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万)',
-        condition: (s) => s.cash >= 300,
+        text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: 'Atherton 顶级豪宅', charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
         nextEventId: 'sv_daily_life',
       },
@@ -2614,25 +2621,25 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
-        condition: (s) => s.cash >= 45,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 45,
         effect: (s) => ({ cash: s.cash - 45, rent: 1.5, has_housing: true, housing_name: 'Sunnyvale 老破小', health: s.health + 10, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '买 North San Jose 现代挑高高密度 Townhouse (首付 $40w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
-        condition: (s) => s.cash >= 40,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 40,
         effect: (s) => ({ cash: s.cash - 40, rent: 2.5, has_housing: true, housing_name: 'North San Jose 联排', charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '攻下 Fremont Mission San Jose 9分顶配学区房 (首付 $65w, 年负担 $4.5w) - 卷二代的终极战场',
-        condition: (s) => s.cash >= 65,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 65,
         effect: (s) => ({ cash: s.cash - 65, rent: 4.5, has_housing: true, housing_name: 'Fremont 学区房', charm: Math.min(25, s.charm + 4), luck: s.luck + 10, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
         nextEventId: 'sv_daily_life',
       },
       {
         text: '向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
-        condition: (s) => s.cash < 45 && !s.parents_helped_house,
+        condition: (s) => (s.cash + (s.stocks || 0)) < 40 && !s.parents_helped_house,
         effect: (s) => ({ cash: 0, has_housing: true, housing_name: 'Sunnyvale 老破小', health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
         nextEventId: 'house_slave',
       },

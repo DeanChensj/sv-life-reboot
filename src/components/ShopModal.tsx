@@ -10,6 +10,7 @@ interface ShopModalProps {
 
 export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy, onTriggerEvent }) => {
   const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '');
+  const totalAssets = gameState.cash + (gameState.stocks || 0);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center bg-zinc-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -22,7 +23,14 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             </div>
             <div>
               <h3 className="font-black text-lg text-zinc-100">硅谷资产与消费商城</h3>
-              <p className="text-xs text-amber-400 font-mono tracking-wider font-semibold">CASH: ${gameState.cash.toFixed(1)}w</p>
+              <p className="text-xs text-amber-400 font-mono tracking-wider font-semibold">
+                可用总资产: ${totalAssets.toFixed(1)}w
+                {(gameState.stocks !== undefined && gameState.stocks > 0) && (
+                  <span className="text-zinc-400 font-normal ml-1.5 hidden sm:inline">
+                    (现金: ${gameState.cash.toFixed(1)}w | 股票: ${gameState.stocks.toFixed(1)}w · 支持平仓抵扣)
+                  </span>
+                )}
+              </p>
             </div>
           </div>
           <button 
@@ -45,12 +53,12 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-800 pb-1">置业与居住 (Housing)</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
-                disabled={gameState.cash < 40 || isHomeowner}
+                disabled={totalAssets < 40 || isHomeowner}
                 onClick={() => { onClose(); onTriggerEvent('buy_house'); }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative overflow-hidden"
               >
-                <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">参加抢房大战 (首付 $40w+)</div>
-                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已拥有一套房产' : '进入买房事件流，挑选湾区房产'}</div>
+                <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">参加抢房大战 (首付 $40w+ · 可用股票)</div>
+                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已拥有一套房产' : '进入买房事件流，挑选湾区房产 (支持股票自动变现)'}</div>
               </button>
               
               <button
@@ -63,12 +71,12 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={gameState.cash >= 10 || gameState.rent <= 0 || isHomeowner}
+                disabled={totalAssets >= 10 || gameState.rent <= 0 || isHomeowner}
                 onClick={() => onBuy({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, gameState.health - 10) }, '你把睡袋塞进了车后备箱。虽然每天去健身房洗澡极其硬核，但成功将房租消耗砍到了 $0！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-zinc-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed group col-span-1 sm:col-span-2"
               >
                 <div className="font-bold text-zinc-400">挂壁退租睡车顶 (房租归零)</div>
-                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法退租' : '要求：现金 < $10w 且当前有房租。健康大幅下降。'}</div>
+                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法退租' : '要求：总资产 < $10w 且当前有房租。健康大幅下降。'}</div>
               </button>
             </div>
           </section>
@@ -78,7 +86,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-800 pb-1">出行座驾 (Vehicles)</h4>
             <div className="grid grid-cols-1 gap-3">
               <button
-                disabled={gameState.cash < 4 || gameState.car === 'model_y' || gameState.car === 'porsche' || gameState.car === 'cybertruck'}
+                disabled={totalAssets < 4 || gameState.car === 'model_y' || gameState.car === 'porsche' || gameState.car === 'cybertruck'}
                 onClick={() => onBuy({ cash: gameState.cash - 4, car: 'model_y', charm: gameState.charm + 4 }, '你提了一台白色的 Model Y。去 Cupertino 买奶茶按半天钥匙开错别人的车门。')}
                 className={`flex justify-between items-center text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.car === 'model_y' 
@@ -99,7 +107,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={gameState.cash < (gameState.car === 'porsche' ? 3 : gameState.car === 'model_y' ? 7 : 9) || gameState.car === 'cybertruck'}
+                disabled={totalAssets < (gameState.car === 'porsche' ? 3 : gameState.car === 'model_y' ? 7 : 9) || gameState.car === 'cybertruck'}
                 onClick={() => {
                   const tradeInCredit = gameState.car === 'porsche' ? 6 : gameState.car === 'model_y' ? 2 : 0;
                   onBuy({ 
@@ -129,7 +137,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={gameState.cash < (gameState.car === 'cybertruck' ? 7 : gameState.car === 'model_y' ? 10 : 12) || gameState.car === 'porsche'}
+                disabled={totalAssets < (gameState.car === 'cybertruck' ? 7 : gameState.car === 'model_y' ? 10 : 12) || gameState.car === 'porsche'}
                 onClick={() => {
                   const tradeInCredit = gameState.car === 'cybertruck' ? 5 : gameState.car === 'model_y' ? 2 : 0;
                   onBuy({ 
@@ -164,7 +172,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <h4 className="text-sm font-mono text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-800 pb-1">生活与服务 (Lifestyle)</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
-                disabled={gameState.cash < 3 || gameState.last_beauty_year === gameState.year}
+                disabled={totalAssets < 3 || gameState.last_beauty_year === gameState.year}
                 onClick={() => onBuy({ cash: gameState.cash - 3, health: Math.min(100, gameState.health + 8), charm: Math.min(25, gameState.charm + 2), last_beauty_year: gameState.year }, '做全脸热玛吉，请硅谷最贵的私教。颜值与身体状态有所提升！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-pink-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
@@ -177,7 +185,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={gameState.cash < 5 || gameState.charm < 8}
+                disabled={totalAssets < 5 || gameState.charm < 8}
                 onClick={() => {
                   const success = Math.random() > 0.5;
                   if (success) onBuy({ cash: gameState.cash - 5, tc: gameState.tc + 5, charm: gameState.charm + 2 }, '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！');
@@ -190,7 +198,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={gameState.cash < 0.5 || gameState.has_dog}
+                disabled={totalAssets < 0.5 || gameState.has_dog}
                 onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_dog: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与日系柴犬` : '日系柴犬'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在南湾救助站领养了一只可爱的柴犬！周末遛狗心情大好，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
                 className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.has_dog 
@@ -208,7 +216,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={gameState.cash < 0.5 || gameState.has_cat}
+                disabled={totalAssets < 0.5 || gameState.has_cat}
                 onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_cat: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与布偶猫` : '布偶猫'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在收容所带回了一只黏人的布偶猫！从此再也不怕湾区的深夜孤独了，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
                 className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.has_cat 

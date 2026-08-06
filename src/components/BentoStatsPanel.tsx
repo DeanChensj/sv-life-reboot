@@ -473,7 +473,15 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
             <span>当前职级</span>
           </div>
           <div className="flex items-center">
-            <span className="text-xs sm:text-[13px] font-bold text-purple-300 bg-purple-500/10 px-2.5 py-0.5 rounded-lg border border-purple-500/20">
+            <span className={`text-xs sm:text-[13px] font-bold px-2.5 py-0.5 rounded-lg border ${
+              displayLevel.includes('L8') || displayLevel.includes('Principal') || displayLevel.includes('Fellow')
+                ? 'text-amber-300 bg-amber-500/15 border-amber-500/30 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
+                : displayLevel.includes('L7') || displayLevel.includes('Senior Staff')
+                  ? 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_8px_rgba(217,70,239,0.25)]'
+                  : displayLevel.includes('L6') || displayLevel.includes('Staff') || displayLevel.includes('MTS')
+                    ? 'text-purple-300 bg-purple-500/15 border-purple-500/30'
+                    : 'text-purple-300 bg-purple-500/10 border-purple-500/20'
+            }`}>
               {displayLevel}
             </span>
           </div>

@@ -130,6 +130,9 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
 
     const medals: { tag: string; title: string; desc: string; rarity: 'SSR' | 'SR' | 'R'; color: string }[] = [];
     
+    if (gameState.level === 'L8 (Principal)' || (gameState.level && gameState.level.includes('L8'))) medals.push({ tag: 'L8', title: '【硅谷科技泰斗】', desc: '登顶 L8 Principal 首席架构师/技术院士', rarity: 'SSR', color: '#fbbf24' });
+    else if (gameState.level === 'L7 (Senior Staff)' || (gameState.level && gameState.level.includes('L7'))) medals.push({ tag: 'L7', title: '【硅谷资深架构师】', desc: '晋级 L7 Senior Staff 资深架构师，统领全公司技术愿景', rarity: 'SSR', color: '#c084fc' });
+    else if (gameState.level === 'L6 (Staff)' || (gameState.level && gameState.level.includes('L6'))) medals.push({ tag: 'L6', title: '【突破职业天花板】', desc: '晋级 L6 Staff 架构师，打破 35 岁职业天花板', rarity: 'SR', color: '#a78bfa' });
     if (gameState.leetcode >= 60) medals.push({ tag: 'ALG', title: '【做题神仙】', desc: 'LeetCode 算法手撕 Hard 题无压力', rarity: 'SSR', color: '#fbbf24' });
     if ((gameState.network || 0) >= 50) medals.push({ tag: 'NET', title: '【硅谷社交天花板】', desc: '手握强大人脉网 (Referral)，在大厂与 VC 圈游刃有余', rarity: 'SSR', color: '#38bdf8' });
     if (gameState.charm >= 24) medals.push({ tag: 'SOC', title: '【南湾顶流名流】', desc: '风采绝伦，Santana Row 社交收割机', rarity: 'SR', color: '#f43f5e' });

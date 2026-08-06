@@ -115,6 +115,22 @@ export const ACHIEVEMENTS: Achievement[] = [
     hint: '暗号：在股市极高风险操作中获利'
   },
   {
+    id: 'l7_senior_staff_architect',
+    title: '硅谷资深架构师 (L7)',
+    icon: 'award',
+    category: 'milestone',
+    description: '打破职场终极天堑，在硅谷科技巨头晋升为统领核心技术战略的 L7 Senior Staff 资深工程师！',
+    hint: '暗号：职级晋升至 L7 (Senior Staff)。'
+  },
+  {
+    id: 'l8_principal_architect',
+    title: '硅谷首席架构师 (L8)',
+    icon: 'crown',
+    category: 'milestone',
+    description: '登顶全球软件工程巅峰，受封全公司仅有数位的 L8 Principal 首席架构师/技术院士！',
+    hint: '暗号：职级晋升至 L8 (Principal)。'
+  },
+  {
     id: 'wsb_leek',
     title: '终极韭菜',
     icon: 'leek',
@@ -200,6 +216,14 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
 
   if (state.status === 'win' && state.visa !== '绿卡' && state.visa !== '公民') {
     if (unlockAchievement('no_gc_fire')) newlyUnlocked.push('no_gc_fire');
+  }
+
+  if (state.level === 'L7 (Senior Staff)' || (state.level && state.level.includes('L7'))) {
+    if (unlockAchievement('l7_senior_staff_architect')) newlyUnlocked.push('l7_senior_staff_architect');
+  }
+
+  if (state.level === 'L8 (Principal)' || (state.level && state.level.includes('L8'))) {
+    if (unlockAchievement('l8_principal_architect')) newlyUnlocked.push('l8_principal_architect');
   }
 
   if (msg.includes('暴富奇迹！')) {

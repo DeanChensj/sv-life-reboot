@@ -95,15 +95,15 @@ export const generateInitialState = (): GameState => {
 
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
+// Mid-year event router: called after choosing a yearly focus in sv_daily_life.
+// Weaves in 1-2 random events before year-end settlement.
 export const midYearEventRouter = (s: GameState): string => {
   const isWorking = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
   const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
 
   // Economy News Broadcasts
-  // Bull/Bear: 14% chance per click -> ~36% chance per year -> ~2.7 years average span
-  // Neutral: 5% chance per click -> ~14% chance per year -> ~7 years average span
   const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
-  if (Math.random() < shiftChance) {
+  if (Math.random() < shiftChance && !s.season_stage) {
     if (s.macro_economy === 'bull') {
       return Math.random() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
     } else if (s.macro_economy === 'bear') {
@@ -163,7 +163,7 @@ export const midYearEventRouter = (s: GameState): string => {
   if ((s.charm || 0) >= 22 && !s.is_married && s.relationship_status !== 'married' && s.relationship_status !== 'dating') {
     lifeEvents.push('bay_area_heart_signal');
     if ((s.charm || 0) >= 25) {
-      lifeEvents.push('bay_area_heart_signal'); // Higher probability for top-tier charm
+      lifeEvents.push('bay_area_heart_signal');
     }
   }
 
@@ -258,9 +258,12 @@ export const midYearEventRouter = (s: GameState): string => {
   }
 
   if (s.car && s.car !== 'none' && Math.random() < 0.25) return 'car_broken';
+  
+  // Default fallback for H2 or end of turn -> Year End Settlement
+  if (s.season_stage === 'h2') {
+    return 'sv_year_end_settlement';
+  }
   return lifeEvents[Math.floor(Math.random() * lifeEvents.length)];
-
-  return 'sv_daily_life';
 };
 
 // Events Engine
@@ -1156,14 +1159,14 @@ export const events: Record<string, GameEvent> = {
         costBadge: '免费外派',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你转到了温哥华分公司，以 L1 身份工作。一年后公司把你调回了湾区 Headquarters，成功保住硅谷高薪！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【学校挂靠】紧急注册 Day 1 CPT 大学 (消耗 $1.5w)',
         costBadge: '花费 $1.5w',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '你成功挂靠了 Day 1 CPT，虽然边上班边写作业极其辛苦，但你成功留在湾区继续工作！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【杰出人才】申办 O1 签证 (花费 $5w 律师费)',
@@ -1221,19 +1224,19 @@ export const events: Record<string, GameEvent> = {
         text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你外派加拿大一年后凭 L1 签证顺利调回湾区总部！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '紧急挂靠 Day 1 CPT 水硕 (花费 .5w)',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【绿卡/公民身份】已有绿卡或公民身份，直接跳过抽签困境',
         condition: (s) => s.visa === '绿卡' || s.visa === '公民',
         effect: (s) => ({ message: '你拥有绿卡/公民身份，完全不受抽签限制，继续专注于工作与生活！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -1253,7 +1256,7 @@ export const events: Record<string, GameEvent> = {
             ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
             : { last_limited_opp_year: s.year, cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场见皮衣黄 ($1.5w)',
@@ -1266,7 +1269,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, (s.luck || 20) + 15),
           message: '【参加 GTC】你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！玄学气运值大增，接下来的投资和求职将获得强运加持！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【限时机会】 火人节 (Burning Man) 极客大迁徙与灵性放空 ($1.2w)',
@@ -1280,7 +1283,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, (s.luck || 20) + 8),
           message: '【火人节洗礼】你在黑石城沙漠参加了 Burning Man，虽然风沙与昼夜狂欢有些耗费体力，但灵性觉醒彻底清空了精神内耗，并结识了一批硅谷前沿极客！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【限时机会】 抢注爆火 AI Agent 域名并发布顶流测评视频 ($0.8w)',
@@ -1305,7 +1308,7 @@ export const events: Record<string, GameEvent> = {
                 message: '【流量平平】视频遭遇了平台算法限流，虽然熬夜没能回本，但积累了宝贵的自媒体剪辑与运营经验。'
               };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (需 LeetCode >= 35)',
@@ -1317,7 +1320,7 @@ export const events: Record<string, GameEvent> = {
             ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
             : { last_limited_opp_year: s.year, health: Math.max(0, s.health - 10), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【限时机会】 考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
@@ -1330,7 +1333,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, (s.luck || 20) + 6),
           message: '【考取飞行执照】你成功通过 FAA 单飞考核拿到了私人飞行员执照！周末开着塞斯纳俯瞰金门大桥，在湾区社交圈名声大噪！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
 
       // 2. 【情境定制动态专属】 (根据公司、婚姻、财富阶层动态生成)
@@ -1805,13 +1808,17 @@ export const events: Record<string, GameEvent> = {
            let healthDrain = 0;
            let companyMsg = '';
            if (!s.laid_off && s.job_type !== 'unemployed') {
-             if (s.job_type === 'tiktok') { healthDrain = 15; companyMsg = ' 字节的连轴转让你身心俱疲 (健康 -15)。'; }
-             else if (s.job_type === 'quant') { healthDrain = 12; companyMsg = ' 高频交易的每一秒都在燃烧你的生命 (健康 -12)。'; }
-             else if (s.company === 'meta') { healthDrain = 8; companyMsg = ' Meta 的 PSC 压力让你掉光了头发 (健康 -8)。'; }
-             else if (s.job_type === 'amazon') { healthDrain = 5; companyMsg = ' 亚麻的 PIP 文化让你每天提心吊胆 (健康 -5)。'; }
-             else if (s.job_type === 'startup') { healthDrain = 5; companyMsg = ' 创业公司的混乱让你心力交瘁 (健康 -5)。'; }
-             else if (s.job_type === 'startup_founder') { healthDrain = 8; companyMsg = ' 创业公司 CEO 烧钱找融资与管理团队的压力让你身心俱疲 (健康 -8)。'; }
-             else if (s.job_type === 'big_tech') { healthDrain = -5; companyMsg = ' 养老厂的 WLB 让你养精蓄锐 (健康 +5)。'; }
+             if (s.job_type === 'tiktok') { healthDrain = 8; companyMsg = ' 字节的高强度对齐让你略感疲惫 (健康 -8)。'; }
+             else if (s.job_type === 'quant') { healthDrain = 6; companyMsg = ' 高频交易的紧绷节奏消耗了体力 (健康 -6)。'; }
+             else if (s.company === 'meta') { healthDrain = 4; companyMsg = ' Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。'; }
+             else if (s.job_type === 'amazon') { healthDrain = 3; companyMsg = ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。'; }
+             else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
+             else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
+             else if (s.job_type === 'big_tech') { healthDrain = -10; companyMsg = ' 养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
+             else { healthDrain = -6; companyMsg = ' 充沛的带薪年假与规律作息让你的体力得到恢复 (健康 +6)。'; }
+           } else {
+             healthDrain = -15;
+             companyMsg = ' 充沛的休息与离职休假让你的身心彻底康复大复活 (健康 +15)。';
            }
            
            let petHealthBoost = 0;
@@ -1998,17 +2005,17 @@ export const events: Record<string, GameEvent> = {
       {
         text: '混水摸鱼匿名跟帖：“TC 380k，做过同组，TL 人格分裂确实坑”',
         effect: (s) => ({ charm: Math.min(25, s.charm + 2), health: s.health - 5, message: '你出了一口恶气，但第二天看到 Manager 脸色阴沉地在全员会强调“我们要加强团队信任与通力协作”。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '极度恐慌！连夜关摄像头，边开全员大会边狂刷 LeetCode 备战跳槽',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: s.health - 15, message: '你吓得半夜爬起来刷了 6 道动态规划困难题，咖啡因过量导致心率达到了 130。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '私信发帖人“同在湾区可以加微信交流吗”，结果发现是隔壁工位的同胞',
         effect: (s) => ({ charm: Math.min(25, s.charm + 3), cash: Math.max(0, s.cash - 0.2), message: '你们在 Palo Alto 密谋了一下午抱团取暖指南，并交换了彼此的 Referral 资源库。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2020,17 +2027,17 @@ export const events: Record<string, GameEvent> = {
       {
         text: '老油条废话推手：“Hello？抱歉刚才 AirPods 断了……我觉得这个要看 Trade-off，建议我们 Offline 找时间 Align 一下。”',
         effect: (s) => ({ charm: Math.min(25, s.charm + 2), message: '经典的硅谷废话太极！高管满意地点了点头，你成功保住了饭碗并继续写出 O(1) 空间复杂度的指针翻转。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '手滑点错！把力扣 Hard 解题窗口共享给了全公司 60 个人！',
         effect: (s) => ({ health: s.health - 15, charm: Math.min(25, s.charm + 8), cash: s.cash + 10, message: '会议室内一片死寂。你把自己的社死截图匿名发到小红书《全员大会手滑投影了力扣Hard怎么破？》，收获 3 万点赞和 200 条求职 Referral 软广费！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '3 秒把问题扔给 ChatGPT，照着读“High throughput, horizontal scalability, zero-cost abstractions”',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 5), tc: s.tc + 2, message: '高管赞叹你的技术深度，当场决定下季度让你负责这个高风险架构重组。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2042,17 +2049,17 @@ export const events: Record<string, GameEvent> = {
       {
         text: '心理防御倒塌：“哥们，你们厂现在有 Referral 吗？包身份就行，TC 随缘！”',
         effect: (s) => ({ tc: Math.max(10, s.tc - 5), health: s.health - 10, is_new_job: true, message: '你含泪跳槽去了一家给钱更少但至少股价底部的公司，重新开始坐 4 年股票牢。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》',
         effect: (s) => ({ cash: s.cash + 15, charm: Math.min(25, s.charm + 4), message: '网友太喜欢看硅谷中产受苦了！你的小红书粉丝暴涨，光是电竞椅和挂壁盒饭的广告费就填补了股票亏损。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '死扛信仰！每天去大华超市买促销打折盒饭，熬到中东主权基金收购',
         effect: (s) => ({ health: s.health - 12, luck: Math.min(99, (s.luck || 20) + 8), message: '你开启了硅谷极简苦行僧模式，胃功能下降了，但心智磨砺得坚不可催。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2064,12 +2071,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '冒着被店员白眼的风险，眯着眼准确点击极小的字体 Custom Tip -> $0.50',
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), charm: Math.max(0, s.charm - 1), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '痛快点击 25%，拍照发朋友圈：“湾区物价让硅谷 L5 活得不如国内县城中产 [流泪]”',
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 2), message: '你的朋友圈成功引起了老同学的围观和暗酸，完成了标准的硅谷式哭穷炫耀。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2082,12 +2089,12 @@ export const events: Record<string, GameEvent> = {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
         condition: (s) => s.visa === 'H1B (工签)',
         effect: (s) => ({ health: Math.max(0, s.health - 25), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
         effect: (s) => ({ health: Math.min(100, s.health + 10), charm: (s.charm || 10) + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2117,7 +2124,7 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash + 100, charm: s.charm + 5, message: '离谱！这家公司莫名其妙被 Yahoo 收购了，你暴富了！' }
             : { cash: s.cash - 1, message: '几个月后这哥们去巴厘岛做数字游民了，你的投资打了水漂。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
         condition: (s) => s.cash >= 1
       },
       {
@@ -2127,7 +2134,7 @@ export const events: Record<string, GameEvent> = {
           charm: s.charm - 1,
           message: '你懒得理他，默默 AC 了一道 Hard 题。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -2181,7 +2188,7 @@ export const events: Record<string, GameEvent> = {
           health: s.health - 15,
           message: '外包中介连夜为你开具了紧急 Offer 办理了工签 Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【OPT / 工签转学自救】注册 Day 1 CPT 大学维持合法留美身份并刷题 (消耗 $1.5w)',
@@ -2228,7 +2235,7 @@ export const events: Record<string, GameEvent> = {
           health: 100,
           message: '你花了 50 万美元。每个月都会有私人医生上门给你注射定制干细胞。你的身体仿佛回到了 18 岁，精力极其充沛！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
         condition: (s) => s.cash >= 50
       },
       {
@@ -2238,7 +2245,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 5),
           message: '你花了 $500 喝下这杯用香菜和不知名粉末榨的汁。别说，第二天在办公室写代码确实不困了。'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
         condition: (s) => s.cash >= 0.05
       },
       {
@@ -2248,7 +2255,7 @@ export const events: Record<string, GameEvent> = {
           charm: s.charm - 2, 
           message: '你在这个满是生酮饮食者的派对里大嚼碳水，被大家用异样的眼光注视。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '跟他探讨脑机接口，看能不能弄点融资',
@@ -2257,7 +2264,7 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash + 10,
           message: '你成功用一些炫酷的词汇忽悠了他，他当场决定给你打钱让你帮他开发一个“量子睡眠追踪”App。'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
         condition: (s) => s.charm > 5
       }
     ]
@@ -2275,7 +2282,7 @@ export const events: Record<string, GameEvent> = {
           charm: s.charm + 10,
           message: '你花了 1.5 万刀买装备。在黑石城的沙尘暴中，你不仅心灵得到了升华，还真的在某个变种车上认识了一个红杉资本的合伙人。'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
         condition: (s) => s.cash >= 1.5
       },
       {
@@ -2285,7 +2292,7 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash + (s.tc / 12),
           message: '你因为顶替他们做了假期的 On-Call 拿到了额外的 Bonus。但看着他们朋友圈的末日废土风照片，你流下了社畜的眼泪。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -2303,7 +2310,7 @@ export const events: Record<string, GameEvent> = {
           health: s.health - 15,
           message: '大盘大跌入熊市！打开券商账户看了一眼股票持仓蒸发 25%，你决定今年圣诞节改去家里蹲。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '此时不博何时博？加杠杆抄底！(需现金 > 30w)',
@@ -2315,7 +2322,7 @@ export const events: Record<string, GameEvent> = {
              ? { tc: Math.floor(s.tc * 0.9), stocks: Math.floor((s.stocks || 0) * 1.15), cash: s.cash + 35, message: '虽然宏观大盘熊市让基本薪酬受压，但你精准在最低点抄底了 AI 龙头，逆势吃到反弹波段大赚 $35w，股票市值也有所增值！' }
              : { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.70), cash: s.cash - 25, health: s.health - 30, message: '抄底抄在半山腰，现金和股票惨遭双杀，市场继续在深度熊市中煎熬。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -2398,7 +2405,7 @@ export const events: Record<string, GameEvent> = {
         text: '准点下班，躺平拿 Meets (保重身体)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2414,7 +2421,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, (s.charm || 10) + 1),
           message: '【爽玩雪山与海滩】打卡了顶级雪道与海滩冲浪！全额公费报销，身心得到了放松与充电 (健康 +10)！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【深夜酒吧与德州扑克】和组员喝精酿鸡尾酒、打德扑、聊湾区八卦与职场内幕',
@@ -2424,7 +2431,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 5),
           message: '【八卦与社交收获】在晚宴酒桌与德扑桌上畅饮谈笑，拉近了与组内同事和小领导的关系 (人脉 +4, 魅力 +2)。'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【奢华米其林与 SPA 纯躺平】睡到自然醒，吃爆公司全额报销的奢华海鲜米其林大餐',
@@ -2433,7 +2440,7 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash + 0.2,
           message: '【公费惬意躺平】抛开一切工作 Slack 消息，在奢华度假村享受 SPA 与米其林大餐，身心得到了良好恢复 (健康 +12)。'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2446,7 +2453,7 @@ export const events: Record<string, GameEvent> = {
         text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level} 的职级头衔，包裹与职场地位同步跃升！` }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2463,7 +2470,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, s.charm + 5),
           message: '全组同事与 VP 亲临现场向你祝贺！你挂上了 L6 Staff 的终极胸牌，成为了湾区技术圈里的传奇神仙！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【深藏功名】保持低调，发小红书“L5 升 L6 心得与系统架构面经”',
@@ -2472,7 +2479,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, (s.luck || 20) + 10),
           message: '干货面经收割了数千赞！你被尊称为小红书与 Blind 上大佬级技术导师！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2490,7 +2497,7 @@ export const events: Record<string, GameEvent> = {
           network: Math.min(99, (s.network || 10) + 15),
           message: '全公司各条业务线的 VP 与顶级 VC 合伙人纷纷举杯致意！你已立于硅谷大厂高管与资深决策层的核心交汇点！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【学术发表】受邀在 IEEE / NeurIPS 发表顶会 Keynote 演讲',
@@ -2499,7 +2506,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, (s.luck || 20) + 12),
           message: '你的演讲在业界引起巨大轰动，行业内无数顶尖工程师与学生将你视作全领域技术偶像！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2517,7 +2524,7 @@ export const events: Record<string, GameEvent> = {
           network: Math.min(99, (s.network || 10) + 20),
           message: 'CEO 亲自为你颁发公司终身荣誉技术院士奖章！在名流云集的庄园夜色中，你成为了硅谷华人史上无可争议的传世传奇！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【功成身退的从容】在 Los Altos Hills 豪宅中惬意品茶，各大顶级猎头与 VC 趋之若鹜',
@@ -2526,7 +2533,7 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash + 10,
           message: '你以科技泰斗之尊笑看风云。各大独角兽与 VC 抢着奉上顾问期权与咨询费，你已站在硅谷食物链的终极顶端！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2541,21 +2548,21 @@ export const events: Record<string, GameEvent> = {
         reqBadge: '需 算法能力',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.leetcode >= 40,
         effect: (s) => ({ relationship_status: 'matched', partner_type: 'engineer', message: '【匹配成功】在激烈的狼人杀中，你敏锐的逻辑吸引了同为大厂码农的 TA。双方互加微信，进入 Matched 状态！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【看展看演出】去 SF MOMA 看展或看独立乐队演出',
         reqBadge: '需 出众形象',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.charm >= 15,
         effect: (s) => ({ relationship_status: 'matched', partner_type: 'artist', charm: Math.min(30, s.charm + 3), message: '【匹配成功】在昏暗的 Livehouse 里，你与一位在设计学院读书的文青对上了眼。你们聊了王家卫和坂本龙一，进入 Matched 状态！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【高端社交】混入沙丘路 VC 晚宴与红酒品鉴会',
         reqBadge: '需 雄厚财力',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 50,
         effect: (s) => ({ relationship_status: 'matched', partner_type: 'vc', network: s.network + 10, message: '【匹配成功】你端着香槟在沙丘路的高端晚宴上侃侃而谈，成功吸引了一位年轻有为的 VC 投资人/创业大佬，进入 Matched 状态！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【周末交友】周末 Santana Row 喝奶茶 (Coffee Meets Bagel)',
@@ -2567,7 +2574,7 @@ export const events: Record<string, GameEvent> = {
             ? { relationship_status: 'matched', partner_type: 'random', charm: Math.min(25, s.charm + 2), message: '【匹配成功】因为主页挂了滑雪和宠物照片，你成功匹配到了一位湾区打工人！双方聊得非常投机，进入 Matched 阶段！' }
             : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, message: '【匹配失败】连喝了三杯 Boba，对方一听你还没买房且身份未定，默默选择了 AA。你不仅花了钱还受到了真实伤害。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【情感升温】邀请对方一起去 Lake Tahoe 滑雪度假 (升温至 Dating)',
@@ -2580,7 +2587,7 @@ export const events: Record<string, GameEvent> = {
             ? { relationship_status: 'dating', charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: `【正式确立关系】Tahoe 的雪景与小木屋篝火让两人的感情迅速升温！你们正式官宣成为湾区情侣 (Dating)！` }
             : { relationship_status: 'single', partner_type: undefined, health: s.health - 10, message: '【分道扬镳】滑雪途中因为路线分配和谁洗碗产生了严重分歧。回到湾区后双方互删，退回单身。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【走进婚姻】与伴侣在 Santa Clara 法院登记领证 (领证结婚)',
@@ -2599,7 +2606,7 @@ export const events: Record<string, GameEvent> = {
             message: `【领证结婚】恭喜！你们在法院正式登记结婚！两人合并了存款与工资 (+$${bonusCash}w 现金)，正式晋升为合法夫妻！`
           };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【豪车开局】开豪车直接闪婚 (单身直达结婚)',
@@ -2614,13 +2621,13 @@ export const events: Record<string, GameEvent> = {
             message: '【豪车闪婚】你开着豪车在半月湾兜风，出众的个人吸引力让你在短短几个月内就完成了相识、热恋和闪婚！'
           };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '放弃交友，专心搞钱',
         condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '觉得相亲太累，你回到家里躺着刷了一整天 YouTube，感到内心十分平静。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2633,7 +2640,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '报警认栽，自认倒霉',
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), health: s.health - 10, message: '警察让你填了个表就没下文了，你花了 $5000 换玻璃和买新电脑。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '定位电脑，勇闯奥克兰黑市！',
@@ -2643,7 +2650,7 @@ export const events: Record<string, GameEvent> = {
             ? { charm: s.charm + 2, cash: s.cash, message: '你像叶问一样一打十，从黑帮手里夺回了电脑，成为了湾区传说！' }
             : { health: s.health - 30, cash: Math.max(0, s.cash - 0.5), message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2656,19 +2663,19 @@ export const events: Record<string, GameEvent> = {
         text: '在国内每天熬夜，按美国时间远程上班',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ health: s.health - 30, cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '管他呢，直接请无薪假在国内到处旅游！',
         condition: (s) => s.cash >= 20 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ cash: s.cash - 20, health: s.health + 30, leetcode: s.leetcode - 10, imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【绿卡/公民免检】出示美国护照/绿卡，免除检查直接入境',
         condition: (s) => s.visa === '绿卡' || s.visa === '公民',
         effect: () => ({ message: '海关人员核验了你的永久居民/公民身份，热情祝你生活愉快！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2723,7 +2730,7 @@ export const events: Record<string, GameEvent> = {
           cpt_used: true,
           message: '【无缝接轨 Day 1 CPT】虽然 STEM OPT 耗尽，但你成功挂靠了 Day 1 CPT 大学，白天写代码晚上交作业，成功维持合法留美身份并继续抽签！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '砸 w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= w, 限 PhD或硬核算法背景)',
@@ -2753,7 +2760,7 @@ export const events: Record<string, GameEvent> = {
           l1_relocated: true,
           message: '你转到了温哥华分公司，凭 L1 签证曲线救国保住了工作！一年后顺利申请调回湾区 Headquarters！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2767,12 +2774,12 @@ export const events: Record<string, GameEvent> = {
         text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: 'Atherton 顶级豪宅', charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '继续在 Open House 现场观望挑房 (回到日常行动)',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '搞副业炒股：梭哈英伟达 (NVDA)！',
@@ -2783,7 +2790,7 @@ export const events: Record<string, GameEvent> = {
             ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
             : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '辞职！凭多年大厂的技术积累直接搞 AI Startup',
@@ -2793,7 +2800,7 @@ export const events: Record<string, GameEvent> = {
             ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
             : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '不再唯唯诺诺，开始在职场上重拳出击',
@@ -2803,7 +2810,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '彻底摆烂，佛系上班',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2817,19 +2824,19 @@ export const events: Record<string, GameEvent> = {
         text: '抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 45,
         effect: (s) => ({ cash: s.cash - 45, rent: 1.5, has_housing: true, housing_name: 'Sunnyvale 老破小', health: s.health + 10, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '买 North San Jose 现代挑高高密度 Townhouse (首付 $40w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 40,
         effect: (s) => ({ cash: s.cash - 40, rent: 2.5, has_housing: true, housing_name: 'North San Jose 联排', charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '攻下 Fremont Mission San Jose 9分顶配学区房 (首付 $65w, 年负担 $4.5w) - 卷二代的终极战场',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 65,
         effect: (s) => ({ cash: s.cash - 65, rent: 4.5, has_housing: true, housing_name: 'Fremont 学区房', charm: Math.min(25, s.charm + 4), luck: s.luck + 10, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
@@ -2840,7 +2847,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '资金暂时不足 / 观望行情，先返回日常行动攒钱',
         effect: () => ({ message: '你看了一眼加价疯狂且竞争白热化的湾区房市，决定等现金流更充裕时再做打算。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2852,7 +2859,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '老老实实上班，咬牙扛住房贷（进入日常行动）',
         effect: (s) => ({ rent: 2.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(0, s.health - 5), message: '你把心安在了加州木板老破小里，虽然房贷沉重，但每次看到属于自己的草坪，干劲又回来了！' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '把次卧与车库偷偷出租给转码留学生（每年回血 $1.5w 被动现金流）',
@@ -2862,13 +2869,13 @@ export const events: Record<string, GameEvent> = {
             ? { rent: 1.2, has_housing: true, housing_name: 'Sunnyvale 老破小', has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.0, health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$1.0w/年)，但把你折腾得够呛。' }
             : { rent: 0.8, has_housing: true, housing_name: 'Sunnyvale 老破小', has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+1.5w/年)！' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '断供卖房！回归租房生活的自由',
         condition: (s) => s.cash < 50,
         effect: (s) => ({ cash: s.cash + 35, has_housing: false, housing_name: '普通合租单间', rent: 2, health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '感觉人生一眼望到头，卖房去创业！(要求 100 万现金)',
@@ -2894,7 +2901,7 @@ export const events: Record<string, GameEvent> = {
           rental_income: (s.rental_income || 0) + 2.0,
           message: '【ADU 改造完成】你在后院建起了一套带独立卫浴的预制 ADU，挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$2.0w 净租金流！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【外州远程投资】购入 Austin/Seattle 精装独栋别墅 (首付 $25w · 产生 +$2.2w/年 租金净流)',
@@ -2906,7 +2913,7 @@ export const events: Record<string, GameEvent> = {
           investment_properties: [...(s.investment_properties || []), 'Austin 远程独栋屋'],
           message: '【外州资产配置】借助全美远程物业托管，你在德州 Austin 核心科技园区拿下了一套独栋屋，租给 Tesla/Apple 工程师，每年被动落袋 +$2.2w 纯现金流！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【湾区核心投资】购入东湾 Hayward/Fremont 独栋出租房 (首付 $45w · 产生 +$3.8w/年 租金净流)',
@@ -2918,7 +2925,7 @@ export const events: Record<string, GameEvent> = {
           investment_properties: [...(s.investment_properties || []), 'Hayward 独立投资房'],
           message: '【湾区核心资产】拿下东湾优质通勤独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$3.8w 租金现金流！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【大地主终极资产】全款/杠杆拿下 Sunnyvale 4-Plex 核心多户公寓楼 (首付 $120w · 产生 +$11.0w/年 巨额租金)',
@@ -2931,12 +2938,12 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, (s.charm || 10) + 5),
           message: '【加州大地主登顶】你拿下了 Sunnyvale 黄金地段 4 套相连的公寓楼！光靠收租每年就能躺赚 +$11.0w 净现金流，彻底告别打工内卷！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '返回日常行动',
         effect: () => ({ message: '你审视了名下的资产组合与租金收益，决定稳健经营现金流。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -2965,7 +2972,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 20),
           message: '【进入自由探索模式】你决定留在湾区继续享受生活与打拼！新的阶梯目标设定为 $800w 舒适 FIRE（尽情体验跑车豪宅、投资房与多元人生）。'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '👑【登顶硅谷 · 冲刺奢华 FIRE 目标 ($1500w+)】追逐顶级独角兽与 Atherton 庄园',
@@ -2977,7 +2984,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 20),
           message: '【豪门巨鳄模式】你的雄心已超越普通打工人！向着 $1500w 奢华 FIRE 与硅谷顶层名流进军！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '💡【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',
@@ -3008,7 +3015,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, (s.luck || 20) + 6),
           message: '你在后备箱睡袋里吃着打折冷蛋白棒堵了整整 9 个小时。第二天早晨 7:30 铲雪车终于打通道路，你抢到了 Heavenly 缆车头把梯，在大草海滑到了无痕绝美头粉！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '识时务者为俊杰！果断掉头在 Sacramento 找快捷酒店吃自热火锅',
@@ -3018,7 +3025,7 @@ export const events: Record<string, GameEvent> = {
           charm: s.charm + 1,
           message: '你看着微信群同学在雪里冻得瑟瑟发抖求援救援车，自己在大床房里吃着海底捞自热火锅打黑神话，完成了最明智标准的湾区反向避险骚操作。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -3043,7 +3050,7 @@ export const events: Record<string, GameEvent> = {
         text: '太累了，降薪跳槽去 Google/Apple 养老',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ tc: Math.max(20, s.tc - 20), company: 'google', health: Math.min(100, s.health + 20), message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹大幅缩水，但终于有了生活。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -3055,7 +3062,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '疯狂写代码，用硬实力说话',
         effect: (s) => ({ health: Math.max(0, s.health - 20), charm: Math.max(0, (s.charm || 10) - 2), message: 'Raj 用你写的硬核代码做了一份精美的 PPT 向上汇报，他获得了晋升。虽然你被边缘化，但你依然手握绿卡拿着高薪大包稳坐工位。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '放下 IDE，打开 PPT 开始高强度向上管理',
@@ -3063,7 +3070,7 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => s.charm >= 12
           ? { tc: (s.tc || 0) + 15, cash: s.cash + 15, charm: Math.min(25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功升职加薪！' }
           : { health: Math.max(0, s.health - 25), charm: Math.max(0, s.charm - 2), message: '缺乏社交情商，你的汇报被对手挑出毛病，功劳全被同事占了。' },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -3640,12 +3647,12 @@ export const events: Record<string, GameEvent> = {
             ? { tc: s.tc + 25, cash: s.cash + 30, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(25, s.charm + 4), health: s.health - 20, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus 并协助加急批复了 O1 签证！' }
             : { health: s.health - 25, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '佛系跟进，不争不抢',
         effect: (s) => ({ health: s.health + 10, cash: s.cash, message: '反正公司也不差你这一个项目，你按时下班，每天看着同事们卷生卷死。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -3667,7 +3674,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '相信数学，不干预策略 (求稳退守)',
         effect: (s) => ({ health: s.health - 10, cash: s.cash + 15, message: '虽然每天看着回撤心惊肉跳，但你还是忍住了干预的冲动。最终策略慢慢回本，年底拿到了小额 Bonus。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -3680,18 +3687,18 @@ export const events: Record<string, GameEvent> = {
         text: '在湾区看牙医',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: s.cash - 0.5, health: s.health + 10, message: '拔了两颗智齿，虽然有保险，但自付额还是高达 $5000，美国医疗名不虚传。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '买机票回国拔牙！',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: s.cash - 0.2, health: s.health + 20, message: '机票 $1500，拔牙只要 200 块人民币！顺便还能吃顿火锅，身心愉悦！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '吃布洛芬硬抗 (免费)',
         effect: (s) => ({ health: s.health - 20, message: '为了省钱你选择了硬抗，结果引发了感染，痛不欲生。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -3710,12 +3717,12 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash + 15, message: '你买的土狗币居然真的小火了一把！你在高点果断卖出提现，狠赚了一笔！' }
             : { cash: Math.max(0, s.cash - 5), health: Math.max(0, s.health - 7), imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都变成了空气币。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '天上不会掉馅饼，退群保平安',
         effect: (s) => ({ charm: s.charm + 1, message: '你敏锐地察觉到了这是骗局，并且在小红书上发帖曝光，获得了不少点赞。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -3733,12 +3740,12 @@ export const events: Record<string, GameEvent> = {
             ? { charm: s.charm + 10, health: s.health + 10, cash: Math.max(0, s.cash - 0.0015), message: '排队 2 小时买到了。你随手拍的照片加了滤镜发到小红书，居然成了爆款！涨粉 1000 人，极大地满足了虚荣心。' }
             : { health: s.health - 10, cash: Math.max(0, s.cash - 0.0015), message: '在烈日下排队 2 小时，喝了一口发现又贵又难喝，纯纯智商税。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '去大厂食堂薅羊毛拿免费气泡水',
         effect: (s) => ({ health: s.health + 2, cash: s.cash + 0.1, message: '你拒绝被消费主义洗脑。周末假装去公司加班，从 MicroKitchen (MK) 顺走了两罐 La Croix 气泡水和几包零食，完美解决下午茶。' }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -3751,28 +3758,28 @@ export const events: Record<string, GameEvent> = {
         text: '豪华 1b1b (每年 4 万美元): 泳池健身房与全职门卫, 提振相亲社交',
         condition: (s) => s.cash >= 4 || s.tc >= 18,
         effect: (s) => ({ rent: 4, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 15), housing_name: 'San Jose 高级公寓', message: '你搬进了带无边泳池的高级公寓！生活质量飙升！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '和朋友合租 2b2b (每年 2 万美元): 性价比极高的湾区中产标准',
         effect: (s) => ({ rent: 2, housing_name: 'Cupertino 2b2b合租', message: '你搬进了 Cupertino 经典的双主卧合租公寓，省钱又方便。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '挂壁大客厅隔间 (每年 1 万美元): 极致压低开销狂攒首付/防破产',
         effect: (s) => ({ rent: 1, charm: Math.max(0, s.charm - 2), health: Math.max(0, s.health - 10), housing_name: '客厅屏风隔间', message: '你搬回了客厅屏风隔间，将每年固定的房租开销砍到了极致。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '终极挂壁：连夜退租！搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年)',
         condition: (s) => !!(s.car && s.car !== 'none'),
         effect: (s) => ({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(0, s.health - 15), message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '↩️ 算了，目前的房子住得挺好，不搬了',
         effect: (s) => ({ message: '你打消了搬家念头。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -3800,7 +3807,7 @@ export const events: Record<string, GameEvent> = {
             message: ` 稳健盈利！凭借严谨的风险控制与高股息收益，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${profit.toFixed(1)}w 美元)！时间自由，心态极其放松！`
           };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险)',
@@ -3823,7 +3830,7 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险)',
@@ -3855,7 +3862,7 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -3918,7 +3925,7 @@ export const events: Record<string, GameEvent> = {
             }
           }
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【高举高打招聘】重金从 Meta/Google 挖掘顶级大牛核心工程组 (需现金>=15w)',
@@ -3944,7 +3951,7 @@ export const events: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【终局 Exit】考虑公司并购 Acq-hire 或准备 纳斯达克 IPO 敲钟上市',
@@ -4000,7 +4007,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 12),
           message: '资金与资源有限，你决定开源节流，挥泪解雇了一批员工。虽然度过了危机，但公司士气大跌，你的心理压力极大。'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -4014,7 +4021,7 @@ export const events: Record<string, GameEvent> = {
         text: '老老实实搬回湾区租昂贵的公寓 (房租重置为 4w)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ rent: 4, health: s.health - 15, message: '你极不情愿地回到了湾区，每个月的房租让你心如刀割，但至少保住了工作。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '淘宝买物理点击器+找同事代刷工牌 (高风险)',
@@ -4048,7 +4055,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '了解 (Ack)',
         effect: (s) => ({ macro_economy: 'bull', message: '宏观经济进入【狂暴大牛市】！现在大厂疯狂扩招，面试门槛大幅降低，年底 RSU 必定暴涨！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4060,7 +4067,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '了解 (Ack)',
         effect: (s) => ({ macro_economy: 'bear', message: '宏观经济进入【裁员大熊市】！现在求职面试将变成地狱难度 (需要刷海量 LeetCode)，年底 RSU 也会严重缩水！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4072,7 +4079,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '了解 (Ack)',
         effect: (s) => ({ macro_economy: 'neutral', message: '宏观经济回归【正常震荡期】。一切按部就班，靠实力说话。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4095,7 +4102,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '算了吧，安分守己',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '你拒绝了高危的诱惑，每天下午 3 点准时躺在沙发上看 Netflix，这就是 WLB。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4129,7 +4136,7 @@ export const events: Record<string, GameEvent> = {
               : '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
           };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '花 $1w 买全套顶级装备去混圈子',
@@ -4145,12 +4152,12 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash - 1, tc: isUnemployed ? 20 : s.tc + 5, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司，总包大涨！' }
             : { cash: s.cash - 1, health: Math.max(0, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '不去，宅在家打黑神话',
         effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你拒绝了无效社交，在家又通关了一次二郎神，神清气爽。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4163,7 +4170,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '和平分手，资产平分',
         effect: (s) => ({ cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 20), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '花 $10w 请湾区顶级离婚律师打官司 (高风险)',
@@ -4174,7 +4181,7 @@ export const events: Record<string, GameEvent> = {
             ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
             : { cash: (s.cash - 10) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产，你痛心不已！' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '痛哭流涕挽留，发誓每天准时 5 点下班做饭',
@@ -4184,7 +4191,7 @@ export const events: Record<string, GameEvent> = {
             ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
             : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4197,7 +4204,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '逻辑拉满！强势 Carry 狂踩全场 (展现高智商)',
         effect: (s) => ({ charm: Math.max(0, (s.charm || 10) - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你逻辑严密，把全场玩伴的漏洞指得一清二楚，带领好人阵营完胜！但是大家觉得你太有压迫感了，活动结束后没一个人加你微信。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '装小白疯狂给人递水，主打情绪价值',
@@ -4208,7 +4215,7 @@ export const events: Record<string, GameEvent> = {
             ? { charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3), health: Math.min(100, s.health + 10), relationship_status: isMarriedNow ? 'married' : 'dating', message: isMarriedNow ? '你全程温柔体贴，结识了几位同样在大厂的同行好友，社交氛围轻松！' : '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
             : { charm: Math.min(s.max_charm || 25, (s.charm || 10) + 1), health: s.health + 5, cash: Math.max(0, s.cash - 0.2), message: '你跑前跑后伺候大家，当了一整天的“沸羊羊”，虽然交了几个普通朋友，但并没有人看上你。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '发现场地的老板正在招全栈工程师，去聊聊',
@@ -4219,7 +4226,7 @@ export const events: Record<string, GameEvent> = {
             ? { tc: isEmployed ? s.tc + 3 : 0, cash: s.cash + 3, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板塞给你一份兼职外包合同与现金，赚了点外快！' }
             : { message: '你和老板聊了半天，发现对方只是想白嫖你写个订餐小程序，你礼貌地拒绝了。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4235,7 +4242,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, s.charm + 3),
           message: '你顶住了侧拉与脚尖 Hook 挂墙，成功 Top out 登顶！虽然前臂肌肉酸痛，但心理压力一扫而空，神清气爽！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '与旁边脱下镁粉袋的老哥交流动态跳跃 (尝试搭讪拓展人脉)',
@@ -4265,7 +4272,7 @@ export const events: Record<string, GameEvent> = {
                 message: '老哥热情地向你分享了他的动态挂脚技巧，你们加了 Strava 好友，约定下周末继续来刷 V5 路线。'
               };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4281,7 +4288,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, s.charm + 4),
           message: '你的正手上旋与发球统治了全场！球友们直呼“湾区费德勒”，纷纷拉你进南湾高端网球俱乐部群，相亲与社交胜率大增！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '打温和拉球，场下与搭档畅聊 AI 风口与美股',
@@ -4291,7 +4298,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, s.charm + 2),
           message: '打完球后大家在场边喝电解质水，搭档大佬随口指点了你几只算力概念股，你果断跟进，随后获得了 $4w 美金的短期投资回报！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4323,7 +4330,7 @@ export const events: Record<string, GameEvent> = {
                 message: '【体面错付与遗憾】虽然在厨房的交心十分温馨，但心动嘉宾最终在告白夜被另一位进攻性更强的嘉宾打动。你体面送上祝福，真诚克制的表现为你在全网赢得了极佳路人缘。'
               };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【大厂硬核炫技】约会时在白板上手撕红黑树与分布式一致性协议，疯狂输出 TC 与大厂光环',
@@ -4333,7 +4340,7 @@ export const events: Record<string, GameEvent> = {
           leetcode: Math.min(100, s.leetcode + 5),
           message: '【硬核出圈】“约会手撕分布式系统”的名场面直接登顶全网热搜！虽然没能牵手成功，但你被奉为“硅谷最纯粹的硬核做题家码农”，疯狂恰饭赚到了 $3w 品牌代言费！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【顶级海王拉扯】在多个嘉宾之间若即若离，疯狂互发匿名心动短信制造修罗场',
@@ -4353,7 +4360,7 @@ export const events: Record<string, GameEvent> = {
                 message: '【全网被冲】你的多线操作被节目组恶意剪辑成了“湾区海王翻车特辑”，在一亩三分地与小红书被疯狂吃瓜讨论，身心俱疲。'
               };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4371,7 +4378,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 15),
           message: '【VIP 内场狂欢】你的高并发抢票脚本在 0.1 秒内秒杀下两张内场票！在 Levi\'s Stadium 烟火下全场大合唱，身心得到极致释放，朋友圈点赞破 300！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【黄牛高溢价买单】不想费脑子，直接在 StubHub 豪掷千金买下山顶看台票 ($0.8w)',
@@ -4382,7 +4389,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, (s.charm || 10) + 2),
           message: '【千金难买心头好】虽然黄牛溢价让人肉疼，但现场全场挥舞荧光棒的震撼合唱让你彻底忘却了本季度的 Perf 焦虑。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【做黄牛转手套利】用脚本抢下 4 张内场票后直接挂在二手群加价转手，狠赚一笔',
@@ -4392,7 +4399,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.max(10, (s.charm || 10) - 1),
           message: '【理财奇才】抢到的门票转手被南湾富二代高价秒抢，净赚 $2.5w 零花钱！虽然被朋友吐槽为“黄牛码农”，但实打实的现金落袋为安。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '理智消费：在体育场外草坪“挂壁”听免费漏音',
@@ -4400,7 +4407,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 5),
           message: '你带着折叠椅和野餐垫坐在场外草坪上，吹着加州晚风听着里面的合唱，一分钱没花也感受到了现场的欢乐。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4418,7 +4425,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 15),
           message: '【成为嫡系】Demo 在社交平台爆火百万转发，VP 逢人便夸你是他的核心技术心腹，年底直接为你破格申请了 +$3w 调薪！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【硬核技术死磕】在架构评审会上当众用指标与延迟打脸 VP 的花架子 PPT',
@@ -4436,7 +4443,7 @@ export const events: Record<string, GameEvent> = {
                 message: '【惨遭穿小鞋】网红 VP 表面微笑着说“Very good feedback”，私下却把最脏最累的 Oncall 维护活全部分配给了你。'
               };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【冷眼吃瓜刷题】在会议室关麦静音，一边看 VP 吹水一边狂刷 LeetCode 备战跳槽',
@@ -4445,7 +4452,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 5),
           message: '【以静制动】你看着 VP 在 PPT 里堆砌各种虚假 AI 概念，内心毫无波澜地刷完了 5 道 Hard 题，随时准备拿着大包跳槽脱离苦海。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4461,7 +4468,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, s.charm + 3),
           message: '站在 Mission Peak 顶峰俯瞰整个旧金山湾区与 237 公路！你在拔剑柱前拍的帅气写真在朋友圈和小红书获得了上百个赞！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '中途在草地上躺平休养，呼吸湾区新鲜空气',
@@ -4469,7 +4476,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 18),
           message: '阳光洒在身上，看着远处的牛群与红木山谷，你久违地感受到了灵魂的放松与惬意。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4486,7 +4493,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, s.charm + 4),
           message: '太平洋的海浪与彩虹彻底洗去了写代码的疲惫！你的体能恢复满格，带着一身健康的阳光小麦肤色重返硅谷！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '海景酒店阳台躺平，听海浪声睡三整天 (花费 $0.4w)',
@@ -4495,7 +4502,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 22),
           message: '彻底关闭 Slack 和 Outlook 提醒！在海浪声中睡到了自然醒，Burnout 症状被完美治愈。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4512,7 +4519,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(25, s.charm + 5),
           message: '你享受了最高规格的日式招待！品尝了顶配和牛与怀石料理，在银座彻底放空身心！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '富士山小木屋温泉私汤连泡 5 天 (消耗 $0.8w)',
@@ -4521,7 +4528,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 20),
           message: '望着富士山雪景泡温泉，热气腾腾中所有的湾区职场焦虑烟消云散！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4538,7 +4545,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 10),
           message: '车友会里藏龙卧虎！你结识了一位科技基金合伙人，对方为你推荐了一个高薪岗位机会，TC 再次提升！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '下场 17-Mile 沿海公路体验极限跑山 (消耗 $0.5w)',
@@ -4548,7 +4555,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4565,7 +4572,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 15),
           message: '烤肉香气扑鼻，大家纷纷夸赞你的眼光与房产品质！社交圈口碑暴涨！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '拍摄全套 Home Decor 发小红书“湾区买房心得”',
@@ -4574,7 +4581,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, (s.luck || 20) + 5),
           message: '爆款文章收割了上千点赞！你成为了小红书湾区家居/房产圈的顶流 Blogger！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4591,7 +4598,7 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash + 100, message: '爆火升值！你投资的 AI 独角兽被巨头高价买断，天使轮获得 5 倍天价回报 (+$100w)！' }
             : { cash: Math.max(0, s.cash - 20), health: s.health - 10, message: 'AI 大模型算力消耗太快，创业团队见底倒闭。你交了 20 万美元天使投资学费。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '观望不投，只去品尝顶级红酒与交流网络',
@@ -4600,7 +4607,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 5),
           message: '你保持了理智，蹭到了昂贵的红酒并拓展了资本圈高管人脉。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4616,7 +4623,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 15),
           message: '你白加黑倒时差工作了两周，终于等到了 Passport 带着 Stamp 寄回！成功惊险返美！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '联系公司法务开具紧急加急信 (Expedite Request)',
@@ -4627,7 +4634,7 @@ export const events: Record<string, GameEvent> = {
             ? { health: Math.min(100, s.health + 5), message: '加急信生效！领事馆提早批复了你的 Visa Stamp，你顺利搭上返美航班！' }
             : { health: s.health - 10, cash: Math.max(0, s.cash - 1), message: '领事馆回复“标准审查无法加急”，你被迫在加州时间深夜远程办公，精疲力竭。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【永久居民 / AP 回美证免签】出示美国护照/绿卡或 AP Combo 卡直接入境',
@@ -4635,7 +4642,7 @@ export const events: Record<string, GameEvent> = {
         effect: () => ({
           message: '你手握美国绿卡/护照或 I-485 附带的 Advance Parole (AP) Combo 回美卡，在海关 CBP 轻松查验直接入境，无需经历领事馆面签与 Check 煎熬！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4652,7 +4659,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 5),
           message: '成功拿到了 300,000 Amex/Chase 积分！直接兑换了旧金山直飞东京的日航全平躺头等舱，精算理财智商彻底碾压同行！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【DoorDash 薅羊毛】研究 Uber Eats / DoorDash 满减优惠券',
@@ -4660,7 +4667,7 @@ export const events: Record<string, GameEvent> = {
           cash: s.cash + 0.3,
           message: '虽然每天在不同 App 里切账号领优惠券只省了几百刀，但薅到羊毛的成就感让你乐此不疲！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4677,7 +4684,7 @@ export const events: Record<string, GameEvent> = {
           tc: s.tc > 0 ? s.tc + 5 : s.tc,
           message: '你成为了组里的 Vibecoding 大师！别人用两周写的功能你半天提交 PR，经理惊呼你一个人就是一支队伍！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【生成式 AI 幻觉】全信 AI 自动生成的代码，未审核直接 Push 到 Production 生产环境！',
@@ -4687,7 +4694,7 @@ export const events: Record<string, GameEvent> = {
             ? { luck: Math.min(99, (s.luck || 20) + 5), cash: s.cash + 2, message: '产线竟然零报错无缝运行！用户量大增，领导夸赞你产出惊人！' }
             : { health: Math.max(0, s.health - 15), message: 'AI 幻觉写出了逻辑死锁导致大厂全网宕机 2 小时！你半夜被 PagerDuty 电话叫醒去改底层 C++！' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4704,7 +4711,7 @@ export const events: Record<string, GameEvent> = {
           job_type: 'startup',
           message: 'a16z 领投种子轮！获得 $15 万美金天使现金，你登上了 TechCrunch 头条，成为硅谷最炙手可热的 AI Agent 创业明星！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【开源上星】在 GitHub 开源该项目，收割 15k Stars',
@@ -4714,7 +4721,7 @@ export const events: Record<string, GameEvent> = {
           leetcode: Math.min(100, s.leetcode + 10),
           message: '项目登上了 GitHub Trending 榜首！全球几万开发者给你送 Star，连 Sam Altman 都转发了你的 Tweet！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4731,7 +4738,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm || 25, s.charm + 3),
           message: '你升任了 EM 管理岗！TC 飙升，但每天要在各类汇报与背 PIP 的沉重压力下度过，白头发暴增。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【死守 IC 架构师】做纯粹的技术专家，拒绝开扯皮管理会',
@@ -4740,7 +4747,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 10),
           message: '你守住了纯粹技术人的尊严！虽然放弃了管理岗加薪，但工作与生活恢复了健康平衡！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4757,7 +4764,7 @@ export const events: Record<string, GameEvent> = {
           luck: Math.min(99, s.luck + 5),
           message: '你成为了公司的 AI 转型功臣！不仅免受裁员波及，还被 VP 点名表彰带头领跑 AI 新时代！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【死守传统底层系统】强调 Legacy Code 维护的重要性与安全性',
@@ -4783,7 +4790,7 @@ export const events: Record<string, GameEvent> = {
           health: s.health + 5,
           message: '你痛心地划走了 3.5 万美金！但修缮后的房子在 Zillow 上的估值立刻大涨，房屋安全性大增。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【加入 HOA 业委会抗争】在社区业主大会上与 HOA 主席展开大战',
@@ -4792,7 +4799,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 15),
           message: '你在邻居群里化身意见领袖，成功把摊派金额砍到了 $1.5w！虽然省了钱，但整整三个星期都在和业委会扯皮，身心俱疲。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4808,7 +4815,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 25),
           message: '健康就是最大的财富！经过半年的体能恢复，你的身体各项指标全面回归正常，神清气爽！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【轻伤不下火线】吃降压药硬抗，继续为下一个 Promotable Project 拼命',
@@ -4818,7 +4825,7 @@ export const events: Record<string, GameEvent> = {
           tc: (s.job_type === 'unemployed' || s.laid_off) ? 0 : s.tc + 5,
           message: '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4835,7 +4842,7 @@ export const events: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm || 25, s.charm + 3),
           message: '你和伴侣达成了 DINK 共识！没有育儿焦虑与学区房负担，两人每年满世界度假，生活滋润无比！'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【抢学区房鸡娃】买 Fremont 10 分学区房，报名卡内基梅隆机器人夏令营 (消耗 $15w 现金)',
@@ -4848,7 +4855,7 @@ export const events: Record<string, GameEvent> = {
           housing_name: s.housing_name === 'Atherton 顶级豪宅' ? 'Atherton 顶级豪宅' : 'Fremont 10分学区房',
           message: '你步入了湾区老爹鸡娃正轨！社区邻居全是高强度卷 AMC10 的硅谷大佬，每天陪娃解题虽然辛苦但充实。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4868,7 +4875,7 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash + 15, stocks: boostedStocks, macro_economy: 'bull', luck: Math.min(99, s.luck + 5), message: 'AI 牛市暴发！英伟达股价创历史新高，你持有的科技股账户飙升 35%！净资产暴涨！' }
             : { cash: Math.max(0, s.cash - 5), stocks: droppedStocks, macro_economy: 'bull', message: '追高在阶段性山顶！财报后利好出尽遭资金砸盘，你持有的科技股下跌 15%，现金被套牢。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【落袋为安抛售套现】把归属的 RSU 及时 Sell，锁住现金买国债/S&P500',
@@ -4877,7 +4884,7 @@ export const events: Record<string, GameEvent> = {
           macro_economy: 'bull',
           message: '你稳健落袋为安！拿着现金稳稳躺赚高息，理财心态稳如老狗。'
         }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4890,12 +4897,12 @@ export const events: Record<string, GameEvent> = {
         text: '大方随份子钱并出席 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(30, s.charm + 1), health: s.health - 5, message: '你强颜欢笑在 Napa 酒庄吃了一顿精致但毫无味道的西餐，包了 $2000 的份子钱，心里拔凉拔凉的。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '装没看见，默默拉黑',
         effect: (s) => ({ network: Math.max(0, s.network - 5), health: Math.min(100, s.health + 5), message: '你选择无视请柬并删除了对方的好友。圈子里传言你“格局太小”，人脉受损，但你觉得心情舒畅多了！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4912,13 +4919,13 @@ export const events: Record<string, GameEvent> = {
             ? { health: s.health - 10, charm: Math.min(30, s.charm + 1), message: '花了 6 个小时，你终于把衣柜拼好了！虽然累得腰酸背痛，但伴侣对你崇拜有加，感情升温！' }
             : { health: s.health - 15, message: '拼到一半发现一块核心木板装反了，必须要全部拆掉重来...伴侣在旁边叹气，两人不欢而散。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '花钱消灾，直接请 TaskRabbit 师傅 (花费 $0.1w)',
         condition: (s) => s.cash >= 0.1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), health: Math.min(100, s.health + 5), message: '你果断打开 TaskRabbit 花了 $1000 请了墨西哥老哥。半小时搞定，你们开开心心出门吃大餐去了。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   }
@@ -4931,12 +4938,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '通宵 48 小时手写 Recovery 恢复脚本救回权重',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), message: '凭借硬核的 Infra 恢复脚本，你奇迹般地挽回了 90% 的权重数据，VP 在 Slack 全员频道为你点赞！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '果断甩锅给基础设施 Infra 部门，关掉手机继续睡觉',
         effect: (s) => ({ health: Math.min(100, s.health + 10), network: Math.max(0, (s.network || 0) - 3), message: '第二天 Infra 组扛下了所有责任，你虽然保住了睡眠，但跟 Infra 组领队关系降到了冰点。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4948,12 +4955,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '主动约新 Manager 1:1，带上精心准备的 30 页 PPT 汇报展现价值',
         effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), health: Math.max(0, s.health - 10), message: '你的主动与专业打动了新老板，成功保住了原本的项目 Owner 身份！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '彻底失望，借机关摄像头狂刷 LeetCode 准备跳槽',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 15), health: Math.max(0, s.health - 10), message: '你在摸鱼中狂刷了 50 道 Hard 题，算法功力大增，准备随时寻找下家！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4965,12 +4972,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '自告奋勇担任 Head of Spatial App 领头人',
         effect: (s) => ({ tc: s.tc + 3, health: Math.max(0, s.health - 15), message: '你成为了公司内部空间计算的第一专家，产品上线后获得了大批关注！总包获得增长！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '体验完 3D 效果后吐槽“戴着颈椎酸痛”，按部就班写网页版代码',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '你维持了健康的生活节奏，避开了空间计算概念退潮后的热度崩塌。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -4983,12 +4990,12 @@ export const events: Record<string, GameEvent> = {
         text: '自认倒霉走自付费 Deductible 换玻璃 (消耗 $0.1w)',
         condition: (s) => s.cash >= 0.1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), health: s.health - 5, message: '你自费修好了车窗玻璃，领教到了旧金山最真实的治安“震撼”。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '拍照发小红书“旧金山治安体验”，引发热烈围观',
         effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: s.health - 5, message: '你的小红书帖子获得了 300+ 赞，不少湾区博主在评论区感同身受地交流防砸车经验。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5001,12 +5008,12 @@ export const events: Record<string, GameEvent> = {
         text: '入坑购买 2 箱高端红酒并订阅 Wine Club 会员 (花费 $0.8w)',
         condition: (s) => s.cash >= 0.8,
         effect: (s) => ({ cash: s.cash - 0.8, charm: Math.min(25, s.charm + 4), health: Math.min(100, s.health + 10), message: '你体验到了正宗的湾区中产生活方式，品味大幅上升，社交话题更加丰富！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '纯打卡拍照发朋友圈，喝葡萄汁享受阳光',
         effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(25, s.charm + 2), message: '纳帕谷的明媚阳光与绿油油的葡萄园让你极度放松，身心得到了全面滋养！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5019,12 +5026,12 @@ export const events: Record<string, GameEvent> = {
         text: '刷信用卡加码买入 2 块金条避险 (消耗 $0.4w 现金)',
         condition: (s) => s.cash >= 0.4,
         effect: (s) => ({ cash: s.cash - 0.4, luck: Math.min(99, s.luck + 2), message: '你成功抢到了两块实物金条装进保险柜，踏实感满满！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '吐槽“码农盲目跟风”，转身买了两盒烤鸡和热狗回家',
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.02), health: Math.min(100, s.health + 5), message: '啃着 $4.99 美元的 Costco 烤鸡，你觉得这才是实打实的性价比自由。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5036,12 +5043,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '讲座后抢占 Q&A 提问环节，自信展示技术见解',
         effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), charm: Math.min(25, s.charm + 3), message: '你的提问得到了老黄的幽默点评，现场几位 VC 主动递上了名片！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '默默听完讲座，去大学路吃一碗热气腾腾的拉面',
         effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(25, s.charm + 1), message: '顶级思维碰撞加上一碗热拉面，让你度过了一个充实而愉快的周五夜晚。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5053,12 +5060,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '吓出一身冷汗，立刻双手接管车轮',
         effect: (s) => ({ health: Math.max(0, s.health - 5), leetcode: s.leetcode + 3, message: '你惊险避免了后车追尾！经此一役，你对自动驾驶边界条件有了更深的工程体会。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '把行车记录仪视频剪辑发 YouTube / B站爆火',
         effect: (s) => ({ charm: Math.min(25, s.charm + 4), message: '你的幽灵刹车测试视频获得了 50,000+ 播放，吸引了大批极客粉丝关注！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   }
@@ -5072,7 +5079,7 @@ export const events: Record<string, GameEvent> = {
         text: '咬牙全额缴纳补充房产税账单 (消耗 $3w 现金)',
         condition: (s) => s.cash >= 3,
         effect: (s) => ({ cash: s.cash - 3, health: s.health - 5, message: '你一次性补齐了 $3w 房产税账单，虽然心痛不已，但保住了房产产权。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '聘请专业 Property Tax Appeal 申诉律师写辩护书 (花费 $1w 律师费)',
@@ -5083,13 +5090,13 @@ export const events: Record<string, GameEvent> = {
             ? { cash: s.cash - 1, charm: Math.min(25, s.charm + 2), message: '律师出面成功证明了评估值虚高，帮为你减免了绝大部分额外房产税！胜诉！' }
             : { cash: s.cash - 4, health: s.health - 10, message: '申诉失败，你不仅补缴了 $3w 房产税，还倒贴了 $1w 律师费！痛苦加倍。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '现金吃紧，向县政府申请税款延期与分期还款协议 (健康 -10)',
         condition: (s) => s.cash < 1,
         effect: (s) => ({ health: Math.max(0, s.health - 10), message: '在复杂的延期申诉流程后，你成功申请了税款分期，暂时化解了滞纳金危机。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5102,19 +5109,19 @@ export const events: Record<string, GameEvent> = {
         text: '花钱消灾，直接缴纳天价赎车费与维修费 (消耗 $2w 现金)',
         condition: (s) => s.cash >= 2,
         effect: (s) => ({ cash: s.cash - 2, health: s.health - 5, message: '你一次性掏出 $2w 赎回了豪车并修好了大灯。高阶玩家的烦恼往往就是这么朴实无华。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '找律师控诉并录制视频发小红书/YouTube 曝光 (消耗 $0.5w 现金)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: s.cash - 0.5, health: s.health - 10, charm: Math.min(25, s.charm + 3), message: '你的曝光视频引发了舆论关注，拖车公司迫于压力退还了赎车费，但你折腾得精疲力竭。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '现金不足，强行刷信用卡透支支付赎车费 (健康 -10)',
         condition: (s) => s.cash < 0.5,
         effect: (s) => ({ health: Math.max(0, s.health - 10), cash: s.cash - 0.5, message: '在现金彻底见底的情况下，你不得不信用卡透支结清拖车费赎回了车辆。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5126,12 +5133,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '通宵加班重头学习最新 Infra 业务架构',
         effect: (s) => ({ health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 10), message: '凭着硬核的学习能力，你咬牙掌握了新架构，重新站稳了团队的核心位置！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '极度挫败！因长期未手写底层代码，算法实力与热情下滑',
         effect: (s) => ({ leetcode: Math.max(20, s.leetcode - 15), health: Math.min(100, s.health + 5), message: '长期从事高层画饼与 PPT 汇报，导致你的手写算法功力大幅生疏，算法实力下滑。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5144,19 +5151,19 @@ export const events: Record<string, GameEvent> = {
         text: '聘请顶级 CPA 注册会计师与税务律师处理 (消耗 $4w 现金)',
         condition: (s) => s.cash >= 4,
         effect: (s) => ({ cash: s.cash - 4, message: '顶级 CPA 出面帮你处理了所有复杂的税务审计纠纷，彻底平息了 IRS 查账危机！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w 现金)',
         condition: (s) => s.cash >= 2.5,
         effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(0, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '资金吃紧，向 IRS 申请分期付款协议 (IA Plan) 并配合补交材料 (健康 -15)',
         condition: (s) => s.cash < 2.5,
         effect: (s) => ({ health: Math.max(0, s.health - 15), message: '经过漫长的电话排队与表格递交，你成功与 IRS 达成了分期付款协议。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5168,13 +5175,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '通宵手写 SQL 脚本与备份恢复',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), message: '凭借硬核的数据库恢复功底，你连夜恢复了绝大部分备份，保住了生产环境！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '甩锅给大模型 API 供应商，申请专项赔偿 (消耗 $0.5w)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), cash: Math.max(0, s.cash - 0.5), message: '虽然倒贴了一些补偿金，但团队把主要责任交给了云端模型供应商的幻觉缺陷。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5187,19 +5194,19 @@ export const events: Record<string, GameEvent> = {
         text: '调教 Agent 替你跑抓取与总结邮件 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), leetcode: Math.min(100, s.leetcode + 4), health: Math.min(100, s.health + 5), message: '本地 OpenClaw 部署成功！虽然折腾 YAML 配置有点累，但 Agent 帮处理了不少琐碎爬虫与邮件任务。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '折腾三天环境，发小红书“湾区码农客厅 AI 服务器” (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 2), message: '你的客厅 Mac Mini 服务器组照获得了 200+ 赞，不少极客同仁在评论区交流开源部署心得。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '资金吃紧，改在旧电脑上配置免费开源 Local Model 尝试轻量测试',
         condition: (s) => s.cash < 0.2,
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 2), message: '你在旧设备上搭建了轻量版本地 Agent，虽然算力有限但体验了本地 AI 的乐趣。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5211,13 +5218,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '定时提现副业收益 (现金 +$12w)',
         effect: (s) => ({ cash: s.cash + 12, health: Math.max(0, s.health - 5), message: 'Multi-Agent 自动套利脚本为你带来了 $12w 额外副业现金流！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '规模过大被 Cloudflare 封禁 IP，倒贴伺服器租金 (消耗 $1w)',
         condition: (s) => s.cash >= 1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 1), message: '频繁并发触发了云端防爬虫拦截，脚本失效并损失了一笔服务器租金。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5229,13 +5236,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '坚称“这是极客硬核文化与 WLB 的象征”',
         effect: (s) => ({ charm: Math.max(0, s.charm - 3), health: Math.min(100, s.health + 5), message: '你维持了自己的穿搭习惯，但在朋友眼里你的精致度与个人形象有所减分。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '痛下决心，去 Santana Row 购买几套修身休闲装 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 3), message: '换上合身的新衣服后，你整个人精神焕发，颜值与个人吸引力大幅提升！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5247,12 +5254,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '在评论区与发帖总监论战维护尊严',
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 5), health: Math.max(0, s.health - 5), message: '你在评论区的生硬辩解招致了更多业内大佬的抵触，人脉网络受损。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '私信向对方诚恳致歉并主动关闭脚本',
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), charm: Math.min(25, s.charm + 1), message: '你的诚恳态度平息了波澜，成功控制住了负面影响。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5264,13 +5271,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '亲自下场在论坛回复发帖与前任对撕澄清',
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 5), charm: Math.max(0, s.charm - 4), health: Math.max(0, s.health - 10), message: '两人的互撕引发了千人围观吃瓜，你在湾区华人圈与同组同事面前丢尽了颜面，人脉与形象重创！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '装作没看见并找论坛管理员申请隐去敏感信息 (花费 $0.1w)',
         condition: (s) => s.cash >= 0.1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), network: Math.max(0, (s.network || 0) - 2), charm: Math.max(0, s.charm - 2), message: '论坛管理员删除了包含个人身份的信息，虽然负面影响逐渐平息，但你依然社死休养了半个月。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5282,13 +5289,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '无视它，“程序员靠硬核算法实力说话，不靠颜值”',
         effect: (s) => ({ charm: Math.max(0, s.charm - 4), health: Math.max(0, s.health - 5), message: '你放任了体态衰退，虽然省下了精力，但在同龄社交局中显得愈发沧桑。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '预约土耳其植发与高端体态矫正普拉提 (花费 $0.5w)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '植发与体态矫正效果显著！你的精气神与个人吸引力大幅度恢复！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5300,13 +5307,13 @@ export const events: Record<string, GameEvent> = {
       {
         text: '继续宅在宿舍/家里，下班打单机游戏',
         effect: (s) => ({ charm: Math.max(0, s.charm - 3), network: Math.max(0, (s.network || 0) - 3), health: Math.min(100, s.health + 5), message: '你沉浸在宅家快乐中，但你的社交朋友圈与个人形象进一步萎缩。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '强迫自己报名湾区狼人杀局与攀岩圈 (花费 $0.05w)',
         condition: (s) => s.cash >= 0.05,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), charm: Math.min(25, s.charm + 2), network: Math.min(100, (s.network || 0) + 3), message: '在桌游与攀岩中你结识了多位开朗的新朋友，重新找回了社交节奏！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5318,12 +5325,12 @@ export const events: Record<string, GameEvent> = {
       {
         text: '接下品牌商业植入推广，开启副业变现！',
         effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 1), message: ' 爆款变现！商业合作广告大获成功，你轻松斩获 $2w 美元额外副业收益！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '保持纯粹，只分享生活日常，拒绝硬广洗脑',
         effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 5), message: '你的真实与接地气圈粉无数，获得了绝佳的粉丝口碑！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5336,18 +5343,18 @@ export const events: Record<string, GameEvent> = {
         text: '全程陪同！请假带爸妈自驾一号公路去 17 Mile 与 Napa 品酒 (花费 $0.3w)',
         condition: (s) => s.cash >= 0.3,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.3), health: Math.min(100, s.health + 5), charm: Math.min(25, s.charm + 2), network: Math.min(100, (s.network || 0) + 2), message: '虽然老妈一路吐槽加州紫外线强且嫌纳帕红酒贵，但看到朋友圈晒满照片并收获老家亲戚数百赞，你感受到了久违的家庭温暖。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '给爸妈报华人大巴老年团，让他们自己去黄石公园与大峡谷 (花费 $0.15w)',
         condition: (s) => s.cash >= 0.15,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.15), health: Math.min(100, s.health + 5), message: '老两口在大巴团里结识了一圈同龄阿姨叔叔，每天聊得热火朝天，顺便还帮你拉到了几个潜在相亲对象的信息。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '工作太忙无暇陪同，让爸妈自己在 South Bay 散步看戏',
         effect: (s) => ({ health: Math.max(0, s.health - 5), message: '老爸因后院翻土种韭菜遭到了 HOA 邻居联名警告，老妈抱怨湾区除了大超市啥都没有像大农村，老两口带着满腹牢骚提前回国了。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   },
@@ -5365,18 +5372,18 @@ export const events: Record<string, GameEvent> = {
             ? { cash: Math.max(0, s.cash - 0.02), charm: Math.min(25, s.charm + 2), health: Math.max(0, s.health - 3), message: '排队 2.5 小时终于喝到了！随手加了滤镜发小红书获得了 200+ 点赞，极大满足了湾区潮人的虚荣心！' }
             : { cash: Math.max(0, s.cash - 0.02), health: Math.max(0, s.health - 6), message: '排队两小时，一口喝下去发现又甜又贵纯纯智商税！不仅被加州阳光晒脱皮，还因高糖奶茶腹泻了半天。' };
         },
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '闪送黄牛代排！多花钱找跑腿黄牛送至办公室 (花费 $0.08w)',
         condition: (s) => s.cash >= 0.08,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.08), charm: Math.min(25, s.charm + 1), message: '多花了几万韩元/跑腿费免去了排队晒太阳之苦，你在办公室悠闲地喝着网红奶茶，收获了同事羡慕的目光。' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '清流拒绝！去大厂 MicroKitchen (MK) 薅免费 LaCroix 气泡水',
         effect: (s) => ({ health: Math.min(100, s.health + 5), cash: s.cash + 0.05, message: '你拒绝了消费主义洗脑。周末假装去公司加班，从 MicroKitchen (MK) 顺走了两罐气泡水与坚果，省钱又健康！' }),
-        nextEventId: 'sv_daily_life'
+        nextEventId: 'sv_year_end_settlement'
       }
     ]
   }

@@ -176,10 +176,14 @@ export const midYearEventRouter = (s: GameState): string => {
   }
 
   if (isWorking) {
-      lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode');
+      lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode', 'team_offsite');
       if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') {
           lifeEvents.push('ex_1point3acres_expose');
       }
+  }
+
+  if (isWorking && Math.random() < 0.20) {
+    return 'team_offsite';
   }
 
   if (!s.is_married) {
@@ -2394,6 +2398,41 @@ export const events: Record<string, GameEvent> = {
         text: '准点下班，躺平拿 Meets (保重身体)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
+        nextEventId: 'sv_daily_life',
+      }
+    ]
+  },
+  'team_offsite': {
+    id: 'team_offsite',
+    title: ' Tahoe / Hawaii 部门 Team Offsite 免费团建大游',
+    description: '部门老板今年预算充沛，全组飞往 Lake Tahoe 豪华雪山木屋与 Hawaii 夏威夷海滩，开启为期 3 天的公费 Team Offsite 度假！不用干活，全额报销，全组同事开启狂欢度假模式。',
+    choices: [
+      {
+        text: '【打卡户外与极限运动】参加 Lake Tahoe 滑雪 / Hawaii 冲浪 & 纳帕酒庄品酒',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 10),
+          charm: Math.min(25, (s.charm || 10) + 1),
+          message: '【爽玩雪山与海滩】打卡了顶级雪道与海滩冲浪！全额公费报销，身心得到了放松与充电 (健康 +10)！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【深夜酒吧与德州扑克】和组员喝精酿鸡尾酒、打德扑、聊湾区八卦与职场内幕',
+        effect: (s) => ({
+          network: Math.min(99, (s.network || 10) + 4),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          health: Math.min(100, s.health + 5),
+          message: '【八卦与社交收获】在晚宴酒桌与德扑桌上畅饮谈笑，拉近了与组内同事和小领导的关系 (人脉 +4, 魅力 +2)。'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【奢华米其林与 SPA 纯躺平】睡到自然醒，吃爆公司全额报销的奢华海鲜米其林大餐',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 12),
+          cash: s.cash + 0.2,
+          message: '【公费惬意躺平】抛开一切工作 Slack 消息，在奢华度假村享受 SPA 与米其林大餐，身心得到了良好恢复 (健康 +12)。'
+        }),
         nextEventId: 'sv_daily_life',
       }
     ]

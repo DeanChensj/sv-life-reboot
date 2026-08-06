@@ -75,6 +75,9 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Allow all system and browser hotkeys (Cmd+C, Ctrl+C, Cmd+R, etc.) to pass through
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
       const target = e.target as HTMLElement;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
 
@@ -158,6 +161,7 @@ export default function App() {
     showWarReport,
     showAchievementCodex,
     isShopOpen,
+    isMobileStatsOpen,
   ]);
 
   const handleChoice = (choice: Choice) => {

@@ -1,57 +1,47 @@
-name: Deploy to GitHub Pages
+name: CI/CD Pipeline & Automatic Deployment
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
-# 设置权限允许 GITHUB_TOKEN 部署到 GitHub Pages
+# 赋予 GITHUB_TOKEN 写权限以实现全自动 CI/CD 发布
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# 允许一个并发部署
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  ci-cd:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 1. Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: 2. Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: 3. Install Dependencies
         run: npm ci
 
-      - name: Run Test Suite
+      - name: 4. [CI] Run Full Automated Test Suite (10,000 Fuzzing & Invariants)
         run: npm test
 
-      - name: Build
+      - name: 5. [CI] Build Production Bundle (Vite + TypeScript)
         run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: 6. [CD] Deploy to GitHub Pages Automatically
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: './dist'
+          folder: dist
+          branch: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
 
 
 

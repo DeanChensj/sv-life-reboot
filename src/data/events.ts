@@ -284,7 +284,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'choose_year',
       },
       {
-        text: '【卷王之王】天生做题家，算法天赋极高（初始刷题+35），拥有极强的抗压耐受力，大厂内卷与跳槽如鱼得水。',
+        text: '【卷王之王】天生做题家，算法天赋极高，拥有极强的抗压耐受力，大厂内卷与跳槽如鱼得水。',
         effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 35, health: Math.max(90, s.health - 8), network: 15, win_threshold: 380 }),
         nextEventId: 'choose_year',
       },

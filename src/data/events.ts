@@ -91,6 +91,8 @@ export const generateInitialState = (): GameState => {
     status: 'playing',
     npcs: {},
     story_flags: {},
+    timeline: [],
+    history_net_worth: [],
     message: bgMessage
   };
 };
@@ -2048,7 +2050,67 @@ export const events: Record<string, GameEvent> = {
               meritMsg = `  凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
             }
 
-           return { 
+           const newNetWorth = finalCash + currentStocks;
+            const newHistory = [
+              ...(s.history_net_worth || []),
+              {
+                age: s.age,
+                year: s.year,
+                netWorth: parseFloat(newNetWorth.toFixed(1)),
+                cash: parseFloat(finalCash.toFixed(1)),
+                stocks: parseFloat(currentStocks.toFixed(1))
+              }
+            ];
+
+            let newTimeline = [...(s.timeline || [])];
+            let newStoryFlags = { ...(s.story_flags || {}) };
+
+            if (newNetWorth >= 100 && !newStoryFlags.milestone_100w) {
+              newStoryFlags.milestone_100w = true;
+              newTimeline.push({
+                age: s.age,
+                year: s.year,
+                title: '资产跨越: 个人净资产突破 $100 万美元',
+                description: '恭喜！扣除所有开支与税费，你的流动净资产正式突破百万美元大关！迈出财务自由扎实一步！',
+                category: 'wealth',
+                statHighlight: `$${newNetWorth.toFixed(1)}w`
+              });
+            }
+            if (newNetWorth >= 300 && !newStoryFlags.milestone_300w) {
+              newStoryFlags.milestone_300w = true;
+              newTimeline.push({
+                age: s.age,
+                year: s.year,
+                title: '资产跨越: 个人净资产突破 $300 万美元',
+                description: '通过薪资结余与资本市场复利积累，你的净资产已达 300 万美元，生活从容度大幅提升！',
+                category: 'wealth',
+                statHighlight: `$${newNetWorth.toFixed(1)}w`
+              });
+            }
+            if (newNetWorth >= 500 && !newStoryFlags.milestone_500w) {
+              newStoryFlags.milestone_500w = true;
+              newTimeline.push({
+                age: s.age,
+                year: s.year,
+                title: '里程碑: 达成基础 FIRE 财务自由 ($500w)',
+                description: '资产突破 500 万美元！即使每年 4% 安全提款率也能覆盖湾区高品质生活，提前退休大门已为你敞开！',
+                category: 'milestone',
+                statHighlight: `$${newNetWorth.toFixed(1)}w FIRE`
+              });
+            }
+            if (newNetWorth >= 800 && !newStoryFlags.milestone_800w) {
+              newStoryFlags.milestone_800w = true;
+              newTimeline.push({
+                age: s.age,
+                year: s.year,
+                title: '里程碑: 达成舒适级 FIRE 财务自由 ($800w)',
+                description: '资产突破 800 万美元！坐拥丰厚股票持仓与优质被动现金流，跻身硅谷高净值自由阶层！',
+                category: 'milestone',
+                statHighlight: `$${newNetWorth.toFixed(1)}w 舒适 FIRE`
+              });
+            }
+
+            return { 
               mid_year: false,
               season_stage: undefined,
               age: s.age + 1, 
@@ -2063,6 +2125,9 @@ export const events: Record<string, GameEvent> = {
               tc: updatedTC,
               health: newHealth,
               macro_economy: newEconomy,
+              story_flags: newStoryFlags,
+              timeline: newTimeline,
+              history_net_worth: newHistory,
               message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
            };
         },

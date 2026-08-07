@@ -6,6 +6,7 @@ interface BentoStatsPanelProps {
   currentEventId: string;
   onOpenCodex?: () => void;
   onOpenShop?: () => void;
+  onOpenTimeline?: () => void;
   onToggleSound?: () => void;
   isMuted?: boolean;
   hasOpenedShop?: boolean;
@@ -16,6 +17,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   currentEventId,
   onOpenCodex,
   onOpenShop,
+  onOpenTimeline,
   onToggleSound,
   isMuted,
   hasOpenedShop = false,
@@ -297,6 +299,15 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
               >
                 <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
                 <span>[C] 图鉴</span>
+              </button>
+            )}
+            {onOpenTimeline && (
+              <button
+                onClick={onOpenTimeline}
+                className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-sky-500/10 active:scale-95 transition-all cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>[T] 大事记</span>
               </button>
             )}
           </div>

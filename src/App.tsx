@@ -13,6 +13,7 @@ const WarReportModal = lazy(() => import('./components/WarReportModal').then(m =
 const AchievementCodexModal = lazy(() => import('./components/AchievementCodexModal').then(m => ({ default: m.AchievementCodexModal })));
 const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
 const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
+const CareerTimelineModal = lazy(() => import('./components/CareerTimelineModal').then(m => ({ default: m.CareerTimelineModal })));
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(generateInitialState);
@@ -24,6 +25,7 @@ export default function App() {
   const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
+  const [showCareerTimeline, setShowCareerTimeline] = useState<boolean>(false);
   const [isShopOpen, setIsShopOpen] = useState<boolean>(false);
   const [hasOpenedShop, setHasOpenedShop] = useState<boolean>(false);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
@@ -83,11 +85,12 @@ export default function App() {
       const target = e.target as HTMLElement;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
 
-      if (showWelcome || showCharacterPass || showWarReport || showAchievementCodex || isShopOpen || isMobileStatsOpen) {
+      if (showWelcome || showCharacterPass || showWarReport || showAchievementCodex || showCareerTimeline || isShopOpen || isMobileStatsOpen) {
         if (e.key === 'Escape') {
           if (isMobileStatsOpen) setIsMobileStatsOpen(false);
           else if (isShopOpen) setIsShopOpen(false);
           else if (showAchievementCodex) setShowAchievementCodex(false);
+          else if (showCareerTimeline) setShowCareerTimeline(false);
           else if (showWarReport) setShowWarReport(false);
           else if (showCharacterPass) setShowCharacterPass(false);
           else if (showWelcome) {
@@ -142,6 +145,12 @@ export default function App() {
         return;
       }
 
+      if (e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        setShowCareerTimeline(true);
+        return;
+      }
+
       if (e.key.toLowerCase() === 'r') {
         if (gameState.status !== 'playing') {
           e.preventDefault();
@@ -162,6 +171,7 @@ export default function App() {
     showCharacterPass,
     showWarReport,
     showAchievementCodex,
+    showCareerTimeline,
     isShopOpen,
     isMobileStatsOpen,
   ]);
@@ -174,10 +184,11 @@ export default function App() {
     // ==========================================
     // IMMUNE SYSTEM: STATE MIDDLEWARE 
     // ==========================================
-    // Normalize Layoff State: If an event sets laid_off: true, force tc=0 and unemployed
-    if (effectResult.laid_off === true) {
+    // Normalize Layoff State: If an event sets laid_off: true or job_type: unemployed, force tc=0
+    if (effectResult.laid_off === true || effectResult.job_type === 'unemployed') {
       effectResult.tc = 0;
       effectResult.job_type = 'unemployed';
+      effectResult.laid_off = true;
     }
     // Normalize Employment State: If an event gives a job, force laid_off: false
     if (effectResult.job_type && effectResult.job_type !== 'unemployed') {
@@ -206,7 +217,7 @@ export default function App() {
        if (gameState.gc_stage === 'perm_processing' || gameState.gc_stage === 'perm_audit' || gameState.gc_stage === 'i140_processing' || gameState.gc_stage === 'i140_rfe') {
            effectResult.gc_stage = 'perm_processing';
            effectResult.gc_progress = 1;
-           effectResult.message = (effectResult.message || '') + ' 🚫 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队。';
+           effectResult.message = (effectResult.message || '') + ' 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队。';
        } else if (isI140Approved) {
            effectResult.message = (effectResult.message || '') + ' 【I-140 已锁 PD】因之前 I-140 已批准，本次跳槽成功锁定原优先日期 (PD)！';
        }
@@ -227,6 +238,91 @@ export default function App() {
     newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
     newState.charm = Math.max(0, Math.min(maxCharmLimit, newState.charm));
     newState.network = Math.max(0, Math.min(100, newState.network || 10));
+
+    // Timeline Auto Recording
+    const updatedTimeline = [...(newState.timeline || [])];
+    const recAge = newState.age;
+    const recYear = newState.year;
+
+    if (currentEventId === 'choose_trait' && effectResult.trait_title) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: `特质觉醒: ${effectResult.trait_title}`,
+        description: effectResult.trait_desc || '开启独特的硅谷人生底色与专属天赋属性',
+        category: 'milestone'
+      });
+    } else if (currentEventId === 'choose_school' && effectResult.school) {
+      const schoolMap: Record<string, string> = { cmu: 'CMU (卡耐基梅隆)', ucb: 'UCB (加州伯克利)', state: 'SJSU (圣何塞州立)', thu_pku: '国内清北/复交' };
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: `踏上征途: 入读 ${schoolMap[effectResult.school] || effectResult.school}`,
+        description: '背上行囊，正式开启学术积累与留学生涯',
+        category: 'education'
+      });
+    } else if (effectResult.is_new_job || (effectResult.job_type && effectResult.job_type !== 'unemployed' && effectResult.job_type !== gameState.job_type && !gameState.job_type)) {
+      const compName = (effectResult.company || effectResult.job_type || '科技大厂').toUpperCase();
+      const lvl = effectResult.level || 'L3';
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: `成功入职: ${compName} (${lvl})`,
+        description: `顺利通过技术面试，年薪总包达到 $${(newState.tc || 0).toFixed(1)}w！`,
+        category: 'career',
+        statHighlight: `TC $${(newState.tc || 0).toFixed(1)}w`
+      });
+    } else if (effectResult.level && effectResult.level !== gameState.level && !effectResult.is_new_job) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: `职级晋升: 升至 ${effectResult.level}`,
+        description: `斩获优秀绩效考核，总包提升至 $${(newState.tc || 0).toFixed(1)}w！`,
+        category: 'career',
+        statHighlight: `TC $${(newState.tc || 0).toFixed(1)}w`
+      });
+    } else if (effectResult.visa && effectResult.visa !== gameState.visa) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: `身份跨越: 取得 ${effectResult.visa}`,
+        description: `北美合法留美与工作身份迎来关键突破！`,
+        category: 'immigration',
+        statHighlight: effectResult.visa
+      });
+    } else if (effectResult.housing_name && effectResult.housing_name !== gameState.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(effectResult.housing_name)) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: `置业安家: 购入 ${effectResult.housing_name}`,
+        description: `在加州湾区拥有了属于自己的房产，成为有产阶级！`,
+        category: 'real_estate',
+        statHighlight: effectResult.housing_name
+      });
+    } else if (effectResult.is_married && !gameState.is_married) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: '缔结良缘: 步入婚姻殿堂',
+        description: '在加州与心仪的伴侣正式领证结婚，组建湾区家庭！',
+        category: 'relation'
+      });
+    } else if (effectResult.story_flags?.alex_ipo_done && !gameState.story_flags?.alex_ipo_done) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: '时代盛宴: OmniAgent 终局退出结算',
+        description: '见证 Alex 博士初创智能体公司走向纳斯达克挂牌与巨头并购退出！',
+        category: 'wealth'
+      });
+    } else if (effectResult.story_flags?.dave_defeated && !gameState.story_flags?.dave_defeated) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: '绝地反击: 击溃 Manager Dave',
+        description: '凭借扎实的证据链在闭门考核中彻底扳倒职场宿敌！',
+        category: 'story'
+      });
+    } else if (effectResult.story_flags?.sam_zero_day_done && !gameState.story_flags?.sam_zero_day_done) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: '黑客探险: 斩获 Zero-Day 漏洞赏金',
+        description: '与极客战友 Sam 在车库通宵调试并提交 AI 云平台底层逃逸漏洞 PoC！',
+        category: 'story'
+      });
+    }
+    newState.timeline = updatedTimeline;
 
     // 🛡️ Global Visa Invariant Guard Middleware: Protect Citizen & Green Card status against accidental downgrades
     if (gameState.visa === '公民') {
@@ -339,6 +435,8 @@ export default function App() {
     setCurrentEventId('choose_trait');
     setShowCharacterPass(false);
     setShowWarReport(false);
+    setShowAchievementCodex(false);
+    setShowCareerTimeline(false);
     setHasUnlockedShopToast(false);
     setHasOpenedShop(false);
   };
@@ -549,6 +647,15 @@ export default function App() {
               <svg className="w-3 h-3 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
               <span>图鉴</span>
             </button>
+
+            {/* Timeline Mobile Button */}
+            <button
+              onClick={() => setShowCareerTimeline(true)}
+              className="px-2 py-1 rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <svg className="w-3 h-3 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>大事记</span>
+            </button>
           </div>
         </div>
       </div>
@@ -573,6 +680,7 @@ export default function App() {
             currentEventId={currentEventId} 
             onOpenCodex={() => setShowAchievementCodex(true)} 
             onOpenShop={handleOpenShop}
+            onOpenTimeline={() => setShowCareerTimeline(true)}
             onToggleSound={handleToggleSound} 
             isMuted={isMuted} 
             hasOpenedShop={hasOpenedShop}
@@ -590,6 +698,7 @@ export default function App() {
               currentEventId={currentEventId} 
               onOpenCodex={() => setShowAchievementCodex(true)} 
               onOpenShop={handleOpenShop}
+              onOpenTimeline={() => setShowCareerTimeline(true)}
               onToggleSound={handleToggleSound} 
               isMuted={isMuted} 
               hasOpenedShop={hasOpenedShop}
@@ -598,6 +707,12 @@ export default function App() {
 
           {/* Modals */}
           <Suspense fallback={null}>
+            {showCareerTimeline && (
+              <CareerTimelineModal 
+                gameState={gameState}
+                onClose={() => setShowCareerTimeline(false)}
+              />
+            )}
             {isShopOpen && (
               <ShopModal 
                 gameState={gameState}
@@ -890,14 +1005,21 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
                       onClick={() => setShowWarReport(true)}
-                      className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-base transition-all duration-200 active:scale-[0.985] shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2.5"
+                      className="px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-base transition-all duration-200 active:scale-[0.985] shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2.5"
                     >
                       <svg className="w-5 h-5 text-zinc-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                      <span>生成炫彩战报海报（朋友圈/小红书）</span>
+                      <span>生成炫彩战报海报</span>
+                    </button>
+                    <button
+                      onClick={() => setShowCareerTimeline(true)}
+                      className="px-6 py-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-sky-300 border border-sky-500/30 font-bold text-base transition-all active:scale-[0.985] cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                    >
+                      <svg className="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <span>大事记编年史</span>
                     </button>
                     <button
                       onClick={resetGame}
-                      className="px-8 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.985] cursor-pointer"
+                      className="px-6 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.985] cursor-pointer"
                     >
                       再次重开人生
                     </button>

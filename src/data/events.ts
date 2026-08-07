@@ -2653,7 +2653,7 @@ export const events: Record<string, GameEvent> = {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
           return (cur === 'L5 (Senior)' || cur === 'L5') && s.leetcode >= 60 && (s.charm || 10) >= 12 && (s.network || 10) >= 20 && s.health >= 35 && s.tc >= 30;
         },
-        reqBadge: '需 当前L5 & 算法≥60 & 魅力≥12 & 人脉≥20 & TC≥30w',
+        reqBadge: '需 当前L5 & 算法≥60 & 资深架构与团队领导力',
         costBadge: '消耗健康与高阶精力',
         effect: (s) => {
           const winRate = 0.08 + ((s.charm || 10) / 100) * 0.25 + ((s.network || 10) / 100) * 0.25 + (s.leetcode / 100) * 0.10;
@@ -2670,7 +2670,7 @@ export const events: Record<string, GameEvent> = {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
           return (cur === 'L6 (Staff)' || cur === 'Staff' || cur === 'MTS') && s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45;
         },
-        reqBadge: '需 当前L6 & 算法≥70 & 魅力≥16 & 人脉≥35 & TC≥45w',
+        reqBadge: '需 当前L6 & 算法≥70 & 跨部门统筹与高管背书',
         costBadge: '消耗健康与高阶政治与战略心智',
         effect: (s) => {
           const winRate = 0.12 + ((s.charm || 10) / 100) * 0.20 + ((s.network || 10) / 100) * 0.20 + (s.leetcode / 100) * 0.08;
@@ -2687,7 +2687,7 @@ export const events: Record<string, GameEvent> = {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
           return (cur === 'L7 (Senior Staff)' || cur === 'Senior Staff' || cur === 'L7') && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65;
         },
-        reqBadge: '需 当前L7 & 算法≥80 & 魅力≥20 & 人脉≥50 & TC≥65w',
+        reqBadge: '需 当前L7 & 算法≥80 & 行业泰斗与战略决策力',
         costBadge: '消耗健康与终极政治心智',
         effect: (s) => {
           const winRate = 0.10 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.05;
@@ -2726,7 +2726,7 @@ export const events: Record<string, GameEvent> = {
           network: Math.min(99, (s.network || 10) + 4),
           charm: Math.min(25, (s.charm || 10) + 2),
           health: Math.min(100, s.health + 5),
-          message: '【八卦与社交收获】在晚宴酒桌与德扑桌上畅饮谈笑，拉近了与组内同事和小领导的关系 (人脉 +4, 魅力 +2)。'
+          message: '【八卦与社交收获】在晚宴酒桌与德扑桌上畅饮谈笑，拉近了与组内同事和小领导的关系，积累了宝贵的职场人际默契。'
         }),
         nextEventId: 'sv_year_end_settlement',
       },

@@ -267,6 +267,9 @@ const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1
 // Regular expression to detect broken currency placeholders (e.g. "花费 w", "出资 w", "消耗 .5w")
 const brokenCurrencyRegex = /(?:花费|消耗|出资|收益|净赚|入账|获得|亏损|损失|年供)\s*(?:[^\$0-9w\s]*)(?:(?<![0-9\.\$])w\b|(?<![0-9\$])\.5w\b)/;
 
+// Regular expression to detect explicit leaks of hidden stats (Charm / Network / Luck) with numbers or operators
+const hiddenStatLeakRegex = /(?:人脉|魅力|运气|气运|幸运值|人脉值|魅力值)\s*(?:[≥≤><=]|[\+\-]\s*\d+|\b\d+\b)/;
+
 for (const [id, ev] of Object.entries(events)) {
   // 1. Check title & description
   if (emojiRegex.test(ev.title)) {
@@ -277,6 +280,9 @@ for (const [id, ev] of Object.entries(events)) {
   }
   if (brokenCurrencyRegex.test(ev.title) || brokenCurrencyRegex.test(ev.description)) {
     logIssue('Broken Currency Placeholder', id, `Title or description contains broken currency string.`);
+  }
+  if (hiddenStatLeakRegex.test(ev.title) || hiddenStatLeakRegex.test(ev.description)) {
+    logIssue('Hidden Stat Leak Violation', id, `Title or description explicitly leaked hidden stat numbers.`);
   }
 
   // 2. Check all choices text, reqBadge, costBadge, and effect message
@@ -293,6 +299,12 @@ for (const [id, ev] of Object.entries(events)) {
     if (c.text && brokenCurrencyRegex.test(c.text)) {
       logIssue('Broken Currency Placeholder', id, `Choice ${idx} text contains missing currency figure: "${c.text}"`);
     }
+    if (c.reqBadge && hiddenStatLeakRegex.test(c.reqBadge)) {
+      logIssue('Hidden Stat Leak Violation', id, `Choice ${idx} reqBadge leaked hidden stat numbers: "${c.reqBadge}"`);
+    }
+    if (c.text && hiddenStatLeakRegex.test(c.text)) {
+      logIssue('Hidden Stat Leak Violation', id, `Choice ${idx} text leaked hidden stat numbers: "${c.text}"`);
+    }
 
     // Check placeholder / NaN text
     const textToCheck = `${c.text} ${c.reqBadge || ''} ${c.costBadge || ''}`;
@@ -307,6 +319,9 @@ for (const [id, ev] of Object.entries(events)) {
           const eff = c.effect(st);
           if (eff.message && emojiRegex.test(eff.message)) {
             logIssue('Copywriting Emoji Violation', id, `Choice ${idx} message contains emojis: "${eff.message}"`);
+          }
+          if (eff.message && hiddenStatLeakRegex.test(eff.message)) {
+            logIssue('Hidden Stat Leak Violation', id, `Choice ${idx} message leaked hidden stat numbers: "${eff.message}"`);
           }
           if (eff.message && (eff.message.includes('NaN') || eff.message.includes('undefined') || eff.message.includes('[object Object]'))) {
             logIssue('Template Placeholder Artifact', id, `Choice ${idx} message contains NaN or undefined: "${eff.message}"`);

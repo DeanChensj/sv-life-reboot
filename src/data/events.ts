@@ -15,7 +15,7 @@ const getLevelScaledTC = (baseTC: number, level?: string): number => {
 };
 
 export const generateInitialState = (): GameState => {
-  let savedSeed: { cash: number; charm: number; max_charm: number; luck: number } | null = null;
+  let savedSeed: { cash: number; charm: number; max_charm: number; luck: number; is_ssr_unlocked?: boolean } | null = null;
 
   try {
     const stored = safeStorage.getItem('sv_life_initial_seed');
@@ -24,17 +24,18 @@ export const generateInitialState = (): GameState => {
     // Ignore storage errors
   }
 
-  // Fresh 8% random roll for SSR Native US Citizen trait on every new game restart
-  const is_ssr_unlocked = Math.random() < 0.08;
-
-  let luck: number, cash: number, charm: number, max_charm: number;
+  let luck: number, cash: number, charm: number, max_charm: number, is_ssr_unlocked: boolean;
 
   if (savedSeed) {
     luck = savedSeed.luck;
     cash = savedSeed.cash;
     charm = savedSeed.charm;
     max_charm = savedSeed.max_charm;
+    is_ssr_unlocked = !!savedSeed.is_ssr_unlocked;
   } else {
+    // 8% random roll for SSR Native US Citizen trait on fresh new game initialization
+    is_ssr_unlocked = Math.random() < 0.08;
+
     // Generate new if no seed
     const isRich = Math.random() < 0.15; // 15% 概率富二代
     if (!isRich) {
@@ -46,7 +47,7 @@ export const generateInitialState = (): GameState => {
     max_charm = Math.min(30, Math.max(15, charm + Math.floor(Math.random() * 6) + 8));
     luck = Math.floor(Math.random() * 100);
 
-    safeStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, max_charm, luck }));
+    safeStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, max_charm, luck, is_ssr_unlocked }));
   }
 
   const ap = 3;

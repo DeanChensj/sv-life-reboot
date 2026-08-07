@@ -327,8 +327,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 Google】降压养老，享受顶尖 WLB、美味食堂与稳健股票',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('google') : s.company !== 'google'),
         effect: (s) => {
-          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
-          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
+          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
+          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
           const baseBand = nextLvl === 'L8 (Principal)' ? 120 : nextLvl === 'L7 (Senior Staff)' ? 82 : nextLvl === 'L6 (Staff)' ? 58 : nextLvl === 'L5 (Senior)' ? 42 : nextLvl === 'L4' ? 30 : 22;
           const econMultiplier = s.macro_economy === 'bull' ? 1.15 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
@@ -339,8 +339,9 @@ export const careerEvents: Record<string, GameEvent> = {
             level: nextLvl,
             tc: newTC,
             health: Math.min(100, s.health + 12),
+            laid_off: false,
             is_new_job: true,
-            message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级调整至 ${nextLvl}，总包锁定为 ${newTC}w！`
+            message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！`
           };
         },
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
@@ -349,8 +350,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('meta') : s.company !== 'meta'),
         effect: (s) => {
-          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
-          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
+          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
+          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
           const baseBand = nextLvl === 'L8 (Principal)' ? 135 : nextLvl === 'L7 (Senior Staff)' ? 92 : nextLvl === 'L6 (Staff)' ? 65 : nextLvl === 'L5 (Senior)' ? 46 : nextLvl === 'L4' ? 34 : 25;
           const econMultiplier = s.macro_economy === 'bull' ? 1.20 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 6, Math.floor(baseBand * econMultiplier));
@@ -362,6 +363,7 @@ export const careerEvents: Record<string, GameEvent> = {
             tc: newTC,
             cash: s.cash + (s.macro_economy === 'bull' ? 8 : 4),
             health: Math.max(0, s.health - 18),
+            laid_off: false,
             is_new_job: true,
             message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -18)。`
           };
@@ -373,22 +375,23 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('nvidia') : s.company !== 'nvidia'),
         effect: (s) => {
           const isBull = s.macro_economy === 'bull' || s.year >= 2023;
-          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
-          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
-          const boost = isBull 
-            ? (nextLvl === 'L8 (Principal)' ? 20 : nextLvl === 'L7 (Senior Staff)' ? 15 : nextLvl === 'L6 (Staff)' ? 11 : nextLvl === 'L5 (Senior)' ? 7 : 4) 
-            : (nextLvl === 'L8 (Principal)' ? 14 : nextLvl === 'L7 (Senior Staff)' ? 10 : nextLvl === 'L6 (Staff)' ? 7 : nextLvl === 'L5 (Senior)' ? 4 : 2);
+          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
+          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
+          const baseBand = nextLvl === 'L8 (Principal)' ? 130 : nextLvl === 'L7 (Senior Staff)' ? 90 : nextLvl === 'L6 (Staff)' ? 64 : nextLvl === 'L5 (Senior)' ? 45 : nextLvl === 'L4' ? 33 : 24;
+          const econMultiplier = isBull ? 1.25 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
+          const newTC = Math.max(s.tc + 5, Math.floor(baseBand * econMultiplier));
 
           return {
             company: 'nvidia',
             job_type: 'nvidia',
             level: nextLvl,
-            tc: s.tc + boost,
+            tc: newTC,
             cash: s.cash + (isBull ? 4 : 2),
+            laid_off: false,
             is_new_job: true,
             message: isBull
-              ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到了高 RSU 占比的 NVIDIA 芯片团队包裹，职级晋至 ${nextLvl}，年薪总包调至 ${(s.tc + boost).toFixed(1)}w！`
-              : `【入职英伟达】成功入职芯片团队，职级调整至 ${nextLvl}，拿到稳健的软硬件结合包裹 (+${boost}w TC)！`
+              ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到了高 RSU 占比的 NVIDIA 芯片团队包裹，职级定为 ${nextLvl}，年薪总包跃升至 ${newTC}w！`
+              : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`
           };
         },
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
@@ -397,19 +400,22 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 TikTok / 字节】接手中美跨时区核心业务，拿顶格全现金包裹',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('tiktok') : s.company !== 'tiktok'),
         effect: (s) => {
-          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
-          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
-          const boost = nextLvl === 'L8 (Principal)' ? 40 : nextLvl === 'L7 (Senior Staff)' ? 26 : nextLvl === 'L6 (Staff)' ? 18 : nextLvl === 'L5 (Senior)' ? 12 : 8;
+          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
+          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
+          const baseBand = nextLvl === 'L8 (Principal)' ? 140 : nextLvl === 'L7 (Senior Staff)' ? 95 : nextLvl === 'L6 (Staff)' ? 68 : nextLvl === 'L5 (Senior)' ? 48 : nextLvl === 'L4' ? 33 : 24;
+          const econMultiplier = s.macro_economy === 'bull' ? 1.18 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
+          const newTC = Math.max(s.tc + 6, Math.floor(baseBand * econMultiplier));
 
           return {
             company: 'tiktok',
             job_type: 'big_tech',
             level: nextLvl,
-            tc: s.tc + boost,
+            tc: newTC,
             cash: s.cash + 10,
             health: Math.max(0, s.health - 18),
+            laid_off: false,
             is_new_job: true,
-            message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级挂至 ${nextLvl}，总包提升至 ${(s.tc + boost).toFixed(1)}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -18)。`
+            message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -18)。`
           };
         },
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
@@ -449,8 +455,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 Apple】加入库比蒂诺巨头，享受极致稳定性与顶尖硬件生态',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('apple') : s.company !== 'apple'),
         effect: (s) => {
-          const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
-          const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
+          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
+          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
           const baseBand = nextLvl === 'L8 (Principal)' ? 125 : nextLvl === 'L7 (Senior Staff)' ? 86 : nextLvl === 'L6 (Staff)' ? 60 : nextLvl === 'L5 (Senior)' ? 44 : nextLvl === 'L4' ? 32 : 24;
           const econMultiplier = s.macro_economy === 'bull' ? 1.15 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 5, Math.floor(baseBand * econMultiplier));
@@ -463,7 +469,7 @@ export const careerEvents: Record<string, GameEvent> = {
             health: Math.min(100, s.health + 10),
             laid_off: false,
             is_new_job: true,
-            message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级跃升至 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
+            message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
           };
         },
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),

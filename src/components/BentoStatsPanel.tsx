@@ -23,19 +23,23 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   hasOpenedShop = false,
 }) => {
   const displayLevel = gameState.level || (
-    gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type 
+    gameState.laid_off || gameState.job_type === 'unemployed'
       ? '待业' 
-      : gameState.job_type === 'quant' 
-        ? 'Quant' 
-        : gameState.job_type === 'ai_research' 
-          ? 'MTS' 
-          : gameState.job_type === 'trader'
-            ? '全职 Trader'
-            : gameState.job_type === 'startup_founder'
-              ? 'CEO & Founder'
-              : gameState.is_phd 
-                ? 'L4' 
-                : 'L3'
+      : !gameState.job_type
+        ? (gameState.is_phd ? '全奖博士' : gameState.is_master ? '硕士在读' : '本科在读')
+        : gameState.job_type === 'quant' 
+          ? 'Quant' 
+          : gameState.job_type === 'ai_research' 
+            ? 'MTS' 
+            : gameState.job_type === 'trader'
+              ? '全职 Trader'
+              : gameState.job_type === 'startup_founder'
+                ? 'CEO & Founder'
+                : gameState.job_type === 'cn_tech'
+                  ? '国内研发'
+                  : gameState.is_phd 
+                    ? 'L4' 
+                    : 'L3'
   );
 
   const hasCar = gameState.car && gameState.car !== 'none';
@@ -95,7 +99,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
     }
     if (gameState.visa === 'Day 1 CPT') {
       return {
-        label: 'Day 1 CPT (学籍)',
+        label: 'Day 1 CPT (学籍保底)',
         className: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30 font-bold',
       };
     }
@@ -115,13 +119,13 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
     }
     if (gameState.visa === 'F1 (学生)') {
       return {
-        label: 'F-1 (在读学生)',
+        label: gameState.is_phd ? 'F-1 (博士在读)' : gameState.is_master ? 'F-1 (硕士在读)' : 'F-1 (在读学生)',
         className: 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-semibold',
       };
     }
     if (!gameState.visa || gameState.visa === '无') {
       return {
-        label: gameState.has_us_degree ? '待定身份' : '暂无 (未赴美)',
+        label: gameState.job_type === 'cn_tech' ? '暂无 (国内在职)' : (gameState.has_us_degree ? '待定身份' : '暂无 (未赴美)'),
         className: 'text-zinc-400 bg-zinc-800/60 border-zinc-700 font-medium',
       };
     }
@@ -137,6 +141,13 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
       return {
         label: '待业求职中',
         className: 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'cn_big_tech' || gameState.job_type === 'cn_tech') {
+      return {
+        label: '国内互联网大厂',
+        className: 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold',
       };
     }
 
@@ -156,15 +167,17 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
     }
 
     if (gameState.job_type === 'quant' || gameState.company === 'two_sigma' || gameState.company === 'citadel' || gameState.company === 'jane_street') {
+      const quantName = gameState.company === 'citadel' ? 'Citadel (城堡)' : gameState.company === 'jane_street' ? 'Jane Street' : gameState.company === 'two_sigma' ? 'Two Sigma' : 'Top Quant (量化)';
       return {
-        label: 'Top Quant (量化)',
+        label: quantName,
         className: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 font-bold',
       };
     }
 
     if (gameState.job_type === 'ai_research' || gameState.company === 'openai' || gameState.company === 'anthropic') {
+      const aiName = gameState.company === 'anthropic' ? 'Anthropic (Claude)' : 'OpenAI / MTS';
       return {
-        label: 'OpenAI / MTS',
+        label: aiName,
         className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold',
       };
     }
@@ -218,6 +231,34 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
       };
     }
 
+    if (gameState.company === 'uber') {
+      return {
+        label: 'Uber (优步)',
+        className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
+      };
+    }
+
+    if (gameState.company === 'microsoft') {
+      return {
+        label: 'Microsoft (微软)',
+        className: 'text-sky-400 bg-sky-500/10 border-sky-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'cisco') {
+      return {
+        label: 'Cisco (思科)',
+        className: 'text-teal-400 bg-teal-500/10 border-teal-500/20 font-bold',
+      };
+    }
+
+    if (gameState.company === 'adobe') {
+      return {
+        label: 'Adobe (奥多比)',
+        className: 'text-red-400 bg-red-500/10 border-red-500/20 font-bold',
+      };
+    }
+
     if (gameState.job_type === 'startup') {
       return {
         label: 'AI Startup (初创)',
@@ -234,7 +275,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
     if (!gameState.job_type) {
       return {
-        label: '学生在读',
+        label: gameState.is_phd ? '北美博士实验室' : gameState.is_master ? '硕士研究生在读' : '在读学生',
         className: 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-medium',
       };
     }

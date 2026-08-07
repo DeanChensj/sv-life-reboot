@@ -57,7 +57,7 @@ export interface GameState {
   has_reached_initial_fire?: boolean; // 是否已达成过初始阶段 FIRE 目标
   fire_tier?: 'basic' | 'comfortable' | 'luxury' | 'dynasty'; // 阶梯 FIRE 等级
   laid_off: boolean;
-  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia' | 'trader' | 'startup_founder';
+  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia' | 'trader' | 'startup_founder' | 'cn_tech';
   company?: string;
   level?: string;
   last_promo_age?: number;

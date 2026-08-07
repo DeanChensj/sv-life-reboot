@@ -252,17 +252,38 @@ export default function App() {
         description: effectResult.trait_desc || '开启独特的硅谷人生底色与专属天赋属性',
         category: 'milestone'
       });
-    } else if (currentEventId === 'choose_school' && effectResult.school) {
-      const schoolMap: Record<string, string> = { cmu: 'CMU (卡耐基梅隆)', ucb: 'UCB (加州伯克利)', state: 'SJSU (圣何塞州立)', thu_pku: '国内清北/复交' };
+    } else if (currentEventId === 'choose_school') {
+      const schoolMap: Record<string, string> = { cmu: 'CMU (卡耐基梅隆)', ucb: 'UCB (加州伯克利)', state: 'SJSU (圣何塞州立)' };
+      const schoolName = effectResult.school ? (schoolMap[effectResult.school] || effectResult.school) : '国内高校 / 中外合办大学';
       updatedTimeline.push({
         age: recAge, year: recYear,
-        title: `踏上征途: 入读 ${schoolMap[effectResult.school] || effectResult.school}`,
-        description: '背上行囊，正式开启学术积累与留学生涯',
+        title: `踏上征途: 入读 ${schoolName}`,
+        description: effectResult.school ? '背上行囊，正式开启学术积累与北美留学生涯' : '进入大学校园，打下扎实的高等数学与算法编程底子',
         category: 'education'
       });
-    } else if (effectResult.is_new_job || (effectResult.job_type && effectResult.job_type !== 'unemployed' && effectResult.job_type !== gameState.job_type && !gameState.job_type)) {
-      const compName = (effectResult.company || effectResult.job_type || '科技大厂').toUpperCase();
-      const lvl = effectResult.level || 'L3';
+    } else if (effectResult.is_master && !gameState.is_master) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: '深造进阶: 入读北美 CS 硕士研究生',
+        description: '手握录取通知书飞赴美国，开启高强度课业与刷题求职新篇章！',
+        category: 'education'
+      });
+    } else if (effectResult.is_phd && !gameState.is_phd) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: '学术殿堂: 斩获北美顶尖 CS 全奖直博 PhD',
+        description: '加入顶级人工智能实验室，致力于前沿顶会论文与分布式架构研发！',
+        category: 'education'
+      });
+    } else if (effectResult.is_new_job || (effectResult.job_type && effectResult.job_type !== 'unemployed' && (effectResult.job_type !== gameState.job_type || effectResult.company !== gameState.company))) {
+      const compMap: Record<string, string> = {
+        google: 'Google (谷歌)', meta: 'Meta (卷王)', nvidia: 'NVIDIA (英伟达)', tiktok: 'TikTok (字节)',
+        apple: 'Apple (苹果)', amazon: 'Amazon (亚麻)', openai: 'OpenAI', citadel: 'Citadel (城堡)',
+        uber: 'Uber (优步)', microsoft: 'Microsoft (微软)', cisco: 'Cisco (思科)', adobe: 'Adobe (奥多比)',
+        cn_big_tech: '国内一线互联网大厂', icc: 'ICC 外包公司'
+      };
+      const compName = effectResult.company ? (compMap[effectResult.company] || effectResult.company.toUpperCase()) : (effectResult.job_type === 'cn_tech' ? '国内一线互联网大厂' : effectResult.job_type === 'startup_founder' ? 'AI 独角兽' : '硅谷科技企业');
+      const lvl = effectResult.level || (effectResult.job_type === 'cn_tech' ? '国内研发' : effectResult.job_type === 'startup_founder' ? 'Founder' : 'SDE');
       updatedTimeline.push({
         age: recAge, year: recYear,
         title: `成功入职: ${compName} (${lvl})`,
@@ -279,10 +300,21 @@ export default function App() {
         statHighlight: `TC $${(newState.tc || 0).toFixed(1)}w`
       });
     } else if (effectResult.visa && effectResult.visa !== gameState.visa) {
+      const visaDescriptions: Record<string, { title: string; desc: string }> = {
+        'Day 1 CPT': { title: '身份自救: 启用 Day 1 CPT (学籍保底)', desc: '在学籍保护下从容应对抽签与离境压力，继续在湾区全职工作！' },
+        'L1 (外派)': { title: '跨国调动: 取得 L-1 跨国工作签证', desc: '完成海外分支机构轮岗调动，正式进驻湾区总部！' },
+        'H1B (工签)': { title: '人品爆发: 成功抽中 H-1B 工作签证', desc: '在移民局年度大乐透中逆风中签，正式获得独立工签！' },
+        'O1 (杰出人才)': { title: '杰出人才: 获批 O-1 签证', desc: '凭借顶会论文或硬核算法成就获批杰出人才工签，免受抽签约束！' },
+        '绿卡': { title: '终极突破: 取得美国绿卡 (永久居民)', desc: '漫长排期长征终获全胜！彻底挣脱雇主与抽签枷锁！' },
+        '公民': { title: '天命所归: 取得美籍公民身份 (SSR)', desc: '获得绝对免签证与自由工作权益，硅谷人生畅通无阻！' },
+        'OPT (实习)': { title: '走向职场: 激活 OPT 实习期', desc: '顺利走出象牙塔，正式踏入北美职场求职与工作实战！' },
+        'F1 (学生)': { title: '求学签证: 获批 F-1 留学生签证', desc: '踏上赴美求学之路，开启海外求学生涯！' }
+      };
+      const info = visaDescriptions[effectResult.visa] || { title: `身份跨越: 取得 ${effectResult.visa}`, desc: '北美合法留美与工作身份迎来关键突破！' };
       updatedTimeline.push({
         age: recAge, year: recYear,
-        title: `身份跨越: 取得 ${effectResult.visa}`,
-        description: `北美合法留美与工作身份迎来关键突破！`,
+        title: info.title,
+        description: info.desc,
         category: 'immigration',
         statHighlight: effectResult.visa
       });
@@ -294,11 +326,28 @@ export default function App() {
         category: 'real_estate',
         statHighlight: effectResult.housing_name
       });
+    } else if (effectResult.rental_income && (effectResult.rental_income > (gameState.rental_income || 0))) {
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: '资产扩张: 布局不动产被动现金流',
+        description: `名下投资房产/ADU 落地出租，年化被动租金现金流增至 +$${effectResult.rental_income.toFixed(1)}w！`,
+        category: 'real_estate',
+        statHighlight: `+$${effectResult.rental_income.toFixed(1)}w/年`
+      });
+    } else if (effectResult.car && effectResult.car !== gameState.car && effectResult.car !== 'none') {
+      const carMap: Record<string, string> = { porsche: '保时捷 Porsche 911', cybertruck: '特斯拉 Cybertruck', model_y: 'Tesla Model Y' };
+      updatedTimeline.push({
+        age: recAge, year: recYear,
+        title: `座驾升级: 提车 ${carMap[effectResult.car] || effectResult.car}`,
+        description: '行驶在加州 101 高速公路上，尽情体验硅谷速度与驾驶乐趣！',
+        category: 'wealth',
+        statHighlight: carMap[effectResult.car]
+      });
     } else if (effectResult.is_married && !gameState.is_married) {
       updatedTimeline.push({
         age: recAge, year: recYear,
         title: '缔结良缘: 步入婚姻殿堂',
-        description: '在加州与心仪的伴侣正式领证结婚，组建湾区家庭！',
+        description: '在加州与心仪的伴侣正式领证结婚，组建幸福的湾区家庭！',
         category: 'relation'
       });
     } else if (effectResult.story_flags?.alex_ipo_done && !gameState.story_flags?.alex_ipo_done) {

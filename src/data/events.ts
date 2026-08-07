@@ -617,7 +617,7 @@ export const events: Record<string, GameEvent> = {
           const pass = Math.random() < (0.18 + (s.leetcode >= 80 ? 0.20 : 0));
           return pass
             ? { cash: s.cash + 2, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '奇迹！凭着陆本顶尖算法功底，你跨海斩获了美国 CS 全奖直博 Offer！' }
-            : { health: Math.max(0, s.health - 15), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
+            : { health: Math.max(0, s.health - 15), age: s.age + 1, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
         },
         nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'cn_work',
       },
@@ -625,7 +625,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '申请美国 CS 硕士 (自筹资金 / 积蓄 $5w 即可申请)',
         condition: (s) => s.cash >= 5,
-        effect: (s) => ({ cash: s.cash - 5, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age, is_master: true, housing_name: '美硕 校外公寓' }),
+        effect: (s) => ({ cash: s.cash - 5, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', school: 'state', has_us_degree: true, age: s.age, is_master: true, housing_name: '美硕 校外公寓' }),
         nextEventId: 'us_master_year1',
       },
       {
@@ -637,6 +637,8 @@ export const events: Record<string, GameEvent> = {
             return { 
               cash: Math.max(0, s.cash - 2), 
               visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', 
+              school: 'state',
+              has_us_degree: true,
               age: s.age, 
               is_master: true,
               housing_name: '美硕 校外公寓', 
@@ -653,7 +655,19 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '在国内大厂打工攒钱 (积累工作经验)',
-        effect: (s) => ({ cash: s.cash + 8, health: Math.max(30, s.health - 12), tc: 8, job_type: 'big_tech', laid_off: false, age: s.age + 1, housing_name: '国内 厂区单间' }),
+        effect: (s) => ({
+          cash: s.cash + 8,
+          health: Math.max(30, s.health - 12),
+          tc: 8,
+          company: 'cn_big_tech',
+          job_type: 'cn_tech',
+          level: '国内研发',
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '无',
+          laid_off: false,
+          age: s.age + 1,
+          housing_name: '国内 厂区单间',
+          message: '你入职了国内一线互联网大厂，开启了打工攒钱与积累硬核算法经验的职场生涯。'
+        }),
         nextEventId: 'cn_work',
       }
     ]
@@ -1930,6 +1944,7 @@ export const events: Record<string, GameEvent> = {
              else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
              else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
              else if (s.job_type === 'big_tech') { healthDrain = -10; companyMsg = ' 养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
+             else if (s.job_type === 'cn_tech' || s.company === 'cn_big_tech') { healthDrain = 6; companyMsg = ' 国内大厂的高强度业务开发消耗了精力 (健康 -6)。'; }
              else { healthDrain = -6; companyMsg = ' 充沛的带薪年假与规律作息让你的体力得到恢复 (健康 +6)。'; }
            } else {
              healthDrain = -15;
@@ -2047,7 +2062,7 @@ export const events: Record<string, GameEvent> = {
             let newVisa = s.visa;
             let newAttempts = s.h1b_attempts || 0;
 
-            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed') {
+            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.company !== 'cn_big_tech') {
               newAttempts += 1;
               const baseWinRate = s.difficulty_title === '简单难度' ? 0.65 : s.difficulty_title === '困难难度' ? 0.20 : 0.40;
               const winRate = baseWinRate + (s.luck / 100) * 0.2;
@@ -3451,13 +3466,36 @@ export const events: Record<string, GameEvent> = {
     choices: [
       {
         text: '【打工攒钱】积累赴美存款 (积累 $8w 存款)',
-        effect: (s) => ({ health: Math.max(25, s.health - 12), cash: s.cash + 8, age: s.age + 1, year: s.year + 1, leetcode: s.leetcode + 15, message: '你打工一年攒下了 8 万美金存款，算法与硬核项目经验有了显著提升！' }),
+        effect: (s) => ({
+          health: Math.max(25, s.health - 12),
+          cash: s.cash + 8,
+          age: s.age + 1,
+          year: s.year + 1,
+          leetcode: s.leetcode + 15,
+          company: 'cn_big_tech',
+          job_type: 'cn_tech',
+          level: '国内研发',
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '无',
+          message: '你在国内大厂打工一年攒下了 8 万美金存款，算法与硬核项目经验有了显著提升！'
+        }),
         nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work',
       },
       {
         text: '【申请美硕】拿着积蓄申请美国 CS 硕士 (顺利赴美)',
         condition: (s) => s.cash >= 4,
-        effect: (s) => ({ cash: s.cash - 4, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age, message: '拿着打工攒下的第一桶金，你顺利通过签证与录取，踏上了赴美求学之路！' }),
+        effect: (s) => ({
+          cash: s.cash - 4,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          company: undefined,
+          job_type: undefined,
+          level: undefined,
+          tc: 0,
+          school: 'state',
+          has_us_degree: true,
+          is_master: true,
+          age: s.age,
+          message: '拿着打工攒下的第一桶金，你顺利通过签证与录取，踏上了赴美求学之路！'
+        }),
         nextEventId: 'us_master_year1',
       },
       {
@@ -3468,12 +3506,13 @@ export const events: Record<string, GameEvent> = {
           tc: 22,
           company: 'google',
           job_type: 'big_tech',
+          level: 'L4',
           laid_off: false,
           cash: s.cash + 5,
           age: s.age + 1,
           year: s.year + 1,
           message: (s.visa === '公民' || s.visa === '绿卡')
-            ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职！'
+            ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职 Google！'
             : '陆本硬核算法发威！你拿到了外派 Offer，先以 L1 身份入职海外分公司，一年后调动回湾区总部！'
         }),
         nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : 'sv_daily_life',

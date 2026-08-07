@@ -6,6 +6,8 @@ import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
 import { safeStorage } from './utils/safeStorage';
 import { applyStateTransition } from './utils/stateTransitions';
+import { migrateSaveData, CURRENT_SAVE_VERSION } from './utils/saveMigration';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy loaded heavy modals for optimized code splitting
 const YearEndStatementModal = lazy(() => import('./components/YearEndStatementModal').then(m => ({ default: m.YearEndStatementModal })));
@@ -27,24 +29,15 @@ const loadInitialGameData = (): {
     const raw = safeStorage.getItem(GAME_SAVE_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.gameState && parsed.currentEventId && events[parsed.currentEventId]) {
-        return {
-          gameState: parsed.gameState,
-          currentEventId: parsed.currentEventId,
-          hasUnlockedShopToast: Boolean(parsed.hasUnlockedShopToast),
-          hasOpenedShop: Boolean(parsed.hasOpenedShop),
-        };
+      const migrated = migrateSaveData(parsed);
+      if (events[migrated.currentEventId]) {
+        return migrated;
       }
     }
   } catch {
     // If storage is corrupted or invalid, fallback cleanly
   }
-  return {
-    gameState: generateInitialState(),
-    currentEventId: 'choose_trait',
-    hasUnlockedShopToast: false,
-    hasOpenedShop: false,
-  };
+  return migrateSaveData(null);
 };
 
 export default function App() {
@@ -71,7 +64,7 @@ export default function App() {
   useEffect(() => {
     if (gameState && currentEventId) {
       const saveData = {
-        version: 1,
+        version: CURRENT_SAVE_VERSION,
         savedAt: Date.now(),
         gameState,
         currentEventId,
@@ -307,41 +300,43 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* Modals with Lazy Suspense */}
-      <Suspense fallback={null}>
-        {/* Welcome Intro Modal (First Boot) */}
-        {showWelcome && (
-          <WelcomeModal
-            onStart={() => {
-              setShowWelcome(false);
-              safeStorage.setItem('sv_life_welcome_seen', 'true');
-            }}
-          />
-        )}
+      {/* Modals with Lazy Suspense protected by ErrorBoundary */}
+      <ErrorBoundary fallbackTitle="弹窗模块加载异常">
+        <Suspense fallback={null}>
+          {/* Welcome Intro Modal (First Boot) */}
+          {showWelcome && (
+            <WelcomeModal
+              onStart={() => {
+                setShowWelcome(false);
+                safeStorage.setItem('sv_life_welcome_seen', 'true');
+              }}
+            />
+          )}
 
-        {/* Year End Settlement Modal */}
-        {currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing' && (
-          <YearEndStatementModal
-            gameState={gameState}
-            onContinue={handleYearEndContinue}
-          />
-        )}
+          {/* Year End Settlement Modal */}
+          {currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing' && (
+            <YearEndStatementModal
+              gameState={gameState}
+              onContinue={handleYearEndContinue}
+            />
+          )}
 
-        {/* War Report Canvas Modal */}
-        {showWarReport && (
-          <WarReportModal
-            gameState={gameState}
-            onClose={() => setShowWarReport(false)}
-          />
-        )}
+          {/* War Report Canvas Modal */}
+          {showWarReport && (
+            <WarReportModal
+              gameState={gameState}
+              onClose={() => setShowWarReport(false)}
+            />
+          )}
 
-        {/* Achievement Codex Modal */}
-        {showAchievementCodex && (
-          <AchievementCodexModal
-            onClose={() => setShowAchievementCodex(false)}
-          />
-        )}
-      </Suspense>
+          {/* Achievement Codex Modal */}
+          {showAchievementCodex && (
+            <AchievementCodexModal
+              onClose={() => setShowAchievementCodex(false)}
+            />
+          )}
+        </Suspense>
+      </ErrorBoundary>
 
       {/* Unlock Notification Toast */}
       {achievementToast && (

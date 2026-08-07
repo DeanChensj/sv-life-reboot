@@ -113,6 +113,7 @@ export interface GameState {
   story_flags?: StoryFlags; // 跨多回合长线因果伏笔追踪器
   timeline?: TimelineRecord[]; // 历年生涯大事记
   history_net_worth?: { age: number; year: number; netWorth: number; cash: number; stocks: number }[]; // 资产历年走势
+  seed?: number; // 可复现的 PRNG 随机数种子
 }
 
 export interface Choice {

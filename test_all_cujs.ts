@@ -2,6 +2,8 @@ import { events, generateInitialState, midYearEventRouter } from './src/data/eve
 import { GameState, Choice } from './src/types';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown } from './src/utils/gameStateSelectors';
+import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
+import { setGameSeed, gameRandom } from './src/utils/random';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
@@ -396,6 +398,50 @@ console.log('--- [CUJ 7] Game Over / Bankruptcy & Burnout Handlers ---');
   assert(transition3.nextState.status === 'playing', 'Game continues after auto-liquidation');
 
   console.log('✅ CUJ 7 Passed\n');
+}
+
+// =========================================================================
+// CUJ 8: Save Schema Migration & Deterministic Seedable PRNG Verification
+// =========================================================================
+console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
+{
+  // 1. Ancient v0 legacy save with missing arrays, NaNs, and unversioned envelope
+  const rawLegacySave = {
+    gameState: {
+      age: 32,
+      year: 2022,
+      cash: NaN,
+      health: 120, // out of bounds
+      leetcode: -10, // out of bounds
+      laid_off: true,
+      tc: 35, // should be 0 for laid off
+      // missing timeline, history_net_worth, story_flags, npcs, stocks
+    },
+    currentEventId: 'job_hunt',
+  };
+
+  const migrated = migrateSaveData(rawLegacySave);
+  assert(migrated.gameState.age === 32, 'Age preserved');
+  assert(!isNaN(migrated.gameState.cash), 'NaN cash sanitized');
+  assert(migrated.gameState.health <= 100, 'Health clamped to <= 100');
+  assert(migrated.gameState.leetcode >= 0, 'LeetCode clamped to >= 0');
+  assert(migrated.gameState.tc === 0, 'Unemployed TC reset to 0');
+  assert(Array.isArray(migrated.gameState.timeline), 'Timeline polyfilled to Array');
+  assert(Array.isArray(migrated.gameState.history_net_worth), 'History polyfilled to Array');
+  assert(typeof migrated.gameState.story_flags === 'object', 'StoryFlags polyfilled');
+  assert(typeof migrated.gameState.seed === 'number', 'Seed initialized');
+  assert(migrated.migratedFromVersion === 0, 'Detected v0 migration');
+
+  // 2. Deterministic Seedable PRNG Test
+  setGameSeed(12345);
+  const run1 = [gameRandom(), gameRandom(), gameRandom()];
+
+  setGameSeed(12345);
+  const run2 = [gameRandom(), gameRandom(), gameRandom()];
+
+  assert(run1[0] === run2[0] && run1[1] === run2[1] && run1[2] === run2[2], 'PRNG is 100% deterministic given same seed');
+
+  console.log('✅ CUJ 8 Passed\n');
 }
 
 console.log(`\n======================================================`);

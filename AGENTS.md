@@ -26,7 +26,12 @@
    - 任何涉及事件与状态修改的代码，必须通过全量测试：
      ```bash
      npm test
-     # 包括：audit.ts (路由死胡同校验), audit_all_flows.ts (真实性校验), fuzz_test.ts (10000 局状态不变性)
+     # 包括：
+     # 1. audit.ts (路由连通性与死胡同校验)
+     # 2. audit_all_flows.ts (有向图 BFS 孤岛可达性与文案合规校验)
+     # 3. test_all_cujs.ts (7 大核心用户旅程 CUJ 场景断言)
+     # 4. fuzz_test.ts (10,000 局状态不变性 Fuzzing)
+     # 5. test_monte_carlo_balance.ts (3,000 局蒙特卡洛数值平衡与寿命保障 CI 门禁)
      ```
 
 ---

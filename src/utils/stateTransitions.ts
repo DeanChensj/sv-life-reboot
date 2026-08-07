@@ -117,7 +117,14 @@ export function applyStateTransition(
       category: 'career',
       statHighlight: `TC $${(newState.tc || 0).toFixed(1)}w`,
     });
-  } else if (effect.level && effect.level !== prevState.level && !effect.is_new_job) {
+  } else if ((effect.laid_off && !prevState.laid_off) || (effect.job_type === 'unemployed' && prevState.job_type && prevState.job_type !== 'unemployed')) {
+    updatedTimeline.push({
+      age: recAge, year: recYear,
+      title: '职场变故: 离开当前岗位进入待业期',
+      description: '遭遇部门业务调整或主动离职，重新进入求职与调整期！',
+      category: 'career',
+    });
+  } else if (effect.level && effect.level !== prevState.level && effect.level !== '待业' && !effect.is_new_job && !effect.laid_off && effect.job_type !== 'unemployed' && prevState.job_type !== 'unemployed' && (newState.tc || 0) > 0) {
     updatedTimeline.push({
       age: recAge, year: recYear,
       title: `职级晋升: 升至 ${effect.level}`,

@@ -157,7 +157,7 @@ export const startupEvents: Record<string, GameEvent> = {
               cash: s.cash + 20,
               job_type: 'unemployed',
               company: undefined,
-              level: '待业',
+              level: undefined,
               laid_off: true,
               founder_stage: undefined,
               company_valuation: 0,

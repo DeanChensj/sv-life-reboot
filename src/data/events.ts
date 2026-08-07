@@ -315,6 +315,30 @@ export const h1ToH2Router = (s: GameState): string => {
   return midYearEventRouter({ ...s, season_stage: 'h2' });
 };
 
+// Dynamic Annual Opportunities Pool & Rotation System
+export const ANNUAL_OPPORTUNITY_KEYS = [
+  'opp_cursor_hunt',
+  'opp_treehacks',
+  'opp_pilot_license',
+  'opp_burning_man',
+  'opp_sand_hill_salon',
+  'opp_gtc_nvidia',
+  'opp_zero_day_bounty',
+  'opp_viral_ai_video',
+  'opp_foreclosure_deal',
+  'opp_yosemite_heal',
+  'opp_angel_invest',
+  'opp_laguna_seca',
+] as const;
+
+export function isOpportunityActiveThisYear(s: GameState, oppKey: string): boolean {
+  const primaryIdx = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2) % ANNUAL_OPPORTUNITY_KEYS.length);
+  const secondaryIdx = (primaryIdx + 5) % ANNUAL_OPPORTUNITY_KEYS.length;
+
+  return oppKey === ANNUAL_OPPORTUNITY_KEYS[primaryIdx] ||
+         oppKey === ANNUAL_OPPORTUNITY_KEYS[secondaryIdx];
+}
+
 // Events Engine
 export const events: Record<string, GameEvent> = {
 
@@ -1419,40 +1443,67 @@ export const events: Record<string, GameEvent> = {
     title: '湾区日常 (行动面板)',
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
-      // 1. 【今年限时机会】 (每年限参与 1 次，不消耗年度重心)
+      // 1. 【每年专属动态轮替机遇池】 (每年动态激活 1~2 个专属限时奇遇)
       {
-        text: '【限时机会】 Stanford 师兄/师姐拉你组队冲 AI Hackathon ($0.5w)',
-        condition: (s) => s.cash >= 0.5 && (s.year % 6 === 0 || s.year % 6 === 3) && s.last_limited_opp_year !== s.year,
+        text: '【限时机遇：独角兽挖角】收到前沿 AI 独角兽 VP 亲自发来的免初筛直通终面邀请',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_cursor_hunt') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
-          const win = Math.random() < (0.10 + s.leetcode / 800);
-          return win
-            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
-            : { last_limited_opp_year: s.year, cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩了没拿奖，但你结识了一群大牛。' };
+          const pass = s.leetcode >= 45 && Math.random() < 0.65;
+          if (pass) {
+            return {
+              last_limited_opp_year: s.year,
+              tc: s.tc + 12.0,
+              stocks: (s.stocks || 0) + 15.0,
+              health: Math.max(0, s.health - 12),
+              is_new_job: true,
+              company: 'openai',
+              level: 'MTS',
+              message: '【斩获独角兽核心 Offer】你在终面架构评审中征服了创始人！职级定级为 MTS，总包大涨 +$12.0w TC 并配发 $15.0w 早期流动性期权！'
+            };
+          }
+          return {
+            last_limited_opp_year: s.year,
+            health: Math.max(0, s.health - 10),
+            leetcode: s.leetcode + 4,
+            message: '【独角兽面试折戟】独角兽终面对于底层系统优化要求极高，虽然遗憾未能拿下 Offer，但硬核技术视野收获颇丰。'
+          };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机会】 抢购 NVIDIA GTC 大会 VIP 门票进场见皮衣黄 ($1.5w)',
-        condition: (s) => s.cash >= 1.5 && (s.year % 6 === 1) && s.last_limited_opp_year !== s.year,
+        text: '【限时机遇：黑客松夺冠】组队参加斯坦福 TreeHacks 极客马拉松 ($0.5w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_treehacks') && s.cash >= 0.5 && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const win = Math.random() < (0.15 + s.leetcode / 600);
+          return win
+            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
+            : { last_limited_opp_year: s.year, cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩溃没拿奖，但你结识了一群技术极客。' };
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【限时机遇：硬核破圈】考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_pilot_license') && s.cash >= 2.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
           last_limited_opp_year: s.year,
-          cash: s.cash - 1.5,
-          charm: Math.min(25, (s.charm || 10) + 6),
-          luck: Math.min(99, (s.luck || 20) + 15),
-          message: '【参加 GTC】你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！玄学气运值大增，接下来的投资和求职将获得强运加持！'
+          cash: s.cash - 2.5,
+          charm: Math.min(25, (s.charm || 10) + 5),
+          luck: Math.min(99, (s.luck || 20) + 6),
+          message: '【考取飞行执照】你成功通过 FAA 单飞考核拿到了私人飞行员执照！周末开着塞斯纳俯瞰金门大桥，在湾区社交圈名声大噪！'
         }),
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机会】 火人节 (Burning Man) 极客大迁徙与灵性放空 ($1.2w)',
-        condition: (s) => s.cash >= 1.2 && (s.year % 6 === 2) && s.last_limited_opp_year !== s.year,
+        text: '【限时机遇：科技狂欢】前往内华达沙漠参加火人节 (Burning Man) 极客大迁徙 ($1.2w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_burning_man') && s.cash >= 1.2 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
           last_limited_opp_year: s.year,
           cash: s.cash - 1.2,
-          health: Math.min(100, s.health + 8),
+          health: Math.min(100, s.health + 10),
           charm: Math.min(25, (s.charm || 10) + 4),
           luck: Math.min(99, (s.luck || 20) + 8),
           message: '【火人节洗礼】你在黑石城沙漠参加了 Burning Man，虽然风沙与昼夜狂欢有些耗费体力，但灵性觉醒彻底清空了精神内耗，并结识了一批硅谷前沿极客！'
@@ -1460,8 +1511,46 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机会】 抢注爆火 AI Agent 域名并发布顶流测评视频 ($0.8w)',
-        condition: (s) => s.cash >= 0.8 && (s.year % 6 === 4) && s.last_limited_opp_year !== s.year,
+        text: '【限时机遇：沙丘路私享会】受邀参加 Sand Hill Road 闭门华人天使投资人沙龙 ($1.0w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_sand_hill_salon') && (s.cash + (s.stocks || 0)) >= 150 && s.cash >= 1.0 && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          last_limited_opp_year: s.year,
+          cash: s.cash - 1.0,
+          charm: Math.min(25, (s.charm || 10) + 4),
+          luck: Math.min(99, (s.luck || 20) + 6),
+          message: '【拓展顶层人脉】在沙丘路红木私宅里结识了数位顶级 VC 合伙人与独角兽创始人，手握核心行业内幕与优质天使跟投名额！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【限时机遇：硅谷朝圣】抢购 NVIDIA GTC 大会 VIP 门票进场见黄仁勋 ($1.5w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_gtc_nvidia') && s.cash >= 1.5 && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          last_limited_opp_year: s.year,
+          cash: s.cash - 1.5,
+          charm: Math.min(25, (s.charm || 10) + 5),
+          luck: Math.min(99, (s.luck || 20) + 12),
+          message: '【参加 GTC】你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！接下来的投资和求职将获得强运加持！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【限时机遇：漏洞赏金】深挖大厂分布式基础设施 Zero-Day 漏洞获取 Bug Bounty 奖金',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_zero_day_bounty') && s.leetcode >= 35 && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const success = Math.random() < 0.35;
+          return success
+            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
+            : { last_limited_opp_year: s.year, health: Math.max(0, s.health - 8), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
+        },
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【限时机遇：自媒体爆款】深度测评爆火 AI 开源模型并发布顶流视频 ($0.8w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_viral_ai_video') && s.cash >= 0.8 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
           const winRate = 0.40 + ((s.charm || 10) / 50) + ((s.luck || 20) / 500);
@@ -1485,27 +1574,62 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机会】 提交大厂云系统 Zero-Day 漏洞获取 Bug Bounty 赏金 (需 LeetCode >= 35)',
-        condition: (s) => s.leetcode >= 35 && (s.year % 6 === 5) && s.last_limited_opp_year !== s.year,
+        text: '【限时机遇：捡漏投资房】参与东湾法拍独栋房捡漏拍卖 (首付 $20w · 获稳健被动租金)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_foreclosure_deal') && (s.cash + (s.stocks || 0)) >= 20 && (s.rental_income || 0) < 10 && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          last_limited_opp_year: s.year,
+          cash: s.cash - 20,
+          rental_income: (s.rental_income || 0) + 2.5,
+          investment_properties: [...(s.investment_properties || []), '东湾法拍翻新独立屋'],
+          message: '【成功拍下法拍房】你在 Courthouse 拍卖中以超低折扣拿下东湾翻新独立屋！快速完成招租，每年产生 +$2.5w 净被动租金现金流！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【限时机遇：自然疗愈】前往 Yosemite 优胜美地极限徒步，远离 Slack 消息彻底养生回血',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_yosemite_heal') && s.health < 80 && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          last_limited_opp_year: s.year,
+          health: Math.min(100, s.health + 16),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          message: '【优胜美地洗肺】登顶半穹顶 (Half Dome)！清脆的瀑布声与高山森林让你洗尽了硅谷职场的心灵内耗，身体机能全面回血！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【限时机遇：天使跟投】前同事明星 AI 团队启动 Seed 轮，以天使投资人身份入局 ($10w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_angel_invest') && s.cash >= 10 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
-          const success = Math.random() < 0.25;
+          const success = Math.random() < 0.45;
           return success
-            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
-            : { last_limited_opp_year: s.year, health: Math.max(0, s.health - 10), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
+            ? {
+                last_limited_opp_year: s.year,
+                cash: s.cash - 10,
+                stocks: (s.stocks || 0) + 40,
+                message: '【天使投资神话】该 AI 团队仅用 6 个月便斩获红杉 A 轮领投！公司估值暴涨 5 倍，你的天使股份价值跃升至 $40w！'
+              }
+            : {
+                last_limited_opp_year: s.year,
+                cash: s.cash - 10,
+                message: '【天使投资沉淀】初创项目在激烈内卷中遭遇巨头降维打击，资金正在艰难摸索 PMF 转型，暂未实现估值爆发。'
+              };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机会】 考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
-        condition: (s) => s.cash >= 2.5 && (s.year % 5 === 2) && s.last_limited_opp_year !== s.year,
+        text: '【限时机遇：赛道竞速】带爱车参加 Laguna Seca 赛道日 GT 极限竞速与名流聚会 ($1.8w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_laguna_seca') && s.cash >= 1.8 && (s.car === 'porsche' || s.car === 'cybertruck') && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
           last_limited_opp_year: s.year,
-          cash: s.cash - 2.5,
+          cash: s.cash - 1.8,
+          health: Math.min(100, s.health + 10),
           charm: Math.min(25, (s.charm || 10) + 5),
-          luck: Math.min(99, (s.luck || 20) + 6),
-          message: '【考取飞行执照】你成功通过 FAA 单飞考核拿到了私人飞行员执照！周末开着塞斯纳俯瞰金门大桥，在湾区社交圈名声大噪！'
+          luck: Math.min(99, (s.luck || 20) + 8),
+          message: '【极限竞速狂飙】在 Laguna Seca 标志性的螺旋弯道留下胎印！极速推背感清空了所有压力，更在 VIP Paddock 结识了一圈超跑车友！'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -1548,7 +1672,7 @@ export const events: Record<string, GameEvent> = {
               }
             }
             if ((curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') && yearsInGrade >= 2 && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50) {
-              const promoChance = 0.11 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.05 : 0);
+              const promoChance = 0.10 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
               if (Math.random() < Math.min(0.20, promoChance)) {
                 return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(25, drain + 14)), tc: s.tc + 35.0, level: 'L8 (Principal)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】封神之路！获董事会联合推举与行业泰斗声望，破格登顶 L8 Principal 首席架构师/技术院士！' : '【战时冲刺成功】你在董事会闭门会议中赢得一致赞誉，登顶全公司屈指可数的 L8 Principal 首席架构师！总包暴涨 +$35w！' };
               }
@@ -1619,19 +1743,6 @@ export const events: Record<string, GameEvent> = {
               : '【浪漫热恋周末】在 Napa 阳光与葡萄藤下度过了浪漫周末，两人感情迅速升温，职场疲惫一扫而空！'
           };
         },
-        nextEventId: midYearEventRouter,
-      },
-      {
-        text: '【沙丘路私享会】受邀参加 Sand Hill Road 闭门华人天使投资人沙龙 ($1.0w)',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 200 && s.cash >= 1.0,
-        hideIfUnavailable: true,
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          cash: s.cash - 1.0,
-          charm: Math.min(25, (s.charm || 10) + 3),
-          luck: Math.min(99, (s.luck || 20) + 6),
-          message: '【拓展顶层人脉】在沙丘路红木私宅里结识了数位顶级 VC 合伙人与独角兽创始人，手握核心行业内幕与优质天使跟投名额！'
-        }),
         nextEventId: midYearEventRouter,
       },
       {

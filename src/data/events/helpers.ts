@@ -191,7 +191,8 @@ export const midYearEventRouter = (s: GameState): string => {
     'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation', 'bay_area_pop_concert',
     'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
-    'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy'
+    'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy',
+    'brentwood_cherry_picking', 'cancun_all_inclusive', 'patagonia_vest_hoodie_uniform', 'costco_weekend_pilgrimage'
   ];
 
   if (s.charm && s.charm >= 15 && s.job_type !== 'unemployed') {

@@ -1273,5 +1273,127 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+
+  'brentwood_cherry_picking': {
+    id: 'brentwood_cherry_picking',
+    title: '【湾区五月三俗之首】Brentwood 摘樱桃大军',
+    description: '五月加州阳光明媚，湾区朋友圈与 Slack #random 频道被 Brentwood 摘樱桃 (U-Pick Cherries) 彻底刷屏！你戴上草帽、开着车加入了浩浩荡荡的果园大军...',
+    choices: [
+      {
+        text: '【狂摘 25 磅】烈日下抢摘顶级 Rainier 白樱桃，周一带去 MicroKitchen 分给组员 (花费 $0.08w)',
+        condition: (s) => s.cash >= 0.08,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.08),
+          network: Math.min(100, (s.network || 0) + 2),
+          health: Math.max(0, s.health - 6),
+          message: '【满载而归与轻度中暑】在 35 度烈日与扬尘中狂摘 4 小时让你大汗淋漓、双臂酸痛。不过周一当香甜的白樱桃出现在 MicroKitchen 时，同事们争相品尝并对你的热情赞不绝口。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【边摘边吃】在樱桃树荫下大饱口福，拍照发小红书“湾区精致农家乐”',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 6),
+          charm: Math.min(25, s.charm + 1),
+          message: '【果糖超标与写真出片】新鲜甜脆的白樱桃让你停不下来，结果因为糖分和果酸超标导致下午严重腹胀腹泻。不过在果园拍的田园写真在小红书斩获了不少点赞。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'cancun_all_inclusive': {
+    id: 'cancun_all_inclusive',
+    title: '【大厂冬假三巨头】坎昆 All-inclusive 全包度假村',
+    description: '圣诞长假来临，你逃离了湾区的阴雨，飞往墨西哥坎昆 (Cancun) 的 5 星级全包度假村。加勒比海滩、无限续杯的 Margaritas 与全天候 Taco 自助餐让你彻底放空。',
+    choices: [
+      {
+        text: '【彻底合上电脑】海滩躺平 7 天，享受顶级纯享 WLB 避世 (花费 $0.4w)',
+        condition: (s) => s.cash >= 0.4,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.4),
+          health: Math.min(100, s.health + 10),
+          leetcode: Math.max(0, s.leetcode - 6),
+          message: '【身心回血与手感生疏】加勒比海的碧海蓝天洗净了一整年的工位内耗与疲惫。不过彻底远离工位的这一周，让你回到湾区后连基本的二叉树遍历都有点反应迟钝。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【泳池边边摸鱼边度假】无边泳池喝鸡尾酒，开着笔记本在 Slack 上秒回 “LGTM” (花费 $0.25w)',
+        condition: (s) => s.cash >= 0.25,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.25),
+          health: Math.max(0, s.health - 6),
+          leetcode: s.leetcode + 2,
+          message: '【心累摸鱼与保持敏锐】戴着墨镜在泳池遮阳伞下死盯笔记本，随时准备应急响应。你既没享受到纯粹的假期，身心也有些紧绷，但好在算法与代码手感丝毫未落。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【穷游特价红眼航班】用信用卡积分兑换经济舱，在海滩晒太阳吃街头 Taco',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 5),
+          charm: Math.min(25, s.charm + 1),
+          message: '【红眼腰酸与街头烟火】为了省钱坐了凌晨两点的廉航红眼航班，逼仄的座位让你落枕腰酸。好在加勒比海的阳光同样明媚，你在街头 Taco 摊吃得心满意足。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'patagonia_vest_hoodie_uniform': {
+    id: 'patagonia_vest_hoodie_uniform',
+    title: '【硅谷穿搭圣经】Patagonia 抓绒马甲与神级工装',
+    description: '随着入职时间变长，你发现组里从 Senior 到 VP 清一色都是“湾区经典皮肤”：Patagonia Better Sweater 抓绒马甲 + 灰色 Allbirds/On 跑鞋 + 黑色公司 Logo 卫衣。',
+    choices: [
+      {
+        text: '【全套入乡随俗】添置经典抓绒马甲与昂跑跑鞋，完美融入硅谷老油条圈子 (花费 $0.05w)',
+        condition: (s) => s.cash >= 0.05,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.05),
+          charm: Math.max(0, s.charm - 2),
+          network: Math.min(100, (s.network || 0) + 2),
+          message: '【老码农皮肤与告别时尚】穿上松垮的抓绒马甲与灰色羊毛鞋，你彻底告别了时尚穿搭。虽然相亲吸引力有所下滑，但走在办公楼里同事们一眼就看出你是自己人。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【坚守前卫潮流】坚持走自己的时尚路线，拒绝千篇一律的程序员穿搭',
+        effect: (s) => ({
+          charm: Math.min(25, s.charm + 2),
+          network: Math.max(0, (s.network || 0) - 2),
+          message: '【时尚出圈与格格不入】你穿着剪裁利落的大衣走在满地拖鞋马甲的工程师堆里，显得与大环境格格不入。直男同事们甚至私下揣测你是不是准备转去 Product 或 Design 部门。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'costco_weekend_pilgrimage': {
+    id: 'costco_weekend_pilgrimage',
+    title: '【湾区周末朝圣】Costco 试吃大迁徙与抢车位',
+    description: '周六下午，你开进了 Sunnyvale 的 Costco 停车场。为了抢一个近车位你跟着推车行人兜了 20 分钟。空气里弥漫着 $4.99 烤鸡与热狗披萨的诱人香气。',
+    choices: [
+      {
+        text: '【横扫全部试吃摊位】煎饺、小香肠、牛肉粒、有机蓝莓巡回打卡，吃饱并搬回 Kirkland 特产',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 4),
+          cash: s.cash + 0.02,
+          message: '【高钠快餐与省钱省心】在试吃摊位前与大爷大妈们拼手速，灌下一整杯碳酸饮料和热狗。虽然省下了昂贵的湾区下馆子费用，但高钠高糖的快餐让你的胃沉重了一整天。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【囤满养生保健品】采购辅酶 Q10、高纯鱼油与护肝片，为高强度开发蓄力 (花费 $0.03w)',
+        condition: (s) => s.cash >= 0.03,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.03),
+          health: Math.min(100, s.health + 6),
+          message: '【养生防猝死储备】推着沉重的购物车在排队长龙中等了半小时。看着满满一车辅酶与护肝片，你虽然钱包缩水，但为接下来的高强度加班做足了心理建设。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
   }
 };

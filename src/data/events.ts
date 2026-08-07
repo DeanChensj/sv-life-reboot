@@ -1256,39 +1256,91 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【真爱伴侣结婚】与交往伴侣领证递交 I-130/I-485 婚姻绿卡 (合法合规)',
         condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({
-          visa: '绿卡',
-          gc_progress: 5,
-          gc_stage: 'approved',
-          is_married: true,
-          relationship_status: 'married',
-          message: '【婚姻绿卡获批】与相爱伴侣正式领证结婚并提交了婚姻绿卡双递交申请，顺利拿下绿卡，彻底解决留美身份！'
-        }),
-        nextEventId: 'post_green_card',
+        effect: (s) => {
+          const partnerIsCitizen = Math.random() < 0.40;
+          if (partnerIsCitizen) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决留美身份！'
+            };
+          }
+          return {
+            is_married: true,
+            relationship_status: 'married',
+            gc_progress: Math.max(3, s.gc_progress || 0),
+            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+            message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或继续维持合法工签！'
+          };
+        },
+        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'sv_daily_life',
       },
       {
-        text: '【付费商婚上岸】支付 $8w 现金找中介匹配公民商婚领证 (需现金 >= $8w, 高风险)',
+        text: '【付费商婚上岸】支付 $8w 现金找中介匹配公民商婚领证 (需现金 >= $8w, 极高风险)',
         reqBadge: '现金>=8w (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const caught = Math.random() < 0.30;
-          return caught
-            ? { cash: s.cash - 8, status: 'game_over', message: '移民局 FDNS 突击家访判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { cash: s.cash - 8, visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', message: '你支付了 $8w 现金成功通过了移民局问话拿到临时绿卡，彻底跨过了身份大关！' };
+          const roll = Math.random();
+          if (roll < 0.35) {
+            return {
+              cash: s.cash - 8,
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【侥幸过关】你支付了 $8w 现金成功通过了移民局 Stokes 严苛分室问话，侥幸拿到了临时绿卡！'
+            };
+          } else if (roll < 0.70) {
+            return {
+              cash: s.cash - 8,
+              health: Math.max(0, s.health - 20),
+              message: '【人财两空】中介收到 $8w 现金后直接拉黑断联卷款潜逃，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救彻底失败！'
+            };
+          } else {
+            return {
+              cash: s.cash - 8,
+              status: 'game_over',
+              message: '【移民欺诈立案】移民局 FDNS 突击搜查认定商婚欺诈，联邦大陪审团正式起诉，你被当场收押遣返并终身禁入美国，游戏结束！'
+            };
+          }
         },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'sv_daily_life'),
       },
       {
         text: '【情场闪婚上岸】凭借过人魅力火速交往美籍对象并闪婚递交绿卡 (需魅力 >= 16)',
-        reqBadge: '魅力>=16',
+        reqBadge: '魅力>=16 (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.charm || 10) >= 16 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const caught = Math.random() < 0.15;
-          return caught
-            ? { status: 'game_over', message: '移民局严厉质疑闪婚动机判定为虚假婚姻，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', charm: Math.min(25, (s.charm || 10) + 3), message: '凭借无与伦比的个人魅力，你火速与美籍伴侣喜结连理并获批婚姻绿卡！' };
+          const charmBonus = Math.min(0.20, (((s.charm || 10) - 16) / 20));
+          const passProb = 0.45 + charmBonus;
+          const roll = Math.random();
+          if (roll < passProb) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              charm: Math.min(25, (s.charm || 10) + 2),
+              message: '【情场通关】凭借极高的个人魅力与社交手腕，你成功与美籍对象喜结良缘，移民局批准了你的婚姻绿卡！'
+            };
+          } else if (roll < 0.75) {
+            return {
+              health: Math.max(0, s.health - 15),
+              message: '【闪婚生隙遭拒】移民局发出意向拒绝信 (NOID)，认为闪婚缺乏共同财务真实证据。对方在压力下提出分居，绿卡申请遗憾流产。'
+            };
+          } else {
+            return {
+              status: 'game_over',
+              message: '【假结婚遣返】移民局严厉质疑闪婚动机并判定为移民欺诈，你被当场取消签证遣返回国，游戏结束！'
+            };
+          }
         },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'sv_daily_life'),
       }
     ]
   },
@@ -1300,39 +1352,91 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
         condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({
-          visa: '绿卡',
-          gc_progress: 5,
-          gc_stage: 'approved',
-          is_married: true,
-          relationship_status: 'married',
-          message: '【婚姻绿卡获批】在身份绝境中，伴侣坚定地与你领证结婚并递交了 I-130/I-485 双递交申请，顺利拿下婚姻绿卡，彻底解决留美身份！'
-        }),
-        nextEventId: 'post_green_card',
+        effect: (s) => {
+          const partnerIsCitizen = Math.random() < 0.40;
+          if (partnerIsCitizen) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决留美身份！'
+            };
+          }
+          return {
+            is_married: true,
+            relationship_status: 'married',
+            gc_progress: Math.max(3, s.gc_progress || 0),
+            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+            message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或继续维持合法工签！'
+          };
+        },
+        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options',
       },
       {
-        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 高风险)',
+        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
         reqBadge: '现金>=8w (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const caught = Math.random() < 0.30;
-          return caught
-            ? { cash: s.cash - 8, status: 'game_over', message: '移民局 FDNS 严肃调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { cash: s.cash - 8, visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', message: '【商婚成功】你支付了 $8w 现金通过中介办妥了婚姻绿卡，彻底化解了身份危机！' };
+          const roll = Math.random();
+          if (roll < 0.35) {
+            return {
+              cash: s.cash - 8,
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【商婚侥幸成功】你支付了 $8w 现金通过中介办妥了婚姻绿卡，彻底化解了身份危机！'
+            };
+          } else if (roll < 0.70) {
+            return {
+              cash: s.cash - 8,
+              health: Math.max(0, s.health - 20),
+              message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救失败！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
+            };
+          } else {
+            return {
+              cash: s.cash - 8,
+              status: 'game_over',
+              message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
+            };
+          }
         },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
       },
       {
         text: '【情场闪婚自救】凭借过人魅力火速闪婚美籍对象递交绿卡 (需魅力 >= 16)',
-        reqBadge: '魅力>=16',
+        reqBadge: '魅力>=16 (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.charm || 10) >= 16 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const caught = Math.random() < 0.15;
-          return caught
-            ? { status: 'game_over', message: '移民局严厉质疑闪婚动机判定为虚假婚姻，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', charm: Math.min(25, (s.charm || 10) + 3), message: '凭借过人魅力，你火速交往美籍对象领证并获批婚姻绿卡，化险为夷！' };
+          const charmBonus = Math.min(0.20, (((s.charm || 10) - 16) / 20));
+          const passProb = 0.45 + charmBonus;
+          const roll = Math.random();
+          if (roll < passProb) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              charm: Math.min(25, (s.charm || 10) + 2),
+              message: '【情场通关】凭借过人魅力，你火速交往美籍对象领证并获批婚姻绿卡，化险为夷！'
+            };
+          } else if (roll < 0.75) {
+            return {
+              health: Math.max(0, s.health - 15),
+              message: '【闪婚生隙遭拒】移民局发出意向拒绝信 (NOID)，认为闪婚缺乏真实生活证明，婚姻绿卡申请遗憾流产。'
+            };
+          } else {
+            return {
+              status: 'game_over',
+              message: '【假结婚遣返】移民局严厉质疑闪婚动机并判定为移民欺诈，你被当场取消签证遣返回国，游戏结束！'
+            };
+          }
         },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
       },
       {
         text: '【杰出人才自救】申办 O1 签证 (花费 w 律师费)',
@@ -2933,39 +3037,91 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
         condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({
-          visa: '绿卡',
-          gc_progress: 5,
-          gc_stage: 'approved',
-          is_married: true,
-          relationship_status: 'married',
-          message: '【婚姻绿卡获批】在绝境中你与真爱伴侣正式领证结婚并提交了婚姻绿卡申请，彻底解除了在美身份危机！'
-        }),
-        nextEventId: 'post_green_card',
+        effect: (s) => {
+          const partnerIsCitizen = Math.random() < 0.40;
+          if (partnerIsCitizen) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决在美身份危机！'
+            };
+          }
+          return {
+            is_married: true,
+            relationship_status: 'married',
+            gc_progress: Math.max(3, s.gc_progress || 0),
+            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+            message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或通过 Day 1 CPT / 外派维持合法留美工签！'
+          };
+        },
+        nextEventId: (s: GameState) => s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis',
       },
       {
-        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 高风险)',
+        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
         reqBadge: '现金>=8w (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const caught = Math.random() < 0.30;
-          return caught
-            ? { cash: s.cash - 8, status: 'game_over', message: '移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { cash: s.cash - 8, visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', message: '【商婚成功】你支付了 $8w 现金成功通过了移民局婚绿面试，绝地求生拿到绿卡！' };
+          const roll = Math.random();
+          if (roll < 0.35) {
+            return {
+              cash: s.cash - 8,
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【商婚侥幸成功】你支付了 $8w 现金成功通过了移民局婚绿面试，绝地求生拿到临时绿卡！'
+            };
+          } else if (roll < 0.70) {
+            return {
+              cash: s.cash - 8,
+              health: Math.max(0, s.health - 20),
+              message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份危机迫在眉睫！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
+            };
+          } else {
+            return {
+              cash: s.cash - 8,
+              status: 'game_over',
+              message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
+            };
+          }
         },
-        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : 'post_green_card',
+        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis'),
       },
       {
         text: '【情场闪婚自救】凭借过人魅力火速闪婚美籍对象递交绿卡 (需魅力 >= 16)',
-        reqBadge: '魅力>=16',
+        reqBadge: '魅力>=16 (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.charm || 10) >= 16 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const caught = Math.random() < 0.15;
-          return caught
-            ? { status: 'game_over', message: '移民局严肃质疑闪婚动机判定为假结婚，你被当场遣返回国并终身禁入美国，游戏结束！' }
-            : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', is_married: true, relationship_status: 'married', charm: Math.min(25, (s.charm || 10) + 3), message: '凭借无与伦比的个人魅力，你在危急关头与美籍对象喜结良缘，成功拿下婚姻绿卡！' };
+          const charmBonus = Math.min(0.20, (((s.charm || 10) - 16) / 20));
+          const passProb = 0.45 + charmBonus;
+          const roll = Math.random();
+          if (roll < passProb) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              charm: Math.min(25, (s.charm || 10) + 2),
+              message: '【情场通关】凭借无与伦比的个人魅力，你在危急关头与美籍对象喜结良缘，成功拿下婚姻绿卡！'
+            };
+          } else if (roll < 0.75) {
+            return {
+              health: Math.max(0, s.health - 15),
+              message: '【闪婚生隙遭拒】移民局发出意向拒绝信 (NOID)，认为闪婚缺乏真实生活证明，婚姻绿卡申请遗憾流产。'
+            };
+          } else {
+            return {
+              status: 'game_over',
+              message: '【假结婚遣返】移民局严厉质疑闪婚动机并判定为移民欺诈，你被当场取消签证遣返回国，游戏结束！'
+            };
+          }
         },
-        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : 'post_green_card',
+        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis'),
       },
       {
         text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 .5w)',

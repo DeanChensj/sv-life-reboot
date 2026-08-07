@@ -22,25 +22,25 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   isMuted,
   hasOpenedShop = false,
 }) => {
-  const displayLevel = gameState.level || (
-    gameState.laid_off || gameState.job_type === 'unemployed'
-      ? '待业' 
-      : !gameState.job_type
-        ? (gameState.is_phd ? '全奖博士' : gameState.is_master ? '硕士在读' : '本科在读')
-        : gameState.job_type === 'quant' 
-          ? 'Quant' 
-          : gameState.job_type === 'ai_research' 
-            ? 'MTS' 
-            : gameState.job_type === 'trader'
-              ? '全职 Trader'
-              : gameState.job_type === 'startup_founder'
-                ? 'CEO & Founder'
-                : gameState.job_type === 'cn_tech'
-                  ? '国内研发'
-                  : gameState.is_phd 
-                    ? 'L4' 
-                    : 'L3'
-  );
+  const displayLevel = (gameState.laid_off || gameState.job_type === 'unemployed')
+    ? '待业' 
+    : !gameState.job_type
+      ? (gameState.is_phd ? '全奖博士' : gameState.is_master ? '硕士在读' : '本科在读')
+      : gameState.level || (
+          gameState.job_type === 'quant' 
+            ? 'Quant' 
+            : gameState.job_type === 'ai_research' 
+              ? 'MTS' 
+              : gameState.job_type === 'trader'
+                ? '全职 Trader'
+                : gameState.job_type === 'startup_founder'
+                  ? 'CEO & Founder'
+                  : gameState.job_type === 'cn_tech'
+                    ? '国内研发'
+                    : gameState.is_phd 
+                      ? 'L4' 
+                      : 'L3'
+        );
 
   const hasCar = gameState.car && gameState.car !== 'none';
   const displayCar = gameState.car === 'porsche' 
@@ -535,13 +535,17 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           </div>
           <div className="flex items-center">
             <span className={`text-xs sm:text-[13px] font-bold px-2.5 py-0.5 rounded-lg border ${
-              displayLevel.includes('L8') || displayLevel.includes('Principal') || displayLevel.includes('Fellow')
-                ? 'text-amber-300 bg-amber-500/15 border-amber-500/30 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
-                : displayLevel.includes('L7') || displayLevel.includes('Senior Staff')
-                  ? 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_8px_rgba(217,70,239,0.25)]'
-                  : displayLevel.includes('L6') || displayLevel.includes('Staff') || displayLevel.includes('MTS')
-                    ? 'text-purple-300 bg-purple-500/15 border-purple-500/30'
-                    : 'text-purple-300 bg-purple-500/10 border-purple-500/20'
+              displayLevel === '待业'
+                ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                : displayLevel.includes('博士') || displayLevel.includes('硕士') || displayLevel.includes('本科')
+                  ? 'text-sky-300 bg-sky-500/10 border-sky-500/20'
+                  : displayLevel.includes('L8') || displayLevel.includes('Principal') || displayLevel.includes('Fellow')
+                    ? 'text-amber-300 bg-amber-500/15 border-amber-500/30 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
+                    : displayLevel.includes('L7') || displayLevel.includes('Senior Staff')
+                      ? 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_8px_rgba(217,70,239,0.25)]'
+                      : displayLevel.includes('L6') || displayLevel.includes('Staff') || displayLevel.includes('MTS')
+                        ? 'text-purple-300 bg-purple-500/15 border-purple-500/30'
+                        : 'text-purple-300 bg-purple-500/10 border-purple-500/20'
             }`}>
               {displayLevel}
             </span>

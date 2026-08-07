@@ -85,7 +85,9 @@ export interface GameState {
   transferred_to_ai?: boolean; // 是否已内部转岗至前沿大模型组
   last_limited_opp_year?: number; // 记录上一次参与湾区限时机会的年份 (防同一年度重复点击)
   npcs?: Record<string, NPCState>; // 具名长线 NPC 关系网
-  story_flags?: Record<string, boolean | number | string>; // 跨多回合长线因果伏笔追踪器
+  hop_applied_count?: number; // 当年投递面试的目标公司总数
+  hop_offers?: string[]; // 当年斩获的社招 Offer 列表 (['google', 'meta', etc.])
+  story_flags?: Record<string, boolean | number | string | string[]>; // 跨多回合长线因果伏笔追踪器
   timeline?: TimelineRecord[]; // 历年生涯大事记
   history_net_worth?: { age: number; year: number; netWorth: number; cash: number; stocks: number }[]; // 资产历年走势
 }

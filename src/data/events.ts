@@ -1858,45 +1858,100 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '【年度重心：闭关修炼】死磕算法与系统设计，提升硬核技术储备',
+        text: '【年度重心：刷题跳槽】闭关刷题备战，海投湾区各大厂/独角兽发起社招面试',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           const isKingOfRoll = s.trait_title === '卷王之王';
           const drain = isKingOfRoll ? 6 : 12;
-          const leetBonus = isKingOfRoll ? 20 : 15;
-          const newLeetcode = s.leetcode + leetBonus;
+          const leetBonus = isKingOfRoll ? 18 : 12;
+          const newLeet = s.leetcode + leetBonus;
 
-          // 闭关修炼以沉淀算法与架构为主，面试能否拿到 Offer 存在真实市场与面试官波动 (绝无 100% 必过)
-          const baseRate = Math.min(0.35, newLeetcode / 200);
-          const charmRate = (s.charm || 10) / 150;
-          const luckRate = (s.luck || 20) / 500;
-          const econRate = s.macro_economy === 'bull' ? 0.08 : (s.macro_economy === 'bear' ? -0.12 : 0);
-          const interviewChance = Math.max(0.08, Math.min(0.50, baseRate + charmRate + luckRate + econRate));
-          const gotInterviews = Math.random() < interviewChance;
+          // 候选公司池与录取算法门槛
+          const allPool: Array<{ id: string; name: string; minLeet: number; weight: number }> = [
+            { id: 'google', name: 'Google', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 45), weight: 0.95 },
+            { id: 'meta', name: 'Meta', minLeet: s.macro_economy === 'bear' ? 65 : (s.macro_economy === 'bull' ? 45 : 55), weight: 0.90 },
+            { id: 'nvidia', name: 'NVIDIA', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
+            { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+            { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+            { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
+          ];
 
-          if (!gotInterviews || newLeetcode < 35) {
+          if (newLeet >= 70 || s.is_phd) {
+            allPool.push({ id: 'openai', name: 'OpenAI', minLeet: s.macro_economy === 'bull' ? 70 : 75, weight: 0.65 });
+          }
+
+          const eligiblePool = allPool.filter(c => c.id !== s.company && c.id !== s.job_type);
+
+          // 真实社招机制：每轮跳槽精力有限，精准投递 2 ~ 3 家目标大厂/团队
+          const targetCount = Math.min(eligiblePool.length, isKingOfRoll ? 4 : (Math.random() < 0.45 ? 2 : 3));
+          const targetCompanies = [...eligiblePool].sort(() => Math.random() - 0.5).slice(0, targetCount);
+
+          // 逐一计算面试通过与发 Offer 概率
+          const wonOffers: string[] = [];
+          const econBonus = s.macro_economy === 'bull' ? 0.14 : (s.macro_economy === 'bear' ? -0.20 : 0);
+          const charmBonus = ((s.charm || 10) - 10) / 140;
+          const luckBonus = ((s.luck || 20) - 20) / 300;
+
+          for (const comp of targetCompanies) {
+            if (newLeet >= comp.minLeet) {
+              const diff = newLeet - comp.minLeet;
+              const passProb = Math.max(0.06, Math.min(0.72, (0.20 + (diff / 85) + econBonus + charmBonus + luckBonus) * comp.weight));
+              if (Math.random() < passProb) {
+                wonOffers.push(comp.id);
+              }
+            }
+          }
+
+          // 卷王保底机制：算法 >= 50 且有 target 时保底获得 1 个 Offer
+          if (isKingOfRoll && wonOffers.length === 0 && newLeet >= 50 && targetCompanies.length > 0) {
+            const fallback = targetCompanies[Math.floor(Math.random() * targetCompanies.length)];
+            wonOffers.push(fallback.id);
+          }
+
+          // 1. 拿到了 0 个 Offer
+          if (wonOffers.length === 0) {
             return {
               mid_year: true,
               season_stage: 'h1',
               health: Math.max(0, s.health - drain),
-              leetcode: newLeetcode,
-              message: isKingOfRoll 
-                ? `【卷王疯狂刷题】闭关苦修算法与架构，狂刷 200 题算法真经 (算法 +${leetBonus})！虽然做题储备大涨，但今年大厂 Headcount 紧缩且竞争白热化，投递简历后未能拿到有效 Offer，还需继续沉淀！` 
-                : `你闭关苦练算法与系统架构，做题储备大有长进 (算法 +${leetBonus})！但因大厂面试 Bar 严苛且名额有限，海投简历未获任何 Offer，需要继续积累经验。`
+              leetcode: newLeet,
+              hop_applied_count: targetCompanies.length,
+              hop_offers: [],
+              message: s.macro_economy === 'bear'
+                ? `【熊市寒冬·HC 冻结】科技股熊市下各大厂招聘收紧，简历多数石沉大海，多轮 Onsite 终面后均未发 Offer。好在今年狂刷算法与架构 (算法 +${leetBonus})，技术储备大涨，继续留任原厂蓄力！`
+                : (newLeet < 40 
+                  ? `【算法深度不足·遗憾未过】大厂社招面试 Bar 极高，系统设计与复杂算法未能打动面试委员会，投递的各家均未发 Offer。你利用这一年沉淀了扎实算法 (算法 +${leetBonus})，继续在原厂积累！`
+                  : `【名额有限·全挂遗憾留任】今年社招竞争极其白热化，几轮终面 Hiring Committee 均因名额有限未发 Offer。虽然跳槽未果，但扎实的技术储备 (算法 +${leetBonus}) 实打实留存在你的面板中！`)
             };
           }
+
+          // 2. 拿到了 1 个或多个 Offer
+          const nameMap: Record<string, string> = {
+            google: 'Google',
+            meta: 'Meta',
+            nvidia: 'NVIDIA',
+            tiktok: 'TikTok',
+            apple: 'Apple',
+            openai: 'OpenAI',
+            startup: 'AI Startup'
+          };
+          const offerNames = wonOffers.map(id => nameMap[id] || id).join('、');
 
           return {
             mid_year: true,
             season_stage: 'h1',
             health: Math.max(0, s.health - drain),
-            leetcode: newLeetcode,
-            message: '【算法大成·迎来面试】经过一整年的闭关刷题与系统设计复盘，扎实的功底吸引了科技公司猎头，你通过了前置技术初筛，迎来了跳槽面试机会！'
+            leetcode: newLeet,
+            hop_applied_count: targetCompanies.length,
+            hop_offers: wonOffers,
+            message: wonOffers.length > 1
+              ? `【大丰收！斩获 ${wonOffers.length} 份社招 Competing Offers】经过一整年的闭关刷题与疯狂面试轰炸 (算法 +${leetBonus})，你成功斩获了 ${offerNames} 的正式录用 Offer！请选择入职去向或就地谈薪：`
+              : `【斩获社招 Offer】经过一整年的闭关刷题与多轮 Onsite 面试 (算法 +${leetBonus})，你顺利拿下了 ${offerNames} 的正式录用 Offer！请选择入职去向：`
           };
         },
         nextEventId: (s: GameState) => {
-          const msg = s.message || '';
-          if (msg.includes('迎来面试')) return 'job_hop_market';
+          const offers = s.hop_offers || [];
+          if (offers.length > 0) return 'job_hop_market';
           return midYearEventRouter(s);
         },
       },
@@ -1987,13 +2042,6 @@ export const events: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: () => ({ message: '你打开了 Zillow 与租房中介微信群，准备调整住房开销。' }),
         nextEventId: 'change_rental',
-      },
-      {
-        text: '【跳槽寻路】投递湾区社招简历，开启多重大厂/独角兽 Offer 抉择',
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder',
-        hideIfUnavailable: true,
-        effect: () => ({ message: '你更新了 LinkedIn 与简历，进入了湾区社招面试市场！' }),
-        nextEventId: 'job_hop_market',
       },
       {
         text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
@@ -3834,28 +3882,13 @@ export const events: Record<string, GameEvent> = {
   },
   'job_hop_market': {
     id: 'job_hop_market',
-    title: '湾区跳槽季：多重 Offer 抉择',
-    description: '经历了数轮密集的 Onsite 面试与薪酬谈判 (Negotiation)，猎头与各大厂 HR 陆续向你发来了意向沟通。\n\n【注意】若你的 I-140 尚未批准，跳槽将导致当前 PERM 废弃重办；刚跳槽大厂通常伴随高压 Ramp-up 考验。请根据当前宏观市场与自身状态慎重抉择：',
+    title: '湾区跳槽季：多重 Offer 签约抉择',
+    description: '经过一整年的多轮 Onsite 厮杀与算法洗礼，各大厂 HR 陆续向你发来了正式录用意向！\n\n【注意】跳槽将重置未获批 I-140 的 PERM 排期；新公司入职第一年往往伴随高压 Ramp-up 考验。请根据你的包裹意向与职业规划，慎重签署正式合同：',
     choices: [
       {
-        text: '【跳槽 Google】降压养老，享受顶尖 WLB、美味食堂与稳健股票 (需算法达标)',
-        condition: (s) => s.company !== 'google',
+        text: '【签约入职 Google】降压养老，享受顶尖 WLB、美味食堂与稳健股票',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('google') : s.company !== 'google'),
         effect: (s) => {
-          const req = s.macro_economy === 'bear' ? 60 : s.macro_economy === 'bull' ? 35 : 45;
-          const baseRate = Math.min(0.45, s.leetcode / 140);
-          const charmRate = (s.charm || 10) / 120;
-          const luckRate = (s.luck || 20) / 500;
-          const econRate = s.macro_economy === 'bull' ? 0.10 : (s.macro_economy === 'bear' ? -0.15 : 0);
-          const passProb = Math.max(0.08, Math.min(0.60, baseRate + charmRate + luckRate + econRate));
-          const pass = s.leetcode >= req && Math.random() < passProb;
-
-          if (!pass) {
-            return {
-              health: Math.max(0, s.health - 12),
-              message: `【面试遗憾折戟】当前市场环境要求算法>=${req}。Google 最后一轮 Hiring Committee 认为你的架构设计深度略有欠缺或 HC 暂时冻结，未发 Offer。你只能留任原厂。`
-            };
-          }
-
           const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
           const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
           const baseBand = nextLvl === 'L8 (Principal)' ? 120 : nextLvl === 'L7 (Senior Staff)' ? 82 : nextLvl === 'L6 (Staff)' ? 58 : nextLvl === 'L5 (Senior)' ? 42 : nextLvl === 'L4' ? 30 : 22;
@@ -3875,24 +3908,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
       {
-        text: '【跳槽 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package (需算法>=60)',
-        condition: (s) => s.company !== 'meta',
+        text: '【签约入职 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('meta') : s.company !== 'meta'),
         effect: (s) => {
-          const req = s.macro_economy === 'bear' ? 70 : s.macro_economy === 'bull' ? 45 : 55;
-          const baseRate = Math.min(0.45, s.leetcode / 130);
-          const charmRate = (s.charm || 10) / 140;
-          const luckRate = (s.luck || 20) / 500;
-          const econRate = s.macro_economy === 'bull' ? 0.10 : (s.macro_economy === 'bear' ? -0.18 : 0);
-          const passProb = Math.max(0.08, Math.min(0.58, baseRate + charmRate + luckRate + econRate));
-          const pass = s.leetcode >= req && Math.random() < passProb;
-
-          if (!pass) {
-            return {
-              health: Math.max(0, s.health - 18),
-              message: `【Meta 面试被挂】当前市场环境要求算法>=${req}。在 Meta 严苛的 45 分钟两道 Hard 题极限编码中遇到 Bug 卡壳或 System Design 深度不足，未发 Offer。你只能留任原公司。`
-            };
-          }
-
           const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
           const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
           const baseBand = nextLvl === 'L8 (Principal)' ? 135 : nextLvl === 'L7 (Senior Staff)' ? 92 : nextLvl === 'L6 (Staff)' ? 65 : nextLvl === 'L5 (Senior)' ? 46 : nextLvl === 'L4' ? 34 : 25;
@@ -3907,30 +3925,15 @@ export const events: Record<string, GameEvent> = {
             cash: s.cash + (s.macro_economy === 'bull' ? 8 : 4),
             health: Math.max(0, s.health - 18),
             is_new_job: true,
-            message: `【卷入 Meta 核心架构】手握硬核代码通过委员会审核！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -18)。`
+            message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -18)。`
           };
         },
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
       {
-        text: '【跳槽 NVIDIA】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
-        condition: (s) => s.company !== 'nvidia',
+        text: '【签约入职 NVIDIA】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('nvidia') : s.company !== 'nvidia'),
         effect: (s) => {
-          const req = s.macro_economy === 'bear' ? 65 : 45;
-          const baseRate = Math.min(0.42, s.leetcode / 140);
-          const charmRate = (s.charm || 10) / 130;
-          const luckRate = (s.luck || 20) / 450;
-          const econRate = (s.macro_economy === 'bull' || s.year >= 2023) ? 0.10 : (s.macro_economy === 'bear' ? -0.15 : 0);
-          const passProb = Math.max(0.08, Math.min(0.58, baseRate + charmRate + luckRate + econRate));
-          const pass = s.leetcode >= req && Math.random() < passProb;
-
-          if (!pass) {
-            return {
-              health: Math.max(0, s.health - 12),
-              message: '【英伟达面试未过】芯片底层驱动与 CUDA 并行加速系统设计问题未能打动面试官，遗憾被拒。你继续留任原职。'
-            };
-          }
-
           const isBull = s.macro_economy === 'bull' || s.year >= 2023;
           const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
           const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
@@ -3953,24 +3956,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
       {
-        text: '【跳槽 TikTok / 字节】接手中美跨时区核心业务，拿顶格现金包裹',
-        condition: (s) => s.company !== 'tiktok',
+        text: '【签约入职 TikTok / 字节】接手中美跨时区核心业务，拿顶格全现金包裹',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('tiktok') : s.company !== 'tiktok'),
         effect: (s) => {
-          const req = s.macro_economy === 'bear' ? 55 : 40;
-          const baseRate = Math.min(0.45, s.leetcode / 120);
-          const charmRate = (s.charm || 10) / 130;
-          const luckRate = (s.luck || 20) / 500;
-          const econRate = s.macro_economy === 'bull' ? 0.08 : (s.macro_economy === 'bear' ? -0.12 : 0);
-          const passProb = Math.max(0.10, Math.min(0.62, baseRate + charmRate + luckRate + econRate));
-          const pass = s.leetcode >= req && Math.random() < passProb;
-
-          if (!pass) {
-            return {
-              health: Math.max(0, s.health - 10),
-              message: '【TikTok 面试卡壳】高并发算法设计未完全符合标准，遗憾被拒。你继续留任原职。'
-            };
-          }
-
           const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
           const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
           const boost = nextLvl === 'L8 (Principal)' ? 40 : nextLvl === 'L7 (Senior Staff)' ? 26 : nextLvl === 'L6 (Staff)' ? 18 : nextLvl === 'L5 (Senior)' ? 12 : 8;
@@ -3989,47 +3977,23 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
       },
       {
-        text: '【跳槽 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹 (需算法>=75 或 PhD)',
-        condition: (s) => s.company !== 'openai',
-        effect: (s) => {
-          const isEligible = s.leetcode >= 75 || s.is_phd;
-          if (!isEligible) {
-            return {
-              health: Math.max(0, s.health - 15),
-              message: '【门槛不足】OpenAI 简历筛选极度严苛，要求顶会论文背景或 80+ 极致算法，你的简历在初筛阶段被拒。'
-            };
-          }
-
-          const baseRate = s.is_phd ? 0.25 : 0.15;
-          const leetBonus = s.leetcode >= 80 ? 0.12 : 0;
-          const charmRate = (s.charm || 10) / 150;
-          const econRate = s.macro_economy === 'bull' ? 0.08 : -0.05;
-          const passProb = Math.max(0.05, Math.min(0.45, baseRate + leetBonus + charmRate + econRate));
-          const pass = Math.random() < passProb;
-
-          if (!pass) {
-            return {
-              health: Math.max(0, s.health - 15),
-              message: '【终面惜败】在关于大模型 MoE 路由与分布式通信优化的终极架构面试中遗憾惜败，未能入职 OpenAI。'
-            };
-          }
-
-          return {
-            company: 'openai',
-            job_type: 'ai_research',
-            level: 'MTS',
-            tc: Math.max(s.tc + 22, 68),
-            cash: s.cash + 8,
-            health: Math.max(0, s.health - 10),
-            is_new_job: true,
-            message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！`
-          };
-        },
+        text: '【签约入职 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('openai') : s.company !== 'openai'),
+        effect: (s) => ({
+          company: 'openai',
+          job_type: 'ai_research',
+          level: 'MTS',
+          tc: Math.max(s.tc + 22, 68),
+          cash: s.cash + 8,
+          health: Math.max(0, s.health - 10),
+          is_new_job: true,
+          message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！`
+        }),
         nextEventId: midYearEventRouter,
       },
       {
-        text: '【跳槽 AI Startup 初创团队】降薪赌一把早期核心员工期权大饼 (高风险高回报)',
-        condition: (s) => s.job_type !== 'startup',
+        text: '【签约入职 AI Startup 初创团队】降薪赌一把早期核心员工期权大饼 (高风险高回报)',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('startup') : s.job_type !== 'startup'),
         effect: (s) => ({
           company: 'startup',
           job_type: 'startup',
@@ -4042,24 +4006,9 @@ export const events: Record<string, GameEvent> = {
         nextEventId: midYearEventRouter,
       },
       {
-        text: '【跳槽 Apple】加入库比蒂诺巨头，享受极致稳定性与顶尖硬件生态 (需算法达标)',
-        condition: (s) => s.company !== 'apple',
+        text: '【签约入职 Apple】加入库比蒂诺巨头，享受极致稳定性与顶尖硬件生态',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('apple') : s.company !== 'apple'),
         effect: (s) => {
-          const req = s.macro_economy === 'bear' ? 60 : 40;
-          const baseRate = Math.min(0.42, s.leetcode / 140);
-          const charmRate = (s.charm || 10) / 110;
-          const luckRate = (s.luck || 20) / 500;
-          const econRate = s.macro_economy === 'bull' ? 0.08 : (s.macro_economy === 'bear' ? -0.14 : 0);
-          const passProb = Math.max(0.08, Math.min(0.58, baseRate + charmRate + luckRate + econRate));
-          const pass = s.leetcode >= req && Math.random() < passProb;
-
-          if (!pass) {
-            return {
-              health: Math.max(0, s.health - 10),
-              message: '【Apple 面试未过】底层系统优化与架构设计未能完全打动面试委员会，遗憾留任原职。'
-            };
-          }
-
           const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
           const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
           const baseBand = nextLvl === 'L8 (Principal)' ? 125 : nextLvl === 'L7 (Senior Staff)' ? 86 : nextLvl === 'L6 (Staff)' ? 60 : nextLvl === 'L5 (Senior)' ? 44 : nextLvl === 'L4' ? 32 : 24;
@@ -4080,16 +4029,24 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',
+        condition: (s) => !!s.hop_offers && s.hop_offers.length >= 1,
         effect: (s) => ({
           tc: s.tc + 4.5,
           health: Math.min(100, s.health + 5),
           message: '【成功 Counter-Offer】老板为了挽留你连夜向 HR 申请了特别加薪 (+4.5w TC)！你零搬迁成本、零 PERM 重置风险，继续在原厂稳步发展！'
         }),
         nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【留任原厂】看好原厂股票与团队氛围，婉拒全部外部 Offer',
+        condition: (_s) => true,
+        effect: () => ({
+          message: '你经过慎重考虑，决定婉拒外部机会，继续深耕原厂业务。'
+        }),
+        nextEventId: midYearEventRouter,
       }
     ]
   },
-
   'icc_work': {
     id: 'icc_work',
     title: 'ICC 挂靠',

@@ -37,33 +37,31 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       if (state.health < 60) {
         const healChoice = validChoices.find(c => c.text.includes('躺平') || c.text.includes('WLB') || c.text.includes('火人节'));
         chosen = healChoice || validChoices[0];
-      } else if (state.leetcode < 50) {
-        const grindChoice = validChoices.find(c => c.text.includes('闭关修炼'));
+      } else if (state.leetcode < 40) {
+        const grindChoice = validChoices.find(c => c.text.includes('刷题跳槽') || c.text.includes('疯狂内卷'));
         chosen = grindChoice || validChoices[0];
       } else if (state.tc < 50 && Math.random() < 0.6) {
-        const sprintChoice = validChoices.find(c => c.text.includes('战时冲刺') || c.text.includes('跳槽寻路'));
-        chosen = sprintChoice || validChoices[0];
+        const hopChoice = validChoices.find(c => c.text.includes('刷题跳槽'));
+        const sprintChoice = validChoices.find(c => c.text.includes('战时冲刺') || c.text.includes('疯狂内卷'));
+        chosen = hopChoice || sprintChoice || validChoices[0];
       } else {
+        const hopChoice = validChoices.find(c => c.text.includes('刷题跳槽'));
         const investChoice = validChoices.find(c => c.text.includes('投资理财') || c.text.includes('拓展副业'));
-        chosen = investChoice || validChoices[Math.floor(Math.random() * validChoices.length)];
+        chosen = (Math.random() < 0.40 && hopChoice) ? hopChoice : (investChoice || validChoices[Math.floor(Math.random() * validChoices.length)]);
       }
-    } else if (currentEventId === 'job_hop_market') {
-      hopsAttempted++;
-      const offerChoices = validChoices.filter(c => !c.text.includes('原地 Match') && !c.text.includes('留任'));
-      chosen = offerChoices.length > 0 ? offerChoices[Math.floor(Math.random() * offerChoices.length)] : validChoices[0];
     } else {
       chosen = validChoices[Math.floor(Math.random() * validChoices.length)];
     }
 
+    const isHopGrind = currentEventId === 'sv_daily_life' && chosen.text.includes('刷题跳槽');
     const prevCompany = state.company;
     const eff = chosen.effect(state);
     const transition = applyStateTransition(state, eff, { eventId: currentEventId });
     state = transition.nextState;
 
-    if (currentEventId === 'job_hop_market') {
-      if (state.company !== prevCompany || (state.message || '').includes('入职') || (state.message || '').includes('成功')) {
-        hopsSucceeded++;
-      }
+    if (isHopGrind) {
+      hopsAttempted += state.hop_applied_count || 3;
+      hopsSucceeded += (state.hop_offers || []).length;
     }
 
     if (state.status !== 'playing') break;

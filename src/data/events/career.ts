@@ -1,6 +1,6 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
-import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 
 export const careerEvents: Record<string, GameEvent> = {
   'job_hunt': {
@@ -159,19 +159,21 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
           const stateCompanies = [
-            { company: 'cisco', name: 'Cisco 思科网络研发部' },
-            { company: 'adobe', name: 'Adobe 圣何塞总部' },
-            { company: 'icc', name: '硅谷大型 Tech IT 咨询外包' }
+            { company: 'cisco', name: 'Cisco 思科网络研发部', baseTc: 20 },
+            { company: 'adobe', name: 'Adobe 圣何塞总部', baseTc: 22 },
+            { company: 'oracle', name: 'Oracle 甲骨文云架构组', baseTc: 21 },
+            { company: 'icc', name: '硅谷大型 Tech IT 咨询外包', baseTc: 14 }
           ];
           const comp = stateCompanies[Math.floor(Math.random() * stateCompanies.length)];
+          const newTC = getLevelScaledTC(comp.baseTc, lvl);
           return { 
-            tc: getLevelScaledTC(16, lvl), 
+            tc: newTC, 
             laid_off: false, 
             company: comp.company, 
             health: Math.min(100, s.health + 8), 
-            job_type: 'big_tech', 
+            job_type: comp.company === 'icc' ? 'startup' : 'big_tech', 
             level: lvl, 
-            message: `【紧急避险成功】成功入职 ${comp.name}！工作节奏适中且合法工签身份无虞，每月有稳定现金流进账！` 
+            message: `【紧急避险成功】成功入职 ${comp.name} (定级 ${lvl} · 年薪 $${newTC}w)！工作节奏适中且合法工签身份无虞，每月有稳定现金流进账！` 
           };
         },
         nextEventId: (s: GameState) => {
@@ -1416,8 +1418,10 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)',
         effect: (s) => {
           const pass = s.leetcode >= 45 || Math.random() < 0.55;
+          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const newTC = getLevelScaledTC(22, targetLvl);
           return pass
-            ? { tc: 20, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: '【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer，成功延续 OPT 身份！' }
+            ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: `【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)，成功延续 OPT 身份！` }
             : { status: 'game_over', message: '90 天 OPT 失业期耗尽，且未能及时挂靠转学，SEVIS 状态失效被迫登机回国。' };
         },
         nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
@@ -1443,8 +1447,10 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)',
         effect: (s) => {
           const pass = s.leetcode >= 55 || Math.random() < 0.50;
+          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const newTC = getLevelScaledTC(24, targetLvl);
           return pass
-            ? { tc: 22, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 20), message: '【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司并成功办理 H1B Transfer 保住工签！' }
+            ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 20), message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${targetLvl} · 年薪 ${newTC}w) 并成功办理 H1B Transfer 保住工签！` }
             : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，工签身份到期被迫登机离境。' };
         },
         nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
@@ -1907,12 +1913,17 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【转型 M1/EM 管理岗】承担背指标背 PIP 责任，管理 12 人团队',
-        effect: (s) => ({
-          tc: s.tc + 15,
-          health: Math.max(0, s.health - 20),
-          charm: Math.min(s.max_charm || 25, s.charm + 3),
-          message: '你升任了 EM 管理岗！TC 飙升，但每天要在各类汇报与背 PIP 的沉重压力下度过，白头发暴增。'
-        }),
+        condition: (s) => isCorporateEmployee(s) && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)' || s.level === 'MTS'),
+        effect: (s) => {
+          const nextLvl = (s.level === 'L5 (Senior)') ? 'L6 (Staff)' : (s.level === 'L6 (Staff)') ? 'L7 (Senior Staff)' : s.level;
+          return {
+            tc: s.tc + 10,
+            level: nextLvl,
+            health: Math.max(0, s.health - 20),
+            charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3),
+            message: `你升任了 EM 管理岗 (职级对齐为 ${nextLvl})！TC 增加 $10w，但每天要在各类汇报与背 PIP 的沉重压力下度过，白头发暴增。`
+          };
+        },
         nextEventId: h1ToH2Router
       },
       {
@@ -2348,23 +2359,29 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【实力跳槽降维打击】手握扎实代码，连夜接下 Meta/Nvidia 的 L5 Senior Offer',
         condition: (s) => s.leetcode >= 45,
-        effect: (s) => ({
-          company: 'meta',
-          job_type: 'big_tech',
-          level: 'L5 (Senior)',
-          tc: Math.max(s.tc + 3.5, 32),
-          health: Math.min(100, s.health + 5),
-          npcs: {
-            ...(s.npcs || {}),
-            dave: { name: 'Manager Dave', role: 'manager', affinity: 10, status: 'departed', note: '前组经理，已被你甩在身后' }
-          },
-          story_flags: {
-            ...(s.story_flags || {}),
-            dave_defeated: true,
-            dave_defeated_year: s.year
-          },
-          message: '【优雅离场】你当场甩出 2 周离职信，带走核心上下文跳槽 Meta！Dave 的烂摊子彻底无人收拾，在部门大会上狼狈不堪！'
-        }),
+        effect: (s) => {
+          const cur = s.level || 'L4';
+          const targetLvl = (cur === 'L3') ? 'L4' : (cur === 'L4' || !s.level) ? 'L5 (Senior)' : (cur === 'L5 (Senior)') ? 'L6 (Staff)' : cur;
+          const baseBand = targetLvl === 'L8 (Principal)' ? 135 : targetLvl === 'L7 (Senior Staff)' ? 92 : targetLvl === 'L6 (Staff)' ? 65 : targetLvl === 'L5 (Senior)' ? 46 : 34;
+          const newTC = Math.max(s.tc + 6, baseBand);
+          return {
+            company: 'meta',
+            job_type: 'big_tech',
+            level: targetLvl,
+            tc: newTC,
+            health: Math.min(100, s.health + 5),
+            npcs: {
+              ...(s.npcs || {}),
+              dave: { name: 'Manager Dave', role: 'manager', affinity: 10, status: 'departed', note: '前组经理，已被你甩在身后' }
+            },
+            story_flags: {
+              ...(s.story_flags || {}),
+              dave_defeated: true,
+              dave_defeated_year: s.year
+            },
+            message: `【优雅离场】你当场甩出 2 周离职信，带走核心上下文跳槽 Meta 核心组 (定级 ${targetLvl} · 年薪 $${newTC}w)！Dave 的烂摊子彻底无人收拾，在部门大会上狼狈不堪！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement'
       },
       {

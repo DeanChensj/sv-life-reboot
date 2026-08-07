@@ -140,6 +140,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【稳健对冲股息策略】主要布局标普500/高股息 ETF 与跨期对冲期权 (低风险)',
+        condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBear = s.macro_economy === 'bear';
           const isBull = s.macro_economy === 'bull';
@@ -147,23 +148,24 @@ export const tradingEvents: Record<string, GameEvent> = {
           const luckRate = ((s.luck || 20) / 1000);
           const gainRate = baseRate + luckRate;
           const profit = s.cash * gainRate;
-          const cappedTc = Math.max(0, Math.min(30, parseFloat(profit.toFixed(1))));
+          const cappedProfit = Math.max(0, Math.min(30, parseFloat(profit.toFixed(1))));
           
           if (profit >= 0) {
             return {
               mid_year: true, season_stage: 'h1',
-              tc: cappedTc,
+              tc: 0,
+              cash: parseFloat((s.cash + cappedProfit).toFixed(1)),
               health: Math.max(0, s.health - 4),
-              message: ` 稳健盈利！凭借严谨的风控与股息配置，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (+${cappedTc}w 美元生活提取)！`
+              message: ` 稳健盈利！凭借严谨的风控与股息配置，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (现金增厚 +$${cappedProfit}w)！`
             };
           } else {
             const loss = Math.min(Math.abs(profit), 20);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(5, s.cash - loss),
+              cash: Math.max(5, parseFloat((s.cash - loss).toFixed(1))),
               health: Math.max(0, s.health - 6),
-              message: ` 熊市震荡！宏观大盘整体回调，对冲仓位受损 -${loss.toFixed(1)}w 美元。好在你严格止损，保住了绝大部分主力资金。`
+              message: ` 熊市震荡！宏观大盘整体回调，对冲仓位受损 -$${loss.toFixed(1)}w 美元。好在你严格止损，保住了绝大部分主力资金。`
             };
           }
         },
@@ -171,6 +173,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险)',
+        condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
@@ -180,18 +183,19 @@ export const tradingEvents: Record<string, GameEvent> = {
             const gain = Math.min(45, s.cash * 0.30);
             return {
               mid_year: true, season_stage: 'h1',
-              tc: parseFloat(gain.toFixed(1)),
+              tc: 0,
+              cash: parseFloat((s.cash + gain).toFixed(1)),
               health: Math.max(0, s.health - 6),
-              message: ` 飞天暴赚！你重仓的 AI 科技巨头股价随着算力风口暴涨！账面盈利 +${gain.toFixed(1)}w 美元！`
+              message: ` 飞天暴赚！你重仓的 AI 科技巨头股价随着算力风口暴涨！现金暴增 +$${gain.toFixed(1)}w 美元！`
             };
           } else {
             const loss = Math.min(s.cash * 0.20, 30);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(8, s.cash - loss),
+              cash: Math.max(8, parseFloat((s.cash - loss).toFixed(1))),
               health: Math.max(0, s.health - 10),
-              message: ` 宏观回调！科技板块遭遇资金阶段性获利砸盘，仓位回调 -${loss.toFixed(1)}w 美元！`
+              message: ` 宏观回调！科技板块遭遇资金阶段性获利砸盘，仓位回调 -$${loss.toFixed(1)}w 美元！`
             };
           }
         },
@@ -199,6 +203,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险)',
+        condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
@@ -208,25 +213,26 @@ export const tradingEvents: Record<string, GameEvent> = {
             const doubleGain = Math.min(60, s.cash * 0.50);
             return {
               mid_year: true, season_stage: 'h1',
-              tc: parseFloat(doubleGain.toFixed(1)),
+              tc: 0,
+              cash: parseFloat((s.cash + doubleGain).toFixed(1)),
               health: Math.max(0, s.health - 10),
-              message: ` 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +${doubleGain.toFixed(1)}w 美元！`
+              message: ` 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +$${doubleGain.toFixed(1)}w 美元！`
             };
           } else if (roll < winRate + 0.40) {
             const drop = Math.min(s.cash * 0.30, 40);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(5, s.cash - drop),
+              cash: Math.max(5, parseFloat((s.cash - drop).toFixed(1))),
               health: Math.max(0, s.health - 12),
-              message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -${drop.toFixed(1)}w 美元！`
+              message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -$${drop.toFixed(1)}w 美元！`
             };
           } else {
             const bust = Math.min(s.cash * 0.55, 60);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(2, s.cash - bust),
+              cash: Math.max(2, parseFloat((s.cash - bust).toFixed(1))),
               health: Math.max(0, s.health - 15),
               message: ` 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
             };

@@ -290,8 +290,27 @@ export const immigrationEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const success = s.leetcode >= 50 && Math.random() < 0.3;
           return success
-            ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
-            : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
+            ? { 
+                visa: s.visa === '公民' ? '公民' : '绿卡', 
+                gc_progress: 5, 
+                gc_stage: 'approved', 
+                job_type: 'startup_founder',
+                level: 'CEO & Founder',
+                company: 'AI Startup',
+                founder_stage: 'series_a',
+                company_valuation: 3000,
+                cash: s.cash + 100, 
+                tc: 18, 
+                message: '你带着前沿的 AI 架构理念获得了顶级风投领投！公司估值达 $3000w，你正式转型全职 Founder 开启创业征程！' 
+              }
+            : { 
+                visa: s.visa === '公民' ? '公民' : '绿卡', 
+                gc_progress: 5, 
+                gc_stage: 'approved', 
+                cash: Math.max(0, s.cash - 15), 
+                health: Math.max(0, s.health - 15), 
+                message: '创业前沿探索非常艰难，大模型算力成本高昂，在尝试几个 Demo 后你决定继续留在原厂积蓄实力。' 
+              };
         },
         nextEventId: 'sv_year_end_settlement',
       },

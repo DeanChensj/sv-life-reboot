@@ -194,7 +194,7 @@ export const startupEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < (0.55 + s.leetcode / 300);
           return win 
-            ? { tc: s.tc + 25, cash: s.cash + 30, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(25, s.charm + 4), health: s.health - 20, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus 并协助加急批复了 O1 签证！' }
+            ? { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(25, (s.charm || 10) + 4), health: s.health - 20, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' }
             : { health: s.health - 25, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
         },
         nextEventId: h1ToH2Router,

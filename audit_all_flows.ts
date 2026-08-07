@@ -45,16 +45,16 @@ function logWarning(rule: string, eventId: string, details: string) {
 
 // Dummy base states to test conditions and choice outcomes
 const dummyStates: GameState[] = [
-  { ...generateInitialState(), visa: 'F1 (学生)', job_type: 'unemployed', age: 23, status: 'playing' },
-  { ...generateInitialState(), visa: 'OPT (实习)', job_type: 'big_tech', company: 'Google', level: 'L3', age: 24, status: 'playing' },
-  { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'big_tech', company: 'Meta', level: 'L5', age: 28, status: 'playing', gc_stage: 'perm_processing' },
-  { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'startup', company: 'AI Startup', level: 'Senior', age: 29, status: 'playing', gc_stage: 'i140_approved' },
-  { ...generateInitialState(), visa: '绿卡', job_type: 'big_tech', company: 'Apple', level: 'L6', age: 32, status: 'playing', gc_stage: 'approved', has_housing: true },
-  { ...generateInitialState(), visa: '公民', job_type: 'ai_research', company: 'OpenAI', level: 'Staff', age: 30, status: 'playing', is_ssr_unlocked: true },
-  { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'unemployed', laid_off: true, age: 27, status: 'playing' },
-  { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'startup', age: 26, status: 'playing' },
-  { ...generateInitialState(), visa: 'L1 (外派)', job_type: 'big_tech', age: 27, status: 'playing' },
-  { ...generateInitialState(), visa: '无', job_type: 'cn_tech', company: 'cn_big_tech', age: 24, status: 'playing' },
+  { ...generateInitialState(), visa: 'F1 (学生)', job_type: 'unemployed', tc: 0, age: 23, status: 'playing' },
+  { ...generateInitialState(), visa: 'OPT (实习)', job_type: 'big_tech', company: 'Google', level: 'L3', tc: 22, age: 24, status: 'playing' },
+  { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'big_tech', company: 'Meta', level: 'L5 (Senior)', tc: 46, age: 28, status: 'playing', gc_stage: 'perm_processing' },
+  { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'startup', company: 'AI Startup', level: 'Senior', tc: 24, age: 29, status: 'playing', gc_stage: 'i140_approved' },
+  { ...generateInitialState(), visa: '绿卡', job_type: 'big_tech', company: 'Apple', level: 'L6 (Staff)', tc: 65, age: 32, status: 'playing', gc_stage: 'approved', has_housing: true },
+  { ...generateInitialState(), visa: '公民', job_type: 'ai_research', company: 'OpenAI', level: 'MTS', tc: 75, age: 30, status: 'playing', is_ssr_unlocked: true },
+  { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'unemployed', laid_off: true, tc: 0, age: 27, status: 'playing' },
+  { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'startup', tc: 18, age: 26, status: 'playing' },
+  { ...generateInitialState(), visa: 'L1 (外派)', job_type: 'big_tech', company: 'Google', level: 'L4', tc: 30, age: 27, status: 'playing' },
+  { ...generateInitialState(), visa: '无', job_type: 'cn_tech', company: 'cn_big_tech', level: '国内研发', tc: 8, age: 24, status: 'playing' },
   { ...generateInitialState(), visa: '绿卡', job_type: 'startup_founder', company: 'AI Startup', level: 'CEO & Founder', founder_stage: 'seed', company_valuation: 800, tc: 10, age: 30, status: 'playing' },
   { ...generateInitialState(), visa: '公民', job_type: 'trader', company: '全职 Day Trader', level: '全职 Trader', tc: 0, age: 32, status: 'playing' }
 ];
@@ -137,6 +137,39 @@ for (const [id, ev] of Object.entries(events)) {
         }
       }
     }
+  });
+}
+
+// Check Rule 3.6: Level & Compensation Realism Invariant Audit
+for (const [id, ev] of Object.entries(events)) {
+  ev.choices.forEach((c, idx) => {
+    dummyStates.forEach(st => {
+      if (!c.condition || c.condition(st)) {
+        try {
+          const eff = c.effect(st);
+          const nextState = { ...st, ...eff };
+          if (!nextState.laid_off && (nextState.job_type === 'big_tech' || nextState.job_type === 'nvidia' || nextState.job_type === 'amazon' || nextState.job_type === 'tiktok')) {
+            const lvl = nextState.level;
+            const tc = nextState.tc;
+            if (lvl === 'L3' && (tc < 15 || tc > 35)) {
+              logIssue('TC Realism Anomaly', id, `Choice ${idx} resulted in L3 with TC $${tc}w`);
+            }
+            if (lvl === 'L4' && (tc < 24 || tc > 45)) {
+              logIssue('TC Realism Anomaly', id, `Choice ${idx} resulted in L4 with TC $${tc}w`);
+            }
+            if ((lvl === 'L5' || lvl === 'L5 (Senior)') && (tc < 35 || tc > 65)) {
+              logIssue('TC Realism Anomaly', id, `Choice ${idx} resulted in L5 Senior with TC $${tc}w`);
+            }
+            if ((lvl === 'L6' || lvl === 'L6 (Staff)') && (tc < 50 || tc > 90)) {
+              logIssue('TC Realism Anomaly', id, `Choice ${idx} resulted in L6 Staff with TC $${tc}w`);
+            }
+            if ((lvl === 'L7' || lvl === 'L7 (Senior Staff)') && (tc < 75 || tc > 140)) {
+              logIssue('TC Realism Anomaly', id, `Choice ${idx} resulted in L7 Senior Staff with TC $${tc}w`);
+            }
+          }
+        } catch (e) {}
+      }
+    });
   });
 }
 

@@ -658,7 +658,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 50,
         effect: (s) => ({
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'L1 (外派)',
-          tc: 22,
+          tc: 30,
           company: 'google',
           job_type: 'big_tech',
           level: 'L4',
@@ -667,8 +667,8 @@ export const initializationEvents: Record<string, GameEvent> = {
           age: s.age + 1,
           year: s.year + 1,
           message: (s.visa === '公民' || s.visa === '绿卡')
-            ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职 Google！'
-            : '陆本硬核算法发威！你拿到了外派 Offer，先以 L1 身份入职海外分公司，一年后调动回湾区总部！'
+            ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职 Google (定级 L4 · 年薪 $30w)！'
+            : '陆本硬核算法发威！你拿到了外派 Offer，以 L1 身份入职海外分公司并调动回湾区总部 (定级 L4 · 年薪 $30w)！'
         }),
         nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : 'sv_daily_life',
       }
@@ -754,7 +754,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         text: '申请 OpenAI / Anthropic 核心研究员 (地狱面试, 胜率约 25%)',
         effect: (s) => {
           // Remove 100% auto win exploit! Base pass chance 22%, bonus up to 20% for high leetcode
-          const winRate = 0.22 + (s.leetcode >= 80 ? 0.18 : 0.08) + (s.charm >= 15 ? 0.05 : 0);
+          const winRate = 0.22 + (s.leetcode >= 80 ? 0.18 : 0.08) + ((s.charm || 10) >= 15 ? 0.05 : 0);
           const win = Math.random() < winRate;
           return win
             ? { tc: 80, cash: s.cash + 20, health: s.health - 20, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'openai', job_type: 'ai_research', level: 'MTS', message: '震撼硅谷！你攻克了 AGI 前沿推理大模型面试，OpenAI 直接用 $80w 顶配包裹和 O1 签证把我聘为核心研究员！' }
@@ -768,7 +768,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '去大厂当 Applied Scientist (应用科学家)',
-        effect: (s) => ({ tc: 45, cash: s.cash + 15, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'google', job_type: 'ai_research', level: 'L5', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，生活相对安稳。' }),
+        effect: (s) => ({ tc: 48, cash: s.cash + 15, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'google', job_type: 'ai_research', level: 'L5 (Senior)', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，享受稳健高额包裹！' }),
         nextEventId: (s: GameState) => {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';

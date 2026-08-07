@@ -342,14 +342,17 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！有投资人给你推了独角兽面试，但你太久不练算法，白板编程没有通过面试。'
             };
           }
+          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const newTC = isUnemployed ? getLevelScaledTC(22, targetLvl) : s.tc + 6;
           return {
-            tc: isUnemployed ? 22 : s.tc + 6,
+            tc: newTC,
+            level: targetLvl,
             job_type: isUnemployed ? 'big_tech' : s.job_type,
             laid_off: false,
             charm: Math.min(25, s.charm + 5),
             health: Math.min(100, s.health + 15),
             message: isUnemployed
-              ? '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人引荐你去 AI 独角兽，你扎实的算法基础顺利通过面试，空降高薪 Offer (+$22w)！'
+              ? `多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人引荐你去 AI 独角兽，你扎实的算法基础顺利通过面试，空降高薪 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)！`
               : '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
           };
         },
@@ -365,8 +368,10 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           if (win && isUnemployed && !canLandJob) {
             return { cash: s.cash - 1, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档并获推面试，但算法生疏未能拿到 Offer。' };
           }
+          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const newTC = isUnemployed ? getLevelScaledTC(20, targetLvl) : s.tc + 5;
           return win
-            ? { cash: s.cash - 1, tc: isUnemployed ? 20 : s.tc + 5, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司，总包大涨！' }
+            ? { cash: s.cash - 1, tc: newTC, level: targetLvl, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: `你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司 (定级 ${targetLvl} · 总包 ${newTC}w)！` }
             : { cash: s.cash - 1, health: Math.max(0, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -406,14 +411,17 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               message: '老哥极为欣赏你的解题节奏并为你推荐了 AI 团队面试，可惜你长期没练算法没能通过白板面试。'
             };
           }
+          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const newTC = isUnemployed ? getLevelScaledTC(20, targetLvl) : s.tc + 5;
           return win
             ? {
-                tc: isUnemployed ? 20 : s.tc + 5,
+                tc: newTC,
+                level: targetLvl,
                 job_type: isUnemployed ? 'big_tech' : s.job_type,
                 laid_off: false,
                 charm: Math.min(25, s.charm + 4),
                 health: Math.min(100, s.health + 15),
-                message: '聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，直通推荐你去了核心 AI 算力架构团队！TC 暴涨！'
+                message: `聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，直通推荐你去了核心 AI 算力架构团队 (定级 ${targetLvl} · 总包 ${newTC}w)！`
               }
             : {
                 health: Math.min(100, s.health + 20),
@@ -955,7 +963,9 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({ 
           cash: s.cash - 5, 
           tc: 0, 
-          job_type: 'startup',
+          laid_off: true,
+          job_type: 'unemployed',
+          level: '待业',
           health: s.health - 20,
           message: '你辞去了大厂工作。熬夜修了三天 Bug 后，OpenAI 发布了新功能，直接把你们的产品做成了免费内置功能。公司破产了。'
         }),

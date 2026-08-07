@@ -92,7 +92,7 @@ export const generateInitialState = (): GameState => {
     npcs: {},
     story_flags: {},
     timeline: [],
-    history_net_worth: [],
+    history_net_worth: [{ age: 18, year: 2018, netWorth: parseFloat(cash.toFixed(1)), cash: parseFloat(cash.toFixed(1)), stocks: 0 }],
     message: bgMessage
   };
 };

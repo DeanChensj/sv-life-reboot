@@ -11,8 +11,59 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({ gameSt
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
   const timeline = gameState.timeline || [];
-  const history = gameState.history_net_worth || [];
+  const rawHistory = gameState.history_net_worth || [];
   const currentNetWorth = gameState.cash + (gameState.stocks || 0);
+
+  // Construct dynamic timeline data including all recorded points + current live status
+  const chartHistory: { age: number; year: number; netWorth: number; cash: number; stocks: number; isLive?: boolean }[] = [];
+
+  if (rawHistory.length === 0) {
+    const startAge = Math.min(gameState.age, 18);
+    const startYear = gameState.year - (gameState.age - startAge);
+    chartHistory.push({
+      age: startAge,
+      year: startYear,
+      netWorth: Math.max(1, parseFloat(currentNetWorth.toFixed(1))),
+      cash: Math.max(1, parseFloat(gameState.cash.toFixed(1))),
+      stocks: parseFloat((gameState.stocks || 0).toFixed(1)),
+    });
+  } else {
+    chartHistory.push(...rawHistory);
+  }
+
+  // Ensure current year live snapshot is present / updated
+  const lastRecorded = chartHistory[chartHistory.length - 1];
+  if (!lastRecorded || lastRecorded.age !== gameState.age || lastRecorded.year !== gameState.year) {
+    chartHistory.push({
+      age: gameState.age,
+      year: gameState.year,
+      netWorth: parseFloat(currentNetWorth.toFixed(1)),
+      cash: parseFloat(gameState.cash.toFixed(1)),
+      stocks: parseFloat((gameState.stocks || 0).toFixed(1)),
+      isLive: true,
+    });
+  } else {
+    chartHistory[chartHistory.length - 1] = {
+      ...lastRecorded,
+      netWorth: parseFloat(currentNetWorth.toFixed(1)),
+      cash: parseFloat(gameState.cash.toFixed(1)),
+      stocks: parseFloat((gameState.stocks || 0).toFixed(1)),
+      isLive: true,
+    };
+  }
+
+  // If there is only 1 data point, synthesize the starting baseline point
+  if (chartHistory.length === 1) {
+    const originAge = Math.max(18, gameState.age - 1);
+    const originYear = gameState.year - (gameState.age - originAge);
+    chartHistory.unshift({
+      age: originAge,
+      year: originYear,
+      netWorth: Math.max(0.5, parseFloat((currentNetWorth * 0.5).toFixed(1))),
+      cash: Math.max(0.5, parseFloat((gameState.cash * 0.5).toFixed(1))),
+      stocks: 0,
+    });
+  }
 
   // Filter records
   const filteredTimeline = filterCategory === 'all' 
@@ -20,11 +71,10 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({ gameSt
     : timeline.filter(t => t.category === filterCategory);
 
   // Compute key career milestones
-  const peakNetWorth = history.length > 0 
-    ? Math.max(currentNetWorth, ...history.map(h => h.netWorth)) 
-    : currentNetWorth;
-  
-  const yearsPlayed = history.length > 0 ? history.length : Math.max(1, gameState.age - 22);
+  const peakNetWorth = Math.max(currentNetWorth, ...chartHistory.map(h => h.netWorth));
+  const initialNetWorth = chartHistory[0]?.netWorth || 1;
+  const growthMultiplier = initialNetWorth > 0 ? (currentNetWorth / initialNetWorth).toFixed(1) : '1.0';
+  const yearsPlayed = Math.max(1, chartHistory.length);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -173,7 +223,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({ gameSt
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
                 <polyline points="17 6 23 6 23 12" />
               </svg>
-              <span>资产走势</span>
+              <span>资产走势 ({chartHistory.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('summary')}
@@ -184,17 +234,15 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({ gameSt
               }`}
             >
               <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
-              <span>生涯盘点</span>
+              <span>生涯总览</span>
             </button>
           </div>
 
           {/* Quick Metrics */}
-          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 text-[11px] sm:text-xs font-mono px-1">
+          <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono">
             <div className="flex items-center gap-1">
               <span className="text-zinc-500">峰值资产:</span>
               <span className="font-bold text-emerald-400">${peakNetWorth.toFixed(1)}w</span>
@@ -204,7 +252,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({ gameSt
               <span className="font-bold text-sky-400">${gameState.tc.toFixed(1)}w</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-zinc-500">年限:</span>
+              <span className="text-zinc-500">记录年数:</span>
               <span className="font-bold text-amber-400">{yearsPlayed} 年</span>
             </div>
           </div>
@@ -313,87 +361,211 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({ gameSt
           {/* Tab 2: Net Worth Curve Chart */}
           {activeTab === 'chart' && (
             <div className="space-y-5 sm:space-y-6">
+              {/* Metric Cards Banner */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col">
+                  <span className="text-[10px] sm:text-xs text-zinc-500 font-mono">当前总净资产</span>
+                  <span className="text-base sm:text-xl font-bold font-mono text-emerald-400 mt-1">
+                    ${currentNetWorth.toFixed(1)}w
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                    现金 ${gameState.cash.toFixed(1)}w + 股票 ${(gameState.stocks || 0).toFixed(1)}w
+                  </span>
+                </div>
+
+                <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col">
+                  <span className="text-[10px] sm:text-xs text-zinc-500 font-mono">历史最高峰值</span>
+                  <span className="text-base sm:text-xl font-bold font-mono text-teal-300 mt-1">
+                    ${peakNetWorth.toFixed(1)}w
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                    巅峰财富高光记录
+                  </span>
+                </div>
+
+                <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col">
+                  <span className="text-[10px] sm:text-xs text-zinc-500 font-mono">财富累积倍率</span>
+                  <span className="text-base sm:text-xl font-bold font-mono text-sky-400 mt-1">
+                    {growthMultiplier}x
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                    初始: ${initialNetWorth.toFixed(1)}w
+                  </span>
+                </div>
+
+                <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col">
+                  <span className="text-[10px] sm:text-xs text-zinc-500 font-mono">FIRE 阶段目标</span>
+                  <span className="text-base sm:text-xl font-bold font-mono text-amber-400 mt-1">
+                    {Math.min(100, Math.floor((currentNetWorth / gameState.win_threshold) * 100))}%
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                    目标阈值: ${gameState.win_threshold}w
+                  </span>
+                </div>
+              </div>
+
+              {/* Main Chart Container */}
               <div className="bg-zinc-900/80 border border-zinc-800 p-4 sm:p-6 rounded-2xl">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-5 sm:mb-6">
                   <div>
                     <h3 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2">
                       <span>历年净资产复合增长走势</span>
                       <span className="text-[10px] sm:text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                        FIRE 进度: {Math.min(100, Math.floor((currentNetWorth / gameState.win_threshold) * 100))}%
+                        {chartHistory.length} 个数据节点
                       </span>
                     </h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">展示现金与股票持仓随年限推移的复合积累轨迹</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">展示现金流积累与股票持仓随年限推移的复合资产轨迹</p>
                   </div>
-                  <div className="text-left sm:text-right">
-                    <div className="text-[10px] sm:text-xs text-zinc-500 font-mono">目标阈值</div>
-                    <div className="text-sm sm:text-base font-bold font-mono text-amber-400">${gameState.win_threshold}w</div>
+                  <div className="flex items-center gap-2 text-xs font-mono">
+                    <span className="flex items-center gap-1 text-sky-400">
+                      <span className="w-2.5 h-2.5 rounded-sm bg-sky-500 inline-block" /> 现金
+                    </span>
+                    <span className="flex items-center gap-1 text-teal-400">
+                      <span className="w-2.5 h-2.5 rounded-sm bg-teal-400 inline-block" /> 股票持仓
+                    </span>
                   </div>
                 </div>
 
-                {history.length < 2 ? (
-                  <div className="text-center py-16 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40 flex flex-col items-center justify-center">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-3">
-                      <svg className="w-6 h-6 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="20" x2="18" y2="10" />
-                        <line x1="12" y1="20" x2="12" y2="4" />
-                        <line x1="6" y1="20" x2="6" y2="14" />
-                      </svg>
-                    </div>
-                    <div className="text-zinc-400 text-sm">正在收集历年财务数据...</div>
-                    <div className="text-zinc-600 text-xs mt-1">完成每年的年底结算后，系统将自动生成连续的资产增长轨迹图</div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Visual Bar Chart */}
-                    <div className="h-56 sm:h-64 flex items-end gap-1.5 sm:gap-2 pt-6 pb-2 border-b border-zinc-800 overflow-x-auto px-1 sm:px-2">
-                      {history.map((h, i) => {
-                        const maxVal = Math.max(gameState.win_threshold, peakNetWorth, 100);
-                        const safeNetWorth = Math.max(0, h.netWorth);
-                        const heightPct = Math.max(8, Math.min(100, (safeNetWorth / maxVal) * 100));
-                        const isPeak = h.netWorth === peakNetWorth;
-                        return (
-                          <div key={i} className="flex-1 min-w-[28px] sm:min-w-[32px] flex flex-col items-center gap-1 group relative">
-                            {/* Hover Tooltip */}
-                            <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 border border-zinc-700 text-[10px] font-mono px-2 py-1 rounded shadow-xl pointer-events-none whitespace-nowrap z-20">
-                              <div>{h.year}年 ({h.age}岁)</div>
-                              <div className="text-emerald-400 font-bold">${h.netWorth.toFixed(1)}w</div>
-                              <div className="text-zinc-500">现金: ${h.cash.toFixed(1)}w | 股票: ${h.stocks.toFixed(1)}w</div>
+                <div className="space-y-4">
+                  {/* Visual Stacked Bar Chart */}
+                  <div className="h-60 sm:h-72 flex items-end gap-1.5 sm:gap-2.5 pt-8 pb-2 border-b border-zinc-800 overflow-x-auto px-1 sm:px-2">
+                    {chartHistory.map((h, i) => {
+                      const maxVal = Math.max(gameState.win_threshold, peakNetWorth, 100);
+                      const safeNetWorth = Math.max(0, h.netWorth);
+                      const totalHeightPct = Math.max(10, Math.min(100, (safeNetWorth / maxVal) * 100));
+                      const isPeak = h.netWorth === peakNetWorth && peakNetWorth > 0;
+                      
+                      // Calculate cash vs stocks proportion
+                      const cashPct = safeNetWorth > 0 ? (Math.max(0, h.cash) / safeNetWorth) * 100 : 100;
+                      const stocksPct = safeNetWorth > 0 ? (Math.max(0, h.stocks) / safeNetWorth) * 100 : 0;
+
+                      return (
+                        <div key={i} className="flex-1 min-w-[32px] sm:min-w-[40px] max-w-[64px] flex flex-col items-center gap-1 group relative">
+                          {/* Hover Tooltip */}
+                          <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900/95 border border-zinc-700 text-[10px] sm:text-xs font-mono p-2 rounded-xl shadow-2xl pointer-events-none whitespace-nowrap z-30 backdrop-blur-md">
+                            <div className="text-zinc-300 font-bold flex items-center gap-1.5">
+                              <span>{h.year} 年 ({h.age} 岁)</span>
+                              {h.isLive && (
+                                <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[9px] border border-emerald-500/30">当前</span>
+                              )}
+                              {isPeak && (
+                                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[9px] border border-amber-500/30">峰值</span>
+                              )}
                             </div>
+                            <div className="text-emerald-400 font-extrabold text-sm my-0.5">${h.netWorth.toFixed(1)}w</div>
+                            <div className="text-zinc-400 text-[10px] flex gap-2">
+                              <span className="text-sky-300">现金: ${h.cash.toFixed(1)}w</span>
+                              <span className="text-teal-300">股票: ${h.stocks.toFixed(1)}w</span>
+                            </div>
+                          </div>
 
-                            {/* Bar Column */}
+                          {/* Value Tag on Top of Bar */}
+                          <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 group-hover:text-emerald-400 font-bold truncate max-w-full">
+                            ${h.netWorth >= 100 ? `${Math.round(h.netWorth)}w` : `${h.netWorth.toFixed(1)}w`}
+                          </span>
+
+                          {/* Dual-tone Stacked Column Bar */}
+                          <div 
+                            className={`w-full rounded-t-lg flex flex-col justify-end overflow-hidden transition-all duration-300 ${
+                              isPeak 
+                                ? 'ring-2 ring-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.35)]' 
+                                : 'group-hover:brightness-125'
+                            } ${h.isLive ? 'ring-1 ring-sky-400/80' : ''}`}
+                            style={{ height: `${totalHeightPct}%` }}
+                          >
+                            {/* Stocks Segment (Top) */}
+                            {h.stocks > 0 && (
+                              <div 
+                                className="w-full bg-gradient-to-t from-teal-600 to-emerald-400 transition-all"
+                                style={{ height: `${stocksPct}%` }}
+                              />
+                            )}
+                            {/* Cash Segment (Bottom) */}
                             <div 
-                              className={`w-full rounded-t-md transition-all duration-300 ${
-                                isPeak 
-                                  ? 'bg-gradient-to-t from-emerald-600 via-teal-500 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)]' 
-                                  : 'bg-gradient-to-t from-zinc-800 via-sky-600/60 to-sky-400/80 hover:brightness-125'
-                              }`}
-                              style={{ height: `${heightPct}%` }}
+                              className="w-full bg-gradient-to-t from-sky-700 via-sky-600 to-sky-400 transition-all"
+                              style={{ height: `${cashPct}%` }}
                             />
+                          </div>
 
-                            {/* X-axis Label */}
-                            <span className="text-[9px] sm:text-[10px] font-mono text-zinc-500 group-hover:text-zinc-300">
+                          {/* X-axis Label */}
+                          <div className="flex flex-col items-center">
+                            <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 group-hover:text-zinc-200">
                               {h.age}岁
                             </span>
+                            <span className="text-[8px] font-mono text-zinc-600">
+                              {h.year}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Chart Legend */}
-                    <div className="flex flex-wrap justify-between items-center text-[10px] sm:text-xs font-mono text-zinc-500 pt-2 gap-2">
-                      <span>初始 (${history[0]?.netWorth.toFixed(1)}w)</span>
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-sm bg-sky-500 inline-block" /> 积累
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-sm bg-emerald-400 inline-block" /> 峰值
-                        </span>
-                      </div>
-                      <span>当前 (${currentNetWorth.toFixed(1)}w)</span>
-                    </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
+
+                  {/* Chart Legend & Benchmarks */}
+                  <div className="flex flex-wrap justify-between items-center text-[10px] sm:text-xs font-mono text-zinc-500 pt-1 gap-2">
+                    <span>起始: ${chartHistory[0]?.netWorth.toFixed(1)}w ({chartHistory[0]?.age}岁)</span>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-sm bg-sky-500 inline-block" /> 现金
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-sm bg-teal-400 inline-block" /> 股票
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-sm bg-emerald-400 inline-block" /> 巅峰高光
+                      </span>
+                    </div>
+                    <span>当前: ${currentNetWorth.toFixed(1)}w ({gameState.age}岁)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Table Breakdown */}
+              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3.5 sm:p-5">
+                <h4 className="text-xs sm:text-sm font-bold text-zinc-200 mb-3 flex items-center justify-between">
+                  <span>历年资产明细清单</span>
+                  <span className="text-xs font-mono text-zinc-500">共 {chartHistory.length} 年记录</span>
+                </h4>
+                <div className="overflow-x-auto max-h-48 overflow-y-auto custom-scrollbar">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="text-zinc-500 border-b border-zinc-800 bg-zinc-950/40 sticky top-0">
+                      <tr>
+                        <th className="py-1.5 px-2">年份/年龄</th>
+                        <th className="py-1.5 px-2 text-right">现金储备</th>
+                        <th className="py-1.5 px-2 text-right">股票持仓</th>
+                        <th className="py-1.5 px-2 text-right">总净资产</th>
+                        <th className="py-1.5 px-2 text-right">状态</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/50 text-zinc-300">
+                      {[...chartHistory].reverse().map((row, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-800/30 transition-colors">
+                          <td className="py-1.5 px-2 font-bold text-zinc-200">
+                            {row.year} 年 ({row.age} 岁)
+                          </td>
+                          <td className="py-1.5 px-2 text-right text-sky-400">
+                            ${row.cash.toFixed(1)}w
+                          </td>
+                          <td className="py-1.5 px-2 text-right text-teal-400">
+                            ${row.stocks.toFixed(1)}w
+                          </td>
+                          <td className="py-1.5 px-2 text-right font-bold text-emerald-400">
+                            ${row.netWorth.toFixed(1)}w
+                          </td>
+                          <td className="py-1.5 px-2 text-right text-[10px]">
+                            {row.isLive ? (
+                              <span className="text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">实时</span>
+                            ) : row.netWorth === peakNetWorth ? (
+                              <span className="text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">巅峰</span>
+                            ) : (
+                              <span className="text-zinc-500">结算</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

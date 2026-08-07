@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 
 export const careerEvents: Record<string, GameEvent> = {
@@ -121,8 +121,7 @@ export const careerEvents: Record<string, GameEvent> = {
           };
         },
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       },
       {
@@ -149,8 +148,7 @@ export const careerEvents: Record<string, GameEvent> = {
           };
         },
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       },
       {
@@ -177,8 +175,7 @@ export const careerEvents: Record<string, GameEvent> = {
           };
         },
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       },
       {
@@ -201,8 +198,7 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 40) return 'job_hunt';
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       },
       {
@@ -218,8 +214,7 @@ export const careerEvents: Record<string, GameEvent> = {
           message: '【开启慢生活 Gap Year】你决定暂停无休止的内卷与面试焦虑，给自己放个大假！每天睡到自然醒、徒步、做饭、打游戏，身心得到了彻底的治愈与恢复！'
         }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       },
       {
@@ -346,7 +341,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！`
           };
         },
-        nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package',
@@ -370,7 +365,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -18)。`
           };
         },
-        nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 NVIDIA】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
@@ -396,7 +391,7 @@ export const careerEvents: Record<string, GameEvent> = {
               : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`
           };
         },
-        nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 TikTok / 字节】接手中美跨时区核心业务，拿顶格全现金包裹',
@@ -420,7 +415,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -18)。`
           };
         },
-        nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹',
@@ -436,7 +431,7 @@ export const careerEvents: Record<string, GameEvent> = {
           is_new_job: true,
           message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！`
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : midYearEventRouter(s)),
       },
       {
         text: '【签约入职 AI Startup 初创团队】降薪赌一把早期核心员工期权大饼 (高风险高回报)',
@@ -451,7 +446,7 @@ export const careerEvents: Record<string, GameEvent> = {
           is_new_job: true,
           message: '【加入 AI Startup】你接受了一家顶级风投领投的早期初创团队 Offer！虽然现金略微下调，但分到了极其丰厚的早期期权股份！'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : midYearEventRouter(s)),
       },
       {
         text: '【签约入职 Apple】加入库比蒂诺巨头，享受极致稳定性与顶尖硬件生态',
@@ -474,7 +469,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
           };
         },
-        nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
       },
       {
         text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',

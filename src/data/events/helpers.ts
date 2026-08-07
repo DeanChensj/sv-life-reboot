@@ -334,3 +334,22 @@ export function isOpportunityActiveThisYear(s: GameState, oppKey: string): boole
   return oppKey === ANNUAL_OPPORTUNITY_KEYS[primaryIdx] ||
          oppKey === ANNUAL_OPPORTUNITY_KEYS[secondaryIdx];
 }
+
+// Checks if the player is still living in a temporary student dorm, lab, overseas home, or ICC bunk
+export const isTemporaryOrStudentHousing = (s: GameState): boolean => {
+  if (!s.has_housing || !s.housing_name) return true;
+  const tempDorms = [
+    '四大 校内宿舍',
+    '大U 校内宿舍',
+    '美大U 校内宿舍',
+    '美硕 校外公寓',
+    '美国 博士实验室',
+    '国内大学宿舍',
+    '国内老家',
+    '国内 厂区单间',
+    '加州湾区老宅',
+    'ICC 挂靠合宿单间',
+    'ICC 外包合宿单间'
+  ];
+  return tempDorms.includes(s.housing_name);
+};

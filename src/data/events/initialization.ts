@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 
 export const initializationEvents: Record<string, GameEvent> = {
@@ -593,7 +593,18 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '找ICC挂靠 (保底策略)',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', cash: s.cash - 1, tc: 6, company: 'icc', job_type: 'startup', laid_off: false, message: '你找了一家印裔 ICC 外包公司挂靠，拿着微薄薪水并等待 Client 派遣。' }),
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
+          cash: s.cash - 1,
+          tc: 6,
+          company: 'icc',
+          job_type: 'startup',
+          laid_off: false,
+          rent: 1,
+          has_housing: true,
+          housing_name: 'ICC 挂靠合宿单间',
+          message: '你找了一家印裔 ICC 外包公司挂靠，拿着微薄薪水并在外包合宿单间住下，等待 Client 派遣。'
+        }),
         nextEventId: 'icc_work',
       },
       {
@@ -607,8 +618,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         },
         nextEventId: (s: GameState) => {
           if (s.laid_off) return 'job_hunt';
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       }
     ]
@@ -670,7 +680,7 @@ export const initializationEvents: Record<string, GameEvent> = {
             ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职 Google (定级 L4 · 年薪 $30w)！'
             : '陆本硬核算法发威！你拿到了外派 Offer，以 L1 身份入职海外分公司并调动回湾区总部 (定级 L4 · 年薪 $30w)！'
         }),
-        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : 'sv_daily_life',
+        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'),
       }
     ]
   },
@@ -762,16 +772,14 @@ export const initializationEvents: Record<string, GameEvent> = {
         },
         nextEventId: (s: GameState) => {
           if (s.tc < 45 && !s.job_type) return 'job_hunt';
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       },
       {
         text: '去大厂当 Applied Scientist (应用科学家)',
         effect: (s) => ({ tc: 48, cash: s.cash + 15, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'google', job_type: 'ai_research', level: 'L5 (Senior)', message: '大厂的科学家岗位待遇丰厚，不用写 CRUD，直接解决核心算法问题，享受稳健高额包裹！' }),
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       }
     ]

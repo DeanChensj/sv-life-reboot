@@ -239,6 +239,51 @@ export const tradingEvents: Record<string, GameEvent> = {
           }
         },
         nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【开发量化自动套利系统】手写 Python/C++ 跨期网格与均值回归算法，部署低延迟机房',
+        condition: (s) => s.job_type === 'trader',
+        effect: (s) => {
+          const leetBonus = Math.min(0.08, (s.leetcode / 1000));
+          const ecoBonus = s.macro_economy === 'bull' ? 0.06 : (s.macro_economy === 'bear' ? 0.02 : 0.04);
+          const yieldRate = 0.08 + leetBonus + ecoBonus;
+          const profit = Math.min(25, Math.max(6, s.cash * yieldRate));
+          return {
+            mid_year: true, season_stage: 'h1',
+            tc: 0,
+            cash: parseFloat((s.cash + profit).toFixed(1)),
+            leetcode: s.leetcode + 4,
+            health: Math.min(100, s.health + 6),
+            message: `【量化算法自动赚钱】你编写的自动套利脚本在 AWS 低延迟服务器全自动跑通！免去了手动盯盘的精神压力，算法稳健捕获 +$${profit.toFixed(1)}w Alpha 超额收益！`
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【参加量化对冲私董会】在沙丘路展示实盘 Sharpe 收益曲线，吸引高净值 LP 资金 (花费 $0.5w)',
+        condition: (s) => s.job_type === 'trader' && s.cash >= 0.5,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          tc: 0,
+          cash: parseFloat((s.cash - 0.5 + 4.5).toFixed(1)),
+          network: Math.min(100, (s.network || 0) + 3),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          health: Math.max(0, s.health - 2),
+          message: '【斩获 LP 管理费分红】你在量化私董会上凭借优秀的夏普比率惊艳全场，数位科技新贵与天使 LP 委托你打理资金池，获得 +$4.0w 净管理分红！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【止盈金盆洗手】退出 Day Trading 波动江湖，重新面试大厂寻求稳健年薪',
+        condition: (s) => s.job_type === 'trader',
+        effect: (s) => ({
+          job_type: 'unemployed',
+          laid_off: true,
+          company: undefined,
+          level: undefined,
+          message: '你决定结束个人操盘手生涯，落袋为安，带着充沛的本金重新开启大厂求职！'
+        }),
+        nextEventId: 'job_hunt',
       }
     ]
   },
@@ -317,6 +362,142 @@ export const tradingEvents: Record<string, GameEvent> = {
           message: '你稳健落袋为安！拿着现金稳稳躺赚高息，理财心态稳如老狗。'
         }),
         nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'trader_fed_rate_cpi_night': {
+    id: 'trader_fed_rate_cpi_night',
+    title: '【狂暴波动夜】美联储鲍威尔决议与 CPI 通胀数据',
+    description: '今晚美东早 8:30 鲍威尔发表演讲，大盘期权波动率 (IV) 飙升到极致！纳斯达克期货在非农与 CPI 数据公布瞬间剧烈上下插针！',
+    choices: [
+      {
+        text: '严格纪律：提前平掉所有高杠杆 0DTE 末日轮，空仓观望保护本金',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 4),
+          message: '【纪律战胜贪婪】市场插针剧烈多空双爆，许多赌徒惨遭爆仓，而你空仓喝着咖啡，稳稳保住了本金与胜利果实！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '双向跨式策略 (Straddle)：做多两端波动率，靠大幅跳空捕获暴利',
+        effect: (s) => {
+          const win = Math.random() < 0.55;
+          return win
+            ? {
+                cash: parseFloat((s.cash + 6.5).toFixed(1)),
+                health: Math.max(0, s.health - 4),
+                message: '【波动率拉满】数据公布后纳指瞬间暴跌 3%，你的 Put 腿期权飙升 400%，扣除 Call 成本后净赚 +$6.5w！'
+              }
+            : {
+                cash: Math.max(0, parseFloat((s.cash - 2).toFixed(1))),
+                health: Math.max(0, s.health - 6),
+                message: '【波动率双杀 (IV Crush)】大盘窄幅震荡收盘，双向期权的时间价值全部被做市商吃光，损失了 $2w 权利金。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '单边重仓做多科技七巨头 (Magnificent 7) 业绩预期 (需现金>=10w)',
+        reqBadge: '需现金>=10w',
+        condition: (s) => s.cash >= 10,
+        effect: (s) => {
+          const win = Math.random() < 0.50;
+          return win
+            ? {
+                cash: parseFloat((s.cash + 14).toFixed(1)),
+                stocks: (s.stocks || 0) + 10,
+                luck: Math.min(99, s.luck + 4),
+                message: '【科技巨头暴击大赚】巨头财报全线超预期！大盘高开高走，你重仓的多单斩获 +$14w 暴利与股票浮盈！'
+              }
+            : {
+                cash: Math.max(0, parseFloat((s.cash - 5).toFixed(1))),
+                health: Math.max(0, s.health - 10),
+                message: '【业绩雷暴】某核心巨头下调全年指引导致盘后跳水，你的重仓多头止损离场，亏损 $5w。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
+  'trader_wallstreetbets_short_squeeze': {
+    id: 'trader_wallstreetbets_short_squeeze',
+    title: '【散户暴动】WallStreetBets 逼空妖股与 Gamma 轧空狂欢',
+    description: 'Reddit WSB 论坛千万散户集结，猛烈买入深度虚值 Call 期权，将一只空头占比高达 40% 的科技小盘股推向多重熔断！',
+    choices: [
+      {
+        text: '火中取栗：顺势跟风买入，在盘中剧烈震荡中精准止盈',
+        effect: (s) => {
+          const win = Math.random() < 0.60;
+          return win
+            ? {
+                cash: parseFloat((s.cash + 8).toFixed(1)),
+                charm: Math.min(25, (s.charm || 10) + 2),
+                message: '【逃顶大师】你在股票第 4 次向上熔断时果断挂单市价全平，精准收割了 +$8w 游资利润！'
+              }
+            : {
+                cash: Math.max(0, parseFloat((s.cash - 3).toFixed(1))),
+                health: Math.max(0, s.health - 8),
+                message: '【庄家砸盘闪崩】主力资金在盘尾大举抛售，流动性枯竭导致你的单子踩踏止损，亏损 $3w。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '反向做空：等待非理性狂热情绪见顶，反手布局 Put 远期看跌期权',
+        effect: (s) => ({
+          cash: parseFloat((s.cash + 4.5).toFixed(1)),
+          leetcode: Math.min(100, s.leetcode + 3),
+          message: '【价值回归做空】狂欢次日妖股暴跌 45%，你的做空仓位稳稳兑现 +$4.5w 丰厚收益！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '吃瓜看戏：拒绝情绪化交易，在 Twitter/X 上发 Meme 表情包',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 3),
+          health: Math.min(100, s.health + 6),
+          message: '【心态超然】你在社交媒体上输出神级 Meme 嘲讽空头与散户互割，收获 10 万浏览量与点赞！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
+  'trader_bloomberg_terminal_caffeine': {
+    id: 'trader_bloomberg_terminal_caffeine',
+    title: '【操盘手作息】四屏盯盘、摄入过量冷萃咖啡与失眠焦虑',
+    description: '连续两周美东开盘（美西清晨 6:30）高强度盯盘，你每天灌下 3 大杯 Cold Brew，心率飙升但精神处于高度亢奋与紧绷状态。',
+    choices: [
+      {
+        text: '强行关机休市：去 Half Moon Bay 半月湾吹海风吃海鲜，深度养生回血',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 16),
+          cash: Math.max(0, parseFloat((s.cash - 0.3).toFixed(1))),
+          message: '【自然疗愈】放下所有行情波动，在太平洋海风与夕阳中彻底放松，心率回归正常，身心满血恢复！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '将核心策略全量托管给 Python/AWS 自动交易网格系统，解放肉身',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 10),
+          leetcode: s.leetcode + 4,
+          cash: parseFloat((s.cash + 3.0).toFixed(1)),
+          message: '【算法解放肉身】自动化网格交易脚本无缝接管，你不仅睡上了安稳觉，还自动捕获了 +$3.0w 波动收益！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '通宵复盘：拆解 10-K 年报与美股大宗交易 Dark Pool (暗池) 资金流',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 8),
+          leetcode: Math.min(100, s.leetcode + 6),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          message: '【深度研报收获】通宵研读让你发现了某半导体产业链的隐藏预期差，交易认知大幅进化！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   }

@@ -23,7 +23,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   isMuted,
   hasOpenedShop = false,
 }) => {
-  const { companyLabel, companyClassName, levelLabel, levelClassName } = getJobDisplayInfo(gameState);
+  const { companyHeaderLabel, companyLabel, companyClassName, levelHeaderLabel, levelLabel, levelClassName, tcHeaderLabel } = getJobDisplayInfo(gameState);
   const { visaLabel, visaClassName, gcStation } = getVisaDisplayInfo(gameState);
   const { housingLabel, carLabel, hasCar } = getHousingDisplayInfo(gameState);
 
@@ -146,7 +146,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
           <div className="text-right relative z-10">
             <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.2em] mb-1">
-              年薪总包 (TC)
+              {tcHeaderLabel || '年薪总包 (TC)'}
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-zinc-100">
               ${gameState.tc.toFixed(1)}w
@@ -254,11 +254,11 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
         </div>
 
         {/* 4. Status Badges (Company, Level, Visa, Relationship) */}
-        {/* Card 1: 当前雇主 */}
+        {/* Card 1: 当前雇主 / 操盘 / 创业 / 生活状态 */}
         <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-zinc-700 min-h-[76px] sm:min-h-[82px]">
           <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em] mb-1.5 flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-            <span>当前雇主</span>
+            <span>{companyHeaderLabel || '当前雇主'}</span>
           </div>
           <div className="flex items-center">
             <span className={`text-xs sm:text-[13px] px-2.5 py-0.5 rounded-lg border font-bold ${companyClassName}`}>
@@ -267,11 +267,11 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           </div>
         </div>
 
-        {/* Card 2: 当前职级 */}
+        {/* Card 2: 当前职级 / 主营策略 / 企业阶段 / 当前重心 */}
         <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-zinc-700 min-h-[76px] sm:min-h-[82px]">
           <div className="text-zinc-500 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.15em] mb-1.5 flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 text-purple-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span>当前职级</span>
+            <span>{levelHeaderLabel || '当前职级'}</span>
           </div>
           <div className="flex items-center">
             <span className={`text-xs sm:text-[13px] font-bold px-2.5 py-0.5 rounded-lg border ${levelClassName}`}>

@@ -147,6 +147,8 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
      if (s.job_type === 'quant') return 'quant_stress';
 
+     const isCorporate = isWorking;
+
      const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'agent_hallucination_prod_disaster'];
      
      // Meta 专属 Tech Lead Manager 卷王挑战
@@ -177,11 +179,11 @@ export const midYearEventRouter = (s: GameState): string => {
      if ((s.company === 'nvidia' || s.job_type === 'nvidia' || (s.stocks || 0) >= 5) && s.year >= 2023 && Math.random() < 0.35) {
        workEvents.push('nvidia_stock_surge');
      }
-     if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
-     if (isWorking && Math.random() < 0.25) workEvents.push('influencer_vp_drama');
-     if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
+     if (s.year >= 2024 && isCorporate && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
+     if (isCorporate && Math.random() < 0.25) workEvents.push('influencer_vp_drama');
+     if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
      if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
-     if (isWorking) {
+     if (isCorporate) {
        workEvents.push('friday_p0_outage_crisis', 'empty_promotion_promise', 'multi_timezone_calendar_hell');
      }
 
@@ -189,11 +191,15 @@ export const midYearEventRouter = (s: GameState): string => {
   }
 
   // Stage H2 (Autumn/Winter: Life, Social, Travel & Lifestyle Events)
+  const isCorporate = isWorking && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
+  const isFounder = s.job_type === 'startup_founder';
+  const isTrader = s.job_type === 'trader';
+
   const lifeEvents = [
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 
-    'boba_inflation', 'xhs_boba', 'ai_wrapper_startup', 'biohacking_party', 'tahoe_ski_blizzard', 
+    'boba_inflation', 'xhs_boba', 'biohacking_party', 'tahoe_ski_blizzard', 
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation', 'bay_area_pop_concert',
-    'credit_card_churning', 'vibe_coding_craze', 'ai_agent_startup', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
+    'credit_card_churning', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
     'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy',
     'brentwood_cherry_picking', 'cancun_all_inclusive', 'patagonia_vest_hoodie_uniform', 'costco_weekend_pilgrimage'
   ];
@@ -217,15 +223,31 @@ export const midYearEventRouter = (s: GameState): string => {
       lifeEvents.push('tesla_fsd_unsupervised_scare');
   }
 
-  if (isWorking) {
-      lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode', 'team_offsite');
+  if (isCorporate) {
+      lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode', 'team_offsite', 'vibe_coding_craze', 'ai_wrapper_startup', 'ai_agent_startup');
       if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') {
           lifeEvents.push('ex_1point3acres_expose');
       }
+      if (Math.random() < 0.20) {
+        return 'team_offsite';
+      }
   }
 
-  if (isWorking && Math.random() < 0.20) {
-    return 'team_offsite';
+  if (isFounder) {
+      lifeEvents.push(
+        'founder_co_founder_drama',
+        'founder_vc_term_sheet_ghost',
+        'founder_runway_cash_crunch',
+        'founder_hacker_house_hackathon'
+      );
+  }
+
+  if (isTrader) {
+      lifeEvents.push(
+        'trader_fed_rate_cpi_night',
+        'trader_wallstreetbets_short_squeeze',
+        'trader_bloomberg_terminal_caffeine'
+      );
   }
 
   if (!s.is_married) {

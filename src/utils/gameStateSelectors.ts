@@ -1,13 +1,18 @@
 import type { GameState } from '../types';
 
 export interface JobDisplayInfo {
+  companyHeaderLabel: string;
   companyLabel: string;
   companyClassName: string;
+  levelHeaderLabel: string;
   levelLabel: string;
   levelClassName: string;
   isUnemployed: boolean;
   isStudent: boolean;
   isDomestic: boolean;
+  isTrader: boolean;
+  isFounder: boolean;
+  tcHeaderLabel: string;
 }
 
 export interface VisaDisplayInfo {
@@ -52,18 +57,48 @@ export function hasEmployer(state: GameState): boolean {
  * Derives standardized job & level display properties from GameState.
  */
 export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
+  const isTrader = state.job_type === 'trader';
+  const isFounder = state.job_type === 'startup_founder';
   const isUnemployed = Boolean(state.laid_off || state.job_type === 'unemployed');
   const isStudent = !state.job_type && !isUnemployed;
   const isDomestic = state.company === 'cn_big_tech' || state.job_type === 'cn_tech';
+
+  let companyHeaderLabel = '当前雇主';
+  let levelHeaderLabel = '当前职级';
+  let tcHeaderLabel = '年薪总包 (TC)';
 
   // 1. Level Resolution
   let levelLabel = '待业';
   let levelClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20';
 
-  if (isUnemployed) {
-    levelLabel = '待业';
-    levelClassName = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+  if (isTrader) {
+    companyHeaderLabel = '操盘状态';
+    levelHeaderLabel = '主营策略';
+    tcHeaderLabel = '年度收益 (TC)';
+    levelLabel = '美股指数/期权';
+    levelClassName = 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30 font-bold shadow-[0_0_8px_rgba(16,185,129,0.2)]';
+  } else if (isFounder) {
+    companyHeaderLabel = '创立企业';
+    levelHeaderLabel = '企业阶段';
+    const stageName = state.founder_stage === 'exit' 
+      ? '准上市' 
+      : state.founder_stage === 'series_b'
+        ? 'B轮独角兽'
+        : state.founder_stage === 'series_a' 
+          ? 'A轮成长' 
+          : state.founder_stage === 'seed' 
+            ? '种子轮 Seed' 
+            : '车库 Pre-Seed';
+    levelLabel = `${stageName} (估值 $${state.company_valuation || 180}w)`;
+    levelClassName = 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 font-bold shadow-[0_0_8px_rgba(217,70,239,0.2)]';
+  } else if (isUnemployed) {
+    companyHeaderLabel = state.story_flags?.in_gap_year ? '生活状态' : '当前状态';
+    levelHeaderLabel = state.story_flags?.in_gap_year ? '当前重心' : '当前职级';
+    levelLabel = state.story_flags?.in_gap_year ? '身心调养与探索' : '待业';
+    levelClassName = state.story_flags?.in_gap_year ? 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30 font-bold' : 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold';
   } else if (isStudent) {
+    companyHeaderLabel = '就读院校';
+    levelHeaderLabel = '在读学位';
     levelLabel = state.is_phd ? '全奖博士' : state.is_master ? '硕士在读' : '本科在读';
     levelClassName = 'text-sky-300 bg-sky-500/10 border-sky-500/20';
   } else if (state.level) {
@@ -71,14 +106,12 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   } else {
     if (state.job_type === 'quant') levelLabel = 'Quant';
     else if (state.job_type === 'ai_research') levelLabel = 'MTS';
-    else if (state.job_type === 'trader') levelLabel = '全职 Trader';
-    else if (state.job_type === 'startup_founder') levelLabel = 'CEO & Founder';
     else if (state.job_type === 'cn_tech') levelLabel = '国内研发';
     else if (state.is_phd) levelLabel = 'L4';
     else levelLabel = 'L3';
   }
 
-  if (!isUnemployed && !isStudent) {
+  if (!isUnemployed && !isStudent && !isTrader && !isFounder) {
     if (levelLabel.includes('L8') || levelLabel.includes('Principal') || levelLabel.includes('Fellow')) {
       levelClassName = 'text-amber-300 bg-amber-500/15 border-amber-500/30 shadow-[0_0_8px_rgba(251,191,36,0.3)]';
     } else if (levelLabel.includes('L7') || levelLabel.includes('Senior Staff')) {
@@ -94,28 +127,27 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   let companyLabel = '科技公司';
   let companyClassName = 'text-zinc-300 bg-zinc-800/60 border-zinc-700 font-semibold';
 
-  if (isUnemployed) {
-    companyLabel = '待业求职中';
-    companyClassName = 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold';
+  if (isTrader) {
+    companyLabel = '全职 Day Trader';
+    companyClassName = 'text-amber-300 bg-amber-500/15 border-amber-500/30 font-bold shadow-[0_0_8px_rgba(245,158,11,0.25)]';
+  } else if (isFounder) {
+    companyLabel = 'AI/科技 Startup';
+    companyClassName = 'text-purple-300 bg-purple-500/15 border-purple-500/30 shadow-[0_0_8px_rgba(168,85,247,0.25)] font-bold';
+  } else if (isUnemployed) {
+    companyLabel = (state.story_flags?.in_gap_year || !state.laid_off) ? '慢生活 Gap Year' : '待业求职中';
+    companyClassName = (state.story_flags?.in_gap_year || !state.laid_off) ? 'text-teal-300 bg-teal-500/15 border-teal-500/30 font-bold' : 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold';
   } else if (isDomestic) {
     companyLabel = '国内互联网大厂';
     companyClassName = 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold';
   } else if (state.company === 'icc') {
     companyLabel = 'ICC 外包 (挂靠)';
     companyClassName = 'text-amber-400 bg-amber-950/40 border-amber-600/30 font-bold';
-  } else if (state.job_type === 'startup_founder') {
-    const stageName = state.founder_stage === 'exit' ? '上市独角兽' : state.founder_stage === 'series_a' ? 'A轮独角兽' : 'AI 独角兽';
-    companyLabel = `${stageName} Founder`;
-    companyClassName = 'text-purple-300 bg-purple-500/15 border-purple-500/30 shadow-[0_0_8px_rgba(168,85,247,0.25)] font-bold';
   } else if (state.job_type === 'quant' || state.company === 'two_sigma' || state.company === 'citadel' || state.company === 'jane_street') {
     companyLabel = state.company === 'citadel' ? 'Citadel (城堡)' : state.company === 'jane_street' ? 'Jane Street' : state.company === 'two_sigma' ? 'Two Sigma' : 'Top Quant (量化)';
     companyClassName = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 font-bold';
   } else if (state.job_type === 'ai_research' || state.company === 'openai' || state.company === 'anthropic') {
     companyLabel = state.company === 'anthropic' ? 'Anthropic (Claude)' : 'OpenAI / MTS';
     companyClassName = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold';
-  } else if (state.job_type === 'trader') {
-    companyLabel = '全职 Trader';
-    companyClassName = 'text-amber-300 bg-amber-500/10 border-amber-500/20 font-bold';
   } else if (state.company === 'google') {
     companyLabel = 'Google (谷歌)';
     companyClassName = 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold';
@@ -139,16 +171,16 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     companyClassName = 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold';
   } else if (state.company === 'microsoft') {
     companyLabel = 'Microsoft (微软)';
-    companyClassName = 'text-sky-400 bg-sky-500/10 border-sky-500/20 font-bold';
+    companyClassName = 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold';
   } else if (state.company === 'cisco') {
-    companyLabel = 'Cisco (思科)';
-    companyClassName = 'text-teal-400 bg-teal-500/10 border-teal-500/20 font-bold';
+    companyLabel = 'Cisco (养老厂)';
+    companyClassName = 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20 font-bold';
   } else if (state.company === 'adobe') {
     companyLabel = 'Adobe (奥多比)';
     companyClassName = 'text-red-400 bg-red-500/10 border-red-500/20 font-bold';
   } else if (state.job_type === 'startup') {
-    companyLabel = 'AI Startup (初创)';
-    companyClassName = 'text-orange-400 bg-orange-500/10 border-orange-500/20 font-bold';
+    companyLabel = 'AI 独角兽 (SaaS)';
+    companyClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold';
   } else if (state.job_type === 'big_tech') {
     companyLabel = '硅谷科技大厂';
     companyClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold';
@@ -158,13 +190,18 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   }
 
   return {
+    companyHeaderLabel,
     companyLabel,
     companyClassName,
+    levelHeaderLabel,
     levelLabel,
     levelClassName,
     isUnemployed,
     isStudent,
     isDomestic,
+    isTrader,
+    isFounder,
+    tcHeaderLabel,
   };
 }
 

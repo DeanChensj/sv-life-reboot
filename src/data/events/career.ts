@@ -241,15 +241,15 @@ export const careerEvents: Record<string, GameEvent> = {
             job_type: 'startup_founder',
             company: 'AI/科技 Startup',
             level: 'CEO & Founder',
-            tc: 10,
-            founder_stage: 'seed',
-            company_valuation: 800,
+            tc: 6,
+            founder_stage: 'pre_seed',
+            company_valuation: 180,
             laid_off: false,
             cash: needsO1 ? s.cash - 5 : s.cash,
             visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
             message: needsO1
-              ? '你决定自己当老板！花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
-              : '你决定自己当老板！凭自由身份在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+              ? '你决定自己当老板！花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
+              : '你决定自己当老板！凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
           };
         },
         nextEventId: 'founder_annual_strategy',
@@ -1105,6 +1105,156 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         nextEventId: midYearEventRouter,
       },
+      // --- 3. 【全职 Trader 专属年度决策】 ---
+      {
+        text: '【全职操盘：深入美股 0DTE 末日轮与龙头博弈】根据市场宏观波动态势深入操盘',
+        condition: (s) => s.job_type === 'trader',
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你打开了多个 Bloomberg 终端与 TradingView 多屏图表，准备开始全职操盘策略布局！' }),
+        nextEventId: 'trader_annual_strategy',
+      },
+      {
+        text: '【量化套利：手写 Python/C++ 自动交易网格系统】部署低延迟机房，自动捕获 Alpha 收益',
+        condition: (s) => s.job_type === 'trader',
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const leetBonus = Math.min(0.08, (s.leetcode / 1000));
+          const ecoBonus = s.macro_economy === 'bull' ? 0.06 : (s.macro_economy === 'bear' ? 0.02 : 0.04);
+          const yieldRate = 0.08 + leetBonus + ecoBonus;
+          const profit = Math.min(25, Math.max(6, s.cash * yieldRate));
+          return {
+            mid_year: true, season_stage: 'h1',
+            tc: 0,
+            cash: parseFloat((s.cash + profit).toFixed(1)),
+            leetcode: s.leetcode + 4,
+            health: Math.min(100, s.health + 6),
+            message: `【量化算法自动赚钱】你编写的自动套利脚本在 AWS 低延迟服务器全自动跑通！免去了手动盯盘的精神压力，算法稳健捕获 +$${profit.toFixed(1)}w Alpha 超额收益！`
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【量化私董会：在沙丘路路演实盘收益与募集资金】扩大操盘资金池与管理分成 (花费 $0.5w)',
+        condition: (s) => s.job_type === 'trader' && s.cash >= 0.5,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          tc: 0,
+          cash: parseFloat((s.cash - 0.5 + 4.5).toFixed(1)),
+          network: Math.min(100, (s.network || 0) + 3),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          health: Math.max(0, s.health - 2),
+          message: '【斩获 LP 管理费分红】你在量化私董会上凭借优秀的夏普比率惊艳全场，数位科技新贵与天使 LP 委托你打理资金池，获得 +$4.0w 净管理分红！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【金盆洗手：结束操盘生涯重返大厂】重新海投大厂面试，锁定稳定高额总包与 WLB',
+        condition: (s) => s.job_type === 'trader',
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          job_type: 'unemployed',
+          laid_off: true,
+          company: undefined,
+          level: undefined,
+          message: '你决定结束个人操盘手生涯，落袋为安，带着充沛的本金重新开启大厂求职！'
+        }),
+        nextEventId: 'job_hunt',
+      },
+
+      // --- 4. 【全职 Startup Founder 专属年度决策】 ---
+      {
+        text: '【创业攻坚：沙丘路路演融资与全明星团队扩张】前往 Sand Hill Road 推进下一轮估值',
+        condition: (s) => s.job_type === 'startup_founder',
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你整理好了最新的 MRR 增长曲线与 Pitch Deck，前往沙丘路约见顶级 VC 合伙人！' }),
+        nextEventId: 'founder_annual_strategy',
+      },
+      {
+        text: '【产品冲刺：死磕产品 PMF 与企业级大单签单】冲刺 ARR 经常性收入并拿下企业采购',
+        condition: (s) => s.job_type === 'startup_founder',
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          health: Math.max(0, s.health - 8),
+          cash: parseFloat((s.cash + 5).toFixed(1)),
+          company_valuation: (s.company_valuation || 180) + 350,
+          message: '【ARR 稳步破 $50w 美元！】经过半年高强度产品迭代与上门攻坚，公司拿下多家科技企业采购合同，实现微利造血与创始人分红！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【公关引爆：TechCrunch Disrupt 巅峰演讲与病毒式获客】登上顶级科技峰会做 Live Demo',
+        condition: (s) => s.job_type === 'startup_founder',
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          health: Math.max(0, s.health - 4),
+          network: Math.min(100, (s.network || 0) + 3),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          company_valuation: (s.company_valuation || 180) + 200,
+          message: '【Live Demo 技惊全场！】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页，吸引了上千名早期极客用户注册体验！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【终局退场：申请巨头并购 Acqui-hire 或折价清盘】卸下创始人重担，回归职场',
+        condition: (s) => s.job_type === 'startup_founder',
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你开始与意向买家与董事会评估并购协议与清盘退场条款。' }),
+        nextEventId: 'founder_annual_strategy',
+      },
+
+      // --- 5. 【慢生活 Gap Year / 待业探索 专属年度决策】 ---
+      {
+        text: '【慢生活深度休养：红木森林徒步、瑜伽与环球旅行】彻底远离内卷与焦虑 (花费 $0.5w)',
+        condition: (s) => Boolean(s.laid_off || s.job_type === 'unemployed' || !s.job_type),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          health: Math.min(100, s.health + 22),
+          charm: Math.min(25, (s.charm || 10) + 3),
+          cash: Math.max(0, parseFloat((s.cash - 0.5).toFixed(1))),
+          story_flags: {
+            ...(s.story_flags || {}),
+            in_gap_year: true
+          },
+          message: '【身心深度治愈】你彻底放下了所有职场内卷与焦虑，每天睡到自然醒、徒步红木森林、去夏威夷看海。身体与精神状态重获新生！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【潜心独立开发：打造微型 SaaS 与开源 Agent 工具】低成本探索被动收益与黑客乐趣',
+        condition: (s) => Boolean(s.laid_off || s.job_type === 'unemployed' || !s.job_type),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          health: Math.min(100, s.health + 8),
+          leetcode: s.leetcode + 5,
+          cash: parseFloat((s.cash + 2).toFixed(1)),
+          story_flags: {
+            ...(s.story_flags || {}),
+            in_gap_year: true
+          },
+          message: '【独立黑客探索】你在 GitHub 上开源的实用开发者小工具收获了 2k+ Stars，并获得了几家早期赞助与小额被动收益！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【结束 Gap Year：重返职场】满血状态启动简历海投，备战大厂面试',
+        condition: (s) => Boolean(s.laid_off || s.job_type === 'unemployed' || !s.job_type),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          story_flags: {
+            ...(s.story_flags || {}),
+            in_gap_year: false
+          },
+          message: '身心满血恢复！你重新打开了 LinkedIn 与简历，准备以最佳精神面貌进军湾区职场！'
+        }),
+        nextEventId: 'job_hunt',
+      },
+
+      // --- 6. 【通用职业转换与置业决策】 ---
       {
         text: '【年度重心：投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
         condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
@@ -1129,7 +1279,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【离职全职 Day Trader】凭 $50w 本金与美籍/绿卡自由身全职操盘 (需美籍/绿卡 + 现金>=50w)',
         reqBadge: '需美籍/绿卡+现金>=50w',
-        condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50,
+        condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50 && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (_s) => ({
           job_type: 'trader',
           company: '全职 Day Trader',
@@ -1143,22 +1293,22 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=45w办理O1创业工签)',
         reqBadge: '需美籍/绿卡/O1或现金>=45w',
-        condition: (s) => (s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45,
+        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
           return {
             job_type: 'startup_founder',
             company: 'AI/科技 Startup',
             level: 'CEO & Founder',
-            tc: 10,
-            founder_stage: 'seed',
-            company_valuation: 800,
+            tc: 6,
+            founder_stage: 'pre_seed',
+            company_valuation: 180,
             laid_off: false,
             cash: needsO1 ? s.cash - 5 : s.cash,
             visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
             message: needsO1
-              ? '你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
-              : '你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+              ? '你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
+              : '你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
           };
         },
         nextEventId: 'founder_annual_strategy',

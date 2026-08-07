@@ -79,7 +79,7 @@ export interface GameState {
   mid_year?: boolean;
   difficulty_title?: string;
   startup_tenure?: number; // 初创公司入职年限 (前2年不办PERM)
-  founder_stage?: 'seed' | 'series_a' | 'exit';
+  founder_stage?: 'pre_seed' | 'seed' | 'series_a' | 'series_b' | 'exit';
   company_valuation?: number; // 公司估值 (万美元)
   macro_economy?: 'bull' | 'bear' | 'neutral'; // 宏观经济周期
   transferred_to_ai?: boolean; // 是否已内部转岗至前沿大模型组

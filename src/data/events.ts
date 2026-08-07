@@ -1690,32 +1690,47 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '【年度重心：闭关修炼】死磕算法与系统设计，开启湾区跳槽季 (进入多厂 Offer 抉择)',
+        text: '【年度重心：闭关修炼】死磕算法与系统设计，提升硬核技术储备',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           const isKingOfRoll = s.trait_title === '卷王之王';
           const drain = isKingOfRoll ? 6 : 12;
           const leetBonus = isKingOfRoll ? 20 : 15;
-          if (s.leetcode < 40) {
+          const newLeetcode = s.leetcode + leetBonus;
+
+          // 闭关修炼以沉淀算法与架构为主，面试能否拿到 Offer 存在真实市场与面试官波动 (绝无 100% 必过)
+          const baseRate = Math.min(0.35, newLeetcode / 200);
+          const charmRate = (s.charm || 10) / 150;
+          const luckRate = (s.luck || 20) / 500;
+          const econRate = s.macro_economy === 'bull' ? 0.08 : (s.macro_economy === 'bear' ? -0.12 : 0);
+          const interviewChance = Math.max(0.08, Math.min(0.50, baseRate + charmRate + luckRate + econRate));
+          const gotInterviews = Math.random() < interviewChance;
+
+          if (!gotInterviews || newLeetcode < 35) {
             return {
               mid_year: true,
               season_stage: 'h1',
               health: Math.max(0, s.health - drain),
-              leetcode: s.leetcode + leetBonus,
+              leetcode: newLeetcode,
               message: isKingOfRoll 
-                ? `【卷王疯狂刷题】闭关苦修算法与架构，狂刷 200 题算法真经 (算法 +${leetBonus})！虽然做题储备大涨，但当前 LeetCode 尚未达大厂面试标准，明年蓄力必能乱杀！` 
-                : `你闭关苦练算法与系统架构，做题储备突飞猛进 (算法 +${leetBonus})！但当前算法储备还需沉淀，建议明年蓄力冲击硅谷大厂！`
+                ? `【卷王疯狂刷题】闭关苦修算法与架构，狂刷 200 题算法真经 (算法 +${leetBonus})！虽然做题储备大涨，但今年大厂 Headcount 紧缩且竞争白热化，投递简历后未能拿到有效 Offer，还需继续沉淀！` 
+                : `你闭关苦练算法与系统架构，做题储备大有长进 (算法 +${leetBonus})！但因大厂面试 Bar 严苛且名额有限，海投简历未获任何 Offer，需要继续积累经验。`
             };
           }
+
           return {
             mid_year: true,
             season_stage: 'h1',
             health: Math.max(0, s.health - drain),
-            leetcode: s.leetcode + (isKingOfRoll ? 12 : 8),
-            message: '【斩获多轮 Onsite 面试】经过一整年的闭关刷题与系统设计复盘，你成功通过了多家科技公司的前置轮筛选，正式进入最终 Offer 抉择！'
+            leetcode: newLeetcode,
+            message: '【算法大成·迎来面试】经过一整年的闭关刷题与系统设计复盘，扎实的功底吸引了科技公司猎头，你通过了前置技术初筛，迎来了跳槽面试机会！'
           };
         },
-        nextEventId: (s: GameState) => (s.leetcode >= 40 ? 'job_hop_market' : midYearEventRouter(s)),
+        nextEventId: (s: GameState) => {
+          const msg = s.message || '';
+          if (msg.includes('迎来面试')) return 'job_hop_market';
+          return midYearEventRouter(s);
+        },
       },
       {
         text: '【年度重心：拓展副业】经营小红书与独立开发',
@@ -3650,13 +3665,17 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.company !== 'google',
         effect: (s) => {
           const req = s.macro_economy === 'bear' ? 60 : s.macro_economy === 'bull' ? 35 : 45;
-          const passProb = s.leetcode >= req ? 0.85 : (0.35 + (s.leetcode / 120));
-          const pass = Math.random() < Math.min(0.90, passProb);
+          const baseRate = Math.min(0.45, s.leetcode / 140);
+          const charmRate = (s.charm || 10) / 120;
+          const luckRate = (s.luck || 20) / 500;
+          const econRate = s.macro_economy === 'bull' ? 0.10 : (s.macro_economy === 'bear' ? -0.15 : 0);
+          const passProb = Math.max(0.08, Math.min(0.60, baseRate + charmRate + luckRate + econRate));
+          const pass = s.leetcode >= req && Math.random() < passProb;
 
           if (!pass) {
             return {
               health: Math.max(0, s.health - 12),
-              message: `【面试遗憾折戟】当前市场环境要求算法>=${req}。Google 最后一轮 Hiring Committee 认为你的架构设计深度略有欠缺，未发 Offer。你只能留任原厂。`
+              message: `【面试遗憾折戟】当前市场环境要求算法>=${req}。Google 最后一轮 Hiring Committee 认为你的架构设计深度略有欠缺或 HC 暂时冻结，未发 Offer。你只能留任原厂。`
             };
           }
 
@@ -3682,14 +3701,18 @@ export const events: Record<string, GameEvent> = {
         text: '【跳槽 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package (需算法>=60)',
         condition: (s) => s.company !== 'meta',
         effect: (s) => {
-          const req = s.macro_economy === 'bear' ? 75 : s.macro_economy === 'bull' ? 50 : 60;
-          const passProb = s.leetcode >= req ? 0.80 : (0.25 + (s.leetcode / 150));
-          const pass = Math.random() < Math.min(0.85, passProb);
+          const req = s.macro_economy === 'bear' ? 70 : s.macro_economy === 'bull' ? 45 : 55;
+          const baseRate = Math.min(0.45, s.leetcode / 130);
+          const charmRate = (s.charm || 10) / 140;
+          const luckRate = (s.luck || 20) / 500;
+          const econRate = s.macro_economy === 'bull' ? 0.10 : (s.macro_economy === 'bear' ? -0.18 : 0);
+          const passProb = Math.max(0.08, Math.min(0.58, baseRate + charmRate + luckRate + econRate));
+          const pass = s.leetcode >= req && Math.random() < passProb;
 
           if (!pass) {
             return {
               health: Math.max(0, s.health - 18),
-              message: `【Meta 面试被挂】当前市场环境要求算法>=${req}。在 Meta 严苛的 45 分钟两道 Hard 题极限编码中遇到 Bug 卡壳，面试未过。你只能留任原公司。`
+              message: `【Meta 面试被挂】当前市场环境要求算法>=${req}。在 Meta 严苛的 45 分钟两道 Hard 题极限编码中遇到 Bug 卡壳或 System Design 深度不足，未发 Offer。你只能留任原公司。`
             };
           }
 
@@ -3717,8 +3740,12 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.company !== 'nvidia',
         effect: (s) => {
           const req = s.macro_economy === 'bear' ? 65 : 45;
-          const passProb = s.leetcode >= req ? 0.80 : 0.40;
-          const pass = Math.random() < passProb;
+          const baseRate = Math.min(0.42, s.leetcode / 140);
+          const charmRate = (s.charm || 10) / 130;
+          const luckRate = (s.luck || 20) / 450;
+          const econRate = (s.macro_economy === 'bull' || s.year >= 2023) ? 0.10 : (s.macro_economy === 'bear' ? -0.15 : 0);
+          const passProb = Math.max(0.08, Math.min(0.58, baseRate + charmRate + luckRate + econRate));
+          const pass = s.leetcode >= req && Math.random() < passProb;
 
           if (!pass) {
             return {
@@ -3753,7 +3780,12 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.company !== 'tiktok',
         effect: (s) => {
           const req = s.macro_economy === 'bear' ? 55 : 40;
-          const pass = (s.leetcode >= req) || Math.random() < 0.65;
+          const baseRate = Math.min(0.45, s.leetcode / 120);
+          const charmRate = (s.charm || 10) / 130;
+          const luckRate = (s.luck || 20) / 500;
+          const econRate = s.macro_economy === 'bull' ? 0.08 : (s.macro_economy === 'bear' ? -0.12 : 0);
+          const passProb = Math.max(0.10, Math.min(0.62, baseRate + charmRate + luckRate + econRate));
+          const pass = s.leetcode >= req && Math.random() < passProb;
 
           if (!pass) {
             return {
@@ -3791,7 +3823,11 @@ export const events: Record<string, GameEvent> = {
             };
           }
 
-          const passProb = (s.is_phd ? 0.70 : 0.40) + (s.macro_economy === 'bull' ? 0.15 : 0);
+          const baseRate = s.is_phd ? 0.25 : 0.15;
+          const leetBonus = s.leetcode >= 80 ? 0.12 : 0;
+          const charmRate = (s.charm || 10) / 150;
+          const econRate = s.macro_economy === 'bull' ? 0.08 : -0.05;
+          const passProb = Math.max(0.05, Math.min(0.45, baseRate + leetBonus + charmRate + econRate));
           const pass = Math.random() < passProb;
 
           if (!pass) {
@@ -3833,7 +3869,12 @@ export const events: Record<string, GameEvent> = {
         condition: (s) => s.company !== 'apple',
         effect: (s) => {
           const req = s.macro_economy === 'bear' ? 60 : 40;
-          const pass = (s.leetcode >= req) || Math.random() < 0.75;
+          const baseRate = Math.min(0.42, s.leetcode / 140);
+          const charmRate = (s.charm || 10) / 110;
+          const luckRate = (s.luck || 20) / 500;
+          const econRate = s.macro_economy === 'bull' ? 0.08 : (s.macro_economy === 'bear' ? -0.14 : 0);
+          const passProb = Math.max(0.08, Math.min(0.58, baseRate + charmRate + luckRate + econRate));
+          const pass = s.leetcode >= req && Math.random() < passProb;
 
           if (!pass) {
             return {

@@ -1231,7 +1231,7 @@ export const events: Record<string, GameEvent> = {
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
             : { h1b_attempts: 1, cash: s.cash, health: s.health - 5, message: '第一年 H1B 没抽中！已自动激活 STEM OPT 延期，继续在大厂奋斗并可在年底迎来后续抽签！' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: (s) => (s.message && s.message.includes('没抽中') && Math.random() < 0.35 ? 'h1b_fallback_options' : 'sv_daily_life'),
       },
       {
         text: '砸 $8w 现金找顶级律所申办 O1 杰出人才签证 (需现金 >= $8w, 限 PhD/AI研究员/硬核算法背景)',
@@ -1375,7 +1375,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
       },
       {
-        text: '【杰出人才自救】申办 O1 签证 (花费 w 律师费)',
+        text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
         reqBadge: '需PhD或硬核算法背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
@@ -1388,10 +1388,10 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
       },
       {
-        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 w)',
+        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w)',
         reqBadge: '现金>=80w',
         condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
       {
@@ -1401,7 +1401,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '紧急挂靠 Day 1 CPT 水硕 (花费 .5w)',
+        text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
         nextEventId: 'sv_year_end_settlement',
@@ -1790,6 +1790,27 @@ export const events: Record<string, GameEvent> = {
           };
         },
         nextEventId: 'founder_annual_strategy',
+      },
+      {
+        text: '【置业安家】进军湾区加价抢房大乱斗 (Sunnyvale老破小/San Jose联排/Fremont学区房)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 40 && !s.has_housing,
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你准备好了首付款支票，踏入了火热的湾区 Open House 抢房战场！' }),
+        nextEventId: 'buy_house',
+      },
+      {
+        text: '【改善居住】重新选择湾区租房标准或退租挂壁睡车顶',
+        condition: (s) => !s.has_housing || s.rent > 0,
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你打开了 Zillow 与租房中介微信群，准备调整住房开销。' }),
+        nextEventId: 'change_rental',
+      },
+      {
+        text: '【跳槽寻路】投递湾区社招简历，开启多重大厂/独角兽 Offer 抉择',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder',
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你更新了 LinkedIn 与简历，进入了湾区社招面试市场！' }),
+        nextEventId: 'job_hop_market',
       },
       {
         text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
@@ -2427,7 +2448,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt'
       },
       {
-        text: '【工签紧急挂靠】启动 60 天 Grace Period 找外包公司办理 H1B Transfer (消耗 w)',
+        text: '【工签紧急挂靠】启动 60 天 Grace Period 找外包公司办理 H1B Transfer (消耗 $2w)',
         condition: (s) => s.cash >= 2 && (s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)') && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           cash: s.cash - 2,
@@ -2713,7 +2734,7 @@ export const events: Record<string, GameEvent> = {
       {
         text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
-        effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level} 的职级头衔，包裹与职场地位同步跃升！` }),
+        effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level || '崭新'} 的职级头衔，包裹与职场地位同步跃升！` }),
         nextEventId: h1ToH2Router,
       }
     ]
@@ -3028,7 +3049,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis'),
       },
       {
-        text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 .5w)',
+        text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 $1.5w)',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           visa: 'Day 1 CPT',
@@ -3039,22 +3060,22 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '砸 w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= w, 限 PhD或硬核算法背景)',
+        text: '砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD或硬核算法背景)',
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = Math.random() < (s.is_phd ? 0.70 : 0.35);
           return pass
             ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
-            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，w 律师费彻底打了水漂...' };
+            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
         },
         nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
       },
       {
-        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 w)',
+        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w)',
         reqBadge: '现金>=80w',
         condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
       {
@@ -3477,7 +3498,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
       },
       {
-        text: '【工签紧急挂靠】60 天倒计时逼近，找外包 ICC 公司办理 H1B Transfer 挂靠 (消耗 w)',
+        text: '【工签紧急挂靠】60 天倒计时逼近，找外包 ICC 公司办理 H1B Transfer 挂靠 (消耗 $2w)',
         condition: (s) => (s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)') && s.cash >= 2,
         effect: (s) => ({
           cash: s.cash - 2,

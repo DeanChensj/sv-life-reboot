@@ -1,5 +1,7 @@
-import { events, generateInitialState } from './src/data/events';
+import { events, generateInitialState, midYearEventRouter } from './src/data/events';
 import { GameState, GameEvent, Choice } from './src/types';
+import { applyStateTransition } from './src/utils/stateTransitions';
+import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo } from './src/utils/gameStateSelectors';
 
 console.log(`=== SV LIFE REBOOT EVENT AUDIT ===`);
 console.log(`Total events defined: ${Object.keys(events).length}`);
@@ -51,7 +53,8 @@ const dummyStates: GameState[] = [
   { ...generateInitialState(), visa: '公民', job_type: 'ai_research', company: 'OpenAI', level: 'Staff', age: 30, status: 'playing', is_ssr_unlocked: true },
   { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'unemployed', laid_off: true, age: 27, status: 'playing' },
   { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'startup', age: 26, status: 'playing' },
-  { ...generateInitialState(), visa: 'L1 (外派)', job_type: 'big_tech', age: 27, status: 'playing' }
+  { ...generateInitialState(), visa: 'L1 (外派)', job_type: 'big_tech', age: 27, status: 'playing' },
+  { ...generateInitialState(), visa: '无', job_type: 'cn_tech', company: 'cn_big_tech', age: 24, status: 'playing' }
 ];
 
 // Check Rule 1: Citizens / Green Card holders subjected to visa lottery or deportation
@@ -79,51 +82,90 @@ for (const [id, ev] of Object.entries(events)) {
   });
 }
 
-// Check Rule 2: Layoff check & unemployed state logic
+// Check Rule 2: Invariant enforcement via applyStateTransition across all choices
 for (const [id, ev] of Object.entries(events)) {
-  if (id.includes('promo') || id.includes('perf_review') || id.includes('work_project')) {
-    ev.choices.forEach((c, idx) => {
-      const testLaidOff = { ...dummyStates[6] };
-      if (!c.condition || c.condition(testLaidOff)) {
-        logWarning('Unemployed At Work Event', id, `Work event choice ${idx} ('${c.text}') is accessible when player is laid off/unemployed! Missing condition for job_type != unemployed.`);
+  ev.choices.forEach((c, idx) => {
+    dummyStates.forEach(st => {
+      if (!c.condition || c.condition(st)) {
+        try {
+          const eff = c.effect(st);
+          const { nextState } = applyStateTransition(st, eff, { eventId: id });
+          
+          if (isNaN(nextState.health) || nextState.health < 0 || nextState.health > 100) {
+            logIssue('Health Clamping Error', id, `Choice ${idx} produced invalid health: ${nextState.health}`);
+          }
+          if (isNaN(nextState.cash)) {
+            logIssue('Cash NaN Error', id, `Choice ${idx} produced cash: NaN`);
+          }
+          if ((nextState.laid_off || nextState.job_type === 'unemployed') && nextState.tc > 0) {
+            logIssue('Unemployment TC Violation', id, `Choice ${idx} left TC as ${nextState.tc} while unemployed!`);
+          }
+        } catch (e: any) {
+          logIssue('Effect Runtime Exception', id, `Choice ${idx} threw error: ${e.message}`);
+        }
       }
     });
+  });
+}
+
+// Check Rule 3: Selector Consistency
+dummyStates.forEach((st, idx) => {
+  try {
+    const jobInfo = getJobDisplayInfo(st);
+    const visaInfo = getVisaDisplayInfo(st);
+    const housingInfo = getHousingDisplayInfo(st);
+    if (!jobInfo.companyLabel || !jobInfo.levelLabel || !visaInfo.visaLabel || !housingInfo.housingLabel) {
+      logIssue('Selector Empty Field', `dummyState[${idx}]`, 'Selector returned empty label string');
+    }
+  } catch (e: any) {
+    logIssue('Selector Exception', `dummyState[${idx}]`, e.message);
+  }
+});
+
+import fs from 'fs';
+
+// Check Rule 4: Reachability and Orphan Events Detector
+const referencedEvents = new Set<string>(['choose_trait', 'end', 'fire_milestone_choice', 'manage_rental_properties']);
+
+// Gather nextEventIds from choices
+for (const [id, ev] of Object.entries(events)) {
+  ev.choices.forEach(c => {
+    if (typeof c.nextEventId === 'string') {
+      referencedEvents.add(c.nextEventId);
+    } else if (typeof c.nextEventId === 'function') {
+      dummyStates.forEach(st => {
+        try {
+          const target = (c.nextEventId as (s: GameState) => string)(st);
+          if (target) referencedEvents.add(target);
+        } catch (e) {}
+      });
+    }
+  });
+}
+
+// Check router reachability
+dummyStates.forEach(st => {
+  try {
+    const routed = midYearEventRouter(st);
+    if (routed) referencedEvents.add(routed);
+  } catch (e) {}
+});
+
+const eventsSource = fs.readFileSync('./src/data/events.ts', 'utf8');
+const appSource = fs.readFileSync('./src/App.tsx', 'utf8');
+const shopSource = fs.readFileSync('./src/components/ShopModal.tsx', 'utf8');
+const allCode = eventsSource + '\n' + appSource + '\n' + shopSource;
+
+for (const id of Object.keys(events)) {
+  const regex = new RegExp(`['"\`]${id}['"\`]`, 'g');
+  const matches = allCode.match(regex) || [];
+  if (matches.length <= 2 && !referencedEvents.has(id)) {
+    logWarning('Unreferenced Event / Potential Orphan', id, `Event '${id}' appears to be defined without router/choice callers.`);
   }
 }
 
-// Check Rule 3: Priority Date / Green Card waiting speed vs Reality
-for (const [id, ev] of Object.entries(events)) {
-  ev.choices.forEach((c, idx) => {
-    dummyStates.forEach(st => {
-      if (!c.condition || c.condition(st)) {
-        try {
-          const eff = c.effect(st);
-          if (eff.gc_progress && eff.gc_progress > 5) {
-            logWarning('GC Progress overflow', id, `Choice ${idx} sets gc_progress to ${eff.gc_progress} (>5)`);
-          }
-        } catch (e) {}
-      }
-    });
-  });
-}
-
-// Check Rule 4: Financial numbers sanity check
-for (const [id, ev] of Object.entries(events)) {
-  ev.choices.forEach((c, idx) => {
-    dummyStates.forEach(st => {
-      if (!c.condition || c.condition(st)) {
-        try {
-          const eff = c.effect(st);
-          if (eff.tc !== undefined && (eff.tc < 0 || eff.tc > 5000)) {
-            logIssue('Abnormal TC value', id, `Choice ${idx} ('${c.text}') sets TC to $${eff.tc}w (unusual TC range)`);
-          }
-          if (eff.rent !== undefined && (eff.rent < 0 || eff.rent > 100)) {
-            logIssue('Abnormal Rent value', id, `Choice ${idx} ('${c.text}') sets annual rent to $${eff.rent}w`);
-          }
-        } catch (e) {}
-      }
-    });
-  });
-}
-
 console.log(`\nAudit finished with ${issueCount} critical issues found.`);
+if (issueCount > 0) {
+  process.exit(1);
+}
+

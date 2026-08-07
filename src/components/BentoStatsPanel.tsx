@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GameState } from '../types';
+import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo } from '../utils/gameStateSelectors';
 
 interface BentoStatsPanelProps {
   gameState: GameState;
@@ -22,270 +23,9 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   isMuted,
   hasOpenedShop = false,
 }) => {
-  const displayLevel = (gameState.laid_off || gameState.job_type === 'unemployed')
-    ? '待业' 
-    : !gameState.job_type
-      ? (gameState.is_phd ? '全奖博士' : gameState.is_master ? '硕士在读' : '本科在读')
-      : gameState.level || (
-          gameState.job_type === 'quant' 
-            ? 'Quant' 
-            : gameState.job_type === 'ai_research' 
-              ? 'MTS' 
-              : gameState.job_type === 'trader'
-                ? '全职 Trader'
-                : gameState.job_type === 'startup_founder'
-                  ? 'CEO & Founder'
-                  : gameState.job_type === 'cn_tech'
-                    ? '国内研发'
-                    : gameState.is_phd 
-                      ? 'L4' 
-                      : 'L3'
-        );
-
-  const hasCar = gameState.car && gameState.car !== 'none';
-  const displayCar = gameState.car === 'porsche' 
-    ? '保时捷 Porsche' 
-    : gameState.car === 'cybertruck' 
-      ? '赛博皮卡 Cybertruck' 
-      : gameState.car === 'model_y' 
-        ? 'Tesla Model Y' 
-        : null;
-
-  const displayHousing = gameState.housing_name || (gameState.has_housing ? '湾区自购房产' : '国内老家 / 未购房');
-
-  const getGcStationIndex = () => {
-    if (gameState.visa === '公民' || gameState.visa === '绿卡') return 5;
-    const stage = gameState.gc_stage || 'not_started';
-    const prog = gameState.gc_progress || 0;
-    if (stage === 'i485_pending' || stage === 'approved' || prog >= 4.5) return 5;
-    if (stage === 'waiting_pd' || prog >= 3.5) return 4;
-    if (stage === 'i140_processing' || stage === 'i140_rfe' || stage === 'i140_approved' || prog >= 2) return 3;
-    if (stage === 'perm_audit' || prog >= 1.5) return 2;
-    if (stage === 'perm_processing' || prog > 0) return 1;
-    return 0;
-  };
-  const gcStation = getGcStationIndex();
-
-  const getDisplayVisa = () => {
-    if (gameState.visa === '公民') {
-      return {
-        label: '美籍公民 (SSR)',
-        className: 'text-blue-300 bg-blue-500/15 border-blue-500/30 shadow-[0_0_8px_rgba(59,130,246,0.25)] font-bold',
-      };
-    }
-    if (gameState.visa === '绿卡') {
-      return {
-        label: '美国绿卡 (PR)',
-        className: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.25)] font-bold',
-      };
-    }
-    if (gameState.gc_stage === 'i485_pending') {
-      return {
-        label: 'I-485 Pending (EAD)',
-        className: 'text-teal-300 bg-teal-500/15 border-teal-500/30 font-bold',
-      };
-    }
-    if (gameState.visa === 'O1 (杰出人才)') {
-      return {
-        label: 'O-1 (杰出人才)',
-        className: 'text-purple-300 bg-purple-500/15 border-purple-500/30 font-bold',
-      };
-    }
-    if (gameState.visa === 'L1 (外派)') {
-      return {
-        label: 'L-1 (跨国外派)',
-        className: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30 font-bold',
-      };
-    }
-    if (gameState.visa === 'Day 1 CPT') {
-      return {
-        label: 'Day 1 CPT (学籍保底)',
-        className: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30 font-bold',
-      };
-    }
-    if (gameState.visa === 'H1B (工签)') {
-      const isLocked = ['i140_approved', 'waiting_pd'].includes(gameState.gc_stage || '');
-      return {
-        label: isLocked ? 'H-1B (已锁PD)' : 'H-1B (工作签证)',
-        className: 'text-amber-300 bg-amber-500/15 border-amber-500/30 font-bold',
-      };
-    }
-    if (gameState.visa === 'OPT (实习)') {
-      const isStem = (gameState.h1b_attempts || 0) >= 1;
-      return {
-        label: isStem ? 'STEM OPT (延期)' : 'Initial OPT (1年)',
-        className: 'text-amber-400 bg-amber-400/10 border-amber-400/20 font-semibold',
-      };
-    }
-    if (gameState.visa === 'F1 (学生)') {
-      return {
-        label: gameState.is_phd ? 'F-1 (博士在读)' : gameState.is_master ? 'F-1 (硕士在读)' : 'F-1 (在读学生)',
-        className: 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-semibold',
-      };
-    }
-    if (!gameState.visa || gameState.visa === '无') {
-      return {
-        label: gameState.job_type === 'cn_tech' ? '暂无 (国内在职)' : (gameState.has_us_degree ? '待定身份' : '暂无 (未赴美)'),
-        className: 'text-zinc-400 bg-zinc-800/60 border-zinc-700 font-medium',
-      };
-    }
-    return {
-      label: gameState.visa,
-      className: 'text-amber-400 bg-amber-400/10 border-amber-400/20 font-semibold',
-    };
-  };
-  const visaDisplay = getDisplayVisa();
-
-  const getDisplayCompany = () => {
-    if (gameState.laid_off || gameState.job_type === 'unemployed') {
-      return {
-        label: '待业求职中',
-        className: 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'cn_big_tech' || gameState.job_type === 'cn_tech') {
-      return {
-        label: '国内互联网大厂',
-        className: 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'icc') {
-      return {
-        label: 'ICC 外包 (挂靠)',
-        className: 'text-amber-400 bg-amber-950/40 border-amber-600/30 font-bold',
-      };
-    }
-
-    if (gameState.job_type === 'startup_founder') {
-      const stageName = gameState.founder_stage === 'exit' ? '上市独角兽' : gameState.founder_stage === 'series_a' ? 'A轮独角兽' : 'AI 独角兽';
-      return {
-        label: `${stageName} Founder`,
-        className: 'text-purple-300 bg-purple-500/15 border-purple-500/30 shadow-[0_0_8px_rgba(168,85,247,0.25)] font-bold',
-      };
-    }
-
-    if (gameState.job_type === 'quant' || gameState.company === 'two_sigma' || gameState.company === 'citadel' || gameState.company === 'jane_street') {
-      const quantName = gameState.company === 'citadel' ? 'Citadel (城堡)' : gameState.company === 'jane_street' ? 'Jane Street' : gameState.company === 'two_sigma' ? 'Two Sigma' : 'Top Quant (量化)';
-      return {
-        label: quantName,
-        className: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 font-bold',
-      };
-    }
-
-    if (gameState.job_type === 'ai_research' || gameState.company === 'openai' || gameState.company === 'anthropic') {
-      const aiName = gameState.company === 'anthropic' ? 'Anthropic (Claude)' : 'OpenAI / MTS';
-      return {
-        label: aiName,
-        className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold',
-      };
-    }
-
-    if (gameState.job_type === 'trader') {
-      return {
-        label: '全职 Trader',
-        className: 'text-amber-300 bg-amber-500/10 border-amber-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'google') {
-      return {
-        label: 'Google (谷歌)',
-        className: 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'meta') {
-      return {
-        label: 'Meta (卷王)',
-        className: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'nvidia' || gameState.job_type === 'nvidia') {
-      return {
-        label: 'NVIDIA (英伟达)',
-        className: 'text-lime-400 bg-lime-500/10 border-lime-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'tiktok' || gameState.job_type === 'tiktok') {
-      return {
-        label: 'TikTok (字节)',
-        className: 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'apple') {
-      return {
-        label: 'Apple (苹果)',
-        className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
-      };
-    }
-
-    if (gameState.company === 'amazon' || gameState.job_type === 'amazon') {
-      return {
-        label: 'Amazon (亚麻)',
-        className: 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'uber') {
-      return {
-        label: 'Uber (优步)',
-        className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
-      };
-    }
-
-    if (gameState.company === 'microsoft') {
-      return {
-        label: 'Microsoft (微软)',
-        className: 'text-sky-400 bg-sky-500/10 border-sky-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'cisco') {
-      return {
-        label: 'Cisco (思科)',
-        className: 'text-teal-400 bg-teal-500/10 border-teal-500/20 font-bold',
-      };
-    }
-
-    if (gameState.company === 'adobe') {
-      return {
-        label: 'Adobe (奥多比)',
-        className: 'text-red-400 bg-red-500/10 border-red-500/20 font-bold',
-      };
-    }
-
-    if (gameState.job_type === 'startup') {
-      return {
-        label: 'AI Startup (初创)',
-        className: 'text-orange-400 bg-orange-500/10 border-orange-500/20 font-bold',
-      };
-    }
-
-    if (gameState.job_type === 'big_tech') {
-      return {
-        label: '硅谷科技大厂',
-        className: 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold',
-      };
-    }
-
-    if (!gameState.job_type) {
-      return {
-        label: gameState.is_phd ? '北美博士实验室' : gameState.is_master ? '硕士研究生在读' : '在读学生',
-        className: 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-medium',
-      };
-    }
-
-    return {
-      label: '科技公司',
-      className: 'text-zinc-300 bg-zinc-800/60 border-zinc-700 font-semibold',
-    };
-  };
-  const companyDisplay = getDisplayCompany();
+  const { companyLabel, companyClassName, levelLabel, levelClassName } = getJobDisplayInfo(gameState);
+  const { visaLabel, visaClassName, gcStation } = getVisaDisplayInfo(gameState);
+  const { housingLabel, carLabel, hasCar } = getHousingDisplayInfo(gameState);
 
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
@@ -521,8 +261,8 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
             <span>当前雇主</span>
           </div>
           <div className="flex items-center">
-            <span className={`text-xs sm:text-[13px] px-2.5 py-0.5 rounded-lg border font-bold ${companyDisplay.className}`}>
-              {companyDisplay.label}
+            <span className={`text-xs sm:text-[13px] px-2.5 py-0.5 rounded-lg border font-bold ${companyClassName}`}>
+              {companyLabel}
             </span>
           </div>
         </div>
@@ -534,20 +274,8 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
             <span>当前职级</span>
           </div>
           <div className="flex items-center">
-            <span className={`text-xs sm:text-[13px] font-bold px-2.5 py-0.5 rounded-lg border ${
-              displayLevel === '待业'
-                ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                : displayLevel.includes('博士') || displayLevel.includes('硕士') || displayLevel.includes('本科')
-                  ? 'text-sky-300 bg-sky-500/10 border-sky-500/20'
-                  : displayLevel.includes('L8') || displayLevel.includes('Principal') || displayLevel.includes('Fellow')
-                    ? 'text-amber-300 bg-amber-500/15 border-amber-500/30 shadow-[0_0_8px_rgba(251,191,36,0.3)]'
-                    : displayLevel.includes('L7') || displayLevel.includes('Senior Staff')
-                      ? 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_8px_rgba(217,70,239,0.25)]'
-                      : displayLevel.includes('L6') || displayLevel.includes('Staff') || displayLevel.includes('MTS')
-                        ? 'text-purple-300 bg-purple-500/15 border-purple-500/30'
-                        : 'text-purple-300 bg-purple-500/10 border-purple-500/20'
-            }`}>
-              {displayLevel}
+            <span className={`text-xs sm:text-[13px] font-bold px-2.5 py-0.5 rounded-lg border ${levelClassName}`}>
+              {levelLabel}
             </span>
           </div>
         </div>
@@ -559,8 +287,8 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
             <span>签证身份</span>
           </div>
           <div className="flex items-center">
-            <span className={`text-xs sm:text-[13px] px-2.5 py-0.5 rounded-lg border font-bold ${visaDisplay.className}`}>
-              {visaDisplay.label}
+            <span className={`text-xs sm:text-[13px] px-2.5 py-0.5 rounded-lg border font-bold ${visaClassName}`}>
+              {visaLabel}
             </span>
           </div>
         </div>
@@ -606,7 +334,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-xs font-semibold text-emerald-300 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 flex items-center gap-2">
               <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              {displayHousing}
+              {housingLabel}
               {gameState.has_adu_rented && (
                 <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">ADU出租中</span>
               )}
@@ -621,10 +349,10 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
               </span>
             ))}
 
-            {hasCar && displayCar && (
+            {hasCar && carLabel && (
               <span className="text-xs font-semibold text-indigo-300 bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-500/20 flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                {displayCar}
+                {carLabel}
               </span>
             )}
             {gameState.has_pet && (

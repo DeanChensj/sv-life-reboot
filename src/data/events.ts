@@ -167,6 +167,7 @@ export const midYearEventRouter = (s: GameState): string => {
        workEvents.push('friday_pip');
      }
 
+     if (s.macro_economy === 'bear' && Math.random() < 0.25) workEvents.push('stock_crash');
      if (s.difficulty_title === '困难难度') workEvents.push('friday_pip', 'layoff_rumor');
      if (s.difficulty_title === '简单难度') workEvents.push('perf_review');
      if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
@@ -1215,8 +1216,8 @@ export const events: Record<string, GameEvent> = {
           const winRate = 0.25 + (s.luck / 100) * 0.4; // 幸运值越高越容易中签 (25% - 65%)
           const win = Math.random() < winRate;
           return win 
-            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，今年H1B中签了！' }
-            : { cash: s.cash, health: s.health - 10, message: '今年 H1B 没抽中！只能指望明年...' };
+            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
+            : { h1b_attempts: 1, cash: s.cash, health: s.health - 5, message: '第一年 H1B 没抽中！已自动激活 STEM OPT 延期，继续在大厂奋斗并可在年底迎来后续抽签！' };
         },
         nextEventId: 'sv_daily_life',
       },
@@ -1249,79 +1250,6 @@ export const events: Record<string, GameEvent> = {
             : { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash, message: '你通过婚姻顺利拿到了绿卡，直接跨过了最大的槛！' }
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : 'post_green_card',
-      }
-    ]
-  },
-  'big_tech_work_no_h1b': {
-    id: 'big_tech_work_no_h1b',
-    title: 'H1B 焦虑 (第二年抽签)',
-    description: '前第一年未抽中，好在申请了 STEM OPT 两年延期，这是你第二年的抽签机会...',
-    imageUrl: 'images/visa_denied.jpg',
-    choices: [
-      {
-        text: '参与第二轮 H1B 抽签！',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => {
-          const winRate = 0.35 + (s.luck / 100) * 0.3;
-          const win = Math.random() < winRate;
-          return win 
-            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', cash: s.cash, message: '第二年抽签人品爆发，终于中签了！' }
-            : { cash: s.cash, health: Math.max(0, s.health - 5), message: '第二年还是没抽中...只剩最后一年 STEM OPT 机会了！' };
-        },
-        nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'big_tech_work_no_h1b_final',
-      },
-      {
-        text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $80w 现金)',
-        reqBadge: '现金>=80w',
-        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在第二年抽签前，你果断出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底解决在美身份！' }),
-        nextEventId: 'post_green_card',
-      }
-    ]
-  },
-  'big_tech_work_no_h1b_final': {
-    id: 'big_tech_work_no_h1b_final',
-    title: 'H1B 绝境 (最后一年抽签与拯救对策)',
-    description: 'STEM OPT 最后一年来临！如果今年未抽中，你必须从以下拯救策略中做出抉择：',
-    choices: [
-      {
-        text: '赌上所有气运，进行这辈子最后一次 H1B 抽签！',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => {
-          const winRate = 0.35 + (s.luck / 100) * 0.35;
-          const win = Math.random() < winRate;
-          return win 
-            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', cash: s.cash, gc_progress: (s.visa === '公民' || s.visa === '绿卡') ? s.gc_progress : 1, gc_stage: (s.visa === '公民' || s.visa === '绿卡') ? s.gc_stage : 'perm_processing', message: '奇迹发生！在最后一年绝境中神奇海底捞中签！公司已顺便为你启动了 PERM 绿卡申请！' }
-            : { cash: s.cash, health: Math.max(0, s.health - 10), message: '很遗憾，第三年 H1B 依然未中签！好在公司 HR 允许你选择外派加拿大或挂靠 Day 1 CPT。' };
-        },
-        nextEventId: (s) => s.visa === 'H1B (工签)' ? 'sv_daily_life' : 'h1b_fallback_options',
-      },
-      {
-        text: '【公司外派】申请 Relocate 到温哥华/多伦多 Office (L1 签证曲线救国)',
-        costBadge: '免费外派',
-        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你转到了温哥华分公司，以 L1 身份工作。一年后公司把你调回了湾区 Headquarters，成功保住硅谷高薪！' }),
-        nextEventId: 'sv_year_end_settlement',
-      },
-      {
-        text: '【学校挂靠】紧急注册 Day 1 CPT 大学 (消耗 $1.5w)',
-        costBadge: '花费 $1.5w',
-        condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '你成功挂靠了 Day 1 CPT，虽然边上班边写作业极其辛苦，但你成功留在湾区继续工作！' }),
-        nextEventId: 'sv_year_end_settlement',
-      },
-      {
-        text: '【杰出人才】申办 O1 签证 (花费 $5w 律师费)',
-        reqBadge: '需PhD或硬核算法背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => {
-          const passProb = (s.is_phd || s.job_type === 'ai_research') ? 0.75 : 0.35;
-          const win = Math.random() < passProb;
-          return win
-            ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, message: '凭硬核学术成果与独创性架构，移民局批复了你的 O1 杰出人才签证！成功自救！' }
-            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: '移民局驳回了你的 O1 申请，认为你的行业贡献不足以达到杰出人才标准。' };
-        },
-        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
       }
     ]
   },

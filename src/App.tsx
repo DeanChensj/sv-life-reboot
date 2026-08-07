@@ -5,6 +5,7 @@ import { BentoStatsPanel } from './components/BentoStatsPanel';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
 import { safeStorage } from './utils/safeStorage';
+import { applyStateTransition } from './utils/stateTransitions';
 
 // Lazy loaded heavy modals for optimized code splitting
 const CharacterProfileModal = lazy(() => import('./components/CharacterProfileModal').then(m => ({ default: m.CharacterProfileModal })));
@@ -178,8 +179,7 @@ export default function App() {
   ]);
 
   const handleChoice = (choice: Choice) => {
-    // 1. Calculate new state
-    const newState = { ...gameState, message: '', laid_off: false, imageUrl: undefined }; // Clear old message, image and generic flags
+    // 1. Calculate new effects
     const effectResult = choice.effect(gameState);
     
     // ==========================================
@@ -224,215 +224,20 @@ export default function App() {
        }
     }
     
-    Object.assign(newState, effectResult); // Apply new effects
-    
     // Auto increment year based on age difference, ONLY if year wasn't explicitly set
     if (effectResult.age !== undefined && effectResult.age > gameState.age) {
       if (effectResult.year === undefined) {
-        newState.year = gameState.year + (effectResult.age - gameState.age);
+        effectResult.year = gameState.year + (effectResult.age - gameState.age);
       }
     }
 
-    // Clamp stats
-    const maxCharmLimit = newState.max_charm || 25;
-    newState.health = Math.max(0, Math.min(100, newState.health));
-    newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
-    newState.charm = Math.max(0, Math.min(maxCharmLimit, newState.charm));
-    newState.network = Math.max(0, Math.min(100, newState.network || 10));
+    // Apply centralized state transition and invariant middleware
+    const transition = applyStateTransition(gameState, effectResult, {
+      eventId: currentEventId,
+      source: 'event',
+    });
 
-    // Timeline Auto Recording
-    const updatedTimeline = [...(newState.timeline || [])];
-    const recAge = newState.age;
-    const recYear = newState.year;
-
-    if (currentEventId === 'choose_trait' && effectResult.trait_title) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: `特质觉醒: ${effectResult.trait_title}`,
-        description: effectResult.trait_desc || '开启独特的硅谷人生底色与专属天赋属性',
-        category: 'milestone'
-      });
-    } else if (currentEventId === 'choose_school') {
-      const schoolMap: Record<string, string> = { cmu: 'CMU (卡耐基梅隆)', ucb: 'UCB (加州伯克利)', state: 'SJSU (圣何塞州立)' };
-      const schoolName = effectResult.school ? (schoolMap[effectResult.school] || effectResult.school) : '国内高校 / 中外合办大学';
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: `踏上征途: 入读 ${schoolName}`,
-        description: effectResult.school ? '背上行囊，正式开启学术积累与北美留学生涯' : '进入大学校园，打下扎实的高等数学与算法编程底子',
-        category: 'education'
-      });
-    } else if (effectResult.is_master && !gameState.is_master) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: '深造进阶: 入读北美 CS 硕士研究生',
-        description: '手握录取通知书飞赴美国，开启高强度课业与刷题求职新篇章！',
-        category: 'education'
-      });
-    } else if (effectResult.is_phd && !gameState.is_phd) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: '学术殿堂: 斩获北美顶尖 CS 全奖直博 PhD',
-        description: '加入顶级人工智能实验室，致力于前沿顶会论文与分布式架构研发！',
-        category: 'education'
-      });
-    } else if (effectResult.is_new_job || (effectResult.job_type && effectResult.job_type !== 'unemployed' && (effectResult.job_type !== gameState.job_type || effectResult.company !== gameState.company))) {
-      const compMap: Record<string, string> = {
-        google: 'Google (谷歌)', meta: 'Meta (卷王)', nvidia: 'NVIDIA (英伟达)', tiktok: 'TikTok (字节)',
-        apple: 'Apple (苹果)', amazon: 'Amazon (亚麻)', openai: 'OpenAI', citadel: 'Citadel (城堡)',
-        uber: 'Uber (优步)', microsoft: 'Microsoft (微软)', cisco: 'Cisco (思科)', adobe: 'Adobe (奥多比)',
-        cn_big_tech: '国内一线互联网大厂', icc: 'ICC 外包公司'
-      };
-      const compName = effectResult.company ? (compMap[effectResult.company] || effectResult.company.toUpperCase()) : (effectResult.job_type === 'cn_tech' ? '国内一线互联网大厂' : effectResult.job_type === 'startup_founder' ? 'AI 独角兽' : '硅谷科技企业');
-      const lvl = effectResult.level || (effectResult.job_type === 'cn_tech' ? '国内研发' : effectResult.job_type === 'startup_founder' ? 'Founder' : 'SDE');
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: `成功入职: ${compName} (${lvl})`,
-        description: `顺利通过技术面试，年薪总包达到 $${(newState.tc || 0).toFixed(1)}w！`,
-        category: 'career',
-        statHighlight: `TC $${(newState.tc || 0).toFixed(1)}w`
-      });
-    } else if (effectResult.level && effectResult.level !== gameState.level && !effectResult.is_new_job) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: `职级晋升: 升至 ${effectResult.level}`,
-        description: `斩获优秀绩效考核，总包提升至 $${(newState.tc || 0).toFixed(1)}w！`,
-        category: 'career',
-        statHighlight: `TC $${(newState.tc || 0).toFixed(1)}w`
-      });
-    } else if (effectResult.visa && effectResult.visa !== gameState.visa) {
-      const visaDescriptions: Record<string, { title: string; desc: string }> = {
-        'Day 1 CPT': { title: '身份自救: 启用 Day 1 CPT (学籍保底)', desc: '在学籍保护下从容应对抽签与离境压力，继续在湾区全职工作！' },
-        'L1 (外派)': { title: '跨国调动: 取得 L-1 跨国工作签证', desc: '完成海外分支机构轮岗调动，正式进驻湾区总部！' },
-        'H1B (工签)': { title: '人品爆发: 成功抽中 H-1B 工作签证', desc: '在移民局年度大乐透中逆风中签，正式获得独立工签！' },
-        'O1 (杰出人才)': { title: '杰出人才: 获批 O-1 签证', desc: '凭借顶会论文或硬核算法成就获批杰出人才工签，免受抽签约束！' },
-        '绿卡': { title: '终极突破: 取得美国绿卡 (永久居民)', desc: '漫长排期长征终获全胜！彻底挣脱雇主与抽签枷锁！' },
-        '公民': { title: '天命所归: 取得美籍公民身份 (SSR)', desc: '获得绝对免签证与自由工作权益，硅谷人生畅通无阻！' },
-        'OPT (实习)': { title: '走向职场: 激活 OPT 实习期', desc: '顺利走出象牙塔，正式踏入北美职场求职与工作实战！' },
-        'F1 (学生)': { title: '求学签证: 获批 F-1 留学生签证', desc: '踏上赴美求学之路，开启海外求学生涯！' }
-      };
-      const info = visaDescriptions[effectResult.visa] || { title: `身份跨越: 取得 ${effectResult.visa}`, desc: '北美合法留美与工作身份迎来关键突破！' };
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: info.title,
-        description: info.desc,
-        category: 'immigration',
-        statHighlight: effectResult.visa
-      });
-    } else if (effectResult.housing_name && effectResult.housing_name !== gameState.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(effectResult.housing_name)) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: `置业安家: 购入 ${effectResult.housing_name}`,
-        description: `在加州湾区拥有了属于自己的房产，成为有产阶级！`,
-        category: 'real_estate',
-        statHighlight: effectResult.housing_name
-      });
-    } else if (effectResult.rental_income && (effectResult.rental_income > (gameState.rental_income || 0))) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: '资产扩张: 布局不动产被动现金流',
-        description: `名下投资房产/ADU 落地出租，年化被动租金现金流增至 +$${effectResult.rental_income.toFixed(1)}w！`,
-        category: 'real_estate',
-        statHighlight: `+$${effectResult.rental_income.toFixed(1)}w/年`
-      });
-    } else if (effectResult.car && effectResult.car !== gameState.car && effectResult.car !== 'none') {
-      const carMap: Record<string, string> = { porsche: '保时捷 Porsche 911', cybertruck: '特斯拉 Cybertruck', model_y: 'Tesla Model Y' };
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: `座驾升级: 提车 ${carMap[effectResult.car] || effectResult.car}`,
-        description: '行驶在加州 101 高速公路上，尽情体验硅谷速度与驾驶乐趣！',
-        category: 'wealth',
-        statHighlight: carMap[effectResult.car]
-      });
-    } else if (effectResult.is_married && !gameState.is_married) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: '缔结良缘: 步入婚姻殿堂',
-        description: '在加州与心仪的伴侣正式领证结婚，组建幸福的湾区家庭！',
-        category: 'relation'
-      });
-    } else if (effectResult.story_flags?.alex_ipo_done && !gameState.story_flags?.alex_ipo_done) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: '时代盛宴: OmniAgent 终局退出结算',
-        description: '见证 Alex 博士初创智能体公司走向纳斯达克挂牌与巨头并购退出！',
-        category: 'wealth'
-      });
-    } else if (effectResult.story_flags?.dave_defeated && !gameState.story_flags?.dave_defeated) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: '绝地反击: 击溃 Manager Dave',
-        description: '凭借扎实的证据链在闭门考核中彻底扳倒职场宿敌！',
-        category: 'story'
-      });
-    } else if (effectResult.story_flags?.sam_zero_day_done && !gameState.story_flags?.sam_zero_day_done) {
-      updatedTimeline.push({
-        age: recAge, year: recYear,
-        title: '黑客探险: 斩获 Zero-Day 漏洞赏金',
-        description: '与极客战友 Sam 在车库通宵调试并提交 AI 云平台底层逃逸漏洞 PoC！',
-        category: 'story'
-      });
-    }
-    newState.timeline = updatedTimeline;
-
-    // 🛡️ Global Visa Invariant Guard Middleware: Protect Citizen & Green Card status against accidental downgrades
-    if (gameState.visa === '公民') {
-      newState.visa = '公民';
-      newState.gc_progress = 5;
-      newState.gc_stage = 'approved';
-    } else if (gameState.visa === '绿卡' && newState.visa !== '公民') {
-      newState.visa = '绿卡';
-      newState.gc_progress = 5;
-      newState.gc_stage = 'approved';
-    }
-
-    // Check if health drops <= 0
-    if (newState.health <= 0 && newState.status === 'playing') {
-      newState.status = 'game_over';
-      if (!effectResult.message) {
-        newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
-      } else {
-        newState.message += ' 然而由于长期高压与过度劳累，你突发心梗，倒在了工位上...游戏结束。';
-      }
-    }
-
-    // Auto Liquidate Stocks if Cash < 0 (Allow selling stocks/equity to cover rent and expenses)
-    if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {
-      const deficit = Math.abs(newState.cash);
-      const sellAmt = Math.min(newState.stocks || 0, deficit);
-      newState.stocks = (newState.stocks || 0) - sellAmt;
-      newState.cash = newState.cash + sellAmt;
-      if (sellAmt > 0) {
-        newState.message = (newState.message || '') + ` 【股票自动变现】现金流不足，系统已自动变现 $${sellAmt.toFixed(1)}w 股票持仓以缴纳房租与生活账单。`;
-      }
-    }
-
-    // Check if bankrupt
-    if (newState.cash < -0.001 && newState.status === 'playing') {
-      newState.status = 'game_over';
-      const isHomeowner = newState.has_housing && !!newState.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(newState.housing_name);
-      if (isHomeowner) {
-        newState.message = '【房贷断供法拍破产】失业且资金链断裂无力还贷，加州银行正式启动房产法拍程序，个人信用彻底破产，游戏结束！';
-      } else if (!effectResult.message) {
-        newState.message = '你破产了，无法支付账单，游戏结束！';
-      } else {
-        newState.message += ' 但由于你负债累累，资金链彻底断裂，游戏结束！';
-      }
-    }
-
-    // Check if Health Burnout (健康归零猝死)
-    if (newState.health <= 0 && newState.status === 'playing') {
-      newState.status = 'game_over';
-      newState.message = (newState.message ? newState.message + ' ' : '') + '【身体崩溃猝死】由于高强度高压工作与长期极度疲劳，你的健康值彻底归零，身体突发严重 Burnout 猝死，遗憾登出了硅谷人生！';
-    }
-
-    // Check FIRE milestone
-    let triggerFireMilestone = false;
-    if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
-      if (currentEventId !== 'fire_milestone_choice' && currentEventId !== 'end') {
-        triggerFireMilestone = true;
-        sound.play('win');
-      }
-    }
+    const newState = transition.nextState;
 
     // Sound FX logic
     if (newState.status === 'win') {
@@ -451,10 +256,11 @@ export default function App() {
     setIsMobileStatsOpen(false); // Close mobile drawer if open
 
     // 2. Transition to next event
-    if (newState.status !== 'playing') {
-      setCurrentEventId('end');
-    } else if (triggerFireMilestone) {
-      setCurrentEventId('fire_milestone_choice');
+    if (transition.targetEventId) {
+      if (transition.targetEventId === 'fire_milestone_choice') {
+        sound.play('win');
+      }
+      setCurrentEventId(transition.targetEventId);
     } else {
       let nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
       
@@ -474,7 +280,9 @@ export default function App() {
         }
       }
       
-      setCurrentEventId(nextId);
+      if (nextId) {
+        setCurrentEventId(nextId);
+      }
     }
   };
 
@@ -779,86 +587,14 @@ export default function App() {
                 }}
                 onBuy={(effect, msg) => {
                   setGameState(prev => {
-                    const newState = { ...prev, imageUrl: undefined, ...effect };
-                    // Apply clamping
-                    newState.health = Math.max(0, Math.min(100, newState.health));
-                    newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
-                    newState.charm = Math.max(0, Math.min(newState.max_charm || 25, newState.charm));
-                    
-                    // 🛡️ Global Visa Invariant Guard Middleware
-                    if (prev.visa === '公民') {
-                      newState.visa = '公民';
-                      newState.gc_progress = 5;
-                      newState.gc_stage = 'approved';
-                    } else if (prev.visa === '绿卡' && newState.visa !== '公民') {
-                      newState.visa = '绿卡';
-                      newState.gc_progress = 5;
-                      newState.gc_stage = 'approved';
+                    const transition = applyStateTransition(prev, effect, {
+                      source: 'shop',
+                      customMessage: msg,
+                    });
+                    if (transition.targetEventId) {
+                      setCurrentEventId(transition.targetEventId);
                     }
-                    
-                    // 🛡️ Auto Liquidate Stocks if Cash < 0 on Shop Purchase
-                    if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {
-                      const deficit = Math.abs(newState.cash);
-                      const sellAmt = Math.min(newState.stocks || 0, deficit);
-                      newState.stocks = (newState.stocks || 0) - sellAmt;
-                      newState.cash = newState.cash + sellAmt;
-                      if (sellAmt > 0) {
-                        msg += ` 【股票自动变现】现金流不足，系统已自动变现 $${sellAmt.toFixed(1)}w 股票持仓以支付商城开销。`;
-                      }
-                    }
-
-                    // Timeline Auto Recording for Shop Purchases
-                    const updatedTimeline = [...(newState.timeline || [])];
-                    const recAge = newState.age;
-                    const recYear = newState.year;
-                    if (effect.housing_name && effect.housing_name !== prev.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(effect.housing_name)) {
-                      updatedTimeline.push({
-                        age: recAge, year: recYear,
-                        title: `置业安家: 购入 ${effect.housing_name}`,
-                        description: `在加州湾区拥有了属于自己的房产，成为有产阶级！`,
-                        category: 'real_estate',
-                        statHighlight: effect.housing_name
-                      });
-                    }
-                    if (effect.rental_income && (effect.rental_income > (prev.rental_income || 0))) {
-                      updatedTimeline.push({
-                        age: recAge, year: recYear,
-                        title: '资产扩张: 布局不动产被动现金流',
-                        description: `名下投资房产/ADU 落地出租，年化被动租金现金流增至 +$${effect.rental_income.toFixed(1)}w！`,
-                        category: 'real_estate',
-                        statHighlight: `+$${effect.rental_income.toFixed(1)}w/年`
-                      });
-                    }
-                    if (effect.car && effect.car !== prev.car && effect.car !== 'none') {
-                      const carMap: Record<string, string> = { porsche: '保时捷 Porsche 911', cybertruck: '特斯拉 Cybertruck', model_y: 'Tesla Model Y' };
-                      updatedTimeline.push({
-                        age: recAge, year: recYear,
-                        title: `座驾升级: 提车 ${carMap[effect.car] || effect.car}`,
-                        description: '行驶在加州 101 高速公路上，尽情体验硅谷速度与驾驶乐趣！',
-                        category: 'wealth',
-                        statHighlight: carMap[effect.car]
-                      });
-                    }
-                    newState.timeline = updatedTimeline;
-
-                    // Check game over & win
-                    if (newState.health <= 0 && newState.status === 'playing') {
-                      newState.status = 'game_over';
-                      newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
-                      setCurrentEventId('end');
-                    } else if (newState.cash < -0.001 && newState.status === 'playing') {
-                      newState.status = 'game_over';
-                      newState.message = '你破产了，无法支付账单，游戏结束！';
-                      setCurrentEventId('end');
-                    } else if (newState.cash + (newState.stocks || 0) >= newState.win_threshold && newState.status === 'playing') {
-                      newState.message = `总资产突破 $${newState.win_threshold}w！达成财务自由里程碑！`;
-                      setCurrentEventId('fire_milestone_choice');
-                    } else if (newState.status === 'win') {
-                      setCurrentEventId('end');
-                    } else {
-                      newState.message = msg;
-                    }
-                    return newState;
+                    return transition.nextState;
                   });
                   sound.play('coin');
                   setIsShopOpen(false);

@@ -47,9 +47,29 @@ for (const [id, event] of Object.entries(events)) {
   }
 }
 
+// Verify Character Creation Flow: choose_trait -> choose_year -> choose_school -> college
+const traitEvent = events['choose_trait'];
+traitEvent.choices.forEach((c, idx) => {
+  const next = typeof c.nextEventId === 'function' ? c.nextEventId({} as any) : c.nextEventId;
+  if (next !== 'choose_year') {
+    console.error(`❌ [choose_trait] Choice ${idx} nextEventId is '${next}' (expected 'choose_year')`);
+    errors++;
+  }
+});
+
+const yearEvent = events['choose_year'];
+yearEvent.choices.forEach((c, idx) => {
+  const next = typeof c.nextEventId === 'function' ? c.nextEventId({} as any) : c.nextEventId;
+  if (next !== 'choose_school') {
+    console.error(`❌ [choose_year] Choice ${idx} nextEventId is '${next}' (expected 'choose_school')`);
+    errors++;
+  }
+});
+
 if (errors === 0) {
-  console.log('✅ 所有 nextEventId 指向全部合法，没有死胡同！');
+  console.log('✅ 所有 nextEventId 指向全部合法，开局与主线没有死胡同！');
 } else {
   console.log(`❌ 发现 ${errors} 个路由错误！`);
+  process.exit(1);
 }
 

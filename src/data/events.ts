@@ -1309,38 +1309,6 @@ export const events: Record<string, GameEvent> = {
           }
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'sv_daily_life'),
-      },
-      {
-        text: '【情场闪婚上岸】凭借过人魅力火速交往美籍对象并闪婚递交绿卡 (需魅力 >= 16)',
-        reqBadge: '魅力>=16 (高风险)',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.charm || 10) >= 16 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => {
-          const charmBonus = Math.min(0.20, (((s.charm || 10) - 16) / 20));
-          const passProb = 0.45 + charmBonus;
-          const roll = Math.random();
-          if (roll < passProb) {
-            return {
-              visa: '绿卡',
-              gc_progress: 5,
-              gc_stage: 'approved',
-              is_married: true,
-              relationship_status: 'married',
-              charm: Math.min(25, (s.charm || 10) + 2),
-              message: '【情场通关】凭借极高的个人魅力与社交手腕，你成功与美籍对象喜结良缘，移民局批准了你的婚姻绿卡！'
-            };
-          } else if (roll < 0.75) {
-            return {
-              health: Math.max(0, s.health - 15),
-              message: '【闪婚生隙遭拒】移民局发出意向拒绝信 (NOID)，认为闪婚缺乏共同财务真实证据。对方在压力下提出分居，绿卡申请遗憾流产。'
-            };
-          } else {
-            return {
-              status: 'game_over',
-              message: '【假结婚遣返】移民局严厉质疑闪婚动机并判定为移民欺诈，你被当场取消签证遣返回国，游戏结束！'
-            };
-          }
-        },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'sv_daily_life'),
       }
     ]
   },
@@ -1401,38 +1369,6 @@ export const events: Record<string, GameEvent> = {
               cash: s.cash - 8,
               status: 'game_over',
               message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
-            };
-          }
-        },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
-      },
-      {
-        text: '【情场闪婚自救】凭借过人魅力火速闪婚美籍对象递交绿卡 (需魅力 >= 16)',
-        reqBadge: '魅力>=16 (高风险)',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.charm || 10) >= 16 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => {
-          const charmBonus = Math.min(0.20, (((s.charm || 10) - 16) / 20));
-          const passProb = 0.45 + charmBonus;
-          const roll = Math.random();
-          if (roll < passProb) {
-            return {
-              visa: '绿卡',
-              gc_progress: 5,
-              gc_stage: 'approved',
-              is_married: true,
-              relationship_status: 'married',
-              charm: Math.min(25, (s.charm || 10) + 2),
-              message: '【情场通关】凭借过人魅力，你火速交往美籍对象领证并获批婚姻绿卡，化险为夷！'
-            };
-          } else if (roll < 0.75) {
-            return {
-              health: Math.max(0, s.health - 15),
-              message: '【闪婚生隙遭拒】移民局发出意向拒绝信 (NOID)，认为闪婚缺乏真实生活证明，婚姻绿卡申请遗憾流产。'
-            };
-          } else {
-            return {
-              status: 'game_over',
-              message: '【假结婚遣返】移民局严厉质疑闪婚动机并判定为移民欺诈，你被当场取消签证遣返回国，游戏结束！'
             };
           }
         },
@@ -3092,38 +3028,6 @@ export const events: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis'),
       },
       {
-        text: '【情场闪婚自救】凭借过人魅力火速闪婚美籍对象递交绿卡 (需魅力 >= 16)',
-        reqBadge: '魅力>=16 (高风险)',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.charm || 10) >= 16 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => {
-          const charmBonus = Math.min(0.20, (((s.charm || 10) - 16) / 20));
-          const passProb = 0.45 + charmBonus;
-          const roll = Math.random();
-          if (roll < passProb) {
-            return {
-              visa: '绿卡',
-              gc_progress: 5,
-              gc_stage: 'approved',
-              is_married: true,
-              relationship_status: 'married',
-              charm: Math.min(25, (s.charm || 10) + 2),
-              message: '【情场通关】凭借无与伦比的个人魅力，你在危急关头与美籍对象喜结良缘，成功拿下婚姻绿卡！'
-            };
-          } else if (roll < 0.75) {
-            return {
-              health: Math.max(0, s.health - 15),
-              message: '【闪婚生隙遭拒】移民局发出意向拒绝信 (NOID)，认为闪婚缺乏真实生活证明，婚姻绿卡申请遗憾流产。'
-            };
-          } else {
-            return {
-              status: 'game_over',
-              message: '【假结婚遣返】移民局严厉质疑闪婚动机并判定为移民欺诈，你被当场取消签证遣返回国，游戏结束！'
-            };
-          }
-        },
-        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis'),
-      },
-      {
         text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 .5w)',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
@@ -4259,6 +4163,11 @@ export const events: Record<string, GameEvent> = {
     title: '游戏结束',
     description: '你的硅谷人生模拟旅程已经达成终局结算。',
     choices: [
+      {
+        text: '【重新投胎】开启全新一段硅谷人生',
+        effect: () => ({ status: 'playing' }),
+        nextEventId: 'choose_trait'
+      }
     ]
   },
   'trader_annual_strategy': {

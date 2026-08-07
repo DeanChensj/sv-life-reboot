@@ -80,16 +80,18 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   } else if (isFounder) {
     companyHeaderLabel = '创立企业';
     levelHeaderLabel = '企业阶段';
-    const stageName = state.founder_stage === 'exit' 
-      ? '准上市' 
-      : state.founder_stage === 'series_b'
-        ? 'B轮独角兽'
-        : state.founder_stage === 'series_a' 
-          ? 'A轮成长' 
-          : state.founder_stage === 'seed' 
-            ? '种子轮 Seed' 
-            : '车库 Pre-Seed';
-    levelLabel = `${stageName} (估值 $${state.company_valuation || 180}w)`;
+    const val = state.company_valuation || 180;
+    let stageName = '车库 Pre-Seed';
+    if (state.founder_stage === 'exit' || val >= 8000) {
+      stageName = '准上市';
+    } else if (state.founder_stage === 'series_b' || val >= 4500) {
+      stageName = 'B轮独角兽';
+    } else if (state.founder_stage === 'series_a' || val >= 1500) {
+      stageName = 'A轮成长';
+    } else if (state.founder_stage === 'seed' || val >= 500) {
+      stageName = '种子轮 Seed';
+    }
+    levelLabel = `${stageName} (估值 $${val}w)`;
     levelClassName = 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 font-bold shadow-[0_0_8px_rgba(217,70,239,0.2)]';
   } else if (isUnemployed) {
     companyHeaderLabel = state.story_flags?.in_gap_year ? '生活状态' : '当前状态';

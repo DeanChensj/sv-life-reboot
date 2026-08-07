@@ -16,11 +16,45 @@ const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ defau
 const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const CareerTimelineModal = lazy(() => import('./components/CareerTimelineModal').then(m => ({ default: m.CareerTimelineModal })));
 
+const GAME_SAVE_STORAGE_KEY = 'sv_life_game_save';
+
+const loadInitialGameData = (): {
+  gameState: GameState;
+  currentEventId: string;
+  hasUnlockedShopToast: boolean;
+  hasOpenedShop: boolean;
+} => {
+  try {
+    const raw = safeStorage.getItem(GAME_SAVE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.gameState && parsed.currentEventId && events[parsed.currentEventId]) {
+        return {
+          gameState: parsed.gameState,
+          currentEventId: parsed.currentEventId,
+          hasUnlockedShopToast: Boolean(parsed.hasUnlockedShopToast),
+          hasOpenedShop: Boolean(parsed.hasOpenedShop),
+        };
+      }
+    }
+  } catch {
+    // If storage is corrupted or invalid, fallback cleanly
+  }
+  return {
+    gameState: generateInitialState(),
+    currentEventId: 'choose_trait',
+    hasUnlockedShopToast: false,
+    hasOpenedShop: false,
+  };
+};
+
 export default function App() {
-  const [gameState, setGameState] = useState<GameState>(generateInitialState);
-  const [currentEventId, setCurrentEventId] = useState<string>('choose_trait');
+  const [initialGameData] = useState(loadInitialGameData);
+  const [gameState, setGameState] = useState<GameState>(initialGameData.gameState);
+  const [currentEventId, setCurrentEventId] = useState<string>(initialGameData.currentEventId);
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState<boolean>(false);
   const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    if (initialGameData.currentEventId !== 'choose_trait') return false;
     return !safeStorage.getItem('sv_life_welcome_seen');
   });
   const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
@@ -29,11 +63,26 @@ export default function App() {
   const [showCareerTimeline, setShowCareerTimeline] = useState<boolean>(false);
   const [timelineInitialTab, setTimelineInitialTab] = useState<'timeline' | 'chart' | 'summary'>('chart');
   const [isShopOpen, setIsShopOpen] = useState<boolean>(false);
-  const [hasOpenedShop, setHasOpenedShop] = useState<boolean>(false);
+  const [hasOpenedShop, setHasOpenedShop] = useState<boolean>(initialGameData.hasOpenedShop);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
-  const [hasUnlockedShopToast, setHasUnlockedShopToast] = useState<boolean>(false);
+  const [hasUnlockedShopToast, setHasUnlockedShopToast] = useState<boolean>(initialGameData.hasUnlockedShopToast);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
   const [isCoolingDown, setIsCoolingDown] = useState<boolean>(false);
+
+  // Auto-Save progress whenever gameState or currentEventId updates
+  useEffect(() => {
+    if (gameState && currentEventId) {
+      const saveData = {
+        version: 1,
+        savedAt: Date.now(),
+        gameState,
+        currentEventId,
+        hasUnlockedShopToast,
+        hasOpenedShop,
+      };
+      safeStorage.setItem(GAME_SAVE_STORAGE_KEY, JSON.stringify(saveData));
+    }
+  }, [gameState, currentEventId, hasUnlockedShopToast, hasOpenedShop]);
 
   const handleToggleSound = () => {
     setIsMuted(sound.toggleMute());
@@ -287,6 +336,7 @@ export default function App() {
   };
 
   const resetGame = () => {
+    safeStorage.removeItem(GAME_SAVE_STORAGE_KEY);
     safeStorage.removeItem('sv_life_initial_seed');
     safeStorage.removeItem('sv_life_ssr_status');
     setGameState(generateInitialState());

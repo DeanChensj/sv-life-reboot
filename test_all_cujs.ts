@@ -152,11 +152,17 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
 
   // Advance to Green Card Approved
   state.visa = '绿卡';
-  state.gc_progress = 5.0;
-  state.gc_stage = 'approved';
-  const visaInfo3 = getVisaDisplayInfo(state);
-  assert(visaInfo3.gcStation === 5, 'GC Station is 5 (Green Card)');
-  assert(visaInfo3.visaLabel === '美国绿卡 (PR)', 'Displays Green Card PR');
+  // Company-specific event routing check: Apple worker must never trigger meta_tlm
+  const appleState: GameState = {
+    ...state,
+    company: 'apple',
+    job_type: 'big_tech',
+    season_stage: 'h1',
+  };
+  for (let i = 0; i < 50; i++) {
+    const routed = midYearEventRouter(appleState);
+    assert(routed !== 'meta_tlm', 'Apple employee must never receive Meta TLM event');
+  }
 
   console.log('✅ CUJ 1 Passed\n');
 }

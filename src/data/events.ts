@@ -153,7 +153,17 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'ai_research') return 'ai_research_crisis';
      if (s.job_type === 'quant') return 'quant_stress';
 
-     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'meta_tlm', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'apple_vision_pro_demo', 'agent_hallucination_prod_disaster'];
+     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'agent_hallucination_prod_disaster'];
+     
+     // Meta 专属 Tech Lead Manager 卷王挑战
+     if (s.company === 'meta') {
+       workEvents.push('meta_tlm');
+     }
+
+     // Apple 专属 Vision Pro / 空间计算应用开发
+     if (s.company === 'apple') {
+       workEvents.push('apple_vision_pro_demo');
+     }
      
      // 公司专属 PIP 概率区分：亚麻与 Meta 具有高强度末位淘汰 / PIP 指标，皮衣黄 Nvidia 及 Google / Apple 的 PIP 概率极低
      const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';
@@ -170,7 +180,9 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.macro_economy === 'bear' && Math.random() < 0.25) workEvents.push('stock_crash');
      if (s.difficulty_title === '困难难度') workEvents.push('friday_pip', 'layoff_rumor');
      if (s.difficulty_title === '简单难度') workEvents.push('perf_review');
-     if (s.year >= 2023 && Math.random() < 0.25) workEvents.push('nvidia_stock_surge');
+     if ((s.company === 'nvidia' || s.job_type === 'nvidia' || (s.stocks || 0) >= 5) && s.year >= 2023 && Math.random() < 0.35) {
+       workEvents.push('nvidia_stock_surge');
+     }
      if (s.year >= 2024 && isWorking && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
      if (isWorking && Math.random() < 0.25) workEvents.push('influencer_vp_drama');
      if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');

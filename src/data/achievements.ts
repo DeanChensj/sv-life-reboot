@@ -1,5 +1,6 @@
 import type { Achievement, GameState } from '../types';
 import { safeStorage } from '../utils/safeStorage';
+import { STORAGE_KEYS, HOUSING_NAMES, isPermanentVisa } from '../constants/gameConstants';
 
 export const ACHIEVEMENTS: Achievement[] = [
   {
@@ -142,7 +143,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 export function getUnlockedAchievements(): string[] {
   try {
-    const saved = safeStorage.getItem('sv_life_achievements');
+    const saved = safeStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
     return saved ? JSON.parse(saved) : [];
   } catch (e) {
     return [];
@@ -154,7 +155,7 @@ export function unlockAchievement(id: string): boolean {
     const unlocked = getUnlockedAchievements();
     if (!unlocked.includes(id)) {
       unlocked.push(id);
-      safeStorage.setItem('sv_life_achievements', JSON.stringify(unlocked));
+      safeStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(unlocked));
       return true; // Newly unlocked!
     }
   } catch (e) {}
@@ -181,7 +182,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if ((state.rental_income || 0) >= 2.0 || ((state.cash + (state.stocks || 0)) >= 200 && state.has_housing)) {
       if (unlockAchievement('bay_area_landlord')) newlyUnlocked.push('bay_area_landlord');
     }
-    if ((state.rental_income || 0) >= 10.0 || (state.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')) {
+    if ((state.rental_income || 0) >= 10.0 || (state.investment_properties || []).includes(HOUSING_NAMES.SUNNYVALE_4PLEX)) {
       if (unlockAchievement('passive_cashflow_king')) newlyUnlocked.push('passive_cashflow_king');
     }
   }
@@ -214,7 +215,7 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('day_trader_god')) newlyUnlocked.push('day_trader_god');
   }
 
-  if (state.status === 'win' && state.visa !== '绿卡' && state.visa !== '公民') {
+  if (state.status === 'win' && !isPermanentVisa(state.visa)) {
     if (unlockAchievement('no_gc_fire')) newlyUnlocked.push('no_gc_fire');
   }
 

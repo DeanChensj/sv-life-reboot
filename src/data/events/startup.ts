@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 
 export const startupEvents: Record<string, GameEvent> = {
@@ -11,7 +11,7 @@ export const startupEvents: Record<string, GameEvent> = {
       {
         text: '相信老板的 PPT，自愿降薪换取更多期权 (博取小概率收购变现)',
         effect: (s) => {
-          const win = Math.random() < 0.05;
+          const win = gameRandom() < 0.05;
           return win 
             ? { cash: s.cash + 150, message: ' 奇迹爆发！公司被大厂以数亿美元溢价收购，你的早期期权直接兑现 $150w 现金！' }
             : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, job_type: 'unemployed', message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
@@ -23,7 +23,7 @@ export const startupEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => {
-          const win = Math.random() < 0.25;
+          const win = gameRandom() < 0.25;
           return win
             ? { cash: s.cash + 60, tc: s.tc + 10, message: '你带资入组！公司靠你的资金撑到了 A 轮融资并估值大暴涨，你的 TC 与期权收益双双上涨！' }
             : { cash: s.cash - 10, tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 20, message: '砸进去的 $10w 没能挽救寒冬，公司还是倒闭了...你不仅没了工作还心痛不已。' };
@@ -54,7 +54,7 @@ export const startupEvents: Record<string, GameEvent> = {
           const charmBonus = Math.min(0.12, ((s.charm || 0) - 10) / 80);
           const baseChance = stage === 'pre_seed' ? 0.48 : stage === 'seed' ? 0.32 : 0.22;
           const successChance = Math.max(0.12, Math.min(0.75, baseChance + ecoBonus + networkBonus + charmBonus));
-          const pass = Math.random() < successChance;
+          const pass = gameRandom() < successChance;
 
           if (pass) {
             if (stage === 'pre_seed') {
@@ -89,7 +89,7 @@ export const startupEvents: Record<string, GameEvent> = {
               };
             }
           } else {
-            const isDownRound = Math.random() < 0.35;
+            const isDownRound = gameRandom() < 0.35;
             if (isDownRound) {
               return {
                 mid_year: true, season_stage: 'h1',
@@ -140,7 +140,7 @@ export const startupEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=8w',
         condition: (s) => s.cash >= 8,
         effect: (s) => {
-          const success = Math.random() < 0.65;
+          const success = gameRandom() < 0.65;
           if (success) {
             return {
               mid_year: true, season_stage: 'h1',
@@ -167,7 +167,7 @@ export const startupEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const val = s.company_valuation || 3000;
           const isHuge = val >= 6000;
-          const roll = Math.random();
+          const roll = gameRandom();
           if (isHuge && roll < 0.40) {
             // 40% IPO Win
             return {
@@ -230,7 +230,7 @@ export const startupEvents: Record<string, GameEvent> = {
       {
         text: '抢占先机，连夜写 Paper 冲击顶会！',
         effect: (s) => {
-          const win = Math.random() < (0.55 + s.leetcode / 300);
+          const win = gameRandom() < (0.55 + s.leetcode / 300);
           return win 
             ? { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(25, (s.charm || 10) + 4), health: s.health - 20, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' }
             : { health: s.health - 25, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
@@ -293,7 +293,7 @@ export const startupEvents: Record<string, GameEvent> = {
       {
         text: '连夜启动备选应急预案，向 Stanford 校友网络与天使投资人路演求助',
         effect: (s) => {
-          const win = Math.random() < 0.60;
+          const win = gameRandom() < 0.60;
           return win
             ? {
                 cash: parseFloat((s.cash + 2).toFixed(1)),

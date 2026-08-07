@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing } from '../../constants/gameConstants';
 
@@ -127,7 +127,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                        nextGc = Math.max(2, nextGc); 
                        gcMsg = ' 【绿卡进度】凭借你的杰出背景 (NIW/EB1)，律师直接为你跳过 PERM，提交了 I-140 申请！';
                     } else {
-                       if (Math.random() < (isBigTech ? 0.7 : 0.4)) {
+                       if (gameRandom() < (isBigTech ? 0.7 : 0.4)) {
                          nextStage = 'perm_processing';
                          nextGc = Math.max(1, nextGc);
                          gcMsg = ' 【绿卡进度】公司律师正式为你启动了 PERM 打广告和 PWD 流程，漫长的绿卡长征开始了。';
@@ -136,7 +136,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                        }
                     }
                  } else if (nextStage === 'perm_processing') {
-                    const rand = Math.random();
+                    const rand = gameRandom();
                     if (rand < 0.25) {
                        nextStage = 'perm_audit';
                        gcMsg = ' 【PERM Audit】运气不佳，你的 PERM 遇到了劳工部 Audit (抽查审计)，进度被严重拖延至少一年...';
@@ -148,7 +148,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                        gcMsg = ' 【绿卡进度】PERM 广告与审理流程仍在进行中...';
                     }
                  } else if (nextStage === 'perm_audit') {
-                    if (Math.random() < 0.6) {
+                    if (gameRandom() < 0.6) {
                        nextStage = 'i140_processing';
                        nextGc = Math.max(2, nextGc);
                        gcMsg = ' 【Audit通过】经历漫长的劳工部审计，你的 PERM 奇迹般顺利自证清白并获批！律师已提交 I-140。';
@@ -156,7 +156,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                        gcMsg = ' 【Audit持续】劳工部仍在严审你的职位薪水与合规材料，本年度进度停滞。';
                     }
                  } else if (nextStage === 'i140_processing') {
-                    const rand = Math.random();
+                    const rand = gameRandom();
                     if (rand < 0.20 && !isO1 && !isPhd) {
                        nextStage = 'i140_rfe';
                        gcMsg = ' 【I-140 RFE】移民局对你的学历与技能发出了补件通知 (RFE)，需追加技术证明材料！';
@@ -178,10 +178,10 @@ export const settlementEvents: Record<string, GameEvent> = {
                        gcMsg = ' 【排期大前进】排期到了！律师已火速为你递交 I-485 身份调整申请，进入最后制卡冲刺阶段！';
                     } else {
                        gcMsg = ' 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
-                       if (Math.random() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
+                       if (gameRandom() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
                     }
                  } else if (nextStage === 'i485_pending') {
-                    if (Math.random() < 0.6) {
+                    if (gameRandom() < 0.6) {
                        nextStage = 'approved';
                        nextGc = 5;
                        gcMsg = ' 【制卡成功】制卡完成，你的 I-485 正式获批！';
@@ -202,7 +202,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               newAttempts += 1;
               const baseWinRate = s.difficulty_title === '简单难度' ? 0.65 : s.difficulty_title === '困难难度' ? 0.20 : 0.40;
               const winRate = baseWinRate + (s.luck / 100) * 0.2;
-              const win = Math.random() < winRate;
+              const win = gameRandom() < winRate;
               if (win) {
                 newVisa = 'H1B (工签)';
                 h1bMsg = s.visa === 'L1 (外派)' ? `  外派/L1 转换中签！在第 ${newAttempts} 次 H1B 抽签中成功中签，顺利获得 H1B 工签！` : `  人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
@@ -229,7 +229,7 @@ export const settlementEvents: Record<string, GameEvent> = {
             const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
             const refreshChance = newEconomy === 'bull' ? 0.50 : newEconomy === 'bear' ? 0.15 : 0.35;
             
-            if (isEmployee && Math.random() < refreshChance) {
+            if (isEmployee && gameRandom() < refreshChance) {
               const maxCapByLevel: Record<string, number> = {
                 'L3': 24,
                 'L4': 34,
@@ -247,7 +247,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               const levelCap = maxCapByLevel[curLevelKey] || 55;
               
               if (updatedTC < levelCap) {
-                const refreshAmt = Math.random() < 0.3 ? (newEconomy === 'bull' ? 2.5 : 1.5) : (newEconomy === 'bear' ? 0.5 : 1.0);
+                const refreshAmt = gameRandom() < 0.3 ? (newEconomy === 'bull' ? 2.5 : 1.5) : (newEconomy === 'bear' ? 0.5 : 1.0);
                 updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
                 meritMsg = ` 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
               }

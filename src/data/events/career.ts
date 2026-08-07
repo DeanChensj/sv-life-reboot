@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 
 export const careerEvents: Record<string, GameEvent> = {
@@ -31,8 +31,8 @@ export const careerEvents: Record<string, GameEvent> = {
           }
 
           const eligiblePool = allPool.filter(c => c.id !== s.company && c.id !== s.job_type);
-          const targetCount = Math.min(eligiblePool.length, isKingOfRoll ? 4 : (Math.random() < 0.45 ? 2 : 3));
-          const targetCompanies = [...eligiblePool].sort(() => Math.random() - 0.5).slice(0, targetCount);
+          const targetCount = Math.min(eligiblePool.length, isKingOfRoll ? 4 : (gameRandom() < 0.45 ? 2 : 3));
+          const targetCompanies = [...eligiblePool].sort(() => gameRandom() - 0.5).slice(0, targetCount);
 
           const wonOffers: string[] = [];
           const econBonus = s.macro_economy === 'bull' ? 0.14 : (s.macro_economy === 'bear' ? -0.20 : 0);
@@ -43,14 +43,14 @@ export const careerEvents: Record<string, GameEvent> = {
             if (newLeet >= comp.minLeet) {
               const diff = newLeet - comp.minLeet;
               const passProb = Math.max(0.06, Math.min(0.72, (0.20 + (diff / 85) + econBonus + charmBonus + luckBonus) * comp.weight));
-              if (Math.random() < passProb) {
+              if (gameRandom() < passProb) {
                 wonOffers.push(comp.id);
               }
             }
           }
 
           if (isKingOfRoll && wonOffers.length === 0 && newLeet >= 50 && targetCompanies.length > 0) {
-            const fallback = targetCompanies[Math.floor(Math.random() * targetCompanies.length)];
+            const fallback = targetCompanies[Math.floor(gameRandom() * targetCompanies.length)];
             wonOffers.push(fallback.id);
           }
 
@@ -107,7 +107,7 @@ export const careerEvents: Record<string, GameEvent> = {
             { company: 'apple', name: 'Apple', baseTc: 20, healthDelta: 4, desc: '库比蒂诺 Apple 资深总监开绿灯，将你内推至 Apple Park 核心工程团队，发展平稳且福利丰厚！' },
             { company: 'microsoft', name: 'Microsoft', baseTc: 19, healthDelta: 8, desc: '微软云与 AI 部门熟人校友直接拉你入组，作息极度规律，生活质量拉满！' }
           ];
-          const chosen = referralPool[Math.floor(Math.random() * referralPool.length)];
+          const chosen = referralPool[Math.floor(gameRandom() * referralPool.length)];
           return {
             tc: getLevelScaledTC(chosen.baseTc, lvl),
             laid_off: false,
@@ -135,7 +135,7 @@ export const careerEvents: Record<string, GameEvent> = {
             { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: '校友学长内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态！' },
             { company: 'uber', name: 'Uber (核心调度与分布式架构)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌，校友学姐直接将你带入旧金山 Uber 核心团队！' }
           ];
-          const chosen = mafiaTargets[Math.floor(Math.random() * mafiaTargets.length)];
+          const chosen = mafiaTargets[Math.floor(gameRandom() * mafiaTargets.length)];
           return { 
             health: Math.max(0, s.health - chosen.healthDrain), 
             tc: getLevelScaledTC(chosen.tcBoost, lvl), 
@@ -162,7 +162,7 @@ export const careerEvents: Record<string, GameEvent> = {
             { company: 'oracle', name: 'Oracle 甲骨文云架构组', baseTc: 21 },
             { company: 'icc', name: '硅谷大型 Tech IT 咨询外包', baseTc: 14 }
           ];
-          const comp = stateCompanies[Math.floor(Math.random() * stateCompanies.length)];
+          const comp = stateCompanies[Math.floor(gameRandom() * stateCompanies.length)];
           const newTC = getLevelScaledTC(comp.baseTc, lvl);
           return { 
             tc: newTC, 
@@ -190,7 +190,7 @@ export const careerEvents: Record<string, GameEvent> = {
           if (s.school === 'cmu' && s.is_phd) winRate += 0.20;
           winRate += (s.luck / 100) * 0.10;
 
-          const pass = Math.random() < winRate;
+          const pass = gameRandom() < winRate;
           const lvl = s.level ? s.level : 'Quant';
           return pass 
             ? { tc: getLevelScaledTC(42, lvl), laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '凭顶尖名校与 PhD 学术背景！你击败了众多竞争者，拿下了顶级 Quant Fund 42w+ 包裹 Offer！' }
@@ -277,7 +277,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '去墨西哥 Tijuana 闯关重签签证 (高风险 Visa Run) - 消耗 $1w',
         condition: (s) => s.cash >= 1 && (s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)'),
         effect: (s) => {
-          const win = Math.random() > 0.15; // 85% success
+          const win = gameRandom() > 0.15; // 85% success
           return win
             ? { cash: s.cash - 1, health: s.health - 15, leetcode: s.leetcode + 5, message: '心惊胆战地越过美墨边境，你奇迹般地拿到了新的签证 Stamp！争取到了宝贵的留美时间！' }
             : { status: 'game_over', message: '在边境小黑屋被海关查出挂靠历史，直接吊销签证并被 5 年禁令限制入境！' };
@@ -516,12 +516,12 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '老老实实祈祷 H1B 中签 (免费)',
         effect: (s) => {
           const winRate = 0.25 + (s.luck / 100) * 0.4; // 幸运值越高越容易中签 (25% - 65%)
-          const win = Math.random() < winRate;
+          const win = gameRandom() < winRate;
           return win 
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
             : { h1b_attempts: 1, cash: s.cash, health: s.health - 5, message: '第一年 H1B 没抽中！已自动激活 STEM OPT 延期，继续在大厂奋斗并可在年底迎来后续抽签！' };
         },
-        nextEventId: (s) => (s.message && s.message.includes('没抽中') && Math.random() < 0.35 ? 'h1b_fallback_options' : 'sv_daily_life'),
+        nextEventId: (s) => (s.message && s.message.includes('没抽中') && gameRandom() < 0.35 ? 'h1b_fallback_options' : 'sv_daily_life'),
       },
       {
         text: '砸 $8w 现金找顶级律所申办 O1 杰出人才签证 (需现金 >= $8w, 限 PhD/AI研究员/硬核算法背景)',
@@ -529,7 +529,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => (s.is_phd || s.job_type === 'ai_research' || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const passProb = (s.is_phd || s.job_type === 'ai_research') ? 0.75 : 0.35;
-          const win = Math.random() < passProb;
+          const win = gameRandom() < passProb;
           return win
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'O1 (杰出人才)', cash: s.cash - 8, message: '凭硬核的学术论文与顶会引用，律所成功帮你拿下了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
             : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局以“缺乏行业顶尖影响力与独创贡献”退回了你的 O1 申请！$8w 律师费彻底打了水漂。' };
@@ -547,7 +547,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【真爱伴侣结婚】与交往伴侣领证递交 I-130/I-485 婚姻绿卡 (合法合规)',
         condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const partnerIsCitizen = Math.random() < 0.40;
+          const partnerIsCitizen = gameRandom() < 0.40;
           if (partnerIsCitizen) {
             return {
               visa: '绿卡',
@@ -573,7 +573,7 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=8w (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const roll = Math.random();
+          const roll = gameRandom();
           if (roll < 0.35) {
             return {
               cash: s.cash - 8,
@@ -614,7 +614,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_cursor_hunt') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
-          const pass = s.leetcode >= 45 && Math.random() < 0.65;
+          const pass = s.leetcode >= 45 && gameRandom() < 0.65;
           if (pass) {
             return {
               last_limited_opp_year: s.year,
@@ -641,7 +641,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_treehacks') && s.cash >= 0.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
-          const win = Math.random() < (0.15 + s.leetcode / 600);
+          const win = gameRandom() < (0.15 + s.leetcode / 600);
           return win
             ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
             : { last_limited_opp_year: s.year, cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩溃没拿奖，但你结识了一群技术极客。' };
@@ -706,7 +706,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_zero_day_bounty') && s.leetcode >= 35 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
-          const success = Math.random() < 0.35;
+          const success = gameRandom() < 0.35;
           return success
             ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 5, message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
             : { last_limited_opp_year: s.year, health: Math.max(0, s.health - 8), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
@@ -719,7 +719,7 @@ export const careerEvents: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: (s) => {
           const winRate = 0.40 + ((s.charm || 10) / 50) + ((s.luck || 20) / 500);
-          const isViral = Math.random() < Math.min(0.85, winRate);
+          const isViral = gameRandom() < Math.min(0.85, winRate);
           return isViral
             ? {
                 last_limited_opp_year: s.year,
@@ -768,7 +768,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_angel_invest') && s.cash >= 10 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
-          const success = Math.random() < 0.45;
+          const success = gameRandom() < 0.45;
           return success
             ? {
                 last_limited_opp_year: s.year,
@@ -811,37 +811,37 @@ export const careerEvents: Record<string, GameEvent> = {
           const isKingOfRoll = s.trait_title === '卷王之王';
           const drain = isKingOfRoll ? 8 : 14;
           const winRate = 0.38 + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.15 : 0);
-          const pass = Math.random() < Math.min(0.85, winRate);
+          const pass = gameRandom() < Math.min(0.85, winRate);
 
           if (pass) {
             if (curLevel === 'L3') {
               // L3 升 L4 要求算法 >= 30 (若满2年资历门槛放宽至 25)
-              if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (Math.random() < 0.88 || isKingOfRoll)) {
+              if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (gameRandom() < 0.88 || isKingOfRoll)) {
                 return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 4.0, level: 'L4', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】卷王之王神功大成！你凭借硬核架构交付拿下 Top Perf 轻松破格晋升至 L4！' : '【战时冲刺成功】你带领组员完成核心交付！拿下顶格 Top Perf 顺利晋升至 L4！总包调升 +$4.0w！' };
               }
             }
             if (curLevel === 'L4') {
               // L4 升 L5 Senior 要求算法 >= 48 (若满3年资历门槛放宽至 40)
-              if (yearsInGrade >= 1 && (s.leetcode >= 48 || yearsInGrade >= 3) && (Math.random() < 0.75 || isKingOfRoll)) {
+              if (yearsInGrade >= 1 && (s.leetcode >= 48 || yearsInGrade >= 3) && (gameRandom() < 0.75 || isKingOfRoll)) {
                 return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(12, drain + 2)), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】抗下千亿流量重构！卷王底蕴爆发，全票通过晋升委员会晋级 L5 Senior！' : '【战时冲刺成功】扛下千亿流量大促！顺利通过升职委员会，正式晋升为 L5 Senior！总包调升 +$6.5w！' };
               }
             }
             if ((curLevel === 'L5 (Senior)' || curLevel === 'L5') && yearsInGrade >= 2 && s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25) {
               // L6 Staff 非常难 (最高 18% 胜率)
               const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
-              if (Math.random() < Math.min(0.18, promoChance)) {
+              if (gameRandom() < Math.min(0.18, promoChance)) {
                 return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(18, drain + 8)), tc: s.tc + 12.0, level: 'L6 (Staff)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】打破硅谷天花板！凭借极硬核架构与强大人脉资源，破格晋升为万里挑一的 L6 Staff 架构师！' : '【战时冲刺成功】你拉拢跨组部门资源并主导架构落地，奇迹晋升为 L6 Staff 架构师！总包大幅调升 +$12w！' };
               }
             }
             if ((curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') && yearsInGrade >= 2 && s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35) {
               const promoChance = 0.16 + ((s.charm || 10) * 0.005) + ((s.network || 10) * 0.004) + (isKingOfRoll ? 0.08 : 0);
-              if (Math.random() < Math.min(0.33, promoChance)) {
+              if (gameRandom() < Math.min(0.33, promoChance)) {
                 return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(20, drain + 9)), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】统帅战略基建！在 VP 盟友背书与跨部门拉拢中，全票通过晋升为 L7 Senior Staff 资深架构师！' : '【战时冲刺成功】你凭借雄厚的高管人脉与战略领导力重塑公司架构，正式晋升为 L7 Senior Staff 资深架构师！总包调升 +$20w！' };
               }
             }
             if ((curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') && yearsInGrade >= 2 && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50) {
               const promoChance = 0.10 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
-              if (Math.random() < Math.min(0.20, promoChance)) {
+              if (gameRandom() < Math.min(0.20, promoChance)) {
                 return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(25, drain + 14)), tc: s.tc + 35.0, level: 'L8 (Principal)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】封神之路！获董事会联合推举与行业泰斗声望，破格登顶 L8 Principal 首席架构师/技术院士！' : '【战时冲刺成功】你在董事会闭门会议中赢得一致赞誉，登顶全公司屈指可数的 L8 Principal 首席架构师！总包暴涨 +$35w！' };
               }
             }
@@ -866,7 +866,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
-          const pass = s.leetcode >= 25 || Math.random() < 0.75;
+          const pass = s.leetcode >= 25 || gameRandom() < 0.75;
           
           // L3 / L4 自然晋升机制：要求算法达到标准且有一定资历
           if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
@@ -900,7 +900,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
-          const pass = s.leetcode >= 30 || Math.random() < 0.75;
+          const pass = s.leetcode >= 30 || gameRandom() < 0.75;
 
           if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
             return {
@@ -931,7 +931,7 @@ export const careerEvents: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: (s) => {
           const winRate = 0.20 + (s.leetcode / 400) + ((s.luck || 20) / 400);
-          const win = Math.random() < Math.min(0.65, winRate);
+          const win = gameRandom() < Math.min(0.65, winRate);
           return win
             ? { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), cash: s.cash + 5, stocks: (s.stocks || 0) + 10, message: '【融资大捷】公司顺利拿下 A 轮千万美金融资！你的期权估值大涨并分到了 $5w 现金绩效奖金！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), leetcode: s.leetcode + 5, message: '【技术硬仗】一人干完了三人的全栈活，虽然融资推迟，但全套云原生与 Agent 架构让你技术实力全面蜕变。' };
@@ -950,36 +950,36 @@ export const careerEvents: Record<string, GameEvent> = {
           const drain = isKingOfRoll ? 8 : 14;
           
           const baseWinRate = 0.15 + (s.leetcode / 300) + ((s.charm || 10) * 0.015) + ((s.network || 10) * 0.01) + (isKingOfRoll ? 0.15 : 0);
-          const pass = Math.random() < Math.min(0.78, baseWinRate);
+          const pass = gameRandom() < Math.min(0.78, baseWinRate);
 
           if (curLevel === 'L3') {
             // L3 升 L4 要求算法 >= 35 (达标且满 1 年晋升率极高，若满 2 年算法门槛可放宽至 30)
             if (s.leetcode < 30 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (建议算法>=35)，建议多提升技术硬实力。' };
             const l3PassRate = 0.70 + (s.leetcode / 200) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
-            if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (Math.random() < Math.min(0.95, l3PassRate) || yearsInGrade >= 2 || isKingOfRoll)) {
+            if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (gameRandom() < Math.min(0.95, l3PassRate) || yearsInGrade >= 2 || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 3.5, level: 'L4', last_promo_age: s.age, message: isKingOfRoll ? '【卷王破格晋升】做题家底蕴彻底释放，你的 Perf 拿下顶格 EE 绩效轻松晋升至 L4！' : '恭喜！凭借过硬的算法功底与稳定交付，你顺利晋升为 L4 工程师！总包调薪 +$3.5w！' };
             }
           } else if (curLevel === 'L4') {
             // L4 升 L5 (Senior) 要求算法 >= 50 (资深工程师是硅谷终身职级 Terminal Level，多数人在 2~3 年内达成)
             if (s.leetcode < 45 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别 (建议算法>=50)，独立项目主导深度需进一步沉淀。' };
             const l4PassRate = 0.55 + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
-            if (yearsInGrade >= 1 && (s.leetcode >= 45 || yearsInGrade >= 3) && (Math.random() < Math.min(0.90, l4PassRate) || (yearsInGrade >= 3 && s.leetcode >= 40) || isKingOfRoll)) {
+            if (yearsInGrade >= 1 && (s.leetcode >= 45 || yearsInGrade >= 3) && (gameRandom() < Math.min(0.90, l4PassRate) || (yearsInGrade >= 3 && s.leetcode >= 40) || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 6.0, level: 'L5 (Senior)', last_promo_age: s.age, message: '轰动全组！你主导了核心子模块交付，顺利晋升为 L5 Senior 资深工程师！总包调薪 +$6.0w！' };
             }
           } else if (curLevel === 'L5 (Senior)' || curLevel === 'L5') {
             // L5 升 L6 (Staff) 非常难 (天花板天堑，要求极高架构力、跨组影响力与 VP Sponsor)
             const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
-            if (s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30 && yearsInGrade >= 2 && pass && Math.random() < Math.min(0.18, promoChance)) {
+            if (s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.18, promoChance)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(18, drain + 8)), tc: s.tc + 12.0, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破硅谷天花板，结合顶层架构产出与全公司影响力，成功晋升为万里挑一的 L6 Staff 架构师！总包调升 +$12w！' };
             }
           } else if (curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') {
             const promoChance = 0.10 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
-            if (s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && yearsInGrade >= 2 && pass && Math.random() < Math.min(0.20, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(20, drain + 10)), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', last_promo_age: s.age, message: '战略突围！凭借高层 VP Sponsor 与跨部门整合能力，全票通过晋升为 L7 Senior Staff 资深架构师！总包狂飙 +$20w！' };
+            if (s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.20, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(20, drain + 10)), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', last_promo_age: s.age, message: '战略突围！凭借高层 VP Sponsor 与跨部门整合能力，全票通过晋升为 L7 Senior Staff 资深架构师！总包狂飙 +$20w！' };
           } else if (curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') {
             const promoChance = 0.08 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
-            if (s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && yearsInGrade >= 2 && pass && Math.random() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(25, drain + 14)), tc: s.tc + 35.0, level: 'L8 (Principal)', last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
+            if (s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.max(25, drain + 14)), tc: s.tc + 35.0, level: 'L8 (Principal)', last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
           }
-          const meritBonus = Math.random() < 0.35 ? 2.0 : 1.0;
+          const meritBonus = gameRandom() < 0.35 ? 2.0 : 1.0;
           return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + meritBonus, message: isKingOfRoll ? `【卷王日常高产】你高质高效交付了核心模块，拿到了项目奖金 (+${meritBonus}w TC)！` : `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年部门升职 Quota 紧张，你的指标已入库，明年一定为你申请！”` };
         },
         nextEventId: (s) => {
@@ -1017,8 +1017,8 @@ export const careerEvents: Record<string, GameEvent> = {
           const eligiblePool = allPool.filter(c => c.id !== s.company && c.id !== s.job_type);
 
           // 真实社招机制：每轮跳槽精力有限，精准投递 2 ~ 3 家目标大厂/团队
-          const targetCount = Math.min(eligiblePool.length, isKingOfRoll ? 4 : (Math.random() < 0.45 ? 2 : 3));
-          const targetCompanies = [...eligiblePool].sort(() => Math.random() - 0.5).slice(0, targetCount);
+          const targetCount = Math.min(eligiblePool.length, isKingOfRoll ? 4 : (gameRandom() < 0.45 ? 2 : 3));
+          const targetCompanies = [...eligiblePool].sort(() => gameRandom() - 0.5).slice(0, targetCount);
 
           // 逐一计算面试通过与发 Offer 概率
           const wonOffers: string[] = [];
@@ -1030,7 +1030,7 @@ export const careerEvents: Record<string, GameEvent> = {
             if (newLeet >= comp.minLeet) {
               const diff = newLeet - comp.minLeet;
               const passProb = Math.max(0.06, Math.min(0.72, (0.20 + (diff / 85) + econBonus + charmBonus + luckBonus) * comp.weight));
-              if (Math.random() < passProb) {
+              if (gameRandom() < passProb) {
                 wonOffers.push(comp.id);
               }
             }
@@ -1038,7 +1038,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
           // 卷王保底机制：算法 >= 50 且有 target 时保底获得 1 个 Offer
           if (isKingOfRoll && wonOffers.length === 0 && newLeet >= 50 && targetCompanies.length > 0) {
-            const fallback = targetCompanies[Math.floor(Math.random() * targetCompanies.length)];
+            const fallback = targetCompanies[Math.floor(gameRandom() * targetCompanies.length)];
             wonOffers.push(fallback.id);
           }
 
@@ -1093,12 +1093,12 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【年度重心：拓展副业】经营小红书与独立开发',
         condition: (s) => true,
         effect: (s) => {
-          if (s.leetcode >= 40 && Math.random() < (0.05 + (s.luck || 20) / 500)) {
+          if (s.leetcode >= 40 && gameRandom() < (0.05 + (s.luck || 20) / 500)) {
             return { mid_year: true, season_stage: 'h1', cash: s.cash + 35, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 15), message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
           }
           let winRate = (s.charm || 10) >= 12 ? 0.9 : ((s.charm || 10) >= 7 ? 0.6 : 0.2);
-          if (Math.random() < winRate) {
-            if ((s.charm || 10) >= 20 && Math.random() < 0.05) return { mid_year: true, season_stage: 'h1', cash: s.cash + 48, charm: Math.min(25, (s.charm || 10) + 5), health: Math.max(0, s.health - 10), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
+          if (gameRandom() < winRate) {
+            if ((s.charm || 10) >= 20 && gameRandom() < 0.05) return { mid_year: true, season_stage: 'h1', cash: s.cash + 48, charm: Math.min(25, (s.charm || 10) + 5), health: Math.max(0, s.health - 10), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
             return { mid_year: true, season_stage: 'h1', cash: s.cash + 8, charm: Math.min(25, (s.charm || 10) + 2), health: Math.max(0, s.health - 15), message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
           }
           return { mid_year: true, season_stage: 'h1', cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 20), message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
@@ -1364,7 +1364,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const winProb = isL3 
             ? (yearsInGrade >= 2 ? 0.95 : 0.80) 
             : (yearsInGrade >= 3 ? 0.90 : 0.70);
-          const win = isKingOfRoll || Math.random() < winProb;
+          const win = isKingOfRoll || gameRandom() < winProb;
           const tcIncrease = isL3 ? 3.5 : 6.5;
           const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
@@ -1394,7 +1394,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           // L6 Staff 非常难
           const winRate = 0.05 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.06;
-          const win = Math.random() < Math.min(0.18, winRate);
+          const win = gameRandom() < Math.min(0.18, winRate);
           return win 
             ? { level: 'L6 (Staff)', tc: s.tc + 12, health: Math.max(0, s.health - 20), last_promo_age: s.age, message: '奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构与跨团队沟通，打破硅谷天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +12 万美元！' }
             : { health: Math.max(0, s.health - 18), message: '晋升委员会否决了你的 L6 Staff 申请，认为你在部门影响力与政治 Sponsorship 上仍缺一把火。白卷了一整年。' };
@@ -1411,7 +1411,7 @@ export const careerEvents: Record<string, GameEvent> = {
         costBadge: '消耗健康与高阶政治与战略心智',
         effect: (s) => {
           const winRate = 0.12 + ((s.charm || 10) / 100) * 0.20 + ((s.network || 10) / 100) * 0.20 + (s.leetcode / 100) * 0.08;
-          const win = Math.random() < winRate;
+          const win = gameRandom() < winRate;
           return win 
             ? { level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 25), last_promo_age: s.age, message: ' 战略封神！你在跨部门架构评审中凭借高层 VP Sponsor 撑腰与无可撼动的技术领导力，正式晋升为 L7 Senior Staff Engineer 资深架构师！总包 (TC) 狂飙 +20 万美元！' }
             : { health: Math.max(0, s.health - 22), message: '晋升委员会否决了你的 L7 Senior Staff 申请，认为你在高层政治阵营拉拢与全公司级战略视野上仍需深耕。白卷了一整年。' };
@@ -1428,7 +1428,7 @@ export const careerEvents: Record<string, GameEvent> = {
         costBadge: '消耗健康与终极政治心智',
         effect: (s) => {
           const winRate = 0.10 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.05;
-          const win = Math.random() < winRate;
+          const win = gameRandom() < winRate;
           return win 
             ? { level: 'L8 (Principal)', tc: s.tc + 35, health: Math.max(0, s.health - 32), last_promo_age: s.age, message: ' 硅谷传世神话！你在董事会闭门答辩中赢得 CEO 与顶级投资人一致肯定，破格受聘为全公司屈指可数的 L8 Principal Engineer 首席架构师/技术院士！年薪总包与期权暴涨 (+$35w TC)！' }
             : { health: Math.max(0, s.health - 25), message: 'L8 职级名额受全公司顶层 Quota 严格限制，尽管你的产出极其卓越，但在董事会与高管派系答辩中仍以一票之差抱憾延期。白卷了一整年。' };
@@ -1455,7 +1455,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           let surviveRate = 0.4;
           if (s.leetcode >= 80) surviveRate = 0.8;
-          const win = Math.random() < surviveRate;
+          const win = gameRandom() < surviveRate;
           return win 
             ? { health: s.health - 20, cash: s.cash, message: '你没日没夜地干活，终于在这个裁员季活了下来，但距离 Burnout 只有一步之遥。' }
             : { health: s.health - 10, cash: s.cash, laid_off: true, tc: 0, job_type: 'unemployed', message: '不管你怎么卷，你们整个组都被端了。你被裁员了！' };
@@ -1514,7 +1514,7 @@ export const careerEvents: Record<string, GameEvent> = {
             { company: 'meta', name: 'Meta' },
             { company: 'microsoft', name: 'Microsoft' }
           ];
-          const rescue = rescueCompanies[Math.floor(Math.random() * rescueCompanies.length)];
+          const rescue = rescueCompanies[Math.floor(gameRandom() * rescueCompanies.length)];
           return {
             tc: Math.max(22, s.tc || 22),
             company: rescue.company,
@@ -1531,7 +1531,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【F-1 / OPT 身份】利用 90/150 天失业期额度疯狂刷题，火速投递 E-Verify 新公司',
         condition: (s) => s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)',
         effect: (s) => {
-          const pass = s.leetcode >= 45 || Math.random() < 0.55;
+          const pass = s.leetcode >= 45 || gameRandom() < 0.55;
           const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
           const newTC = getLevelScaledTC(22, targetLvl);
           return pass
@@ -1560,7 +1560,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【H-1B 工签身份】利用 60 天 H1B Grace Period 极限刷题办理 H1B Transfer',
         condition: (s) => s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)',
         effect: (s) => {
-          const pass = s.leetcode >= 55 || Math.random() < 0.50;
+          const pass = s.leetcode >= 55 || gameRandom() < 0.50;
           const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
           const newTC = getLevelScaledTC(24, targetLvl);
           return pass
@@ -1664,7 +1664,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';
           const hasNetworkProtection = (s.network || 0) >= 30;
           const passProb = hasNetworkProtection ? 0.95 : (isHighPipCompany ? 0.55 : 0.80);
-          const survived = Math.random() < passProb;
+          const survived = gameRandom() < passProb;
           return survived
             ? { 
                 health: Math.max(0, s.health - 15), 
@@ -1753,7 +1753,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '淘宝买物理点击器+找同事代刷工牌 (高风险)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
-          const caught = Math.random() < 0.3;
+          const caught = gameRandom() < 0.3;
           return caught
             ? { tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 30, message: '你的代刷工牌行为被 HR 发现，直接以违纪名义当天开除！' }
             : { cash: s.cash + 5, charm: s.charm + 2, message: '成功瞒天过海！你一边拿着加州的工资，一边享受着外州的低物价。' };
@@ -1764,7 +1764,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '硬刚 Manager：“要么让我 Remote，要么我走人！”',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
-          const win = s.leetcode >= 70 && Math.random() < 0.5;
+          const win = s.leetcode >= 70 && gameRandom() < 0.5;
           return win
             ? { tc: s.tc + 2, charm: Math.min(25, s.charm + 5), message: '由于你是团队的核心骨干（High Performer），Manager 妥协了，给你申请了特殊的 Remote Exception！' }
             : { tc: 0, laid_off: true, job_type: 'unemployed', message: 'Manager 冷笑一声：“现在是买方市场，门在那边。” 你被解雇了。' };
@@ -1886,7 +1886,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '接下第二份全职工作 (J2)！赚双倍的钱！',
         condition: (s) => s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia',
         effect: (s) => {
-          const caught = Math.random() < 0.25;
+          const caught = gameRandom() < 0.25;
           return caught
             ? { tc: 0, laid_off: true, job_type: 'unemployed', health: Math.max(0, s.health - 40), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
             : { cash: s.cash + s.tc, health: Math.max(0, s.health - 30), leetcode: s.leetcode + 5, message: '你用两台电脑同时开会，成功拿到了双倍工资！但是巨大的上下文切换让你精神分裂。' };
@@ -1912,7 +1912,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           // L6 Staff 非常难 (18% 成功率，需过硬架构与内卷)
           const isEligible = s.leetcode >= 60 && (s.network || 10) >= 20;
-          const win = isEligible && Math.random() < 0.18;
+          const win = isEligible && gameRandom() < 0.18;
           const newTc = Math.min(68, s.tc + 14);
           return win 
             ? { level: 'L6 (Staff)', tc: newTc, health: Math.max(0, s.health - 22), imageUrl: 'images/burnout.jpg', message: `你干掉了同组全部竞争对手，在严苛的委员会评审中突破天堑晋升为 Meta M1 / L6 Staff TLM！当前总包提升至 $${newTc.toFixed(1)}w！` }
@@ -2072,7 +2072,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【硬核技术死磕】在架构评审会上当众用指标与延迟打脸 VP 的花架子 PPT',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => {
-          const win = s.leetcode >= 45 || Math.random() < 0.45;
+          const win = s.leetcode >= 45 || gameRandom() < 0.45;
           return win
             ? {
                 tc: s.tc + 2.0,
@@ -2116,7 +2116,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【死守传统底层系统】强调 Legacy Code 维护的重要性与安全性',
         effect: (s) => {
-          const win = Math.random() < 0.40;
+          const win = gameRandom() < 0.40;
           return win
             ? { health: s.health + 5, message: '老系统发生重大产线事故，全球只有你懂得如何救火！你成功凭借稀缺性保住了铁饭碗！' }
             : { laid_off: true, tc: 0, job_type: 'unemployed', health: s.health - 15, message: '部门最终决定整体重组裁撤！你拿着 Severance 遣散费步入了中年求职市场。' };
@@ -2248,7 +2248,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           let winRate = 0.15;
           if (s.year >= 2020 && s.year <= 2022) winRate = 0.30;
-          const win = Math.random() < winRate; 
+          const win = gameRandom() < winRate; 
           return win 
             ? { cash: s.cash + 60, message: '稳扎稳打！公司被大厂收购了，你的期权兑现了 $60w 现金！' }
             : { cash: Math.max(0, s.cash - 5), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸，你不得不重新进入求职市场。' };
@@ -2261,7 +2261,7 @@ export const careerEvents: Record<string, GameEvent> = {
           if (s.year < 2022) {
             return { cash: Math.max(0, s.cash - 10), health: s.health - 20, laid_off: true, job_type: 'unemployed', tc: 0, message: `在 ${s.year} 年盲目跟风 AI 概念缺乏底层研发，产品无人问津，公司资金链断裂倒闭，你重新失业。` };
           }
-          const win = Math.random() < 0.18;
+          const win = gameRandom() < 0.18;
           return win 
             ? { cash: s.cash + 35, stocks: (s.stocks || 0) + 45, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产，顺便拿到了 EB-1 绿卡！' }
             : { cash: Math.max(0, s.cash - 10), health: s.health - 20, laid_off: true, job_type: 'unemployed', tc: 0, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜抱起铺盖重新刷题求职。' };
@@ -2356,7 +2356,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const luckBonus = (s.luck || 20) / 1000;
           const ipoProb = Math.max(0.05, Math.min(0.25, 0.12 + bullBonus + techBonus + luckBonus));
           const acquiHireProb = 0.45;
-          const rand = Math.random();
+          const rand = gameRandom();
 
           if (rand < ipoProb) {
             return {
@@ -2401,7 +2401,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const bullBonus = s.macro_economy === 'bull' ? 0.08 : s.macro_economy === 'bear' ? -0.06 : 0;
           const ipoProb = Math.max(0.05, Math.min(0.25, 0.12 + bullBonus));
           const acquiHireProb = 0.45;
-          const rand = Math.random();
+          const rand = gameRandom();
 
           if (rand < ipoProb) {
             return {
@@ -2574,7 +2574,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【通宵协作】带上电脑去 Sam 车库通宵验证漏洞 PoC',
         condition: (s) => s.leetcode >= 25,
         effect: (s) => {
-          const pass = (s.leetcode >= 40) || Math.random() < 0.65;
+          const pass = (s.leetcode >= 40) || gameRandom() < 0.65;
           return pass
             ? {
                 cash: s.cash + 3.0,

@@ -62,7 +62,11 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
     : [{ age: sanitizedAge, year: sanitizedYear, netWorth: sanitizedCash + sanitizedStocks, cash: sanitizedCash, stocks: sanitizedStocks }];
   const sanitizedStoryFlags = rawState.story_flags && typeof rawState.story_flags === 'object' ? rawState.story_flags : {};
   const sanitizedNPCs = rawState.npcs && typeof rawState.npcs === 'object' ? rawState.npcs : {};
-  const sanitizedSeed = typeof rawState.seed === 'number' ? rawState.seed : Math.floor(Math.random() * 2147483647);
+
+  // 100% idempotent seed generation for legacy unseeded saves
+  const sanitizedSeed = typeof rawState.seed === 'number' && !isNaN(rawState.seed)
+    ? (rawState.seed >>> 0)
+    : (((sanitizedYear * 10007) ^ (sanitizedAge * 997) ^ Math.round(sanitizedCash * 100) ^ Math.round(sanitizedStocks * 100)) >>> 0);
 
   // Sync PRNG with save seed
   setGameSeed(sanitizedSeed);

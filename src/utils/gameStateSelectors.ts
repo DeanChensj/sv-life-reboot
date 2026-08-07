@@ -1,4 +1,5 @@
 import type { GameState } from '../types';
+import { isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
 
 export interface JobDisplayInfo {
   companyHeaderLabel: string;
@@ -272,7 +273,7 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
  * Derives housing and vehicle display info.
  */
 export function getHousingDisplayInfo(state: GameState): HousingDisplayInfo {
-  const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(state.housing_name || '');
+  const isHomeowner = isOwnedHousing(state.housing_name);
   const housingLabel = state.housing_name || (state.has_housing ? '湾区自购房产' : '国内老家 / 未购房');
 
   const hasCar = Boolean(state.car && state.car !== 'none');

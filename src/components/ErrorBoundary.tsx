@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { safeStorage } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../constants/gameConstants';
 
 interface Props {
   children: ReactNode;
@@ -11,8 +12,6 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
-
-const GAME_SAVE_STORAGE_KEY = 'sv_life_reboot_save_v1';
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
@@ -32,9 +31,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleResetGame = () => {
     try {
-      safeStorage.removeItem(GAME_SAVE_STORAGE_KEY);
-      safeStorage.removeItem('sv_life_initial_seed');
-      safeStorage.removeItem('sv_life_ssr_status');
+      safeStorage.removeItem(STORAGE_KEYS.GAME_SAVE);
+      safeStorage.removeItem(STORAGE_KEYS.INITIAL_SEED);
+      safeStorage.removeItem(STORAGE_KEYS.SSR_STATUS);
+      safeStorage.removeItem(STORAGE_KEYS.WELCOME_SEEN);
     } catch {
       // Ignore cleanup error
     }
@@ -43,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleExportDebugData = () => {
     try {
-      const currentSave = safeStorage.getItem(GAME_SAVE_STORAGE_KEY);
+      const currentSave = safeStorage.getItem(STORAGE_KEYS.GAME_SAVE);
       const debugPayload = {
         timestamp: new Date().toISOString(),
         error: this.state.error?.message,

@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 
 export const tradingEvents: Record<string, GameEvent> = {
@@ -52,7 +52,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         text: '【梭哈期权】拼了！用小额现金炒 0DTE 末日期权 (投入 $5w)',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
-          const hit = Math.random() < (0.08 + s.luck / 500); // 8% base chance
+          const hit = gameRandom() < (0.08 + s.luck / 500); // 8% base chance
           if (hit) {
             return {
               cash: s.cash + 20, // Turn 5w into 25w (+$20w net cash)
@@ -100,7 +100,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 30,
         effect: (s) => {
            const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%
-           const win = Math.random() < winRate;
+           const win = gameRandom() < winRate;
            return win 
              ? { tc: Math.floor(s.tc * 0.9), stocks: Math.floor((s.stocks || 0) * 1.15), cash: s.cash + 35, message: '虽然宏观大盘熊市让基本薪酬受压，但你精准在最低点抄底了 AI 龙头，逆势吃到反弹波段大赚 $35w，股票市值也有所增值！' }
              : { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.70), cash: s.cash - 25, health: s.health - 30, message: '抄底抄在半山腰，现金和股票惨遭双杀，市场继续在深度熊市中煎熬。' };
@@ -178,7 +178,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
           const winRate = isBull ? 0.60 : (isBear ? 0.35 : 0.48);
-          const isWin = Math.random() < winRate;
+          const isWin = gameRandom() < winRate;
           if (isWin) {
             const gain = Math.min(45, s.cash * 0.30);
             return {
@@ -208,7 +208,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
           const winRate = isBull ? 0.40 : (isBear ? 0.18 : 0.28);
-          const roll = Math.random();
+          const roll = gameRandom();
           if (roll < winRate) {
             const doubleGain = Math.min(60, s.cash * 0.50);
             return {
@@ -296,7 +296,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       {
         text: '顶着高压，手动干预策略并加大杠杆！(45% 概率获得 $250w 巨额 Bonus)',
         effect: (s) => {
-          const win = Math.random() < 0.45;
+          const win = gameRandom() < 0.45;
           return win 
             ? { cash: s.cash + 250, health: s.health - 25, message: ' 华尔街之狼！这波疯狂杠杆让你单月帮基金出海捕捞暴赚！老板亲手为你颁发了 $250w 美金的年终 Bonus 巨额支票！' }
             : { cash: Math.max(0, s.cash - 15), health: s.health - 30, laid_off: true, tc: 0, job_type: 'unemployed', message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
@@ -321,7 +321,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 5,
         effect: (s) => {
           const winRate = 0.01 + (Math.min(45, s.luck) / 100) * 0.15;
-          const win = Math.random() < winRate;
+          const win = gameRandom() < winRate;
           return win 
             ? { cash: s.cash + 15, message: '你买的土狗币居然真的小火了一把！你在高点果断卖出提现，狠赚了一笔！' }
             : { cash: Math.max(0, s.cash - 5), health: Math.max(0, s.health - 7), imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都变成了空气币。' };
@@ -344,7 +344,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       {
         text: '【全仓追高芯片股】把剩余流动资金全部追高 Buying NVDA / AMD',
         effect: (s) => {
-          const win = Math.random() < 0.45;
+          const win = gameRandom() < 0.45;
           const currentStocks = s.stocks || 0;
           const boostedStocks = Math.floor(currentStocks * 1.35);
           const droppedStocks = Math.floor(currentStocks * 0.85);
@@ -382,7 +382,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       {
         text: '双向跨式策略 (Straddle)：做多两端波动率，靠大幅跳空捕获暴利',
         effect: (s) => {
-          const win = Math.random() < 0.55;
+          const win = gameRandom() < 0.55;
           return win
             ? {
                 cash: parseFloat((s.cash + 6.5).toFixed(1)),
@@ -402,7 +402,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         reqBadge: '需现金>=10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => {
-          const win = Math.random() < 0.50;
+          const win = gameRandom() < 0.50;
           return win
             ? {
                 cash: parseFloat((s.cash + 14).toFixed(1)),
@@ -429,7 +429,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       {
         text: '火中取栗：顺势跟风买入，在盘中剧烈震荡中精准止盈',
         effect: (s) => {
-          const win = Math.random() < 0.60;
+          const win = gameRandom() < 0.60;
           return win
             ? {
                 cash: parseFloat((s.cash + 8).toFixed(1)),

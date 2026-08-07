@@ -1,5 +1,9 @@
 import type { GameState } from '../../types';
 import { safeStorage } from '../../utils/safeStorage';
+import { STORAGE_KEYS, isOwnedHousing, VISA_STATUS, isPermanentVisa } from '../../constants/gameConstants';
+import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '../../utils/random';
+
+export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 
 // Helper to scale job hunt TC based on candidate's existing engineering level (benchmarked to levels.fyi)
 export const getLevelScaledTC = (baseL3TC: number, level?: string): number => {
@@ -12,40 +16,46 @@ export const getLevelScaledTC = (baseL3TC: number, level?: string): number => {
   return Math.min(24, baseL3TC); // L3 or new grad
 };
 
-export const generateInitialState = (): GameState => {
-  let savedSeed: { cash: number; charm: number; max_charm: number; luck: number; is_ssr_unlocked?: boolean } | null = null;
+export const generateInitialState = (customSeed?: number): GameState => {
+  let savedSeed: { cash: number; charm: number; max_charm: number; luck: number; is_ssr_unlocked?: boolean; seed?: number } | null = null;
 
   try {
-    const stored = safeStorage.getItem('sv_life_initial_seed');
+    const stored = safeStorage.getItem(STORAGE_KEYS.INITIAL_SEED);
     if (stored) savedSeed = JSON.parse(stored);
   } catch (e) {
     // Ignore storage errors
   }
 
-  let luck: number, cash: number, charm: number, max_charm: number, is_ssr_unlocked: boolean;
+  let luck: number, cash: number, charm: number, max_charm: number, is_ssr_unlocked: boolean, seed: number;
 
-  if (savedSeed) {
+  if (savedSeed && customSeed === undefined) {
     luck = savedSeed.luck;
     cash = savedSeed.cash;
     charm = savedSeed.charm;
     max_charm = savedSeed.max_charm;
-    is_ssr_unlocked = !!savedSeed.is_ssr_unlocked;
+    is_ssr_unlocked = Boolean(savedSeed.is_ssr_unlocked);
+    seed = typeof savedSeed.seed === 'number' ? savedSeed.seed : setGameSeed(Date.now());
+    setGameSeed(seed);
   } else {
+    seed = customSeed !== undefined
+      ? setGameSeed(customSeed)
+      : setGameSeed((Date.now() ^ (Math.floor(Math.random() * 2147483647))) >>> 0);
+
     // 8% random roll for SSR Native US Citizen trait on fresh new game initialization
-    is_ssr_unlocked = Math.random() < 0.08;
+    is_ssr_unlocked = gameRandom() < 0.08;
 
-    // Generate new if no seed
-    const isRich = Math.random() < 0.15; // 15% 概率富二代
+    // Generate new using PRNG
+    const isRich = gameRandom() < 0.15; // 15% 概率富二代
     if (!isRich) {
-      cash = Math.floor(Math.random() * 5) + 8; // 8 - 12 万美元 (中产家庭)
+      cash = gameRandomInt(8, 12); // 8 - 12 万美元 (中产家庭)
     } else {
-      cash = Math.floor(Math.random() * 25) + 25; // 25 - 50 万美元 (富裕家庭)
+      cash = gameRandomInt(25, 50); // 25 - 50 万美元 (富裕家庭)
     }
-    charm = Math.floor(Math.random() * 10) + 1; // 颜值 1-10
-    max_charm = Math.min(30, Math.max(15, charm + Math.floor(Math.random() * 6) + 8));
-    luck = Math.floor(Math.random() * 100);
+    charm = gameRandomInt(1, 10); // 颜值 1-10
+    max_charm = Math.min(30, Math.max(15, charm + gameRandomInt(8, 14)));
+    luck = gameRandomInt(0, 99);
 
-    safeStorage.setItem('sv_life_initial_seed', JSON.stringify({ cash, charm, max_charm, luck, is_ssr_unlocked }));
+    safeStorage.setItem(STORAGE_KEYS.INITIAL_SEED, JSON.stringify({ cash, charm, max_charm, luck, is_ssr_unlocked, seed }));
   }
 
   let bgMessage = '';
@@ -90,14 +100,15 @@ export const generateInitialState = (): GameState => {
     story_flags: {},
     timeline: [],
     history_net_worth: [{ age: 18, year: 2018, netWorth: parseFloat(cash.toFixed(1)), cash: parseFloat(cash.toFixed(1)), stocks: 0 }],
-    message: bgMessage
+    message: bgMessage,
+    seed,
   };
 };
 
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
 export const midYearEventRouter = (s: GameState): string => {
-  const isWorking = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+  const isWorking = Boolean(s.job_type && s.job_type !== 'unemployed' && !s.laid_off);
   const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
 
   // --- 0. 优先消费长线因果剧情链 (Priority Narrative Arcs) ---
@@ -122,19 +133,19 @@ export const midYearEventRouter = (s: GameState): string => {
   }
 
   // 5) Sam 极客战友剧情链：Zero-Day 漏洞与黑客项目
-  if (s.story_flags?.met_sam && !s.story_flags?.sam_zero_day_done && s.age >= 24 && s.leetcode >= 25 && Math.random() < 0.35) {
+  if (s.story_flags?.met_sam && !s.story_flags?.sam_zero_day_done && s.age >= 24 && s.leetcode >= 25 && gameRandom() < 0.35) {
     return 'sam_garage_zero_day';
   }
 
   // Economy News Broadcasts
   const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
-  if (Math.random() < shiftChance && !s.season_stage) {
+  if (gameRandom() < shiftChance && !s.season_stage) {
     if (s.macro_economy === 'bull') {
-      return Math.random() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
+      return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
     } else if (s.macro_economy === 'bear') {
-      return Math.random() < 0.6 ? 'news_neutral_market' : 'news_bull_market_start';
+      return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bull_market_start';
     } else {
-      return Math.random() < 0.5 ? 'news_bull_market_start' : 'news_bear_market_crash';
+      return gameRandom() < 0.5 ? 'news_bull_market_start' : 'news_bear_market_crash';
     }
   }
 
@@ -168,26 +179,26 @@ export const midYearEventRouter = (s: GameState): string => {
      if (isHighPipCompany) {
        workEvents.push('friday_pip', 'friday_pip', 'friday_pip', 'layoff_rumor');
      } else if (isLowPipCompany) {
-       if (Math.random() < 0.15) workEvents.push('friday_pip');
+       if (gameRandom() < 0.15) workEvents.push('friday_pip');
      } else {
        workEvents.push('friday_pip');
      }
 
-     if (s.macro_economy === 'bear' && Math.random() < 0.25) workEvents.push('stock_crash');
+     if (s.macro_economy === 'bear' && gameRandom() < 0.25) workEvents.push('stock_crash');
      if (s.difficulty_title === '困难难度') workEvents.push('friday_pip', 'layoff_rumor');
      if (s.difficulty_title === '简单难度') workEvents.push('perf_review');
-     if ((s.company === 'nvidia' || s.job_type === 'nvidia' || (s.stocks || 0) >= 5) && s.year >= 2023 && Math.random() < 0.35) {
+     if ((s.company === 'nvidia' || s.job_type === 'nvidia' || (s.stocks || 0) >= 5) && s.year >= 2023 && gameRandom() < 0.35) {
        workEvents.push('nvidia_stock_surge');
      }
-     if (s.year >= 2024 && isCorporate && Math.random() < 0.25) workEvents.push('ai_disruption_existential');
-     if (isCorporate && Math.random() < 0.25) workEvents.push('influencer_vp_drama');
-     if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
+     if (s.year >= 2024 && isCorporate && gameRandom() < 0.25) workEvents.push('ai_disruption_existential');
+     if (isCorporate && gameRandom() < 0.25) workEvents.push('influencer_vp_drama');
+     if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && gameRandom() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
      if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
      if (isCorporate) {
        workEvents.push('friday_p0_outage_crisis', 'empty_promotion_promise', 'multi_timezone_calendar_hell');
      }
 
-     return workEvents[Math.floor(Math.random() * workEvents.length)];
+     return gamePick(workEvents);
   }
 
   // Stage H2 (Autumn/Winter: Life, Social, Travel & Lifestyle Events)
@@ -228,7 +239,7 @@ export const midYearEventRouter = (s: GameState): string => {
       if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') {
           lifeEvents.push('ex_1point3acres_expose');
       }
-      if (Math.random() < 0.20) {
+      if (gameRandom() < 0.20) {
         return 'team_offsite';
       }
   }
@@ -262,52 +273,52 @@ export const midYearEventRouter = (s: GameState): string => {
       lifeEvents.push('rsu_vesting_crash');
   }
 
-  if ((s.visa === '绿卡' || s.visa === '公民') && Math.random() < 0.25) {
+  if (isPermanentVisa(s.visa) && gameRandom() < 0.25) {
     return 'japan_trip';
   }
 
-  if (s.visa === 'H1B (工签)' && Math.random() < 0.18) {
+  if (s.visa === 'H1B (工签)' && gameRandom() < 0.18) {
     return 'h1b_visa_stamping_crisis';
   }
 
-  if ((s.car === 'porsche' || s.car === 'cybertruck') && Math.random() < 0.25) {
+  if ((s.car === 'porsche' || s.car === 'cybertruck') && gameRandom() < 0.25) {
     return 'luxury_car_meet';
   }
 
-  const isHomeowner = s.has_housing && !!s.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name);
-  if (isHomeowner && Math.random() < 0.25) {
+  const isHomeowner = isOwnedHousing(s.housing_name);
+  if (isHomeowner && gameRandom() < 0.25) {
     return 'house_warming_party';
   }
 
-  if (s.cash >= 100 && Math.random() < 0.25) {
+  if (s.cash >= 100 && gameRandom() < 0.25) {
     return 'startup_angel_investing';
   }
 
-  if ((s.is_married || s.relationship_status === 'married') && Math.random() < 0.25) {
+  if ((s.is_married || s.relationship_status === 'married') && gameRandom() < 0.25) {
     return 'bay_area_dink_vs_kids';
   }
 
-  if (isHomeowner && s.cash >= 30 && Math.random() < 0.25) {
+  if (isHomeowner && s.cash >= 30 && gameRandom() < 0.25) {
     return 'property_supplemental_tax_hike';
   }
 
-  if ((s.car === 'porsche' || s.car === 'cybertruck') && Math.random() < 0.25) {
+  if ((s.car === 'porsche' || s.car === 'cybertruck') && gameRandom() < 0.25) {
     return 'luxury_car_vandalism_towing';
   }
 
-  if ((s.cash >= 80 || s.tc >= 45) && Math.random() < 0.25) {
+  if ((s.cash >= 80 || s.tc >= 45) && gameRandom() < 0.25) {
     return 'irs_tax_audit_crisis';
   }
 
-  if (isHomeowner && s.age >= 32 && Math.random() < 0.25) {
+  if (isHomeowner && s.age >= 32 && gameRandom() < 0.25) {
     return 'property_hoa_special_assessment';
   }
 
-  if (isWorking && s.age >= 35 && s.health <= 60 && Math.random() < 0.30) {
+  if (isWorking && s.age >= 35 && s.health <= 60 && gameRandom() < 0.30) {
     return 'health_burnout_warning';
   }
 
-  if (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') {
+  if (!isPermanentVisa(s.visa) && s.visa !== '无') {
       lifeEvents.push('visa_check');
   }
 
@@ -317,21 +328,21 @@ export const midYearEventRouter = (s: GameState): string => {
       lifeEvents.push('boardgame_dating');
   }
 
-  if (!s.is_married && s.relationship_status !== 'married' && Math.random() < 0.25) {
+  if (!s.is_married && s.relationship_status !== 'married' && gameRandom() < 0.25) {
       return 'dating_market';
   }
 
-  if (s.car && s.car !== 'none' && Math.random() < 0.25) return 'car_broken';
+  if (s.car && s.car !== 'none' && gameRandom() < 0.25) return 'car_broken';
   
-  return lifeEvents[Math.floor(Math.random() * lifeEvents.length)] || 'sv_year_end_settlement';
+  return gamePick(lifeEvents) || 'sv_year_end_settlement';
 };
 
 // H1 to H2 Event Router: called after resolving an H1 career/work event to transition to an H2 life/social event
 export const h1ToH2Router = (s: GameState): string => {
   if (s.laid_off) {
-    return (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt';
+    return (!isPermanentVisa(s.visa) && s.visa !== '无') ? 'layoff_hit' : 'job_hunt';
   }
-  if (s.job_type === 'unemployed' && (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无')) {
+  if (s.job_type === 'unemployed' && (!isPermanentVisa(s.visa) && s.visa !== '无')) {
     return 'layoff_hit';
   }
   return midYearEventRouter({ ...s, season_stage: 'h2' });

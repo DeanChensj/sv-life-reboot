@@ -72,14 +72,22 @@ export function applyStateTransition(
   };
 
   // 2. Boundary Clamping & Numeric Sanitization
-  const maxCharmLimit = newState.max_charm || 25;
-  newState.health = Math.max(0, Math.min(100, isNaN(newState.health) ? 80 : newState.health));
-  newState.leetcode = Math.max(0, Math.min(100, isNaN(newState.leetcode) ? 0 : newState.leetcode));
-  newState.charm = Math.max(0, Math.min(maxCharmLimit, isNaN(newState.charm) ? 10 : newState.charm));
-  newState.network = Math.max(0, Math.min(100, isNaN(newState.network || 0) ? 10 : (newState.network || 10)));
-  newState.cash = isNaN(newState.cash) ? 0 : parseFloat(newState.cash.toFixed(2));
-  newState.stocks = isNaN(newState.stocks || 0) ? 0 : parseFloat((newState.stocks || 0).toFixed(2));
-  newState.tc = isNaN(newState.tc || 0) ? 0 : parseFloat((newState.tc || 0).toFixed(2));
+  const maxCharmLimit = typeof newState.max_charm === 'number' && !isNaN(newState.max_charm) ? newState.max_charm : 25;
+  const sanitizeNum = (val: unknown, fallback: number, min?: number, max?: number): number => {
+    const num = typeof val === 'number' && !isNaN(val) && isFinite(val) ? val : fallback;
+    let clamped = num;
+    if (min !== undefined) clamped = Math.max(min, clamped);
+    if (max !== undefined) clamped = Math.min(max, clamped);
+    return clamped;
+  };
+
+  newState.health = sanitizeNum(newState.health, 80, 0, 100);
+  newState.leetcode = sanitizeNum(newState.leetcode, 0, 0, 100);
+  newState.charm = sanitizeNum(newState.charm, 10, 0, maxCharmLimit);
+  newState.network = sanitizeNum(newState.network, 10, 0, 100);
+  newState.cash = parseFloat(sanitizeNum(newState.cash, 0).toFixed(2));
+  newState.stocks = parseFloat(sanitizeNum(newState.stocks, 0, 0).toFixed(2));
+  newState.tc = parseFloat(sanitizeNum(newState.tc, 0, 0).toFixed(2));
 
   // 3. Global Invariant Guard: Protect Citizen & Green Card status against accidental downgrades
   if (prevState.visa === VISA_STATUS.CITIZEN) {

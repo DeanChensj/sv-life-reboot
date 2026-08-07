@@ -17,7 +17,7 @@ const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ defau
 const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const CareerTimelineModal = lazy(() => import('./components/CareerTimelineModal').then(m => ({ default: m.CareerTimelineModal })));
 
-const GAME_SAVE_STORAGE_KEY = 'sv_life_game_save';
+import { STORAGE_KEYS, isOwnedHousing } from './constants/gameConstants';
 
 const loadInitialGameData = (): {
   gameState: GameState;
@@ -26,7 +26,7 @@ const loadInitialGameData = (): {
   hasOpenedShop: boolean;
 } => {
   try {
-    const raw = safeStorage.getItem(GAME_SAVE_STORAGE_KEY);
+    const raw = safeStorage.getItem(STORAGE_KEYS.GAME_SAVE);
     if (raw) {
       const parsed = JSON.parse(raw);
       const migrated = migrateSaveData(parsed);
@@ -47,7 +47,7 @@ export default function App() {
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState<boolean>(false);
   const [showWelcome, setShowWelcome] = useState<boolean>(() => {
     if (initialGameData.currentEventId !== 'choose_trait') return false;
-    return !safeStorage.getItem('sv_life_welcome_seen');
+    return !safeStorage.getItem(STORAGE_KEYS.WELCOME_SEEN);
   });
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
@@ -71,7 +71,7 @@ export default function App() {
         hasUnlockedShopToast,
         hasOpenedShop,
       };
-      safeStorage.setItem(GAME_SAVE_STORAGE_KEY, JSON.stringify(saveData));
+      safeStorage.setItem(STORAGE_KEYS.GAME_SAVE, JSON.stringify(saveData));
     }
   }, [gameState, currentEventId, hasUnlockedShopToast, hasOpenedShop]);
 
@@ -271,9 +271,9 @@ export default function App() {
   };
 
   const resetGame = () => {
-    safeStorage.removeItem(GAME_SAVE_STORAGE_KEY);
-    safeStorage.removeItem('sv_life_initial_seed');
-    safeStorage.removeItem('sv_life_ssr_status');
+    safeStorage.removeItem(STORAGE_KEYS.GAME_SAVE);
+    safeStorage.removeItem(STORAGE_KEYS.INITIAL_SEED);
+    safeStorage.removeItem(STORAGE_KEYS.SSR_STATUS);
     setGameState(generateInitialState());
     setCurrentEventId('choose_trait');
     setShowWarReport(false);
@@ -308,7 +308,7 @@ export default function App() {
             <WelcomeModal
               onStart={() => {
                 setShowWelcome(false);
-                safeStorage.setItem('sv_life_welcome_seen', 'true');
+                safeStorage.setItem(STORAGE_KEYS.WELCOME_SEEN, 'true');
               }}
             />
           )}
@@ -733,7 +733,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {(gameState.cash >= 300 || ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '')) && (
+                      {(gameState.cash >= 300 || isOwnedHousing(gameState.housing_name)) && (
                         <div className="bg-gradient-to-r from-emerald-500/15 via-zinc-900 to-zinc-900 border border-emerald-500/40 p-4 rounded-2xl flex items-center gap-3.5 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
                           <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-400 text-zinc-950 shadow-md uppercase tracking-wider">SSR</span>
                           <div>

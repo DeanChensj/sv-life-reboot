@@ -1,6 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { HOUSING_NAMES } from '../../constants/gameConstants';
 
 export const lifestyleEvents: Record<string, GameEvent> = {
   'dating_market': {
@@ -35,7 +36,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => !s.relationship_status || s.relationship_status === 'single',
         effect: (s) => {
           const winRate = 0.35 + (s.charm * 0.02) + (s.luck * 0.002) + (s.has_pet ? 0.20 : 0);
-          const pass = Math.random() < winRate;
+          const pass = gameRandom() < winRate;
           return pass 
             ? { relationship_status: 'matched', partner_type: 'random', charm: Math.min(25, s.charm + 2), message: '【匹配成功】因为主页挂了滑雪和宠物照片，你成功匹配到了一位湾区打工人！双方聊得非常投机，进入 Matched 阶段！' }
             : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, message: '【匹配失败】连喝了三杯 Boba，对方一听你还没买房且身份未定，默默选择了 AA。你不仅花了钱还受到了真实伤害。' };
@@ -48,7 +49,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         reqBadge: '阶段：Matched',
         effect: (s) => {
           const isArtist = s.partner_type === 'artist';
-          const pass = Math.random() < (isArtist ? 0.4 : 0.7); // 文青比较难搞
+          const pass = gameRandom() < (isArtist ? 0.4 : 0.7); // 文青比较难搞
           return pass
             ? { relationship_status: 'dating', charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: `【正式确立关系】Tahoe 的雪景与小木屋篝火让两人的感情迅速升温！你们正式官宣成为湾区情侣 (Dating)！` }
             : { relationship_status: 'single', partner_type: undefined, health: s.health - 10, message: '【分道扬镳】滑雪途中因为路线分配和谁洗碗产生了严重分歧。回到湾区后双方互删，退回单身。' };
@@ -112,7 +113,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '花 $10w 请湾区顶级离婚律师打官司 (高风险)',
         condition: (s) => s.cash >= 15,
         effect: (s) => {
-          const win = Math.random() > 0.5;
+          const win = gameRandom() > 0.5;
           return win
             ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
             : { cash: (s.cash - 10) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产，你痛心不已！' };
@@ -122,7 +123,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '痛哭流涕挽留，发誓每天准时 5 点下班做饭',
         effect: (s) => {
-          const win = s.charm >= 10 && Math.random() > 0.5;
+          const win = s.charm >= 10 && gameRandom() > 0.5;
           return win
             ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
             : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
@@ -145,7 +146,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '装小白疯狂给人递水，主打情绪价值',
         effect: (s) => {
-          const win = Math.random() > 0.5;
+          const win = gameRandom() > 0.5;
           const isMarriedNow = s.is_married || s.relationship_status === 'married';
           return win
             ? { charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3), health: Math.min(100, s.health + 10), relationship_status: isMarriedNow ? 'married' : 'dating', message: isMarriedNow ? '你全程温柔体贴，结识了几位同样在大厂的同行好友，社交氛围轻松！' : '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
@@ -179,7 +180,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const charmBonus = ((s.charm || 22) - 20) * 0.04;
           const luckBonus = ((s.luck || 20) / 300);
           const winRate = Math.min(0.78, Math.max(0.40, baseRate + charmBonus + luckBonus));
-          const pass = Math.random() < winRate;
+          const pass = gameRandom() < winRate;
 
           return pass
             ? {
@@ -210,7 +211,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【顶级海王拉扯】在多个嘉宾之间若即若离，疯狂互发匿名心动短信制造修罗场',
         effect: (s) => {
-          const win = Math.random() < (0.50 + ((s.luck || 20) / 200));
+          const win = gameRandom() < (0.50 + ((s.luck || 20) / 200));
           return win
             ? {
                 charm: Math.min(25, (s.charm || 10) + 6),
@@ -289,9 +290,9 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: s.cash - 15,
           health: s.health - 10,
-          rent: s.housing_name === 'Atherton 顶级豪宅' ? 0 : 4.5,
+          rent: s.housing_name === HOUSING_NAMES.ATHERTON ? 0 : 4.5,
           has_housing: true,
-          housing_name: s.housing_name === 'Atherton 顶级豪宅' ? 'Atherton 顶级豪宅' : 'Fremont 10分学区房',
+          housing_name: s.housing_name === HOUSING_NAMES.ATHERTON ? HOUSING_NAMES.ATHERTON : HOUSING_NAMES.FREMONT_10_DISTRICT,
           message: '你步入了湾区老爹鸡娃正轨！社区邻居全是高强度卷 AMC10 的硅谷大佬，每天陪娃解题虽然辛苦但充实。'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -307,7 +308,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '自告奋勇，独自一人闷头组装 (拼体力)',
         effect: (s) => {
-          const pass = Math.random() < 0.5;
+          const pass = gameRandom() < 0.5;
           return pass 
             ? { health: s.health - 10, charm: Math.min(30, s.charm + 1), message: '花了 6 个小时，你终于把衣柜拼好了！虽然累得腰酸背痛，但伴侣对你崇拜有加，感情升温！' }
             : { health: s.health - 15, message: '拼到一半发现一块核心木板装反了，必须要全部拆掉重来...伴侣在旁边叹气，两人不欢而散。' };
@@ -362,7 +363,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '花 $1w 买全套顶级装备去混圈子',
         condition: (s) => s.cash >= 1,
         effect: (s) => {
-          const win = Math.random() > 0.5;
+          const win = gameRandom() > 0.5;
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
           const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
           if (win && isUnemployed && !canLandJob) {
@@ -401,7 +402,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '与旁边脱下镁粉袋的老哥交流动态跳跃 (尝试搭讪拓展人脉)',
         effect: (s) => {
-          const win = Math.random() < 0.45;
+          const win = gameRandom() < 0.45;
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
           const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
           if (win && isUnemployed && !canLandJob) {
@@ -689,7 +690,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '跟风去排队！并在小红书打卡发帖',
         effect: (s) => {
-          const viral = Math.random() > 0.8;
+          const viral = gameRandom() > 0.8;
           return viral 
             ? { charm: s.charm + 10, health: s.health + 10, cash: Math.max(0, s.cash - 0.0015), message: '排队 2 小时买到了。你随手拍的照片加了滤镜发到小红书，居然成了爆款！涨粉 1000 人，极大地满足了虚荣心。' }
             : { health: s.health - 10, cash: Math.max(0, s.cash - 0.0015), message: '在烈日下排队 2 小时，喝了一口发现又贵又难喝，纯纯智商税。' };
@@ -713,7 +714,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '跟风排队！周末烈日下排队 2 小时打卡并发小红书 (花费 $0.02w)',
         condition: (s) => s.cash >= 0.02,
         effect: (s) => {
-          const win = Math.random() < 0.70;
+          const win = gameRandom() < 0.70;
           return win
             ? { cash: Math.max(0, s.cash - 0.02), charm: Math.min(25, s.charm + 2), health: Math.max(0, s.health - 3), message: '排队 2.5 小时终于喝到了！随手加了滤镜发小红书获得了 200+ 点赞，极大满足了湾区潮人的虚荣心！' }
             : { cash: Math.max(0, s.cash - 0.02), health: Math.max(0, s.health - 6), message: '排队两小时，一口喝下去发现又甜又贵纯纯智商税！不仅被加州阳光晒脱皮，还因高糖奶茶腹泻了半天。' };
@@ -914,7 +915,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【生成式 AI 幻觉】全信 AI 自动生成的代码，未审核直接 Push 到 Production 生产环境！',
         effect: (s) => {
-          const win = Math.random() < 0.45;
+          const win = gameRandom() < 0.45;
           return win
             ? { luck: Math.min(99, (s.luck || 20) + 5), cash: s.cash + 2, message: '产线竟然零报错无缝运行！用户量大增，领导夸赞你产出惊人！' }
             : { health: Math.max(0, s.health - 15), message: 'AI 幻觉写出了逻辑死锁导致大厂全网宕机 2 小时！你半夜被 PagerDuty 电话叫醒去改底层 C++！' };
@@ -975,7 +976,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '投资 $10k，当个天使投资人',
         effect: (s) => {
-          const success = Math.random() > 0.9;
+          const success = gameRandom() > 0.9;
           return success 
             ? { cash: s.cash + 100, charm: s.charm + 5, message: '离谱！这家公司莫名其妙被 Yahoo 收购了，你暴富了！' }
             : { cash: s.cash - 1, message: '几个月后这哥们去巴厘岛做数字游民了，你的投资打了水漂。' };
@@ -1109,7 +1110,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '定位电脑，勇闯奥克兰黑市！',
         effect: (s) => {
-          const win = Math.random() > 0.7;
+          const win = gameRandom() > 0.7;
           return win 
             ? { charm: s.charm + 2, cash: s.cash, message: '你像叶问一样一打十，从黑帮手里夺回了电脑，成为了湾区传说！' }
             : { health: s.health - 30, cash: Math.max(0, s.cash - 0.5), message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };

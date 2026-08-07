@@ -1,6 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { HOUSING_NAMES, VISA_STATUS } from '../../constants/gameConstants';
 
 export const immigrationEvents: Record<string, GameEvent> = {
   'h1b_fallback_options': {
@@ -12,7 +13,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
         condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const partnerIsCitizen = Math.random() < 0.40;
+          const partnerIsCitizen = gameRandom() < 0.40;
           if (partnerIsCitizen) {
             return {
               visa: '绿卡',
@@ -38,7 +39,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=8w (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const roll = Math.random();
+          const roll = gameRandom();
           if (roll < 0.35) {
             return {
               cash: s.cash - 8,
@@ -71,7 +72,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const passProb = s.is_phd ? 0.75 : 0.30;
-          const win = Math.random() < passProb;
+          const win = gameRandom() < passProb;
           return win
             ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, health: Math.max(0, s.health - 5), message: '凭硬核论文与行业大牛推荐信，移民局批复了你的 O1 杰出人才签证！成功自救！' }
             : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。' };
@@ -160,7 +161,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
         condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const partnerIsCitizen = Math.random() < 0.40;
+          const partnerIsCitizen = gameRandom() < 0.40;
           if (partnerIsCitizen) {
             return {
               visa: '绿卡',
@@ -186,7 +187,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=8w (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const roll = Math.random();
+          const roll = gameRandom();
           if (roll < 0.35) {
             return {
               cash: s.cash - 8,
@@ -229,7 +230,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const pass = Math.random() < (s.is_phd ? 0.70 : 0.35);
+          const pass = gameRandom() < (s.is_phd ? 0.70 : 0.35);
           return pass
             ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
             : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
@@ -266,7 +267,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
-        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: 'Atherton 顶级豪宅', charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
+        effect: (s) => ({ visa: s.visa === VISA_STATUS.CITIZEN ? VISA_STATUS.CITIZEN : VISA_STATUS.GREEN_CARD, gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: HOUSING_NAMES.ATHERTON, charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -278,7 +279,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '搞副业炒股：梭哈英伟达 (NVDA)！',
         effect: (s) => {
           const winProb = 0.25 + (Math.min(45, s.luck) / 150);
-          const win = Math.random() < winProb;
+          const win = gameRandom() < winProb;
           return win
             ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
             : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
@@ -288,7 +289,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '辞职！凭多年大厂的技术积累直接搞 AI Startup',
         effect: (s) => {
-          const success = s.leetcode >= 50 && Math.random() < 0.3;
+          const success = s.leetcode >= 50 && gameRandom() < 0.3;
           return success
             ? { 
                 visa: s.visa === '公民' ? '公民' : '绿卡', 
@@ -345,7 +346,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '联系公司法务开具紧急加急信 (Expedite Request)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const pass = Math.random() < 0.55;
+          const pass = gameRandom() < 0.55;
           return pass 
             ? { health: Math.min(100, s.health + 5), message: '加急信生效！领事馆提早批复了你的 Visa Stamp，你顺利搭上返美航班！' }
             : { health: s.health - 10, cash: Math.max(0, s.cash - 1), message: '领事馆回复“标准审查无法加急”，你被迫在加州时间深夜远程办公，精疲力竭。' };

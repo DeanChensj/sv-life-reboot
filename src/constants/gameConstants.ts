@@ -1,14 +1,36 @@
 // Single source of truth for core game constants
 
+export const STORAGE_KEYS = {
+  GAME_SAVE: 'sv_life_game_save',
+  INITIAL_SEED: 'sv_life_initial_seed',
+  SSR_STATUS: 'sv_life_ssr_status',
+  WELCOME_SEEN: 'sv_life_welcome_seen',
+  SOUND_MUTED: 'sv_sound_muted',
+  ACHIEVEMENTS: 'sv_life_achievements',
+} as const;
+
 export const HOUSING_NAMES = {
   ATHERTON: 'Atherton 顶级豪宅',
   SUNNYVALE: 'Sunnyvale 老破小',
   NORTH_SAN_JOSE: 'North San Jose 联排',
   FREMONT: 'Fremont 学区房',
+  FREMONT_10_DISTRICT: 'Fremont 10分学区房',
+  SUNNYVALE_4PLEX: 'Sunnyvale 4-Plex 公寓楼',
+  SAN_JOSE_LUXURY: 'San Jose 高级公寓',
   CUPERTINO_SHARED: 'Cupertino 2b2b合租',
   SUNNYVALE_1B1B: 'Sunnyvale 1b1b独住',
   MOUNTAIN_VIEW_LUXURY: 'Mountain View 豪华公寓',
-  CAR_SLEEPER: '挂壁睡车顶 / 廉价合租',
+  LIVING_ROOM_SCREEN: '客厅屏风隔间',
+  TESLA_ROOF: '特斯拉 睡车顶',
+  NORMAL_SHARED: '普通合租单间',
+  BAY_AREA_OLD_HOUSE: '加州湾区老宅',
+  CMU_DORM: '四大 校内宿舍',
+  UCB_DORM: '大U 校内宿舍',
+  STATE_DORM: '美大U 校内宿舍',
+  CN_DORM: '国内大学宿舍',
+  US_PHD_LAB: '美国 博士实验室',
+  US_MASTER_APT: '美硕 校外公寓',
+  CN_FACTORY_ROOM: '国内 厂区单间',
 } as const;
 
 export type HousingName = typeof HOUSING_NAMES[keyof typeof HOUSING_NAMES];
@@ -18,10 +40,11 @@ export const OWNED_HOUSING_NAMES: ReadonlySet<string> = new Set([
   HOUSING_NAMES.SUNNYVALE,
   HOUSING_NAMES.NORTH_SAN_JOSE,
   HOUSING_NAMES.FREMONT,
+  HOUSING_NAMES.FREMONT_10_DISTRICT,
 ]);
 
 export const isOwnedHousing = (name?: string): boolean => {
-  return !!name && OWNED_HOUSING_NAMES.has(name);
+  return Boolean(name && OWNED_HOUSING_NAMES.has(name));
 };
 
 export const VISA_STATUS = {
@@ -44,7 +67,7 @@ export const PERMANENT_VISAS: ReadonlySet<string> = new Set([
 ]);
 
 export const isPermanentVisa = (visa?: string): boolean => {
-  return !!visa && PERMANENT_VISAS.has(visa);
+  return Boolean(visa && PERMANENT_VISAS.has(visa));
 };
 
 export const COMPANY_PRESETS = {

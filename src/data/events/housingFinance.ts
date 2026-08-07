@@ -1,7 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
-import { isOwnedHousing } from '../../constants/gameConstants';
+import { isOwnedHousing, HOUSING_NAMES } from '../../constants/gameConstants';
 
 export const housingFinanceEvents: Record<string, GameEvent> = {
   'choose_housing': {
@@ -11,17 +11,17 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '豪华 1b1b (每年 4 万美元): 环境好，心情愉悦',
-        effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: 'San Jose 高级公寓', message: '你租下了带有池高级公寓，生活质量极高，相亲市场竞争力上升。' }),
+        effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: HOUSING_NAMES.SAN_JOSE_LUXURY, message: '你租下了带有池高级公寓，生活质量极高，相亲市场竞争力上升。' }),
         nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
       {
         text: '和朋友合租 2b2b (每年 2 万美元): 性价比高',
-        effect: (s) => ({ rent: 2, has_housing: true, housing_name: 'Cupertino 2b2b合租', message: '你和朋友合租，偶尔会因为抢厕所和洗碗吵架，但省下了不少钱。' }),
+        effect: (s) => ({ rent: 2, has_housing: true, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, message: '你和朋友合租，偶尔会因为抢厕所和洗碗吵架，但省下了不少钱。' }),
         nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
       {
         text: '挂壁大客厅 (每年 1 万美元): 终极省钱',
-        effect: (s) => ({ rent: 1, charm: s.charm - 2, health: s.health - 15, has_housing: true, housing_name: '客厅屏风隔间', message: '你睡在客厅，用帘子隔开。每天被室友做饭吵醒，毫无隐私，连相亲都不敢带人回家。' }),
+        effect: (s) => ({ rent: 1, charm: s.charm - 2, health: s.health - 15, has_housing: true, housing_name: HOUSING_NAMES.LIVING_ROOM_SCREEN, message: '你睡在客厅，用帘子隔开。每天被室友做饭吵醒，毫无隐私，连相亲都不敢带人回家。' }),
         nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       }
     ]
@@ -35,23 +35,23 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '豪华 1b1b (每年 4 万美元): 泳池健身房与全职门卫, 提振相亲社交',
         condition: (s) => s.cash >= 4 || s.tc >= 18,
-        effect: (s) => ({ rent: 4, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 15), housing_name: 'San Jose 高级公寓', message: '你搬进了带无边泳池的高级公寓！生活质量飙升！' }),
+        effect: (s) => ({ rent: 4, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 15), housing_name: HOUSING_NAMES.SAN_JOSE_LUXURY, message: '你搬进了带无边泳池的高级公寓！生活质量飙升！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '和朋友合租 2b2b (每年 2 万美元): 性价比极高的湾区中产标准',
-        effect: (s) => ({ rent: 2, housing_name: 'Cupertino 2b2b合租', message: '你搬进了 Cupertino 经典的双主卧合租公寓，省钱又方便。' }),
+        effect: (s) => ({ rent: 2, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, message: '你搬进了 Cupertino 经典的双主卧合租公寓，省钱又方便。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '挂壁大客厅隔间 (每年 1 万美元): 极致压低开销狂攒首付/防破产',
-        effect: (s) => ({ rent: 1, charm: Math.max(0, s.charm - 2), health: Math.max(0, s.health - 10), housing_name: '客厅屏风隔间', message: '你搬回了客厅屏风隔间，将每年固定的房租开销砍到了极致。' }),
+        effect: (s) => ({ rent: 1, charm: Math.max(0, s.charm - 2), health: Math.max(0, s.health - 10), housing_name: HOUSING_NAMES.LIVING_ROOM_SCREEN, message: '你搬回了客厅屏风隔间，将每年固定的房租开销砍到了极致。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '终极挂壁：连夜退租！搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年)',
         condition: (s) => !!(s.car && s.car !== 'none'),
-        effect: (s) => ({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(0, s.health - 15), message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
+        effect: (s) => ({ rent: 0, housing_name: HOUSING_NAMES.TESLA_ROOF, health: Math.max(0, s.health - 15), message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -71,25 +71,25 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 45,
-        effect: (s) => ({ cash: s.cash - 45, rent: 1.5, has_housing: true, housing_name: 'Sunnyvale 老破小', health: s.health + 10, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
+        effect: (s) => ({ cash: s.cash - 45, rent: 1.5, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health + 10, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '买 North San Jose 现代挑高高密度 Townhouse (首付 $40w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 40,
-        effect: (s) => ({ cash: s.cash - 40, rent: 2.5, has_housing: true, housing_name: 'North San Jose 联排', charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
+        effect: (s) => ({ cash: s.cash - 40, rent: 2.5, has_housing: true, housing_name: HOUSING_NAMES.NORTH_SAN_JOSE, charm: Math.min(25, s.charm + 5), message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '攻下 Fremont Mission San Jose 9分顶配学区房 (首付 $65w, 年负担 $4.5w) - 卷二代的终极战场',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 65,
-        effect: (s) => ({ cash: s.cash - 65, rent: 4.5, has_housing: true, housing_name: 'Fremont 学区房', charm: Math.min(25, s.charm + 4), luck: s.luck + 10, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
+        effect: (s) => ({ cash: s.cash - 65, rent: 4.5, has_housing: true, housing_name: HOUSING_NAMES.FREMONT, charm: Math.min(25, s.charm + 4), luck: s.luck + 10, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
         condition: (s) => (s.cash + (s.stocks || 0)) < 40 && !s.parents_helped_house,
-        effect: (s) => ({ cash: 0, has_housing: true, housing_name: 'Sunnyvale 老破小', health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
+        effect: (s) => ({ cash: 0, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
         nextEventId: 'house_slave',
       },
       {
@@ -107,23 +107,23 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '老老实实上班，咬牙扛住房贷（进入日常行动）',
-        effect: (s) => ({ rent: 2.2, has_housing: true, housing_name: 'Sunnyvale 老破小', health: Math.max(0, s.health - 5), message: '你把心安在了加州木板老破小里，虽然房贷沉重，但每次看到属于自己的草坪，干劲又回来了！' }),
+        effect: (s) => ({ rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: Math.max(0, s.health - 5), message: '你把心安在了加州木板老破小里，虽然房贷沉重，但每次看到属于自己的草坪，干劲又回来了！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '把次卧与车库偷偷出租给转码留学生（每年回血 $1.5w 被动现金流）',
         effect: (s) => {
-          const badTenant = Math.random() > 0.65;
+          const badTenant = gameRandom() > 0.65;
           return badTenant
-            ? { rent: 1.2, has_housing: true, housing_name: 'Sunnyvale 老破小', has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.0, health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$1.0w/年)，但把你折腾得够呛。' }
-            : { rent: 0.8, has_housing: true, housing_name: 'Sunnyvale 老破小', has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+1.5w/年)！' };
+            ? { rent: 1.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.0, health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$1.0w/年)，但把你折腾得够呛。' }
+            : { rent: 0.8, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+1.5w/年)！' };
         },
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '断供卖房！回归租房生活的自由',
         condition: (s) => s.cash < 50,
-        effect: (s) => ({ cash: s.cash + 35, has_housing: false, housing_name: '普通合租单间', rent: 2, health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
+        effect: (s) => ({ cash: s.cash + 35, has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -180,11 +180,11 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【大地主终极资产】全款/杠杆拿下 Sunnyvale 4-Plex 核心多户公寓楼 (首付 $120w · 产生 +$11.0w/年 巨额租金)',
         costBadge: '首付 $120w',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 120 && !(s.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼'),
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 120 && !(s.investment_properties || []).includes(HOUSING_NAMES.SUNNYVALE_4PLEX),
         effect: (s) => ({
           cash: s.cash - 120,
           rental_income: (s.rental_income || 0) + 11.0,
-          investment_properties: [...(s.investment_properties || []), 'Sunnyvale 4-Plex 公寓楼'],
+          investment_properties: [...(s.investment_properties || []), HOUSING_NAMES.SUNNYVALE_4PLEX],
           charm: Math.min(25, (s.charm || 10) + 5),
           message: '【加州大地主登顶】你拿下了 Sunnyvale 黄金地段 4 套相连的公寓楼！光靠收租每年就能躺赚 +$11.0w 净现金流，彻底告别打工内卷！'
         }),
@@ -233,7 +233,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '出资 $20w 成为 AI 独角兽 Seed 轮天使投资人 (高风险)',
         effect: (s) => {
-          const win = Math.random() < 0.4;
+          const win = gameRandom() < 0.4;
           return win 
             ? { cash: s.cash + 100, message: '爆火升值！你投资的 AI 独角兽被巨头高价买断，天使轮获得 5 倍天价回报 (+$100w)！' }
             : { cash: Math.max(0, s.cash - 20), health: s.health - 10, message: 'AI 大模型算力消耗太快，创业团队见底倒闭。你交了 20 万美元天使投资学费。' };
@@ -293,7 +293,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         text: '聘请专业 Property Tax Appeal 申诉律师写辩护书 (花费 $1w 律师费)',
         condition: (s) => s.cash >= 1,
         effect: (s) => {
-          const win = Math.random() < 0.5;
+          const win = gameRandom() < 0.5;
           return win
             ? { cash: s.cash - 1, charm: Math.min(25, s.charm + 2), message: '律师出面成功证明了评估值虚高，帮为你减免了绝大部分额外房产税！胜诉！' }
             : { cash: s.cash - 4, health: s.health - 10, message: '申诉失败，你不仅补缴了 $3w 房产税，还倒贴了 $1w 律师费！痛苦加倍。' };

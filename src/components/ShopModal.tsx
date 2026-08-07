@@ -117,7 +117,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {gameState.has_adu_rented 
-                    ? '✅ 已完成改造并持续收租中' 
+                    ? '[已完成] 已完成改造并持续收租中' 
                     : isHomeowner 
                       ? '改造费用: $1.5w | 将自住房次卧/后院独立 ADU 挂牌招租' 
                       : '需先拥有一套湾区自住房'}
@@ -140,7 +140,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {(gameState.investment_properties || []).includes('Austin 远程独栋屋')
-                    ? '✅ 已持有该投资房'
+                    ? '[已持有] 已持有该投资房'
                     : '首付: $25w (支持股票抵扣) | 全美远程托管，无惧科技裁员'}
                 </div>
               </button>
@@ -161,7 +161,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {(gameState.investment_properties || []).includes('Hayward 独立投资房')
-                    ? '✅ 已持有该投资房'
+                    ? '[已持有] 已持有该投资房'
                     : '首付: $45w (支持股票抵扣) | 湾区核心通勤圈，抗通胀现金流'}
                 </div>
               </button>
@@ -183,7 +183,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {(gameState.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')
-                    ? '👑 已晋升为硅谷核心大地主'
+                    ? '[终极地主] 已晋升为硅谷核心大地主'
                     : '首付: $120w (支持股票抵扣) | 4套联排全出租，终极 FIRE 神器'}
                 </div>
               </button>
@@ -199,7 +199,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-amber-300 group-hover:text-amber-200 transition-colors text-sm sm:text-base">🏖️ 随时申请 FIRE 提前退休</span>
+                      <span className="font-extrabold text-amber-300 group-hover:text-amber-200 transition-colors text-sm sm:text-base">随时申请 FIRE 提前退休</span>
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-400 text-zinc-950 uppercase">已达标</span>
                     </div>
                     <div className="text-xs text-zinc-400 mt-1">你已具备财务自由资质！点击立即登出硅谷内卷，进入生涯荣誉与战报结算。</div>

@@ -1011,13 +1011,13 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 40)',
-        condition: (s) => s.leetcode >= 40,
+        text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 55)',
+        condition: (s) => s.leetcode >= 55,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          // Base TC is modest ($28w), but in AI Bull Market (bull), stock surge skyrockets TC to $68w!
+          // Base TC is calibrated ($28w normal, $36w in AI Bull Market with high RSU share)
           const isBull = s.macro_economy === 'bull' || s.year >= 2023;
-          const baseTc = isBull ? 68 : 28;
+          const baseTc = isBull ? 36 : 28;
           return {
             tc: getLevelScaledTC(baseTc, lvl),
             laid_off: false,
@@ -1027,7 +1027,7 @@ export const events: Record<string, GameEvent> = {
             job_type: 'nvidia',
             level: lvl,
             message: isBull 
-              ? '赶上 AI 芯片牛市狂潮！皮衣黄刀法精准，你的英伟达股票持仓大幅暴涨，总包爆表达到 68w 美元！' 
+              ? '赶上 AI 芯片大风口！皮衣黄刀法精准，你拿到了高 RSU 股票占比的英伟达芯片团队包裹 ($36w 基准)！' 
               : '你加入了英伟达芯片团队，拿到了 $28w 基础薪资包裹，等待下一轮 AI 牛市风口的到来！'
           };
         },
@@ -3479,17 +3479,19 @@ export const events: Record<string, GameEvent> = {
           const isBull = s.macro_economy === 'bull' || s.year >= 2023;
           const curLevel = s.level || (s.is_phd ? 'L4' : 'L3');
           const nextLvl = curLevel === 'L3' ? 'L4' : curLevel === 'L4' ? 'L5 (Senior)' : curLevel === 'L5 (Senior)' ? 'L6 (Staff)' : curLevel === 'L6 (Staff)' ? 'L7 (Senior Staff)' : curLevel === 'L7 (Senior Staff)' ? 'L8 (Principal)' : curLevel;
-          const boost = isBull ? (nextLvl === 'L8 (Principal)' ? 50 : nextLvl === 'L7 (Senior Staff)' ? 35 : nextLvl === 'L6 (Staff)' ? 22 : nextLvl === 'L5 (Senior)' ? 16 : 10) : 10;
+          const boost = isBull 
+            ? (nextLvl === 'L8 (Principal)' ? 20 : nextLvl === 'L7 (Senior Staff)' ? 15 : nextLvl === 'L6 (Staff)' ? 11 : nextLvl === 'L5 (Senior)' ? 7 : 4) 
+            : (nextLvl === 'L8 (Principal)' ? 14 : nextLvl === 'L7 (Senior Staff)' ? 10 : nextLvl === 'L6 (Staff)' ? 7 : nextLvl === 'L5 (Senior)' ? 4 : 2);
 
           return {
             company: 'nvidia',
             job_type: 'nvidia',
             level: nextLvl,
             tc: s.tc + boost,
-            cash: s.cash + (isBull ? 6 : 2),
+            cash: s.cash + (isBull ? 4 : 2),
             is_new_job: true,
             message: isBull
-              ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到的 NVIDIA 股票价值暴涨，职级晋至 ${nextLvl}，年薪总包飙升至 ${(s.tc + boost).toFixed(1)}w！`
+              ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到了高 RSU 占比的 NVIDIA 芯片团队包裹，职级晋至 ${nextLvl}，年薪总包调至 ${(s.tc + boost).toFixed(1)}w！`
               : `【入职英伟达】成功入职芯片团队，职级调整至 ${nextLvl}，拿到稳健的软硬件结合包裹 (+${boost}w TC)！`
           };
         },

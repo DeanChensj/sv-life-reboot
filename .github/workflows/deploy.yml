@@ -5,16 +5,21 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# 赋予 GITHUB_TOKEN 写权限以实现全自动 CI/CD 发布
+# Permissions for GitHub Pages deployment
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  ci-cd:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: 1. Checkout Code
@@ -23,7 +28,7 @@ jobs:
       - name: 2. Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: 3. Install Dependencies
@@ -35,13 +40,21 @@ jobs:
       - name: 5. [CI] Build Production Bundle (Vite + TypeScript)
         run: npm run build
 
-      - name: 6. [CD] Deploy to GitHub Pages Automatically
+      - name: 6. Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: 7. Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: 8. Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: 9. [Backup] Sync to gh-pages branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
           branch: gh-pages
           token: ${{ secrets.GITHUB_TOKEN }}
-
-
-
-

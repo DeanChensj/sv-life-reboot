@@ -309,8 +309,11 @@ export const midYearEventRouter = (s: GameState): string => {
 
 // H1 to H2 Event Router: called after resolving an H1 career/work event to transition to an H2 life/social event
 export const h1ToH2Router = (s: GameState): string => {
-  if (s.laid_off || s.job_type === 'unemployed') {
+  if (s.laid_off) {
     return (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') ? 'layoff_hit' : 'job_hunt';
+  }
+  if (s.job_type === 'unemployed' && (s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无')) {
+    return 'layoff_hit';
   }
   return midYearEventRouter({ ...s, season_stage: 'h2' });
 };
@@ -938,46 +941,99 @@ export const events: Record<string, GameEvent> = {
   },
   'job_hunt': {
     id: 'job_hunt',
-    title: '湾区求职季',
-    description: '你迎来了惨烈的面试季。不同年份的市场难度天差地别...',
+    title: '湾区求职季 / 职业方向抉择',
+    description: '身处全球科技中心的湾区，你面临着下一阶段的人生与职业方向抉择。无论是积极重返大厂、动用人脉捷径，还是彻底换个赛道休养调养，命运全由你掌握：',
     choices: [
       {
-        text: '靠 CS四大 校友黑手党内推，空降大厂',
-        condition: (s) => s.school === 'cmu',
+        text: '【海投大厂社招/校招】闭关刷题备战，海投各大科技巨头开启 Onsite 面试',
+        condition: (_s) => true,
         effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const mafiaTargets = [
-            { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: 'CMU 核心校友直接将你内推进山景城 Googleplex 基础设施组！享受顶尖 WLB 与美味食堂。' },
-            { company: 'meta', name: 'Meta (AI 算法与分布式系统)', tcBoost: 35, healthDrain: 16, desc: 'CMU 校友总监将你拉入 Menlo Park Meta 核心组，拿到顶格包裹但面临高压节奏！' },
-            { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: 'CMU 校友学长内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态！' },
-            { company: 'uber', name: 'Uber (核心调度与分布式架构)', tcBoost: 32, healthDrain: 12, desc: '凭借 CMU 分布式系统金字招牌，校友学姐直接将你带入旧金山 Uber 核心团队！' }
+          const isKingOfRoll = s.trait_title === '卷王之王';
+          const drain = isKingOfRoll ? 6 : 12;
+          const leetBonus = isKingOfRoll ? 18 : 12;
+          const newLeet = s.leetcode + leetBonus;
+
+          const allPool: Array<{ id: string; name: string; minLeet: number; weight: number }> = [
+            { id: 'google', name: 'Google', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 45), weight: 0.95 },
+            { id: 'meta', name: 'Meta', minLeet: s.macro_economy === 'bear' ? 65 : (s.macro_economy === 'bull' ? 45 : 55), weight: 0.90 },
+            { id: 'nvidia', name: 'NVIDIA', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
+            { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+            { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+            { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
           ];
-          const chosen = mafiaTargets[Math.floor(Math.random() * mafiaTargets.length)];
-          return { 
-            health: Math.max(0, s.health - chosen.healthDrain), 
-            tc: getLevelScaledTC(chosen.tcBoost, lvl), 
-            laid_off: false, 
-            cash: s.cash + 8, 
-            company: chosen.company, 
-            job_type: 'big_tech', 
-            level: lvl, 
-            message: chosen.desc 
+
+          if (newLeet >= 70 || s.is_phd) {
+            allPool.push({ id: 'openai', name: 'OpenAI', minLeet: s.macro_economy === 'bull' ? 70 : 75, weight: 0.65 });
+          }
+
+          const eligiblePool = allPool.filter(c => c.id !== s.company && c.id !== s.job_type);
+          const targetCount = Math.min(eligiblePool.length, isKingOfRoll ? 4 : (Math.random() < 0.45 ? 2 : 3));
+          const targetCompanies = [...eligiblePool].sort(() => Math.random() - 0.5).slice(0, targetCount);
+
+          const wonOffers: string[] = [];
+          const econBonus = s.macro_economy === 'bull' ? 0.14 : (s.macro_economy === 'bear' ? -0.20 : 0);
+          const charmBonus = ((s.charm || 10) - 10) / 140;
+          const luckBonus = ((s.luck || 20) - 20) / 300;
+
+          for (const comp of targetCompanies) {
+            if (newLeet >= comp.minLeet) {
+              const diff = newLeet - comp.minLeet;
+              const passProb = Math.max(0.06, Math.min(0.72, (0.20 + (diff / 85) + econBonus + charmBonus + luckBonus) * comp.weight));
+              if (Math.random() < passProb) {
+                wonOffers.push(comp.id);
+              }
+            }
+          }
+
+          if (isKingOfRoll && wonOffers.length === 0 && newLeet >= 50 && targetCompanies.length > 0) {
+            const fallback = targetCompanies[Math.floor(Math.random() * targetCompanies.length)];
+            wonOffers.push(fallback.id);
+          }
+
+          if (wonOffers.length === 0) {
+            return {
+              health: Math.max(0, s.health - drain),
+              leetcode: newLeet,
+              hop_applied_count: targetCompanies.length,
+              hop_offers: [],
+              message: s.macro_economy === 'bear'
+                ? `【熊市寒冬·HC 冻结】科技股熊市下各大厂招聘收紧，简历多数石沉大海，多轮 Onsite 终面后均未发 Offer。好在今年狂刷算法与架构 (算法 +${leetBonus})，技术储备大涨！`
+                : (newLeet < 40 
+                  ? `【算法深度不足·遗憾未过】大厂面试 Bar 极高，系统设计与复杂算法未能打动面试委员会，投递的各家均未发 Offer。你利用这一年沉淀了扎实算法 (算法 +${leetBonus})！`
+                  : `【名额有限·全挂遗憾】今年求职竞争极其白热化，几轮终面 Hiring Committee 均因名额有限未发 Offer。虽然暂时未上岸，但扎实的技术储备 (算法 +${leetBonus}) 实打实留存！`)
+            };
+          }
+
+          const nameMap: Record<string, string> = {
+            google: 'Google',
+            meta: 'Meta',
+            nvidia: 'NVIDIA',
+            tiktok: 'TikTok',
+            apple: 'Apple',
+            openai: 'OpenAI',
+            startup: 'AI Startup'
+          };
+          const offerNames = wonOffers.map(id => nameMap[id] || id).join('、');
+
+          return {
+            health: Math.max(0, s.health - drain),
+            leetcode: newLeet,
+            hop_applied_count: targetCompanies.length,
+            hop_offers: wonOffers,
+            message: wonOffers.length > 1
+              ? `【大丰收！斩获 ${wonOffers.length} 份社招 Competing Offers】经过一整年的闭关刷题与疯狂面试轰炸 (算法 +${leetBonus})，你成功斩获了 ${offerNames} 的正式录用 Offer！请选择入职去向：`
+              : `【斩获录取 Offer】经过一整年的闭关刷题与多轮 Onsite 面试 (算法 +${leetBonus})，你顺利拿下了 ${offerNames} 的正式录用 Offer！请选择入职去向：`
           };
         },
         nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+          const offers = s.hop_offers || [];
+          if (offers.length > 0) return 'job_hop_market';
+          return 'job_hunt_fail';
         },
       },
       {
-        text: '跟着 理工大U 教授去搞 Web3/AI 创业',
-        condition: (s) => s.school === 'ucb' && s.cash >= 5,
-        effect: (s) => ({ cash: s.cash - 5, laid_off: false, message: '你加入了教授的局，虽然没拿到大厂包裹，但感觉马上就要改变世界了。' }),
-        nextEventId: 'startup_work',
-      },
-      {
-        text: '【强力人脉 Referral】凭借学长学姐/熟人总监直通大厂面试',
-        reqBadge: '需广阔人脉关系',
+        text: '【强力人脉 Referral】凭借学长学姐/熟人总监直通大厂团队',
+        reqBadge: '需人脉关系>=25',
         condition: (s) => (s.network || 0) >= 25,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
@@ -1006,127 +1062,52 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '通过兄弟会/姐妹会/校友会内推，加入当地中型养老公司',
-        condition: (s) => s.school === 'state',
+        text: '【校友黑手党/教授内推】凭借名校校友网络与导师背书直通大厂',
+        condition: (s) => s.school === 'cmu' || s.school === 'ucb' || s.is_phd,
+        effect: (s) => {
+          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          const mafiaTargets = [
+            { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: '名校校友直接将你内推进山景城 Googleplex 基础设施组！享受顶尖 WLB 与美味食堂。' },
+            { company: 'meta', name: 'Meta (AI 算法与分布式系统)', tcBoost: 35, healthDrain: 16, desc: '校友总监将你拉入 Menlo Park Meta 核心组，拿到顶格包裹但面临高压节奏！' },
+            { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: '校友学长内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态！' },
+            { company: 'uber', name: 'Uber (核心调度与分布式架构)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌，校友学姐直接将你带入旧金山 Uber 核心团队！' }
+          ];
+          const chosen = mafiaTargets[Math.floor(Math.random() * mafiaTargets.length)];
+          return { 
+            health: Math.max(0, s.health - chosen.healthDrain), 
+            tc: getLevelScaledTC(chosen.tcBoost, lvl), 
+            laid_off: false, 
+            cash: s.cash + 8, 
+            company: chosen.company, 
+            job_type: 'big_tech', 
+            level: lvl, 
+            message: chosen.desc 
+          };
+        },
+        nextEventId: (s: GameState) => {
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
+          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+        },
+      },
+      {
+        text: '【急召外包 / ICC / 中型公司紧急避险】保住合法工签身份与基础现金流',
+        condition: (_s) => true,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
           const stateCompanies = [
-            { company: 'apple', name: 'Apple 运维开发团队' },
             { company: 'cisco', name: 'Cisco 思科网络研发部' },
-            { company: 'adobe', name: 'Adobe 圣何塞总部' }
+            { company: 'adobe', name: 'Adobe 圣何塞总部' },
+            { company: 'icc', name: '硅谷大型 Tech IT 咨询外包' }
           ];
           const comp = stateCompanies[Math.floor(Math.random() * stateCompanies.length)];
           return { 
             tc: getLevelScaledTC(16, lvl), 
             laid_off: false, 
             company: comp.company, 
-            health: s.health + 10, 
-            charm: s.charm + 2, 
+            health: Math.min(100, s.health + 8), 
             job_type: 'big_tech', 
             level: lvl, 
-            message: `加入当地校友扎堆的 ${comp.name}！工作轻松，每天下午 4 点下班去冲浪，生活十分惬意。` 
-          };
-        },
-        nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
-        },
-      },
-
-      {
-        text: '面试 FLAG 大厂 (Google/Apple 等养老厂)',
-        effect: (s) => {
-          let req = 50;
-          if (s.macro_economy === 'bull') req = 30;
-          else if (s.macro_economy === 'bear') req = 75;
-          else if (s.year >= 2023) req = 70;
-          else if (s.year >= 2020 && s.year <= 2022) req = 30; // 疫情放水期
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const baseTc = s.year >= 2023 ? 20.5 : 19.5;
-          const targetComp = Math.random() < 0.5 ? 'google' : 'apple';
-          const compName = targetComp === 'google' ? 'Google' : 'Apple';
-          return s.leetcode >= req 
-            ? { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, cash: s.cash + 5, health: s.health - 5, company: targetComp, job_type: 'big_tech', level: lvl, message: `上岸！当前市场环境要求LeetCode>${req}，你顺利通过面试入职 ${compName}。` }
-            : { health: s.health - 10, message: `面试被挂了！当前市场环境要求LeetCode>${req}。` };
-        },
-        nextEventId: (s: GameState) => {
-          let req = 50;
-          if (s.macro_economy === 'bull') req = 30;
-          else if (s.macro_economy === 'bear') req = 75;
-          else if (s.year >= 2023) req = 70;
-          else if (s.year >= 2020 && s.year <= 2022) req = 30;
-          if (s.leetcode < req) return 'job_hunt_fail';
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
-        },
-      },
-      {
-        text: '加入 Meta (传说中的卷王之王) - (需要 LeetCode >= 60)',
-        condition: (s) => s.leetcode >= 60,
-        effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          return { tc: getLevelScaledTC(21.5, lvl), laid_off: false, health: s.health - 10, cash: s.cash + 10, company: 'meta', job_type: 'big_tech', level: lvl, message: '你成功卷入了 Meta！虽然给的钱多，但是压力山大。' };
-        },
-        nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
-        },
-      },
-      {
-        text: '面试普通 Startup',
-        effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          return { tc: getLevelScaledTC(15, lvl), laid_off: false, health: s.health - 2, company: 'startup', job_type: 'startup', level: lvl, message: '你加入了一家 Early Stage 的初创公司，虽然工资低，但老板给你画了巨大的大饼。' };
-        },
-        nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
-        },
-      },
-
-      {
-        text: '加入 TikTok (传说中的拿命换钱) - (需要 LeetCode >= 45)',
-        condition: (s) => s.leetcode >= 45,
-        effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const baseTc = s.year >= 2023 ? 22.5 : 21.0;
-          return { tc: getLevelScaledTC(baseTc, lvl), laid_off: false, health: s.health - 10, cash: s.cash + 15, company: 'tiktok', job_type: 'tiktok', level: lvl, message: '你成功入职了字节跳动！虽然期权是废纸且中美跨时区开会到凌晨 2 点，但现金包裹极其雄厚！' };
-        },
-        nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
-        },
-      },
-      {
-        text: '加入 Amazon (门槛较低，但入职即签生死状) - (需要 LeetCode >= 30)',
-        condition: (s) => s.leetcode >= 30,
-        effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          return { tc: getLevelScaledTC(18, lvl), laid_off: false, health: s.health - 5, cash: s.cash + 5, company: 'amazon', job_type: 'amazon', level: lvl, message: '你通过了亚麻的面试！体验到了真正的 Frugality，没有免费食堂且随时可能被 PIP。' };
-        },
-        nextEventId: (s: GameState) => {
-          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
-          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
-        },
-      },
-      {
-        text: '加入 Nvidia (需要系统底层经验 / LeetCode >= 55)',
-        condition: (s) => s.leetcode >= 55,
-        effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const isBull = s.macro_economy === 'bull' || s.year >= 2023;
-          const baseTc = isBull ? 22 : 19.5;
-          return {
-            tc: getLevelScaledTC(baseTc, lvl),
-            laid_off: false,
-            health: s.health - 5,
-            cash: s.cash + 5,
-            company: 'nvidia',
-            job_type: 'nvidia',
-            level: lvl,
-            message: isBull 
-              ? '赶上 AI 芯片大风口！皮衣黄刀法精准，你拿到了高 RSU 股票占比的英伟达芯片团队包裹！' 
-              : '你加入了英伟达芯片团队，拿到了基础薪资包裹，等待下一轮 AI 牛市风口的到来！'
+            message: `【紧急避险成功】成功入职 ${comp.name}！工作节奏适中且合法工签身份无虞，每月有稳定现金流进账！` 
           };
         },
         nextEventId: (s: GameState) => {
@@ -1135,7 +1116,7 @@ export const events: Record<string, GameEvent> = {
         },
       },
       {
-        text: '挑战顶级量化基金 (Quant) (地狱门槛: 仅限 CS四大 或 PhD)',
+        text: '【挑战顶级量化基金 (Quant)】冲击天价量化交易核心团队 (地狱门槛: 需 CS四大 或 PhD)',
         reqBadge: '仅限 CS四大/PhD',
         condition: (s) => (s.school === 'cmu' || s.is_phd),
         effect: (s) => {
@@ -1149,7 +1130,7 @@ export const events: Record<string, GameEvent> = {
           const pass = Math.random() < winRate;
           const lvl = s.level ? s.level : 'Quant';
           return pass 
-            ? { tc: getLevelScaledTC(42, lvl), laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '凭顶尖四大名校与 PhD 学术背景！你击败了众多竞争者，拿下了顶级 Quant Fund 42w+ 包裹 Offer！' }
+            ? { tc: getLevelScaledTC(42, lvl), laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '凭顶尖名校与 PhD 学术背景！你击败了众多竞争者，拿下了顶级 Quant Fund 42w+ 包裹 Offer！' }
             : { health: s.health - 12, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你的简历或面经遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
@@ -1157,6 +1138,60 @@ export const events: Record<string, GameEvent> = {
           const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
           return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
         },
+      },
+      {
+        text: '【休养放空 / Gap Year 调整】暂不找工作！利用积蓄休养身心，享受慢生活 (需无身份倒计时压力或有存款)',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民' || s.gc_stage === 'i485_pending' || s.cash >= 8,
+        effect: (s) => ({
+          laid_off: false,
+          job_type: 'unemployed',
+          company: undefined,
+          tc: 0,
+          health: Math.min(100, s.health + 25),
+          cash: Math.max(0, s.cash - (s.rent ? s.rent * 12 : 2.5)),
+          message: '【开启慢生活 Gap Year】你决定暂停无休止的内卷与面试焦虑，给自己放个大假！每天睡到自然醒、徒步、做饭、打游戏，身心得到了彻底的治愈与恢复！'
+        }),
+        nextEventId: (s: GameState) => {
+          const isDorm = !s.housing_name || ['四大 校内宿舍','大U 校内宿舍','美大U 校内宿舍','美硕 校外公寓','美国 博士实验室','国内大学宿舍','国内老家','加州湾区老宅'].includes(s.housing_name);
+          return (s.has_housing && !isDorm) ? 'sv_daily_life' : 'choose_housing';
+        },
+      },
+      {
+        text: '【转型全职 Day Trader 操盘】凭借 $50w 本金与自由身全职炒股操盘 (需美籍/绿卡 + 现金>=50w)',
+        reqBadge: '需美籍/绿卡+现金>=50w',
+        condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50,
+        effect: (_s) => ({
+          job_type: 'trader',
+          company: '全职 Day Trader',
+          level: '全职 Trader',
+          tc: 0,
+          laid_off: false,
+          message: '你决定不再看任何大厂 HR 与老板的脸色！凭借 $50w 初始本金与自由身，开启全职操盘人生！'
+        }),
+        nextEventId: 'trader_annual_strategy',
+      },
+      {
+        text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup (需美籍/绿卡/O1 或 现金>=45w)',
+        reqBadge: '需美籍/绿卡/O1或现金>=45w',
+        condition: (s) => (s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45,
+        effect: (s) => {
+          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
+          return {
+            job_type: 'startup_founder',
+            company: 'AI/科技 Startup',
+            level: 'CEO & Founder',
+            tc: 10,
+            founder_stage: 'seed',
+            company_valuation: 800,
+            laid_off: false,
+            cash: needsO1 ? s.cash - 5 : s.cash,
+            visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
+            message: needsO1
+              ? '你决定自己当老板！花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+              : '你决定自己当老板！凭自由身份在 San Mateo 租下一间 Garage，开启了全职 Founder 创业之旅！'
+          };
+        },
+        nextEventId: 'founder_annual_strategy',
       }
     ]
   },
@@ -1859,7 +1894,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【年度重心：刷题跳槽】闭关刷题备战，海投湾区各大厂/独角兽发起社招面试',
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        condition: (s) => !s.laid_off && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           const isKingOfRoll = s.trait_title === '卷王之王';
           const drain = isKingOfRoll ? 6 : 12;
@@ -3986,6 +4021,7 @@ export const events: Record<string, GameEvent> = {
           tc: Math.max(s.tc + 22, 68),
           cash: s.cash + 8,
           health: Math.max(0, s.health - 10),
+          laid_off: false,
           is_new_job: true,
           message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！`
         }),
@@ -3998,8 +4034,9 @@ export const events: Record<string, GameEvent> = {
           company: 'startup',
           job_type: 'startup',
           stocks: (s.stocks || 0) + 18,
-          tc: Math.max(16, Math.floor(s.tc * 0.85)),
+          tc: Math.max(16, Math.floor((s.tc || 20) * 0.85)),
           health: Math.max(0, s.health - 10),
+          laid_off: false,
           is_new_job: true,
           message: '【加入 AI Startup】你接受了一家顶级风投领投的早期初创团队 Offer！虽然现金略微下调，但分到了极其丰厚的早期期权股份！'
         }),
@@ -4021,6 +4058,7 @@ export const events: Record<string, GameEvent> = {
             level: nextLvl,
             tc: newTC,
             health: Math.min(100, s.health + 10),
+            laid_off: false,
             is_new_job: true,
             message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级跃升至 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
           };
@@ -4029,7 +4067,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',
-        condition: (s) => !!s.hop_offers && s.hop_offers.length >= 1,
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !!s.hop_offers && s.hop_offers.length >= 1,
         effect: (s) => ({
           tc: s.tc + 4.5,
           health: Math.min(100, s.health + 5),
@@ -4039,9 +4077,20 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【留任原厂】看好原厂股票与团队氛围，婉拒全部外部 Offer',
-        condition: (_s) => true,
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         effect: () => ({
           message: '你经过慎重考虑，决定婉拒外部机会，继续深耕原厂业务。'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【婉拒 Offer / 暂不入职】继续享受 Gap Year 慢生活',
+        condition: (s) => s.laid_off || s.job_type === 'unemployed',
+        effect: () => ({
+          laid_off: false,
+          job_type: 'unemployed',
+          tc: 0,
+          message: '你经过慎重考虑，决定婉拒当前所有 Offer，继续享受无拘无束的 Gap Year 慢生活。'
         }),
         nextEventId: midYearEventRouter,
       }

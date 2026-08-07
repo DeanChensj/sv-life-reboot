@@ -1,0 +1,346 @@
+import type { GameEvent, GameState } from '../../types';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
+import { getTCBreakdown } from '../../utils/gameStateSelectors';
+
+export const immigrationEvents: Record<string, GameEvent> = {
+  'h1b_fallback_options': {
+    id: 'h1b_fallback_options',
+    title: 'H1B 拯救绝境对策',
+    description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
+    choices: [
+      {
+        text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
+        condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const partnerIsCitizen = Math.random() < 0.40;
+          if (partnerIsCitizen) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决留美身份！'
+            };
+          }
+          return {
+            is_married: true,
+            relationship_status: 'married',
+            gc_progress: Math.max(3, s.gc_progress || 0),
+            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+            message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或继续维持合法工签！'
+          };
+        },
+        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options',
+      },
+      {
+        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
+        reqBadge: '现金>=8w (高风险)',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const roll = Math.random();
+          if (roll < 0.35) {
+            return {
+              cash: s.cash - 8,
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【商婚侥幸成功】你支付了 $8w 现金通过中介办妥了婚姻绿卡，彻底化解了身份危机！'
+            };
+          } else if (roll < 0.70) {
+            return {
+              cash: s.cash - 8,
+              health: Math.max(0, s.health - 20),
+              message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救失败！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
+            };
+          } else {
+            return {
+              cash: s.cash - 8,
+              status: 'game_over',
+              message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
+            };
+          }
+        },
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
+      },
+      {
+        text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
+        reqBadge: '需PhD或硬核算法背景',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const passProb = s.is_phd ? 0.75 : 0.30;
+          const win = Math.random() < passProb;
+          return win
+            ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, health: Math.max(0, s.health - 5), message: '凭硬核论文与行业大牛推荐信，移民局批复了你的 O1 杰出人才签证！成功自救！' }
+            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。' };
+        },
+        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
+      },
+      {
+        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w)',
+        reqBadge: '现金>=80w',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
+        nextEventId: 'post_green_card',
+      },
+      {
+        text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国)',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你外派加拿大一年后凭 L1 签证顺利调回湾区总部！' }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
+        condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【绿卡/公民身份】已有绿卡或公民身份，直接跳过抽签困境',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
+        effect: (s) => ({ message: '你拥有绿卡/公民身份，完全不受抽签限制，继续专注于工作与生活！' }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
+  'h1b_rfe_vs_parent_nag': {
+    id: 'h1b_rfe_vs_parent_nag',
+    title: '【周五噩梦】移民局 80 页 RFE 信遇到老妈 60 秒语音',
+    description: '周五下午 4:55，律所律师发来紧急邮件：“USCIS 针对你的 H1B 发出了 Specialty Occupation RFE，质疑写前端 React 代码不需要计算机学士学位。”\n与此同时，你微信弹出老妈连续三条 60 秒语音：“隔壁王阿姨的小儿子在老家公务员双胞胎都两岁了！你整天在美利坚租房 4000 美金图个啥？！今年到底带不带女朋友回来？！”',
+    choices: [
+      {
+        text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
+        condition: (s) => s.visa === 'H1B (工签)',
+        effect: (s) => ({ health: Math.max(0, s.health - 25), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: (s.charm || 10) + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
+        nextEventId: h1ToH2Router,
+      }
+    ]
+  },
+
+  'visa_check': {
+    id: 'visa_check',
+    title: 'H1B 被 Check',
+    description: '你回国探亲，顺便去大使馆签证，结果喜提行政审查 (Check)，签证官冷漠地扔给你一张黄条。',
+    choices: [
+      {
+        text: '在国内每天熬夜，按美国时间远程上班',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ health: s.health - 30, cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '管他呢，直接请无薪假在国内到处旅游！',
+        condition: (s) => s.cash >= 20 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ cash: s.cash - 20, health: s.health + 30, leetcode: s.leetcode - 10, imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【绿卡/公民免检】出示美国护照/绿卡，免除检查直接入境',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
+        effect: () => ({ message: '海关人员核验了你的永久居民/公民身份，热情祝你生活愉快！' }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
+  'h1b_final_crisis': {
+    id: 'h1b_final_crisis',
+    title: 'H1B 三抽不中 (绝境危机)',
+    description: '连续三年 H1B 抽签全军覆没！你的 STEM OPT 即将到期，公司 HR 和律所发来最终通知：必须在 30 天内解决合法身份，否则将被终止合同并安排外派离境！',
+    choices: [
+      {
+        text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
+        condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const partnerIsCitizen = Math.random() < 0.40;
+          if (partnerIsCitizen) {
+            return {
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决在美身份危机！'
+            };
+          }
+          return {
+            is_married: true,
+            relationship_status: 'married',
+            gc_progress: Math.max(3, s.gc_progress || 0),
+            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+            message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或通过 Day 1 CPT / 外派维持合法留美工签！'
+          };
+        },
+        nextEventId: (s: GameState) => s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis',
+      },
+      {
+        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
+        reqBadge: '现金>=8w (高风险)',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const roll = Math.random();
+          if (roll < 0.35) {
+            return {
+              cash: s.cash - 8,
+              visa: '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【商婚侥幸成功】你支付了 $8w 现金成功通过了移民局婚绿面试，绝地求生拿到临时绿卡！'
+            };
+          } else if (roll < 0.70) {
+            return {
+              cash: s.cash - 8,
+              health: Math.max(0, s.health - 20),
+              message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份危机迫在眉睫！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
+            };
+          } else {
+            return {
+              cash: s.cash - 8,
+              status: 'game_over',
+              message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
+            };
+          }
+        },
+        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis'),
+      },
+      {
+        text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 $1.5w)',
+        condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({
+          visa: 'Day 1 CPT',
+          cash: s.cash - 1.5,
+          cpt_used: true,
+          message: '【无缝接轨 Day 1 CPT】虽然 STEM OPT 耗尽，但你成功挂靠了 Day 1 CPT 大学，白天写代码晚上交作业，成功维持合法留美身份并继续抽签！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD或硬核算法背景)',
+        reqBadge: '现金>=8w+超凡背景',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const pass = Math.random() < (s.is_phd ? 0.70 : 0.35);
+          return pass
+            ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
+            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
+        },
+        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
+      },
+      {
+        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w)',
+        reqBadge: '现金>=80w',
+        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
+        nextEventId: 'post_green_card',
+      },
+      {
+        text: '接受外派温哥华/多伦多 L1 办公室 (曲线救国)',
+        costBadge: '免费外派',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({
+          visa: 'L1 (外派)',
+          l1_relocated: true,
+          message: '你转到了温哥华分公司，凭 L1 签证曲线救国保住了工作！一年后顺利申请调回湾区 Headquarters！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
+  'post_green_card': {
+    id: 'post_green_card',
+    title: '绿卡到手：硅谷新篇章',
+    description: '身份的枷锁解除后，你发现硅谷的烦恼并没有结束。现在的你面临着人生新的十字路口。',
+    choices: [
+
+      {
+        text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: 'Atherton 顶级豪宅', charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '继续在 Open House 现场观望挑房 (回到日常行动)',
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '搞副业炒股：梭哈英伟达 (NVDA)！',
+        effect: (s) => {
+          const winProb = 0.25 + (Math.min(45, s.luck) / 150);
+          const win = Math.random() < winProb;
+          return win
+            ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
+            : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '辞职！凭多年大厂的技术积累直接搞 AI Startup',
+        effect: (s) => {
+          const success = s.leetcode >= 50 && Math.random() < 0.3;
+          return success
+            ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: s.cash + 200, tc: 0, rent: 4, message: '你带着前沿的 AI 理念获得了顶级风投 A 轮融资！手里的股权市值飙升！' }
+            : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', age: s.age + 1, cash: Math.max(0, s.cash - 20), health: s.health - 20, message: '创业太烧钱了，大模型算力成本高昂，产品还没盈利资金见底，你只能重回大厂。' };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '不再唯唯诺诺，开始在职场上重拳出击',
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
+        nextEventId: 'office_politics',
+      },
+      {
+        text: '彻底摆烂，佛系上班',
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
+  'h1b_visa_stamping_crisis': {
+    id: 'h1b_visa_stamping_crisis',
+    title: '【回国续签】H1B 221(g) 行政审查 Check 危机',
+    description: '你趁假期回国探亲顺便预约了美领馆 H1B 续签 Stamp。结果因为 CS/AI 敏感专业，签证官微笑着递给你一张黄单（221g Administrative Processing 行政审查）！',
+    choices: [
+      {
+        text: '在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 15),
+          message: '你白加黑倒时差工作了两周，终于等到了 Passport 带着 Stamp 寄回！成功惊险返美！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '联系公司法务开具紧急加急信 (Expedite Request)',
+        condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const pass = Math.random() < 0.55;
+          return pass 
+            ? { health: Math.min(100, s.health + 5), message: '加急信生效！领事馆提早批复了你的 Visa Stamp，你顺利搭上返美航班！' }
+            : { health: s.health - 10, cash: Math.max(0, s.cash - 1), message: '领事馆回复“标准审查无法加急”，你被迫在加州时间深夜远程办公，精疲力竭。' };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【永久居民 / AP 回美证免签】出示美国护照/绿卡或 AP Combo 卡直接入境',
+        condition: (s) => s.visa === '绿卡' || s.visa === '公民' || s.gc_stage === 'i485_pending' || s.gc_stage === 'approved',
+        effect: () => ({
+          message: '你手握美国绿卡/护照或 I-485 附带的 Advance Parole (AP) Combo 回美卡，在海关 CBP 轻松查验直接入境，无需经历领事馆面签与 Check 煎熬！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  }
+};

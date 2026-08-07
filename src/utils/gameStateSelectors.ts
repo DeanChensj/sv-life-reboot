@@ -25,6 +25,30 @@ export interface HousingDisplayInfo {
 }
 
 /**
+ * Role Predicate Helpers:
+ * Guarantees semantic role isolation across all events, routers, and annual settlements.
+ */
+export function isCorporateEmployee(state: GameState): boolean {
+  return !state.laid_off &&
+         Boolean(state.job_type) &&
+         state.job_type !== 'unemployed' &&
+         state.job_type !== 'trader' &&
+         state.job_type !== 'startup_founder';
+}
+
+export function isSelfEmployedOrFounder(state: GameState): boolean {
+  return state.job_type === 'startup_founder' || state.job_type === 'trader';
+}
+
+export function isUnemployedOrGapYear(state: GameState): boolean {
+  return Boolean(state.laid_off || state.job_type === 'unemployed' || !state.job_type);
+}
+
+export function hasEmployer(state: GameState): boolean {
+  return isCorporateEmployee(state);
+}
+
+/**
  * Derives standardized job & level display properties from GameState.
  */
 export function getJobDisplayInfo(state: GameState): JobDisplayInfo {

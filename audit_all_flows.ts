@@ -54,7 +54,9 @@ const dummyStates: GameState[] = [
   { ...generateInitialState(), visa: 'H1B (工签)', job_type: 'unemployed', laid_off: true, age: 27, status: 'playing' },
   { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'startup', age: 26, status: 'playing' },
   { ...generateInitialState(), visa: 'L1 (外派)', job_type: 'big_tech', age: 27, status: 'playing' },
-  { ...generateInitialState(), visa: '无', job_type: 'cn_tech', company: 'cn_big_tech', age: 24, status: 'playing' }
+  { ...generateInitialState(), visa: '无', job_type: 'cn_tech', company: 'cn_big_tech', age: 24, status: 'playing' },
+  { ...generateInitialState(), visa: '绿卡', job_type: 'startup_founder', company: 'AI Startup', level: 'CEO & Founder', founder_stage: 'seed', company_valuation: 800, tc: 10, age: 30, status: 'playing' },
+  { ...generateInitialState(), visa: '公民', job_type: 'trader', company: '全职 Day Trader', level: '全职 Trader', tc: 0, age: 32, status: 'playing' }
 ];
 
 // Check Rule 1: Citizens / Green Card holders subjected to visa lottery or deportation
@@ -121,6 +123,22 @@ dummyStates.forEach((st, idx) => {
     logIssue('Selector Exception', `dummyState[${idx}]`, e.message);
   }
 });
+
+// Check Rule 3.5: Role & Corporate Context Isolation (Prevent Founder/Trader from seeing corporate employer choices)
+for (const [id, ev] of Object.entries(events)) {
+  ev.choices.forEach((c, idx) => {
+    // Non-employee states: Founder, Trader, Unemployed
+    const nonEmployees = dummyStates.filter(s => s.job_type === 'startup_founder' || s.job_type === 'trader' || s.job_type === 'unemployed' || s.laid_off);
+    for (const neState of nonEmployees) {
+      if (!c.condition || c.condition(neState)) {
+        const text = c.text || '';
+        if (text.includes('找现任老板谈薪') || text.includes('原地 Match') || text.includes('留任原厂')) {
+          logIssue('Role Context Mismatch', id, `Choice ${idx} ('${text}') is visible to non-employee role '${neState.job_type}'!`);
+        }
+      }
+    }
+  });
+}
 
 import fs from 'fs';
 

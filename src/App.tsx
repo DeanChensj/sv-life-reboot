@@ -26,6 +26,7 @@ export default function App() {
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
   const [showCareerTimeline, setShowCareerTimeline] = useState<boolean>(false);
+  const [timelineInitialTab, setTimelineInitialTab] = useState<'timeline' | 'chart' | 'summary'>('chart');
   const [isShopOpen, setIsShopOpen] = useState<boolean>(false);
   const [hasOpenedShop, setHasOpenedShop] = useState<boolean>(false);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
@@ -680,7 +681,10 @@ export default function App() {
             currentEventId={currentEventId} 
             onOpenCodex={() => setShowAchievementCodex(true)} 
             onOpenShop={handleOpenShop}
-            onOpenTimeline={() => setShowCareerTimeline(true)}
+            onOpenTimeline={(tab) => {
+              setTimelineInitialTab(tab || 'chart');
+              setShowCareerTimeline(true);
+            }}
             onToggleSound={handleToggleSound} 
             isMuted={isMuted} 
             hasOpenedShop={hasOpenedShop}
@@ -698,7 +702,10 @@ export default function App() {
               currentEventId={currentEventId} 
               onOpenCodex={() => setShowAchievementCodex(true)} 
               onOpenShop={handleOpenShop}
-              onOpenTimeline={() => setShowCareerTimeline(true)}
+              onOpenTimeline={(tab) => {
+                setTimelineInitialTab(tab || 'chart');
+                setShowCareerTimeline(true);
+              }}
               onToggleSound={handleToggleSound} 
               isMuted={isMuted} 
               hasOpenedShop={hasOpenedShop}
@@ -710,6 +717,7 @@ export default function App() {
             {showCareerTimeline && (
               <CareerTimelineModal 
                 gameState={gameState}
+                initialTab={timelineInitialTab}
                 onClose={() => setShowCareerTimeline(false)}
               />
             )}

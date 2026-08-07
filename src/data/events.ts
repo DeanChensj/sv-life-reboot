@@ -4032,7 +4032,7 @@ export const events: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '↩️ 算了，目前的房子住得挺好，不搬了',
+        text: '算了，目前的房子住得挺好，不搬了',
         effect: (s) => ({ message: '你打消了搬家念头。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -4041,7 +4041,7 @@ export const events: Record<string, GameEvent> = {
   'end': {
     id: 'end',
     title: '游戏结束',
-    description: '',
+    description: '你的硅谷人生模拟旅程已经达成终局结算。',
     choices: [
     ]
   },

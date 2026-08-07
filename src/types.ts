@@ -21,6 +21,29 @@ export interface TimelineRecord {
   statHighlight?: string;
 }
 
+export interface StoryFlags {
+  met_alex?: boolean;
+  alex_meet_year?: number;
+  alex_startup_invited?: boolean;
+  joined_omniagent?: boolean;
+  angel_invest_omniagent?: boolean;
+  alex_ipo_done?: boolean;
+  omniagent_start_year?: number;
+  has_dave_evidence?: boolean;
+  dave_conflict_year?: number;
+  dave_defeated?: boolean;
+  dave_defeated_year?: number;
+  dave_veto_done?: boolean;
+  met_sam?: boolean;
+  sam_zero_day_done?: boolean;
+  in_gap_year?: boolean;
+  milestone_100w?: boolean;
+  milestone_300w?: boolean;
+  milestone_500w?: boolean;
+  milestone_800w?: boolean;
+  [key: string]: unknown;
+}
+
 export interface GameState {
   age: number;
   cash: number; // 万美元
@@ -87,7 +110,7 @@ export interface GameState {
   npcs?: Record<string, NPCState>; // 具名长线 NPC 关系网
   hop_applied_count?: number; // 当年投递面试的目标公司总数
   hop_offers?: string[]; // 当年斩获的社招 Offer 列表 (['google', 'meta', etc.])
-  story_flags?: Record<string, boolean | number | string | string[]>; // 跨多回合长线因果伏笔追踪器
+  story_flags?: StoryFlags; // 跨多回合长线因果伏笔追踪器
   timeline?: TimelineRecord[]; // 历年生涯大事记
   history_net_worth?: { age: number; year: number; netWorth: number; cash: number; stocks: number }[]; // 资产历年走势
 }

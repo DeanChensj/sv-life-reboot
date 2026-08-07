@@ -1,6 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { isOwnedHousing } from '../../constants/gameConstants';
 
 export const housingFinanceEvents: Record<string, GameEvent> = {
   'choose_housing': {
@@ -143,7 +144,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【自住房改造】搭建后院 ADU 独立套间并出租 (耗费 $1.5w · 产生 +$2.0w/年 租金净流)',
         costBadge: '花费 $1.5w',
-        condition: (s) => s.has_housing && !s.has_adu_rented && (s.cash + (s.stocks || 0)) >= 1.5 && ['Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房', 'Atherton 顶级豪宅'].includes(s.housing_name || ''),
+        condition: (s) => s.has_housing && !s.has_adu_rented && (s.cash + (s.stocks || 0)) >= 1.5 && isOwnedHousing(s.housing_name),
         effect: (s) => ({
           cash: s.cash - 1.5,
           has_adu_rented: true,

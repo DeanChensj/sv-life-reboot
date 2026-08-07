@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GameState } from '../types';
+import { isOwnedHousing } from '../constants/gameConstants';
 
 interface ShopModalProps {
   gameState: GameState;
@@ -9,7 +10,7 @@ interface ShopModalProps {
 }
 
 export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy, onTriggerEvent }) => {
-  const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '');
+  const isHomeowner = isOwnedHousing(gameState.housing_name);
   const totalAssets = gameState.cash + (gameState.stocks || 0);
 
   return (

@@ -61,17 +61,17 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【简单难度 (宽松周期)】硅谷黄金时代，Headcount 充沛，升职加薪顺水推舟。',
-        effect: (_s) => ({ year: 2014, difficulty_title: '简单难度', luck: (_s.luck || 20) + 10 }),
+        effect: (s) => ({ year: 2014, difficulty_title: '简单难度', luck: (s.luck || 20) + 10 }),
         nextEventId: 'choose_school',
       },
       {
         text: '【普通难度 (周期交替)】经历经济周期起伏，放水狂欢与裁员潮交替 (标准体验)。',
-        effect: (_s) => ({ year: 2018, difficulty_title: '普通难度' }),
+        effect: () => ({ year: 2018, difficulty_title: '普通难度' }),
         nextEventId: 'choose_school',
       },
       {
         text: '【困难难度 (地狱 AI 狂潮)】AI 颠覆性内卷，大厂 HC 极度锁死，职场高压挑战！',
-        effect: (_s) => ({ year: 2019, difficulty_title: '困难难度' }),
+        effect: () => ({ year: 2019, difficulty_title: '困难难度' }),
         nextEventId: 'choose_school',
       }
     ]

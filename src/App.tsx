@@ -226,57 +226,8 @@ export default function App() {
   const handleChoice = (choice: Choice) => {
     // 1. Calculate new effects
     const effectResult = choice.effect(gameState);
-    
-    // ==========================================
-    // IMMUNE SYSTEM: STATE MIDDLEWARE 
-    // ==========================================
-    // Normalize Layoff State: If an event sets laid_off: true or job_type: unemployed, force tc=0
-    if (effectResult.laid_off === true || effectResult.job_type === 'unemployed') {
-      effectResult.tc = 0;
-      effectResult.job_type = 'unemployed';
-      effectResult.laid_off = true;
-    }
-    // Normalize Employment State: If an event gives a job, force laid_off: false
-    if (effectResult.job_type && effectResult.job_type !== 'unemployed') {
-      effectResult.laid_off = false;
-      // If player enters the workforce on an F-1 student visa, transition to OPT
-      if ((gameState.visa === 'F1 (学生)' || !gameState.visa || gameState.visa === '无') && !effectResult.visa) {
-        effectResult.visa = 'OPT (实习)';
-      }
-    }
-    // Numerical Safety Guards
-    if (effectResult.cash !== undefined && isNaN(effectResult.cash)) effectResult.cash = gameState.cash;
-    if (effectResult.health !== undefined && isNaN(effectResult.health)) effectResult.health = gameState.health;
-    
-    // Green Card Reset Middleware (Job Hopping)
-    const isNewJob = effectResult.is_new_job || 
-                     (currentEventId === 'job_hunt' && effectResult.laid_off === false) ||
-                     (effectResult.job_type && effectResult.job_type !== 'unemployed' && effectResult.job_type !== gameState.job_type) ||
-                     (effectResult.company && effectResult.company !== gameState.company);
-                     
-    const currentVisa = gameState.visa;
-    const targetVisa = effectResult.visa || currentVisa;
-    const isPermanentResidentOrCitizen = currentVisa === '绿卡' || currentVisa === '公民' || targetVisa === '绿卡' || targetVisa === '公民';
 
-    if (isNewJob && !isPermanentResidentOrCitizen && targetVisa !== 'O1 (杰出人才)' && !gameState.is_phd) {
-       const isI140Approved = ['i140_approved', 'waiting_pd', 'i485_pending', 'approved'].includes(gameState.gc_stage || '');
-       if (gameState.gc_stage === 'perm_processing' || gameState.gc_stage === 'perm_audit' || gameState.gc_stage === 'i140_processing' || gameState.gc_stage === 'i140_rfe') {
-           effectResult.gc_stage = 'perm_processing';
-           effectResult.gc_progress = 1;
-           effectResult.message = (effectResult.message || '') + ' 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队。';
-       } else if (isI140Approved) {
-           effectResult.message = (effectResult.message || '') + ' 【I-140 已锁 PD】因之前 I-140 已批准，本次跳槽成功锁定原优先日期 (PD)！';
-       }
-    }
-    
-    // Auto increment year based on age difference, ONLY if year wasn't explicitly set
-    if (effectResult.age !== undefined && effectResult.age > gameState.age) {
-      if (effectResult.year === undefined) {
-        effectResult.year = gameState.year + (effectResult.age - gameState.age);
-      }
-    }
-
-    // Apply centralized state transition and invariant middleware
+    // 2. Apply centralized state transition and invariant middleware
     const transition = applyStateTransition(gameState, effectResult, {
       eventId: currentEventId,
       source: 'event',

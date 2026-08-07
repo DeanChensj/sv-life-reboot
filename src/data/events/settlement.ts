@@ -1,6 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { HOUSING_NAMES, isOwnedHousing } from '../../constants/gameConstants';
 
 export const settlementEvents: Record<string, GameEvent> = {
   'sv_year_end_settlement': {
@@ -21,10 +22,10 @@ export const settlementEvents: Record<string, GameEvent> = {
            let nextGc = s.gc_progress || 0;
            let nextStage = s.gc_stage || 'not_started';
 
-           const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name || '');
+           const isHomeowner = isOwnedHousing(s.housing_name);
            const housingExpense = s.rent !== undefined 
              ? s.rent 
-             : (isHomeowner ? (s.housing_name === 'Atherton 顶级豪宅' ? 5.0 : 2.0) : 4.0);
+             : (isHomeowner ? (s.housing_name === HOUSING_NAMES.ATHERTON ? 5.0 : 2.0) : 4.0);
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
            const livingExpense = 3.0;
            const petExpense = s.has_pet ? 0.3 : 0;

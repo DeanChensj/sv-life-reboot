@@ -49,10 +49,6 @@ export function isUnemployedOrGapYear(state: GameState): boolean {
   return Boolean(state.laid_off || state.job_type === 'unemployed' || !state.job_type);
 }
 
-export function hasEmployer(state: GameState): boolean {
-  return isCorporateEmployee(state);
-}
-
 /**
  * Derives standardized job & level display properties from GameState.
  */

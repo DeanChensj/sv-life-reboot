@@ -1,5 +1,6 @@
 import { events, generateInitialState } from './src/data/events';
 import { GameState } from './src/types';
+import { applyStateTransition } from './src/utils/stateTransitions';
 
 console.log('🚀 启动全量事件流与状态不变性 Fuzz 测试 (Event & State Invariants Fuzzing)...\n');
 
@@ -95,31 +96,12 @@ function runFuzzTest(iterations: number) {
       try {
         const effectResult = randomChoice.effect(currentState);
         
-        // 模拟 Middleware (与 App.tsx 完全保持一致)
-        if (effectResult.laid_off === true) {
-          effectResult.tc = 0;
-          effectResult.job_type = 'unemployed';
-        }
-        if (effectResult.job_type && effectResult.job_type !== 'unemployed') {
-          effectResult.laid_off = false;
-        }
-
-        const newState = { ...currentState, ...effectResult };
-
-        // 🛡️ Global Visa Invariant Guard Middleware (App.tsx 保持一致)
-        if (previousStateSnapshot.visa === '公民') {
-          newState.visa = '公民';
-          newState.gc_progress = 5;
-          newState.gc_stage = 'approved';
-        } else if (previousStateSnapshot.visa === '绿卡' && newState.visa !== '公民') {
-          newState.visa = '绿卡';
-          newState.gc_progress = 5;
-          newState.gc_stage = 'approved';
-        }
-
-        // Clamp attributes (与 App.tsx 保持一致)
-        newState.health = Math.max(0, Math.min(100, newState.health));
-        newState.leetcode = Math.max(0, Math.min(100, newState.leetcode));
+        // 统一经过中央状态流转引擎
+        const transition = applyStateTransition(currentState, effectResult, {
+          eventId: currentEventId,
+          source: 'event',
+        });
+        const newState = transition.nextState;
 
         // 验证全局状态不变性 (State Invariants Assertion)
         if (!validateStateInvariants(previousStateSnapshot, newState, currentEventId)) {
@@ -129,12 +111,12 @@ function runFuzzTest(iterations: number) {
 
         currentState = newState;
 
-        // 模拟 Game Over 判断
-        if (currentState.health <= 0 || currentState.cash < -0.001 || (currentState.cash + (currentState.stocks || 0)) >= currentState.win_threshold) {
+        // 模拟 Game Over / Win 判断
+        if (currentState.status === 'game_over' || currentState.status === 'win' || currentState.health <= 0 || currentState.cash < -0.001 || (currentState.cash + (currentState.stocks || 0)) >= currentState.win_threshold) {
           break; 
         }
 
-        const nextId = typeof randomChoice.nextEventId === 'function' ? randomChoice.nextEventId(currentState) : randomChoice.nextEventId;
+        const nextId = transition.targetEventId || (typeof randomChoice.nextEventId === 'function' ? randomChoice.nextEventId(currentState) : randomChoice.nextEventId);
         currentEventId = nextId;
 
       } catch (e: any) {

@@ -2071,15 +2071,17 @@ export const events: Record<string, GameEvent> = {
                 newVisa = 'H1B (工签)';
                 h1bMsg = s.visa === 'L1 (外派)' ? `  外派/L1 转换中签！在第 ${newAttempts} 次 H1B 抽签中成功中签，顺利获得 H1B 工签！` : `  人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
               } else {
-                if (newAttempts === 1) {
-                  h1bMsg = '  第一年 H1B 未中签！已开启 STEM OPT 2 年延期，明年还有抽签机会！';
-                } else if (newAttempts === 2) {
-                  h1bMsg = '  第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，压力山大！';
+                if (s.visa === 'L1 (外派)') {
+                  h1bMsg = ` 【L-1 抽签未中】第 ${newAttempts} 次 H1B 抽签未能中签！但凭借你的 L-1 跨国外派签证，你在湾区合法工作完全不受影响，公司将为你继续递交后续抽签或启动 EB-1C 绿卡！`;
+                } else if (s.visa === 'Day 1 CPT') {
+                  h1bMsg = ` 【CPT 抽签未中】第 ${newAttempts} 次 H1B 抽签未能中签！好在有 Day 1 CPT 学籍维持合法全职工作，明年继续冲刺抽签！`;
                 } else {
-                  if (s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') {
-                    h1bMsg = `  第 ${newAttempts} 次 H1B 抽签未能中签！好在有 ${s.visa} 身份保底维持合法工作，明年继续参与抽签！`;
+                  if (newAttempts === 1) {
+                    h1bMsg = ' 【H1B首抽未中】第一年 H1B 未中签！已自动激活 STEM OPT 2 年延期，明年还有抽签机会！';
+                  } else if (newAttempts === 2) {
+                    h1bMsg = ' 【H1B二抽未中】第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，需密切关注转学挂靠或外派后路！';
                   } else {
-                    h1bMsg = '  警告：三年 H1B 抽签均未能中签！STEM OPT 身份即将到期，面临离境危机！';
+                    h1bMsg = ' 【三年未中告急】警告：三年 H1B 抽签均未能中签！STEM OPT 身份即将到期，面临离境遣返危机！';
                   }
                 }
               }

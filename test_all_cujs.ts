@@ -277,8 +277,16 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
   state = res.nextState;
   assert(state.visa === 'Day 1 CPT', 'Visa successfully transferred to Day 1 CPT');
 
-  const visaInfo = getVisaDisplayInfo(state);
-  assert(visaInfo.visaLabel === 'Day 1 CPT (学籍保底)', 'Visa label is Day 1 CPT (学籍保底)');
+  // 3. Marriage green card availability assertions (Single vs In a Relationship)
+  const singlePoorState: GameState = { ...state, relationship_status: 'single', cash: 2, charm: 10 };
+  const singleRichState: GameState = { ...state, relationship_status: 'single', cash: 10, charm: 10 };
+  const marriedState: GameState = { ...state, relationship_status: 'dating', is_married: false };
+
+  const fallbackEv = events['h1b_fallback_options'];
+  assert(!fallbackEv.choices[0].condition!(singlePoorState), 'Single poor player cannot choose true love marriage');
+  assert(!fallbackEv.choices[1].condition!(singlePoorState), 'Single poor player cannot choose $8w commercial marriage');
+  assert(fallbackEv.choices[1].condition!(singleRichState), 'Single player with $10w cash can choose $8w commercial marriage');
+  assert(fallbackEv.choices[0].condition!(marriedState), 'Player with dating partner can choose true love marriage');
 
   console.log('✅ CUJ 4 Passed\n');
 }

@@ -89,6 +89,8 @@ export const generateInitialState = (): GameState => {
     difficulty_title: '普通难度',
     is_ssr_unlocked,
     status: 'playing',
+    npcs: {},
+    story_flags: {},
     message: bgMessage
   };
 };
@@ -100,6 +102,32 @@ export const generateInitialState = (): GameState => {
 export const midYearEventRouter = (s: GameState): string => {
   const isWorking = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
   const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
+
+  // --- 0. 优先消费长线因果剧情链 (Priority Narrative Arcs) ---
+  // 1) Alex 博士剧情链：Series A 创业合伙人/天使邀请
+  if (s.story_flags?.met_alex && !s.story_flags?.alex_startup_invited && isWorking && s.age >= 24 && s.year >= (Number(s.story_flags.alex_meet_year || 0) + 1)) {
+    return 'alex_startup_series_a';
+  }
+
+  // 2) Alex 博士剧情链：OmniAgent 纳斯达克 IPO / 退出回报结算
+  if ((s.story_flags?.joined_omniagent || s.story_flags?.angel_invest_omniagent) && !s.story_flags?.alex_ipo_done && s.year >= (Number(s.story_flags.omniagent_start_year || 0) + 3)) {
+    return 'alex_omniagent_ipo_exit';
+  }
+
+  // 3) Dave 职场宿敌剧情链：掌握证据后的年度考核摊牌大反击
+  if (s.story_flags?.has_dave_evidence && !s.story_flags?.dave_defeated && isWorking && s.year >= (Number(s.story_flags.dave_conflict_year || 0) + 1)) {
+    return 'dave_retaliation_showdown';
+  }
+
+  // 4) Dave 职场宿敌剧情链：多年后的面试桌攻守易形逆转
+  if (s.story_flags?.dave_defeated && !s.story_flags?.dave_veto_done && (s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)' || s.job_type === 'startup_founder') && s.year >= (Number(s.story_flags.dave_defeated_year || 0) + 2)) {
+    return 'dave_interview_veto';
+  }
+
+  // 5) Sam 极客战友剧情链：Zero-Day 漏洞与黑客项目
+  if (s.story_flags?.met_sam && !s.story_flags?.sam_zero_day_done && s.age >= 24 && s.leetcode >= 25 && Math.random() < 0.35) {
+    return 'sam_garage_zero_day';
+  }
 
   // Economy News Broadcasts
   const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
@@ -433,11 +461,22 @@ export const events: Record<string, GameEvent> = {
   'cn_acm_contest': {
     id: 'cn_acm_contest',
     title: '【校园突发】ACM 区域赛遭遇死锁 Bug',
-    description: '代表学校参加程序设计竞赛，比赛倒计时 15 分钟，核心题目评测机突然返回 Time Limit Exceeded (TLE)！',
+    description: '代表学校参加程序设计竞赛，比赛倒计时 15 分钟，核心题目评测机突然返回 TLE！同队的算法怪才 Sam 正满头大汗狂敲键盘！',
     choices: [
       {
-        text: '冷静打印 Code，用笔手写推导复杂度',
-        effect: (s) => ({ leetcode: s.leetcode + 8, message: '你抓出了隐藏的 $O(N^2)$ 死循环！修改后封榜前压线 AC，拿到了银牌！' }),
+        text: '冷静打印 Code，用笔手写推导复杂度 (与 Sam 并肩死磕)',
+        effect: (s) => ({
+          leetcode: s.leetcode + 8,
+          npcs: {
+            ...(s.npcs || {}),
+            sam: { name: '极客 Sam', role: 'co_founder', affinity: 90, status: 'ally', note: '硬核黑客与全栈极客，ACM 战友' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            met_sam: true
+          },
+          message: '你抓出了隐藏的 $O(N^2)$ 死循环！修改后封榜前压线 AC，拿到了银牌！Sam 拍着你肩膀说：“哥们，以后一起搞大项目！”'
+        }),
         nextEventId: 'cn_college_year3',
       },
       {
@@ -445,7 +484,19 @@ export const events: Record<string, GameEvent> = {
         effect: (s) => {
           const win = Math.random() < 0.45 + (s.leetcode / 200);
           return win
-            ? { leetcode: s.leetcode + 12, cash: s.cash + 0.5, message: '逆天改命！最后一分钟提交绿色 Accepted！全队欢呼，拿下了比赛奖金！' }
+            ? {
+                leetcode: s.leetcode + 12,
+                cash: s.cash + 0.5,
+                npcs: {
+                  ...(s.npcs || {}),
+                  sam: { name: '极客 Sam', role: 'co_founder', affinity: 95, status: 'ally', note: '硬核黑客与全栈极客，ACM 战友' }
+                },
+                story_flags: {
+                  ...(s.story_flags || {}),
+                  met_sam: true
+                },
+                message: '🔥 逆天改命！最后一分钟提交绿色 Accepted！全队欢呼，拿下了比赛奖金！Sam 视你为生死战友！'
+              }
             : { health: s.health - 10, message: '心态太急写出了越界段错误 (SIGSEGV)，遗憾与奖牌失之交臂。' };
         },
         nextEventId: 'cn_college_year3',
@@ -638,16 +689,42 @@ export const events: Record<string, GameEvent> = {
   'college_hackathon_boom': {
     id: 'college_hackathon_boom',
     title: '【校园突发】全美 Hackathon AI 助手爆发',
-    description: '校园阶段，你组队参加全美大学黑客松。比赛倒计时 2 小时，你们的项目因为并发逻辑出现卡顿！',
+    description: '校园阶段，你组队参加全美大学黑客松。主评委是 Stanford 博士、AI 开源先锋 Alex 师兄，以及大厂总监 Dave。比赛倒计时 2 小时，你们的项目因为并发逻辑出现卡顿！',
     choices: [
       {
-        text: '紧急接入 Claude/Cursor 重新优化 Agent 调度层',
-        effect: (s) => ({ leetcode: s.leetcode + 12, cash: s.cash + 1.5, message: ' 逆天夺冠！你们的 AI Agent 演示震撼全场，拿下了冠军并获得了 $1.5w 奖金！' }),
+        text: '紧急接入 Claude/Cursor 重新优化 Agent 调度层 (硬核技术攻坚)',
+        effect: (s) => ({
+          leetcode: s.leetcode + 12,
+          cash: s.cash + 1.5,
+          npcs: {
+            ...(s.npcs || {}),
+            alex: { name: 'Alex 博士', role: 'mentor', affinity: 85, status: 'ally', note: '黑客松伯乐，Stanford AI 先锋' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            met_alex: true,
+            alex_meet_year: s.year
+          },
+          message: '🏆 逆天夺冠！你们的 AI Agent 演示震撼全场，主评委 Alex 博士对你的技术架构赞不绝口，主动加你微信/LinkedIn 并颁发了 $1.5w 冠军奖金！'
+        }),
         nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       },
       {
-        text: '砍掉复杂并发功能，专注于写精致的前端 Demo 演示',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 5), cash: s.cash + 0.5, message: '演示极其流畅！评委夸赞你们具备产品经理思维，获得了最佳人气奖！' }),
+        text: '砍掉复杂并发功能，专注于写精致的前端 Demo 与 PPT 演示',
+        effect: (s) => ({
+          charm: Math.min(25, s.charm + 5),
+          cash: s.cash + 0.5,
+          npcs: {
+            ...(s.npcs || {}),
+            dave: { name: 'Manager Dave', role: 'manager', affinity: 65, status: 'active', note: '大厂总监，极度看重汇报与PPT' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            met_dave: true,
+            dave_meet_year: s.year
+          },
+          message: '✨ 最佳人气奖！大厂总监 Dave 对你的产品汇报与 PPT 演示极为满意，夸赞你具备“大厂管理层潜质”，现场给你发了名片！'
+        }),
         nextEventId: (s: GameState) => ((s.housing_name || '').includes('美硕') || s.is_master) ? 'us_master_grad' : 'us_undergrad_year3',
       }
     ]
@@ -2144,6 +2221,28 @@ export const events: Record<string, GameEvent> = {
     description: '你的 Manager 突然在周五下午 4 点给你发了个 "Quick Sync" 的日历邀请。会上，他用着毫无感情的 corporate 语调表示你的 "impact" 没有 "move the needle"，并将你放入了为期 30 天的 Focus/PIP 计划。',
     choices: [
       {
+        text: '【王牌证据反杀】拿出暗中备份的 40 页 Commit 与沟通记录直接上报 HR 与 VP！',
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off && !!s.story_flags?.has_dave_evidence,
+        hideIfUnavailable: true,
+        reqBadge: '需 掌握证据链',
+        effect: (s) => ({
+          tc: s.tc + 5,
+          health: Math.min(100, s.health + 10),
+          charm: Math.min(25, (s.charm || 10) + 3),
+          npcs: {
+            ...(s.npcs || {}),
+            dave: { name: 'Manager Dave', role: 'manager', affinity: 0, status: 'nemesis', note: '被你反杀的职场宿敌' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            dave_defeated: true,
+            dave_defeated_year: s.year
+          },
+          message: '⚡ 绝地反杀！HR 廉政合规调查组介入，查实该 PIP 属于恶意打击报复！你的 PIP 被当场撤销，Manager 被调岗，公司为你补发了绩效调薪！'
+        }),
+        nextEventId: 'sv_daily_life'
+      },
+      {
         text: '认怂疯狂加班，证明自己的 Synergy',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
@@ -2346,7 +2445,19 @@ export const events: Record<string, GameEvent> = {
           const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
             ? { health: Math.max(0, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: ` 卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
-            : { health: Math.max(0, s.health - 12), message: '你辛辛苦苦写的文档被 Manager 拿去抢了功劳，还是个 Meets。白卷了。' };
+            : { 
+                health: Math.max(0, s.health - 12),
+                npcs: {
+                  ...(s.npcs || {}),
+                  dave: s.npcs?.dave || { name: 'Manager Dave', role: 'manager', affinity: 30, status: 'nemesis', note: '抢占你项目功劳的经理' }
+                },
+                story_flags: {
+                  ...(s.story_flags || {}),
+                  has_dave_evidence: true,
+                  dave_conflict_year: s.year
+                },
+                message: '你辛辛苦苦写的核心文档被 Manager Dave 拿去汇报抢了功劳！好在你暗中留存了全部 Jira Commit 与 Slack 截图证据链，等待时机反击！' 
+              };
         },
         nextEventId: (s) => ((s.message || '').includes('晋升') ? 'promo_celebration' : 'sv_daily_life'),
       },
@@ -5383,6 +5494,351 @@ export const events: Record<string, GameEvent> = {
       {
         text: '清流拒绝！去大厂 MicroKitchen (MK) 薅免费 LaCroix 气泡水',
         effect: (s) => ({ health: Math.min(100, s.health + 5), cash: s.cash + 0.05, message: '你拒绝了消费主义洗脑。周末假装去公司加班，从 MicroKitchen (MK) 顺走了两罐气泡水与坚果，省钱又健康！' }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  // === 职场长线 NPC 与多幕剧情因果链 (Long-term NPC Narrative Arcs) ===
+  'alex_startup_series_a': {
+    id: 'alex_startup_series_a',
+    title: '【硅谷前沿】Alex 博士的咖啡馆深谈',
+    description: '在 Palo Alto University Ave 的 Philz Coffee，当年的伯乐 Alex 博士递给你一杯 Mint Mojito。他神情兴奋地推过来一份 Pitch Deck：“我们正在打造具身智能与多智能体底座——OmniAgent，刚拿到红杉沙丘路 $1200w Series A 领投。来做早期核心合伙人吧，期权管够！”',
+    imageUrl: 'images/ai_startup.jpg',
+    choices: [
+      {
+        text: '【All-in 核心合伙人】降薪加入，拿 2.5% 早期原始股权 (转为 Startup 核心)',
+        condition: (s) => !s.laid_off && s.job_type !== 'unemployed',
+        effect: (s) => ({
+          job_type: 'startup',
+          company: 'OmniAgent AI',
+          tc: Math.max(16, Math.floor((s.tc || 25) * 0.65)),
+          health: Math.max(0, s.health - 10),
+          npcs: {
+            ...(s.npcs || {}),
+            alex: { name: 'Alex 博士', role: 'founder', affinity: 95, status: 'ally', company: 'OmniAgent AI', note: 'OmniAgent 创始人，并肩作战' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            alex_startup_invited: true,
+            joined_omniagent: true,
+            omniagent_start_year: s.year
+          },
+          message: '🚀 你正式以早期核心合伙人身份加入 OmniAgent AI！手握 2.5% 原始股权，与 Alex 一起在硅谷车库与算力集群日夜攻坚！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【天使注资支持】出资 $10w 个人现金作为天使轮投资人 (拿早期投资份额)',
+        condition: (s) => s.cash >= 10,
+        reqBadge: '需现金≥$10w',
+        effect: (s) => ({
+          cash: s.cash - 10,
+          npcs: {
+            ...(s.npcs || {}),
+            alex: { name: 'Alex 博士', role: 'founder', affinity: 90, status: 'ally', company: 'OmniAgent AI', note: '天使投资项目创始人' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            alex_startup_invited: true,
+            angel_invest_omniagent: true,
+            omniagent_start_year: s.year
+          },
+          message: '💰 你以个人天使身份给 OmniAgent 开出 $10w 支票！Alex 感动地握住你的手：“兄弟，上市敲钟那天第一排有你的位置！”'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【稳健保守】婉拒全职加入，答应担任外部兼职技术顾问 (保持盟友关系)',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 3),
+          network: Math.min(100, (s.network || 10) + 15),
+          npcs: {
+            ...(s.npcs || {}),
+            alex: { name: 'Alex 博士', role: 'founder', affinity: 85, status: 'ally', company: 'OmniAgent AI', note: '独角兽创始人，外部顾问' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            alex_startup_invited: true,
+            omniagent_advisor: true
+          },
+          message: '你保持了大厂的稳定生活，并作为顾问为 Alex 介绍了多位大牛校友。Alex 依然视你为最信赖的技术智囊！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'alex_omniagent_ipo_exit': {
+    id: 'alex_omniagent_ipo_exit',
+    title: '【前沿分水岭】OmniAgent 终局生死战与退出评估',
+    description: '创业三年，Alex 博士创办的 OmniAgent AI 迎来了决定生死与估值的终局大考。大模型算力大战进入白热化，资本市场正在对公司进行深度尽调与估值清算...',
+    imageUrl: 'images/ai_startup.jpg',
+    choices: [
+      {
+        text: '【全职合伙人结算】清算团队期权股权与终局退出命运',
+        condition: (s) => !!s.story_flags?.joined_omniagent,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          // 真实硅谷创业退出概率模型：
+          // 1. 纳斯达克 IPO 独角兽 (极低概率 12% 基础，牛市+8%，高算法+5%，最高不超过 25%)
+          // 2. 科技巨头高溢价并购 Acqui-hire (45% 概率)
+          // 3. 算力烧光破产清算 (约 43% 概率)
+          const bullBonus = s.macro_economy === 'bull' ? 0.08 : s.macro_economy === 'bear' ? -0.06 : 0;
+          const techBonus = s.leetcode >= 60 ? 0.05 : 0;
+          const luckBonus = (s.luck || 20) / 1000;
+          const ipoProb = Math.max(0.05, Math.min(0.25, 0.12 + bullBonus + techBonus + luckBonus));
+          const acquiHireProb = 0.45;
+          const rand = Math.random();
+
+          if (rand < ipoProb) {
+            return {
+              cash: s.cash + 50,
+              stocks: (s.stocks || 0) + 40,
+              health: Math.min(100, s.health + 10),
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '🎉 纳斯达克敲钟！OmniAgent 克服万难成功上市 (代码 $OMNI)！虽然经历了多轮股权稀释，但作为早期核心员工你的期权依然套现了 $50w 现金与 $40w 股票！'
+            };
+          } else if (rand < ipoProb + acquiHireProb) {
+            return {
+              cash: s.cash + 20,
+              stocks: (s.stocks || 0) + 15,
+              job_type: 'big_tech',
+              company: 'google',
+              level: s.level === 'L6 (Staff)' ? 'L6 (Staff)' : 'L5 (Senior)',
+              tc: Math.max(s.tc, 34),
+              health: Math.min(100, s.health + 5),
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '🤝 巨头收购！Google 以 1.5 亿美元收购 OmniAgent 团队！作为早期技术骨干，你分到了 $20w 现金与 $15w 留任股票，并被吸纳入大厂担任 Senior 架构师！'
+            };
+          } else {
+            return {
+              job_type: 'unemployed',
+              laid_off: true,
+              tc: 0,
+              leetcode: s.leetcode + 12,
+              network: Math.min(100, (s.network || 10) + 8),
+              health: Math.max(0, s.health - 6),
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '💔 算力断裂！大模型集群烧光了融资储备，公司进入破产清算。期权化为废纸，但你沉淀了硬核 AI 架构落地能力，在求职市场备受大厂抢夺！'
+            };
+          }
+        },
+        nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_year_end_settlement'
+      },
+      {
+        text: '【天使投资人结算】清算天使轮协议与投资回报',
+        condition: (s) => !!s.story_flags?.angel_invest_omniagent,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const bullBonus = s.macro_economy === 'bull' ? 0.08 : s.macro_economy === 'bear' ? -0.06 : 0;
+          const ipoProb = Math.max(0.05, Math.min(0.25, 0.12 + bullBonus));
+          const acquiHireProb = 0.45;
+          const rand = Math.random();
+
+          if (rand < ipoProb) {
+            return {
+              cash: s.cash + 30,
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '💎 投资大捷！OmniAgent 纳斯达克挂牌上市，你的 $10w 天使轮投资获得了 3 倍退出回报 (净回款 $30w 现金)！'
+            };
+          } else if (rand < ipoProb + acquiHireProb) {
+            return {
+              cash: s.cash + 13,
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '🤝 收购退出！OmniAgent 被大厂收购清偿优先股，你的 $10w 天使投资拿回了 $13w 本金与少量收益。'
+            };
+          } else {
+            return {
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '💸 投资失利！OmniAgent 算力耗尽清算倒闭，你的 $10w 天使投资打了水漂，交了一笔昂贵的硅谷天使学费。'
+            };
+          }
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【朋友圈见证】在朋友圈转发 OmniAgent 商业新闻并为老友 Alex 点赞',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 1),
+          story_flags: {
+            ...(s.story_flags || {}),
+            alex_ipo_done: true
+          },
+          message: '你在朋友圈见证了初创团队在 AI 浪潮中的商战起伏。Alex 看到后发来私信：“无论成败，感谢一路以来的建议与支持！”'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'dave_retaliation_showdown': {
+    id: 'dave_retaliation_showdown',
+    title: '【绝地反击】Manager Dave 闭门考核摊牌战',
+    description: '年度闭门考核会上，Manager Dave 故技重施，试图将跨部门核心基建成果归功于他自己，并以“跨组对齐不达标”为由在系统里给你打了 Needs Improvement。但他不知道，你早已布下了天罗地网！',
+    choices: [
+      {
+        text: '【雷霆出击】向 HR 廉政合规组与 Skip-level VP 提交 40 页证据链 (反向击溃 Dave)',
+        condition: (s) => !!s.story_flags?.has_dave_evidence,
+        reqBadge: '需 掌握证据链',
+        effect: (s) => {
+          const cur = s.level || 'L4';
+          const nextLvl = (cur === 'L3') ? 'L4' : (cur === 'L4') ? 'L5 (Senior)' : cur;
+          return {
+            tc: s.tc + 4.5,
+            level: nextLvl,
+            health: Math.min(100, s.health + 8),
+            charm: Math.min(25, (s.charm || 10) + 3),
+            npcs: {
+              ...(s.npcs || {}),
+              dave: { name: 'Manager Dave', role: 'manager', affinity: 0, status: 'nemesis', note: '职场宿敌，被你的审计证据直接击溃' }
+            },
+            story_flags: {
+              ...(s.story_flags || {}),
+              dave_defeated: true,
+              dave_defeated_year: s.year
+            },
+            message: '⚡ 证据确凿！VP 亲自介入调查，确认 Dave 存在严重抢占成果与职场霸凌行为！Dave 被撤职调离，你因硬核技术与正直表现获得常规绩效调薪 +$4.5w！'
+          };
+        },
+        nextEventId: 'promo_celebration'
+      },
+      {
+        text: '【实力跳槽降维打击】手握扎实代码，连夜接下 Meta/Nvidia 的 L5 Senior Offer',
+        condition: (s) => s.leetcode >= 45,
+        effect: (s) => ({
+          company: 'meta',
+          job_type: 'big_tech',
+          level: 'L5 (Senior)',
+          tc: Math.max(s.tc + 3.5, 32),
+          health: Math.min(100, s.health + 5),
+          npcs: {
+            ...(s.npcs || {}),
+            dave: { name: 'Manager Dave', role: 'manager', affinity: 10, status: 'departed', note: '前组经理，已被你甩在身后' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            dave_defeated: true,
+            dave_defeated_year: s.year
+          },
+          message: '🔥 优雅离场！你当场甩出 2 周离职信，带走核心上下文跳槽 Meta！Dave 的烂摊子彻底无人收拾，在部门大会上狼狈不堪！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【据理力争】在闭门考核中据理力争驳斥不合理指标，虽未扳倒 Dave 但守住了底线',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 8),
+          story_flags: {
+            ...(s.story_flags || {}),
+            dave_defeated: true,
+            dave_defeated_year: s.year
+          },
+          message: '你用详实的工作日志据理力争，使得 Dave 不得不收敛了恶意针对。你保住了正常评级，并决定加快晋升或跳槽步伐。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'dave_interview_veto': {
+    id: 'dave_interview_veto',
+    title: '【命运轮回】面试官桌对面的熟悉面孔',
+    description: '作为技术委员会核心考官，你打开今天的 Staff 架构师候选人简历。当抬头看到推门进来的应聘者时，双方都愣住了——居然是头发稀疏、略显疲态的 Manager Dave！当年不可一世的他，如今在求职市场上辗转求生。',
+    choices: [
+      {
+        text: '【一票否决 (Veto)】在系统写下 "Technical Depth 不足，Strong Reject"',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 3),
+          health: Math.min(100, s.health + 10),
+          story_flags: {
+            ...(s.story_flags || {}),
+            dave_veto_done: true
+          },
+          message: '⚖️ 天道好轮回！你在评语写道：“缺乏一线架构实战能力，倾向于 PPT 汇报，与团队技术文化不符。” 终面一票否决！多年怨气一扫而空！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【招入麾下】“准了！招进来当我的汇报下属，天天给我写对齐周报”',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 5),
+          health: Math.min(100, s.health + 10),
+          npcs: {
+            ...(s.npcs || {}),
+            dave: { name: 'Manager Dave', role: 'manager', affinity: 40, status: 'active', note: '如今成为向你汇报的下属' }
+          },
+          story_flags: {
+            ...(s.story_flags || {}),
+            dave_veto_done: true
+          },
+          message: '😈 攻守易形！Dave 诚惶诚恐地接了 Offer。现在轮到他每周五下午 4 点向你诚惶诚恐地汇报 1:1 了！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【客观包容】不带个人恩怨，就事论事客观评估技术表现',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 6),
+          network: Math.min(100, (s.network || 10) + 10),
+          story_flags: {
+            ...(s.story_flags || {}),
+            dave_veto_done: true
+          },
+          message: '你展现了硅谷顶级技术领袖的从容格局。Dave 在面试结束后深深向你鞠躬致谢，对当年的行为悔恨不已。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'sam_garage_zero_day': {
+    id: 'sam_garage_zero_day',
+    title: '【黑客车库】极客 Sam 的 Zero-Day 漏洞探险',
+    description: '当年一起在 ACM 赛场拼杀的怪才极客 Sam 突然给你发来加密 Telegram 消息：“哥们！我发现了一家头部 AI 算力云平台的底层集群权限逃逸漏洞 (Zero-Day)！按官方漏洞悬赏 (Bug Bounty) 规则能领 $6w 赏金！今晚来我车库一起把 PoC 跑通！”',
+    choices: [
+      {
+        text: '【通宵协作】带上电脑去 Sam 车库通宵验证漏洞 PoC',
+        condition: (s) => s.leetcode >= 25,
+        effect: (s) => {
+          const pass = (s.leetcode >= 40) || Math.random() < 0.65;
+          return pass
+            ? {
+                cash: s.cash + 3.0,
+                leetcode: s.leetcode + 8,
+                health: Math.max(0, s.health - 8),
+                npcs: {
+                  ...(s.npcs || {}),
+                  sam: { name: '极客 Sam', role: 'co_founder', affinity: 100, status: 'ally', note: '生死战友，安全黑客' }
+                },
+                story_flags: {
+                  ...(s.story_flags || {}),
+                  sam_zero_day_done: true
+                },
+                message: '🎯 提交成功！厂商安全团队半夜紧急修复并向你们转账 $6w 赏金！你与 Sam 五五分账，净入账 +$3w 现金！'
+              }
+            : {
+                health: Math.max(0, s.health - 10),
+                leetcode: s.leetcode + 4,
+                story_flags: {
+                  ...(s.story_flags || {}),
+                  sam_zero_day_done: true
+                },
+                message: '厂商回复称该问题为“已知设计”，白喝了 6 罐无糖可乐，不过你与 Sam 的配合愈发默契。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '劝阻 Sam 并注意安全合规，专注于大厂正规架构工作',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 5),
+          story_flags: {
+            ...(s.story_flags || {}),
+            sam_zero_day_done: true
+          },
+          message: '你提醒了 Sam 遵守合法披露准则。Sam 听从了你的建议，避免了潜在的法律风险。'
+        }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]

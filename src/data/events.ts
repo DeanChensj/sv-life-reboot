@@ -2165,6 +2165,9 @@ export const events: Record<string, GameEvent> = {
         },
         nextEventId: (s) => {
           if (s.status === 'win') return 'end';
+          if ((s.cash + (s.stocks || 0)) >= s.win_threshold && !s.has_reached_initial_fire) {
+            return 'fire_milestone_choice';
+          }
           if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
             return 'h1b_final_crisis';
           }
@@ -3184,7 +3187,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 20),
           message: '【进入自由探索模式】你决定留在湾区继续享受生活与打拼！新的阶梯目标设定为 $800w 舒适 FIRE（尽情体验跑车豪宅、投资房与多元人生）。'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '【登顶硅谷 · 冲刺奢华 FIRE 目标 ($1500w+)】追逐顶级独角兽与 Atherton 庄园',
@@ -3196,7 +3199,7 @@ export const events: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 20),
           message: '【豪门巨鳄模式】你的雄心已超越普通打工人！向着 $1500w 奢华 FIRE 与硅谷顶层名流进军！'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',

@@ -1481,7 +1481,7 @@ export const events: Record<string, GameEvent> = {
       // 1. 【每年专属动态轮替机遇池】 (每年动态激活 1~2 个专属限时奇遇)
       {
         text: '【限时机遇：独角兽挖角】收到前沿 AI 独角兽 VP 亲自发来的免初筛直通终面邀请',
-        condition: (s) => isOpportunityActiveThisYear(s, 'opp_cursor_hunt') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.last_limited_opp_year !== s.year,
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_cursor_hunt') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
           const pass = s.leetcode >= 45 && Math.random() < 0.65;
@@ -2385,13 +2385,13 @@ export const events: Record<string, GameEvent> = {
               }
             }
 
-            // Merit raise / RSU refresh check (45% chance)
+            // Merit raise / RSU refresh check (45% chance) for corporate tech employees
             let updatedTC = s.tc;
             let meritMsg = '';
-            const isWorking = !s.laid_off && s.job_type && s.job_type !== 'unemployed';
+            const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
             const refreshChance = newEconomy === 'bull' ? 0.50 : newEconomy === 'bear' ? 0.15 : 0.35;
             
-            if (isWorking && Math.random() < refreshChance) {
+            if (isEmployee && Math.random() < refreshChance) {
               const maxCapByLevel: Record<string, number> = {
                 'L3': 24,
                 'L4': 34,
@@ -2412,6 +2412,12 @@ export const events: Record<string, GameEvent> = {
                 const refreshAmt = Math.random() < 0.3 ? (newEconomy === 'bull' ? 2.5 : 1.5) : (newEconomy === 'bear' ? 0.5 : 1.0);
                 updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
                 meritMsg = ` 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+              }
+            } else if (s.job_type === 'startup_founder' && !s.laid_off) {
+              if (newEconomy === 'bull') {
+                meritMsg = ' 初创团队业务在牛市大环境中健康增长，公司产品顺利推进！';
+              } else if (newEconomy === 'bear') {
+                meritMsg = ' 宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬！';
               }
             }
 
@@ -4067,7 +4073,7 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !!s.hop_offers && s.hop_offers.length >= 1,
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !!s.hop_offers && s.hop_offers.length >= 1,
         effect: (s) => ({
           tc: s.tc + 4.5,
           health: Math.min(100, s.health + 5),
@@ -4077,20 +4083,23 @@ export const events: Record<string, GameEvent> = {
       },
       {
         text: '【留任原厂】看好原厂股票与团队氛围，婉拒全部外部 Offer',
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: () => ({
           message: '你经过慎重考虑，决定婉拒外部机会，继续深耕原厂业务。'
         }),
         nextEventId: midYearEventRouter,
       },
       {
-        text: '【婉拒 Offer / 暂不入职】继续享受 Gap Year 慢生活',
-        condition: (s) => s.laid_off || s.job_type === 'unemployed',
-        effect: () => ({
+        text: '【放弃签约 / 保持现状】婉拒外部 Offer，继续深耕创业/操盘/慢生活',
+        condition: (s) => s.laid_off || s.job_type === 'unemployed' || s.job_type === 'trader' || s.job_type === 'startup_founder',
+        effect: (s) => ({
           laid_off: false,
-          job_type: 'unemployed',
-          tc: 0,
-          message: '你经过慎重考虑，决定婉拒当前所有 Offer，继续享受无拘无束的 Gap Year 慢生活。'
+          tc: (s.job_type === 'unemployed' || s.laid_off) ? 0 : s.tc,
+          message: s.job_type === 'startup_founder'
+            ? '你经过慎重考虑，决定婉拒打工 Offer，继续作为 CEO 带领自己的初创团队全力以赴！'
+            : (s.job_type === 'trader'
+              ? '你经过慎重考虑，决定婉拒打工 Offer，继续作为全职 Trader 自由操盘！'
+              : '你经过慎重考虑，决定婉拒当前所有 Offer，继续享受无拘无束的 Gap Year 慢生活。')
         }),
         nextEventId: midYearEventRouter,
       }

@@ -249,45 +249,49 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
       {/* Header Title Section */}
-      <div className="mb-4 sm:mb-6 relative">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] text-emerald-400 uppercase">
-              SV ENGINE V2.5 // BENTO HUD
+      <div className="mb-4 sm:mb-5 relative">
+        <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-zinc-800/60">
+          <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
+            <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase whitespace-nowrap">
+              SV ENGINE V2.5
+            </span>
+            <span className="text-zinc-600 font-mono text-[10px] hidden sm:inline">//</span>
+            <span className="text-zinc-500 font-mono text-[10px] tracking-wider uppercase hidden sm:inline whitespace-nowrap">
+              BENTO HUD
             </span>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Compact Quick Action Buttons */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {onToggleSound && (
               <button
                 onClick={onToggleSound}
                 title={isMuted ? '开启音效' : '静音'}
-                className={`p-2 rounded-xl border font-mono font-bold text-xs flex items-center justify-center active:scale-95 transition-all cursor-pointer ${
+                className={`p-1.5 rounded-lg border font-mono text-xs flex items-center justify-center active:scale-95 transition-all cursor-pointer ${
                   isMuted 
                     ? 'bg-zinc-900/80 hover:bg-zinc-800 text-zinc-500 border-zinc-800' 
-                    : 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/30 shadow-md shadow-indigo-500/10'
+                    : 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border-indigo-500/30'
                 }`}
               >
                 {isMuted ? (
-                  <svg className="w-4 h-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                  <svg className="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
                 ) : (
-                  <svg className="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  <svg className="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 )}
               </button>
             )}
             {onOpenShop && gameState.job_type !== undefined && (
               <button
                 onClick={onOpenShop}
-                className="relative px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/40 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/10 active:scale-95 transition-all cursor-pointer group"
+                className="relative px-2 sm:px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/40 font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm active:scale-95 transition-all cursor-pointer group whitespace-nowrap"
               >
-                <svg className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <svg className="w-3 h-3 text-amber-400 group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span>[S] 商城</span>
                 {!hasOpenedShop && (
                   <>
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute -top-0.5 -right-0.5" />
-                    <span className="w-2 h-2 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping absolute -top-0.5 -right-0.5" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5" />
                   </>
                 )}
               </button>
@@ -295,18 +299,18 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
             {onOpenCodex && (
               <button
                 onClick={onOpenCodex}
-                className="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-purple-500/10 active:scale-95 transition-all cursor-pointer"
+                className="px-2 sm:px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
-                <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
+                <svg className="w-3 h-3 text-purple-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
                 <span>[C] 图鉴</span>
               </button>
             )}
             {onOpenTimeline && (
               <button
                 onClick={onOpenTimeline}
-                className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 font-mono font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-sky-500/10 active:scale-95 transition-all cursor-pointer"
+                className="px-2 sm:px-2.5 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
-                <svg className="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg className="w-3 h-3 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>[T] 大事记</span>
               </button>
             )}
@@ -608,7 +612,13 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
                     }`}
                     title={npc.note || ''}
                   >
-                    <span>{isAlly ? '🤝' : isNemesis ? '⚡' : '👤'}</span>
+                    {isAlly ? (
+                      <svg className="w-3 h-3 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    ) : isNemesis ? (
+                      <svg className="w-3 h-3 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    ) : (
+                      <svg className="w-3 h-3 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    )}
                     <span>{npc.name}</span>
                     <span className="text-[10px] font-mono opacity-80">
                       ({isAlly ? '坚实盟友' : isNemesis ? '职场宿敌' : npc.role === 'mentor' ? '导师' : npc.role === 'manager' ? '上级' : '熟人'})

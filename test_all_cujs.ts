@@ -172,6 +172,19 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   assert(tcBreakdown.postTaxBase === 16.5, 'Post-tax cash is $16.5w');
   assert(tcBreakdown.postTaxRSU === 13.5, 'Post-tax RSU is $13.5w');
 
+  // 11. Housing event routing check: Renter must never trigger house_warming_party
+  const renterState: GameState = {
+    ...state,
+    has_housing: true,
+    housing_name: 'Cupertino 2b2b合租',
+    season_stage: 'h2',
+  };
+  for (let i = 0; i < 50; i++) {
+    const routed = midYearEventRouter(renterState);
+    assert(routed !== 'house_warming_party', 'Renting player must never trigger house_warming_party');
+    assert(routed !== 'property_supplemental_tax_hike', 'Renting player must never trigger property tax hike');
+  }
+
   console.log('✅ CUJ 1 Passed\n');
 }
 

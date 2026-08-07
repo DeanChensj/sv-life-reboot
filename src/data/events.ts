@@ -256,7 +256,7 @@ export const midYearEventRouter = (s: GameState): string => {
   }
 
   const isHomeowner = s.has_housing && !!s.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(s.housing_name);
-  if (s.has_housing && Math.random() < 0.25) {
+  if (isHomeowner && Math.random() < 0.25) {
     return 'house_warming_party';
   }
 

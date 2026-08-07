@@ -2465,5 +2465,111 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+
+  'friday_p0_outage_crisis': {
+    id: 'friday_p0_outage_crisis',
+    title: '【周五警报】下午 4:55 的生产环境 P0 线上大故障',
+    description: '周五下午 4:55，你正准备合上电脑去吃火锅，隔壁组新来的同事强行推了一个未经充分压测的 Hotfix，导致生产环境主站与结算流水全线瘫痪！Slack 的 #war-room 警报把整个部门上百人炸醒...',
+    choices: [
+      {
+        text: '【救火队长一战封神】主动挺身而出通宵排查，连夜定位 Root Cause 并完成回滚',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 8),
+          network: Math.min(100, (s.network || 0) + 3),
+          cash: s.cash + 0.5,
+          message: '【凌晨救火与高管点赞】连灌两罐红牛，在 War Room 排查到凌晨 4 点终于定位到坏配置并修复。虽然周末泡汤、眼圈发黑，但在全组事后复盘邮件中获得了高管点名感谢与特别奖金。'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【战术跟进与留痕取证】在 Slack 回一句“Looking into it”，默默截图保存证据链',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 2),
+          message: '【专业避坑与责任厘清】你深知盲目插手只会引发更大混乱。你慢条斯理地在群里跟进，同时保存了完整错误日志与未经代码评审的发布记录，周一复盘会上成功将责任撇得干干净净。'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【合上电脑开启免打扰】假装已经在前往 Tahoe 滑雪没有信号的 I-80 山路上',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 6),
+          network: Math.max(0, (s.network || 0) - 2),
+          message: '【彻底断联与纯享周末】你将手机调至勿扰模式，如期去参加了周五精酿聚会。周一到公司发现问题已被其他同事解决，虽然被 Oncall 老板念叨了两句，但你的周末过得极其惬意。'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'empty_promotion_promise': {
+    id: 'empty_promotion_promise',
+    title: '【职场博弈】老板的画饼神功与年底升职卡位',
+    description: '年中 1-on-1 时老板拍着胸脯向你保证：“只要你把这个没人愿意接的 Legacy 屎山架构啃下来，年底 Promo 优先推你！”然而到了年底评审会，老板满脸无奈地叹气：“今年委员会 Headcount 极其惨烈，明年肯定优先推你...”',
+    choices: [
+      {
+        text: '【开启 Quiet Quitting 摸鱼】看透大厂零和博弈，准点下班把精力留给自己',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 8),
+          message: '【拒绝内耗与专注生活】你关掉了下班后的工作通知，准点打卡下班去健身、做饭、睡足 8 小时。既然没有实际加薪，就把精力转化为实打实的身体健康与内心宁静。'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【化愤怒为刷题动力】推掉无意义加班，闭关两个月重刷 LeetCode 备战跳槽',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 6),
+          leetcode: s.leetcode + 12,
+          message: '【重拾手感与蓄力跳槽】被画饼的憋屈激发了你的斗志。你推掉了周末应酬，闭关重刷 Hard 题与系统设计。算法手感重回巅峰，准备在即将到来的跳槽季狠狠教老板做人。'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【私下联系 Skip-level 申请转组】寻找跨部门更具上升空间的明星业务线',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 3),
+          network: Math.min(100, (s.network || 0) + 2),
+          charm: Math.min(25, s.charm + 1),
+          message: '【跨部门破局与人脉铺路】你没有当场翻脸，而是私下找隔壁业务线的 Director 喝咖啡，凭借扎实的项目交付口碑拿到了新团队的接收意向，为无缝转岗埋下了伏笔。'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'multi_timezone_calendar_hell': {
+    id: 'multi_timezone_calendar_hell',
+    title: '【跨国协作】跨时区日历地狱与日夜颠倒',
+    description: '公司大力推行全球矩阵协作，你的日历被排成了跨时区噩梦：早上 7:30 对接欧洲团队，下午对齐加州总部，深夜 11 点和亚洲研发中心开 Architecture Review。一天跨越三个半球，睡眠彻底碎成粉末...',
+    choices: [
+      {
+        text: '【全天候硬扛跨时区沟通】靠黑咖啡与褪黑素支撑，争取跨国项目的国际影响力',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 8),
+          network: Math.min(100, (s.network || 0) + 3),
+          charm: Math.min(25, s.charm + 1),
+          message: '【全球影响力与黑眼圈】早上在被窝里对接伦敦，深夜在书房连线北京。虽然作息紊乱且黑眼圈深重，但你在跨国团队中树立了极强的技术号召力与跨区域影响力。'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【整顿职场推行异步沟通】Decline 掉所有非核心时段会议，强推文档与 PR 交流',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 5),
+          network: Math.max(0, (s.network || 0) - 1),
+          message: '【划定边界与文档留痕】你在日历上锁定了免打扰时段，要求所有越洋问题一律通过 Google Doc 和 PR 异步留痕。睡眠质量明显恢复，工作效率反而大幅提升。'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【申请调动到纯北美本地 Infra 组】告别跨国矩阵，回归加州朝九晚五',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 4),
+          leetcode: s.leetcode + 2,
+          message: '【回归正常作息】你向老板申请调动到只对接加州总部的底层基础设施组。告别了半夜和清晨的夺命连环会，你的生活重新回归了规律的加州阳光。'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
   }
 };

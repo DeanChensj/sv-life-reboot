@@ -181,6 +181,9 @@ export const midYearEventRouter = (s: GameState): string => {
      if (isWorking && Math.random() < 0.25) workEvents.push('influencer_vp_drama');
      if (isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && Math.random() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
      if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
+     if (isWorking) {
+       workEvents.push('friday_p0_outage_crisis', 'empty_promotion_promise', 'multi_timezone_calendar_hell');
+     }
 
      return workEvents[Math.floor(Math.random() * workEvents.length)];
   }

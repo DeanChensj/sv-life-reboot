@@ -943,37 +943,6 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         nextEventId: midYearEventRouter,
       },
-      {
-        text: '【家庭生活：Napa 酒庄度假】带伴侣前往 Napa 谷品酒度假，优化家庭双职工理财',
-        condition: (s) => s.relationship_status === 'married' || s.is_married || s.relationship_status === 'dating',
-        hideIfUnavailable: true,
-        effect: (s) => {
-          const isMarriedNow = s.relationship_status === 'married' || s.is_married;
-          return {
-            mid_year: true, season_stage: 'h1',
-            health: Math.min(100, s.health + 10),
-            cash: isMarriedNow ? s.cash + 1.5 : Math.max(0, s.cash - 0.5),
-            charm: Math.min(25, (s.charm || 10) + 2),
-            message: isMarriedNow 
-              ? '【家庭甜度与财富双收】打卡 Napa 米其林与酒庄，夫妻双方合理规划了家庭 401k 与 Backdoor Roth IRA，家庭净资产稳健增长！'
-              : '【浪漫热恋周末】在 Napa 阳光与葡萄藤下度过了浪漫周末，两人感情迅速升温，职场疲惫一扫而空！'
-          };
-        },
-        nextEventId: midYearEventRouter,
-      },
-      {
-        text: '【湾区省钱作战】打卡大华 99 特价便当与 CostCo 拼单，极限降低生活能耗',
-        condition: (s) => s.cash < 15 && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
-        hideIfUnavailable: true,
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          cash: s.cash + 0.8,
-          health: Math.min(100, s.health + 3),
-          message: '【极简挂壁大作战】凭借 CostCo 烤鸡与超市特价便当，今年成功省下 $0.8w 生活开支，磨砺了坚韧的极简生存心态！'
-        }),
-        nextEventId: midYearEventRouter,
-      },
-
       // 3. 【常规年度重心】 (点击后进入年中/年底结算)
       {
         text: '【年度重心：疯狂内卷】拼命加班冲 Perf，争取加薪与升职',

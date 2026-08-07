@@ -1,5 +1,6 @@
 import type { GameState, GameEvent } from '../types';
 import { safeStorage } from '../utils/safeStorage';
+import { getTCBreakdown } from '../utils/gameStateSelectors';
 
 // Initial State
 
@@ -1826,34 +1827,13 @@ export const events: Record<string, GameEvent> = {
              currentStocks = newStocksVal;
            }
            
-           // Income split (50% base cash, 50% RSU stocks for tech workers)
-           let preTaxBase = 0;
-           let preTaxRSU = 0;
-           
-           if (!s.laid_off && s.job_type !== 'unemployed' && s.tc > 0) {
-             if (s.job_type === 'trader' || s.job_type === 'startup_founder' || s.job_type === 'quant' || s.job_type === 'big_tech') {
-               preTaxBase = s.tc; // 交易员、创始人、Quant、养老厂(big_tech) 全现金
-             } else if (s.job_type === 'startup') {
-               preTaxBase = s.tc * 0.5;
-               preTaxRSU = s.tc * 0.5; // startup 股权/期权 50/50
-             } else if (s.job_type === 'tiktok') {
-               preTaxBase = s.tc * 0.7;
-               preTaxRSU = s.tc * 0.3; // 字节现金多
-             } else if (s.company === 'meta' || s.job_type === 'nvidia') {
-               preTaxBase = s.tc * 0.4;
-               preTaxRSU = s.tc * 0.6; // Meta/NVDA 股票多
-             } else {
-               preTaxBase = s.tc * 0.5;
-               preTaxRSU = s.tc * 0.5; // 其他大厂 50/50 (如 Amazon)
-             }
-           }
-           
-           const rsuMsg = (currentStocks > 0 || preTaxRSU > 0) 
-             ? (newEconomy === 'bull' ? ' (牛市加持股票资产增值 1.25x)' : newEconomy === 'bear' ? ' (熊市打击股票资产缩水 0.75x)' : '')
-             : '';
-             
-           const postTaxBase = preTaxBase * 0.75; 
-           const postTaxRSU = preTaxRSU * 0.75;
+           // Standardized compensation split (Cash & RSU)
+           const tcInfo = getTCBreakdown(s);
+           const preTaxBase = tcInfo.preTaxBase;
+           const preTaxRSU = tcInfo.preTaxRSU;
+           const postTaxBase = tcInfo.postTaxBase;
+           const postTaxRSU = tcInfo.postTaxRSU;
+            const rsuMsg = preTaxRSU > 0 ? ` 【RSU 股票归属】本年度归属股票税后 +${postTaxRSU.toFixed(1)}w！` : '';
            
            currentStocks += postTaxRSU; // Vested RSUs go to stock account
            

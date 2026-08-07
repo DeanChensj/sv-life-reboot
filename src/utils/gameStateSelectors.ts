@@ -232,3 +232,89 @@ export function getHousingDisplayInfo(state: GameState): HousingDisplayInfo {
     isHomeowner,
   };
 }
+
+export interface TCBreakdown {
+  preTaxTC: number;
+  preTaxBase: number;
+  preTaxRSU: number;
+  postTaxBase: number;
+  postTaxRSU: number;
+  taxRate: number;
+  taxAmount: number;
+  rsuTaxAmount: number;
+}
+
+/**
+ * Pure calculation of annual TC Cash / RSU breakdown and taxes.
+ * Standardizes compensation split across Big Tech, Meta/NVDA, TikTok, Startups, and Quants.
+ */
+export function getTCBreakdown(state: GameState): TCBreakdown {
+  const preTaxTC = state.tc > 0 && !state.laid_off && state.job_type !== 'unemployed' ? state.tc : 0;
+  
+  if (preTaxTC <= 0) {
+    return {
+      preTaxTC: 0,
+      preTaxBase: 0,
+      preTaxRSU: 0,
+      postTaxBase: 0,
+      postTaxRSU: 0,
+      taxRate: 0.25,
+      taxAmount: 0,
+      rsuTaxAmount: 0,
+    };
+  }
+
+  let baseRatio = 0.55;
+  let rsuRatio = 0.45;
+
+  // 1. High Cash / Bonus based roles: Quant, Trader, Domestic Tech, ICC
+  if (state.job_type === 'trader' || state.job_type === 'quant') {
+    baseRatio = 0.85;
+    rsuRatio = 0.15;
+  } else if (state.job_type === 'cn_tech' || state.company === 'cn_big_tech' || state.company === 'icc') {
+    baseRatio = 1.0;
+    rsuRatio = 0.0;
+  }
+  // 2. High Equity Tech: Meta, Nvidia, AI Research
+  else if (state.company === 'meta' || state.company === 'nvidia' || state.job_type === 'nvidia' || state.job_type === 'ai_research') {
+    baseRatio = 0.40;
+    rsuRatio = 0.60;
+  }
+  // 3. High Cash Big Tech: TikTok
+  else if (state.company === 'tiktok' || state.job_type === 'tiktok') {
+    baseRatio = 0.70;
+    rsuRatio = 0.30;
+  }
+  // 4. Early Stage Startup & Founders
+  else if (state.job_type === 'startup') {
+    baseRatio = 0.50;
+    rsuRatio = 0.50;
+  } else if (state.job_type === 'startup_founder') {
+    baseRatio = 0.35;
+    rsuRatio = 0.65;
+  }
+  // 5. Standard Big Tech (Google, Apple, Microsoft, Amazon, Cisco, Adobe, etc.)
+  else {
+    baseRatio = 0.55;
+    rsuRatio = 0.45;
+  }
+
+  const preTaxBase = parseFloat((preTaxTC * baseRatio).toFixed(2));
+  const preTaxRSU = parseFloat((preTaxTC * rsuRatio).toFixed(2));
+  const taxRate = 0.25;
+  const taxAmount = parseFloat((preTaxBase * taxRate).toFixed(2));
+  const postTaxBase = parseFloat((preTaxBase * (1 - taxRate)).toFixed(2));
+  const rsuTaxAmount = parseFloat((preTaxRSU * taxRate).toFixed(2));
+  const postTaxRSU = parseFloat((preTaxRSU * (1 - taxRate)).toFixed(2));
+
+  return {
+    preTaxTC,
+    preTaxBase,
+    preTaxRSU,
+    postTaxBase,
+    postTaxRSU,
+    taxRate,
+    taxAmount,
+    rsuTaxAmount,
+  };
+}

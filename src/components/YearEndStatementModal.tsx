@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GameState } from '../types';
+import { getTCBreakdown } from '../utils/gameStateSelectors';
 
 interface YearEndStatementModalProps {
   gameState: GameState;
@@ -9,32 +10,13 @@ interface YearEndStatementModalProps {
 export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ gameState, onContinue }) => {
   const isHomeowner = ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(gameState.housing_name || '');
   
-  const preTaxTC = gameState.tc > 0 ? gameState.tc : 0;
-  
-  let preTaxBase = 0;
-  let preTaxRSU = 0;
-  if (!gameState.laid_off && gameState.job_type !== 'unemployed' && preTaxTC > 0) {
-    if (gameState.job_type === 'trader' || gameState.job_type === 'startup_founder' || gameState.job_type === 'quant' || gameState.job_type === 'big_tech') {
-      preTaxBase = preTaxTC;
-    } else if (gameState.job_type === 'startup') {
-      preTaxBase = preTaxTC * 0.5;
-      preTaxRSU = preTaxTC * 0.5;
-    } else if (gameState.job_type === 'tiktok') {
-      preTaxBase = preTaxTC * 0.7;
-      preTaxRSU = preTaxTC * 0.3;
-    } else if (gameState.company === 'meta' || gameState.job_type === 'nvidia') {
-      preTaxBase = preTaxTC * 0.4;
-      preTaxRSU = preTaxTC * 0.6;
-    } else {
-      preTaxBase = preTaxTC * 0.5;
-      preTaxRSU = preTaxTC * 0.5;
-    }
-  }
-
-  const taxAmountNum = preTaxBase * 0.25;
-  const postTaxIncomeNum = preTaxBase * 0.75;
-  const rsuTaxAmountNum = preTaxRSU * 0.25;
-  const postTaxRSUNum = preTaxRSU * 0.75;
+  const tcInfo = getTCBreakdown(gameState);
+  const preTaxBase = tcInfo.preTaxBase;
+  const preTaxRSU = tcInfo.preTaxRSU;
+  const taxAmountNum = tcInfo.taxAmount;
+  const postTaxIncomeNum = tcInfo.postTaxBase;
+  const rsuTaxAmountNum = tcInfo.rsuTaxAmount;
+  const postTaxRSUNum = tcInfo.postTaxRSU;
   
   const taxAmount = taxAmountNum.toFixed(1);
   const postTaxIncome = postTaxIncomeNum.toFixed(1);

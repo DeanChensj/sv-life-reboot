@@ -1,7 +1,7 @@
 import { events, generateInitialState, midYearEventRouter } from './src/data/events';
 import { GameState, Choice } from './src/types';
 import { applyStateTransition } from './src/utils/stateTransitions';
-import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo } from './src/utils/gameStateSelectors';
+import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown } from './src/utils/gameStateSelectors';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
@@ -158,11 +158,19 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
     company: 'apple',
     job_type: 'big_tech',
     season_stage: 'h1',
+    tc: 40,
   };
   for (let i = 0; i < 50; i++) {
     const routed = midYearEventRouter(appleState);
     assert(routed !== 'meta_tlm', 'Apple employee must never receive Meta TLM event');
   }
+
+  // 10. Financial & Equity TC breakdown assertions
+  const tcBreakdown = getTCBreakdown(appleState);
+  assert(tcBreakdown.preTaxBase === 22, 'Big Tech cash base is 55% of $40w ($22w)');
+  assert(tcBreakdown.preTaxRSU === 18, 'Big Tech RSU is 45% of $40w ($18w)');
+  assert(tcBreakdown.postTaxBase === 16.5, 'Post-tax cash is $16.5w');
+  assert(tcBreakdown.postTaxRSU === 13.5, 'Post-tax RSU is $13.5w');
 
   console.log('✅ CUJ 1 Passed\n');
 }

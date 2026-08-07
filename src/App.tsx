@@ -807,6 +807,40 @@ export default function App() {
                       }
                     }
 
+                    // Timeline Auto Recording for Shop Purchases
+                    const updatedTimeline = [...(newState.timeline || [])];
+                    const recAge = newState.age;
+                    const recYear = newState.year;
+                    if (effect.housing_name && effect.housing_name !== prev.housing_name && ['Atherton 顶级豪宅', 'Sunnyvale 老破小', 'North San Jose 联排', 'Fremont 学区房'].includes(effect.housing_name)) {
+                      updatedTimeline.push({
+                        age: recAge, year: recYear,
+                        title: `置业安家: 购入 ${effect.housing_name}`,
+                        description: `在加州湾区拥有了属于自己的房产，成为有产阶级！`,
+                        category: 'real_estate',
+                        statHighlight: effect.housing_name
+                      });
+                    }
+                    if (effect.rental_income && (effect.rental_income > (prev.rental_income || 0))) {
+                      updatedTimeline.push({
+                        age: recAge, year: recYear,
+                        title: '资产扩张: 布局不动产被动现金流',
+                        description: `名下投资房产/ADU 落地出租，年化被动租金现金流增至 +$${effect.rental_income.toFixed(1)}w！`,
+                        category: 'real_estate',
+                        statHighlight: `+$${effect.rental_income.toFixed(1)}w/年`
+                      });
+                    }
+                    if (effect.car && effect.car !== prev.car && effect.car !== 'none') {
+                      const carMap: Record<string, string> = { porsche: '保时捷 Porsche 911', cybertruck: '特斯拉 Cybertruck', model_y: 'Tesla Model Y' };
+                      updatedTimeline.push({
+                        age: recAge, year: recYear,
+                        title: `座驾升级: 提车 ${carMap[effect.car] || effect.car}`,
+                        description: '行驶在加州 101 高速公路上，尽情体验硅谷速度与驾驶乐趣！',
+                        category: 'wealth',
+                        statHighlight: carMap[effect.car]
+                      });
+                    }
+                    newState.timeline = updatedTimeline;
+
                     // Check game over & win
                     if (newState.health <= 0 && newState.status === 'playing') {
                       newState.status = 'game_over';

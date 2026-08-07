@@ -101,7 +101,7 @@ sv-life-reboot/
 │   ├── components/         # 页面弹窗与 UI 组件
 │   │   ├── AchievementCodexModal.tsx   # 成就图鉴弹窗
 │   │   ├── BentoStatsPanel.tsx         # Bento 风格属性仪表盘
-│   │   ├── CharacterProfileModal.tsx   # 角色档案通行证
+│   │   ├── CareerTimelineModal.tsx     # 历年大事记编年史与资产走势图
 │   │   ├── ShopModal.tsx               # 硅谷资产与消费商城
 │   │   ├── WarReportModal.tsx          # 终局结算战报
 │   │   ├── WelcomeModal.tsx            # 欢迎与规则弹窗

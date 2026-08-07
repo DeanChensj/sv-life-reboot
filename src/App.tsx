@@ -8,7 +8,6 @@ import { safeStorage } from './utils/safeStorage';
 import { applyStateTransition } from './utils/stateTransitions';
 
 // Lazy loaded heavy modals for optimized code splitting
-const CharacterProfileModal = lazy(() => import('./components/CharacterProfileModal').then(m => ({ default: m.CharacterProfileModal })));
 const YearEndStatementModal = lazy(() => import('./components/YearEndStatementModal').then(m => ({ default: m.YearEndStatementModal })));
 const WarReportModal = lazy(() => import('./components/WarReportModal').then(m => ({ default: m.WarReportModal })));
 const AchievementCodexModal = lazy(() => import('./components/AchievementCodexModal').then(m => ({ default: m.AchievementCodexModal })));
@@ -57,7 +56,6 @@ export default function App() {
     if (initialGameData.currentEventId !== 'choose_trait') return false;
     return !safeStorage.getItem('sv_life_welcome_seen');
   });
-  const [showCharacterPass, setShowCharacterPass] = useState<boolean>(false);
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
   const [showCareerTimeline, setShowCareerTimeline] = useState<boolean>(false);
@@ -136,14 +134,13 @@ export default function App() {
       const target = e.target as HTMLElement;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
 
-      if (showWelcome || showCharacterPass || showWarReport || showAchievementCodex || showCareerTimeline || isShopOpen || isMobileStatsOpen) {
+      if (showWelcome || showWarReport || showAchievementCodex || showCareerTimeline || isShopOpen || isMobileStatsOpen) {
         if (e.key === 'Escape') {
           if (isMobileStatsOpen) setIsMobileStatsOpen(false);
           else if (isShopOpen) setIsShopOpen(false);
           else if (showAchievementCodex) setShowAchievementCodex(false);
           else if (showCareerTimeline) setShowCareerTimeline(false);
           else if (showWarReport) setShowWarReport(false);
-          else if (showCharacterPass) setShowCharacterPass(false);
           else if (showWelcome) {
             setShowWelcome(false);
             safeStorage.setItem('sv_life_welcome_seen', 'true');
@@ -219,7 +216,6 @@ export default function App() {
     currentEvent,
     isCoolingDown,
     showWelcome,
-    showCharacterPass,
     showWarReport,
     showAchievementCodex,
     showCareerTimeline,
@@ -313,11 +309,6 @@ export default function App() {
     } else {
       let nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
       
-      // Trigger Character Pass Modal after school selection
-      if (currentEventId === 'choose_school') {
-        setShowCharacterPass(true);
-      }
-
       // Intercept return to daily life if we are in mid-year (H1 -> H2 -> Year End Settlement)
       if (nextId === 'sv_daily_life' && newState.mid_year) {
         if (newState.season_stage === 'h1' || !newState.season_stage) {
@@ -341,7 +332,6 @@ export default function App() {
     safeStorage.removeItem('sv_life_ssr_status');
     setGameState(generateInitialState());
     setCurrentEventId('choose_trait');
-    setShowCharacterPass(false);
     setShowWarReport(false);
     setShowAchievementCodex(false);
     setShowCareerTimeline(false);
@@ -375,14 +365,6 @@ export default function App() {
               setShowWelcome(false);
               safeStorage.setItem('sv_life_welcome_seen', 'true');
             }}
-          />
-        )}
-
-        {/* Character Creation Pass Modal */}
-        {showCharacterPass && (
-          <CharacterProfileModal
-            gameState={gameState}
-            onConfirm={() => setShowCharacterPass(false)}
           />
         )}
 

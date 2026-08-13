@@ -189,8 +189,11 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 </div>
               </button>
 
-              {/* Instant FIRE Retirement for achieved players */}
-              {(gameState.has_reached_initial_fire || totalAssets >= gameState.win_threshold) && (
+              {/* Instant FIRE Retirement — only when CURRENT total assets clear the
+                  CURRENT win threshold. Do not short-circuit on has_reached_initial_fire:
+                  a player who opted into a higher FIRE tier ($800w/$1500w) must actually
+                  reach that tier, not win at any asset level from a past milestone. */}
+              {(totalAssets >= gameState.win_threshold) && (
                 <button
                   onClick={() => {
                     onClose();

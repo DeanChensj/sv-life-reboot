@@ -82,7 +82,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w)',
         reqBadge: '现金>=80w',
-        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
         nextEventId: 'post_green_card',
       },
@@ -240,7 +240,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w)',
         reqBadge: '现金>=80w',
-        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
         nextEventId: 'post_green_card',
       },

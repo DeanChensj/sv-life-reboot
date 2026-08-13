@@ -604,16 +604,18 @@ export default function App() {
                   setCurrentEventId(eventId);
                 }}
                 onBuy={(effect, msg) => {
-                  setGameState(prev => {
-                    const transition = applyStateTransition(prev, effect, {
-                      source: 'shop',
-                      customMessage: msg,
-                    });
-                    if (transition.targetEventId) {
-                      setCurrentEventId(transition.targetEventId);
-                    }
-                    return transition.nextState;
+                  // Compute the transition OUTSIDE the state updater so the updater
+                  // stays pure (React can invoke updaters twice under StrictMode /
+                  // concurrent rendering). Commit state and event id together, the
+                  // same way handleChoice does.
+                  const transition = applyStateTransition(gameState, effect, {
+                    source: 'shop',
+                    customMessage: msg,
                   });
+                  setGameState(transition.nextState);
+                  if (transition.targetEventId) {
+                    setCurrentEventId(transition.targetEventId);
+                  }
                   sound.play('coin');
                   setIsShopOpen(false);
                 }}

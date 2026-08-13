@@ -539,7 +539,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $80w 现金)',
         reqBadge: '现金>=80w',
-        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭家里雄厚的资金实力，直接出资 $80w 办妥了新法 EB-5 投资移民绿卡，跳过一切工签抽签直接上岸！' }),
         nextEventId: 'post_green_card',
       },
@@ -1614,7 +1614,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【钞能力 EB-5 自救】全额出资申办 EB-5 投资移民并递交 I-485 拿 Combo 卡 (花费 $80w)',
         reqBadge: '现金>=80w',
-        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           visa: '绿卡',
           gc_progress: 5,
@@ -1723,7 +1723,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【钞能力 EB-5 自救】掏出 $80w 办理新法 EB-5 并双递交 (I-485)，拿 EAD Combo 卡解除 PIP 危机！',
         reqBadge: '需现金>=80w+无绿卡',
-        condition: (s) => s.cash >= 80 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           cash: s.cash - 80,
           gc_progress: 4.5,

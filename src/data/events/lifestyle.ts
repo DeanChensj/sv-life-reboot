@@ -106,7 +106,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '和平分手，资产平分',
-        effect: (s) => ({ cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
+        effect: (s) => ({ cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产 (现金与股票均分)，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -115,8 +115,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() > 0.5;
           return win
-            ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
-            : { cash: (s.cash - 10) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产，你痛心不已！' };
+            ? { cash: (s.cash - 10) * 0.9, stocks: (s.stocks || 0) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师非常给力！你成功保住了 90% 的婚内资产 (现金与股票同比例)，但漫长的官司让你心力交瘁，头发白了一半。' }
+            : { cash: (s.cash - 10) * 0.6, stocks: (s.stocks || 0) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产 (现金与股票同比例)，你痛心不已！' };
         },
         nextEventId: 'sv_year_end_settlement'
       },
@@ -126,7 +126,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const win = s.charm >= 10 && gameRandom() > 0.5;
           return win
             ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
-            : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
+            : { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产 (现金与股票均分)。' };
         },
         nextEventId: 'sv_year_end_settlement'
       }

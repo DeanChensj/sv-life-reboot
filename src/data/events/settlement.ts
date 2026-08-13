@@ -54,9 +54,16 @@ export const settlementEvents: Record<string, GameEvent> = {
            
            currentStocks += postTaxRSU; // Vested RSUs go to stock account
            
-           const rentalIncome = s.rental_income || 0;
-            const rentalMsg = rentalIncome > 0 ? ` 【房产被动现金流】名下出租房产/ADU 带来净租金收益 +$${rentalIncome.toFixed(1)}w！` : '';
-            const netIncome = postTaxBase + rentalIncome - totalExpense;
+            const rentalIncome = s.rental_income || 0;
+             const rentalMsg = rentalIncome > 0 ? ` 【房产被动现金流】名下出租房产/ADU 带来净租金收益 +$${rentalIncome.toFixed(1)}w！` : '';
+             // Dual-income household: a married player's spouse contributes annual
+             // post-tax income, tiered by partner_type (mirrors the one-shot marriage
+             // bonus at dating_market). Previously married players got $0 extra cash flow.
+             const spouseIncome = s.is_married
+               ? (s.partner_type === 'vc' ? 15 : s.partner_type === 'founder' ? 12 : s.partner_type === 'engineer' ? 10 : s.partner_type === 'artist' ? 3 : 6)
+               : 0;
+             const spouseMsg = spouseIncome > 0 ? ` 【双职工家庭】配偶本年度税后收入贡献 +$${spouseIncome.toFixed(1)}w！` : '';
+             const netIncome = postTaxBase + rentalIncome + spouseIncome - totalExpense;
            let finalCash = s.cash + netIncome;
            let autoStockSellMsg = '';
 
@@ -337,7 +344,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               story_flags: newStoryFlags,
               timeline: newTimeline,
               history_net_worth: newHistory,
-              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
+              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${spouseMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
            };
         },
         nextEventId: (s) => {

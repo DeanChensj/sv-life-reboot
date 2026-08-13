@@ -106,7 +106,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '和平分手，资产平分',
-        effect: (s) => ({ cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 20), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
+        effect: (s) => ({ cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -115,8 +115,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() > 0.5;
           return win
-            ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
-            : { cash: (s.cash - 10) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 40), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产，你痛心不已！' };
+            ? { cash: (s.cash - 10) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师非常给力！你成功保住了 90% 的婚内资产，但漫长的官司让你心力交瘁，头发白了一半。' }
+            : { cash: (s.cash - 10) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产，你痛心不已！' };
         },
         nextEventId: 'sv_year_end_settlement'
       },
@@ -126,7 +126,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const win = s.charm >= 10 && gameRandom() > 0.5;
           return win
             ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
-            : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 30), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
+            : { cash: s.cash / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产。' };
         },
         nextEventId: 'sv_year_end_settlement'
       }
@@ -803,7 +803,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '吃布洛芬硬抗 (免费)',
-        effect: (s) => ({ health: s.health - 20, message: '为了省钱你选择了硬抗，结果引发了感染，痛不欲生。' }),
+        effect: (s) => ({ health: s.health - 15, message: '为了省钱你选择了硬抗，结果引发了感染，痛不欲生。' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -967,7 +967,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           laid_off: true,
           job_type: 'unemployed',
           level: undefined,
-          health: s.health - 20,
+          health: s.health - 15,
           message: '你辞去了大厂工作。熬夜修了三天 Bug 后，OpenAI 发布了新功能，直接把你们的产品做成了免费内置功能。公司破产了。'
         }),
         nextEventId: 'job_hunt',
@@ -1113,7 +1113,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const win = gameRandom() > 0.7;
           return win 
             ? { charm: s.charm + 2, cash: s.cash, message: '你像叶问一样一打十，从黑帮手里夺回了电脑，成为了湾区传说！' }
-            : { health: s.health - 30, cash: Math.max(0, s.cash - 0.5), message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };
+            : { health: s.health - 15, cash: Math.max(0, s.cash - 0.5), message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };
         },
         nextEventId: 'sv_year_end_settlement',
       }
@@ -1229,7 +1229,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【轻伤不下火线】吃降压药硬抗，继续为下一个 Promotable Project 拼命',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => ({
-          health: Math.max(0, s.health - 20),
+          health: Math.max(0, s.health - 15),
           tc: (s.job_type === 'unemployed' || s.laid_off) ? 0 : s.tc + 5,
           message: '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
         }),

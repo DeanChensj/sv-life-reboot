@@ -24,20 +24,43 @@ const loadInitialGameData = (): {
   currentEventId: string;
   hasUnlockedShopToast: boolean;
   hasOpenedShop: boolean;
+  loadError?: boolean;
 } => {
-  try {
-    const raw = safeStorage.getItem(STORAGE_KEYS.GAME_SAVE);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const migrated = migrateSaveData(parsed);
-      if (events[migrated.currentEventId]) {
-        return migrated;
-      }
-    }
-  } catch {
-    // If storage is corrupted or invalid, fallback cleanly
+  const raw = safeStorage.getItem(STORAGE_KEYS.GAME_SAVE);
+  // No existing save is a clean first run, NOT an error.
+  if (!raw) {
+    return migrateSaveData(null);
   }
-  return migrateSaveData(null);
+  try {
+    const parsed = JSON.parse(raw);
+    const migrated = migrateSaveData(parsed);
+    if (events[migrated.currentEventId]) {
+      return migrated;
+    }
+    // The save decoded fine but points at an event id that no longer exists
+    // (renamed/removed between releases). Don't throw away the whole run —
+    // resume an in-progress game at the main loop; otherwise keep as-is so the
+    // status-driven end screens (game_over/win) still render.
+    const safeId = events['sv_daily_life'] ? 'sv_daily_life' : 'choose_trait';
+    return {
+      ...migrated,
+      currentEventId: migrated.gameState.status === 'playing' ? safeId : 'choose_trait',
+    };
+  } catch (e) {
+    // Corrupt/undecodable save. Preserve the ORIGINAL bytes under a backup key
+    // BEFORE the auto-save effect can overwrite the primary key, so the player's
+    // data stays recoverable (e.g. via the ErrorBoundary "export debug" path).
+    // Previously this was swallowed silently and then stomped on the next render.
+    console.error('[loadInitialGameData] corrupt save detected; backing up to .bak', e);
+    try {
+      if (!safeStorage.getItem(STORAGE_KEYS.GAME_SAVE_BACKUP)) {
+        safeStorage.setItem(STORAGE_KEYS.GAME_SAVE_BACKUP, raw);
+      }
+    } catch {
+      // Backup is best-effort; never let it block startup.
+    }
+    return { ...migrateSaveData(null), loadError: true };
+  }
 };
 
 export default function App() {
@@ -74,6 +97,17 @@ export default function App() {
       safeStorage.setItem(STORAGE_KEYS.GAME_SAVE, JSON.stringify(saveData));
     }
   }, [gameState, currentEventId, hasUnlockedShopToast, hasOpenedShop]);
+
+  // One-time notice if the previous save was corrupt: we backed it up to `.bak`
+  // and recovered to a fresh game instead of silently discarding progress.
+  useEffect(() => {
+    if (initialGameData.loadError) {
+      setAchievementToast('[存档修复] 检测到存档损坏，已备份原存档 (.bak) 并开启新的人生。');
+      const t = setTimeout(() => setAchievementToast(null), 6000);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggleSound = () => {
     setIsMuted(sound.toggleMute());
@@ -241,32 +275,38 @@ export default function App() {
       sound.play('click');
     }
 
-    setGameState(newState);
     setIsMobileStatsOpen(false); // Close mobile drawer if open
 
-    // 2. Transition to next event
+    // 2. Determine the next event id and any final (immutable) state changes.
+    //    IMPORTANT: never mutate `newState` after it is handed to setGameState —
+    //    compute the season transition into a fresh object and commit state once.
+    let finalState = newState;
+    let nextId: string | undefined;
+
     if (transition.targetEventId) {
       if (transition.targetEventId === 'fire_milestone_choice') {
         sound.play('win');
       }
-      setCurrentEventId(transition.targetEventId);
+      nextId = transition.targetEventId;
     } else {
-      let nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
-      
+      nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
+
       // Intercept return to daily life if we are in mid-year (H1 -> H2 -> Year End Settlement)
       if (nextId === 'sv_daily_life' && newState.mid_year) {
         if (newState.season_stage === 'h1' || !newState.season_stage) {
-          newState.season_stage = 'h2';
-          nextId = midYearEventRouter(newState);
+          finalState = { ...newState, season_stage: 'h2' };
+          nextId = midYearEventRouter(finalState);
         } else {
-          newState.season_stage = undefined;
+          finalState = { ...newState, season_stage: undefined };
           nextId = 'sv_year_end_settlement';
         }
       }
-      
-      if (nextId) {
-        setCurrentEventId(nextId);
-      }
+    }
+
+    // 3. Commit state exactly once with the final immutable object.
+    setGameState(finalState);
+    if (nextId) {
+      setCurrentEventId(nextId);
     }
   };
 

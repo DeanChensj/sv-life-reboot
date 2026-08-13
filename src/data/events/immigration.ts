@@ -53,7 +53,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
           } else if (roll < 0.70) {
             return {
               cash: s.cash - 8,
-              health: Math.max(0, s.health - 20),
+              health: Math.max(0, s.health - 15),
               message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救失败！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
             };
           } else {
@@ -115,7 +115,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
         condition: (s) => s.visa === 'H1B (工签)',
-        effect: (s) => ({ health: Math.max(0, s.health - 25), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 15), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }),
         nextEventId: h1ToH2Router,
       },
       {
@@ -134,7 +134,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '在国内每天熬夜，按美国时间远程上班',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ health: s.health - 30, cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
+        effect: (s) => ({ health: s.health - 15, cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -201,7 +201,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
           } else if (roll < 0.70) {
             return {
               cash: s.cash - 8,
-              health: Math.max(0, s.health - 20),
+              health: Math.max(0, s.health - 15),
               message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份危机迫在眉睫！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
             };
           } else {

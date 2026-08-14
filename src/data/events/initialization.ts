@@ -136,8 +136,10 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(gameRandom() * 4)],
       },
       {
-        text: '【学生会外联】加入学生会与外联部 (锻炼人际社交与组织能力)',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: s.health - 5, age: s.age + 2, message: '你在学生会拉赞助混得风生水起，结识了一圈活跃朋友。两年时光悄然流逝。' }),
+        text: '【学生会外联】加入学生会与外联部 (人脉路线)',
+        // Repurposed into the NETWORK play (was strictly dominated by 文娱自媒体: same
+        // charm+8 but worse cash & health, and 0 network despite "结识一圈朋友").
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 4), network: Math.min(100, (s.network || 10) + 12), health: s.health - 5, age: s.age + 2, message: '你在学生会拉赞助、办活动混得风生水起，攒下了一张厚实的校园人脉网。两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(gameRandom() * 4)],
       },
       {
@@ -231,7 +233,8 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '临场发挥讲述情怀故事，拉满现场演讲感染力',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 5), luck: Math.min(99, s.luck + 5), message: '全场响起热烈掌声！拿下了最佳台风奖，并在场外结识了多位投资界大咖！' }),
+        // "结识多位投资界大咖" now grants network (was luck only — flavor/effect mismatch).
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 5), network: Math.min(100, (s.network || 10) + 8), message: '全场响起热烈掌声！拿下了最佳台风奖，并在场外结识了多位投资界大咖！' }),
         nextEventId: 'cn_college_year3',
       }
     ]
@@ -262,7 +265,10 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【出国留学备战】报班死磕托福/GRE (准备申请美国 CS 硕士)',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 2), health: s.health - 10, age: s.age + 2, message: '付出了巨大汗水，终于考出了满意的托福/GRE 分数，顺利完成大三大四学业！' }),
+        // The GRE/TOEFL grind now yields real stats (charm from English + leetcode from
+        // study) so it isn't a strict subset of the 秋招/实习 options (was cash-2/health-10
+        // with zero gain, actively weakening the abroad-gates it claimed to prepare).
+        effect: (s) => ({ cash: Math.max(0, s.cash - 2), leetcode: Math.min(100, s.leetcode + 6), charm: Math.min(s.max_charm ?? 25, s.charm + 4), health: s.health - 8, age: s.age + 2, message: '你死磕托福/GRE 和口语，不仅考出了满意的分数，英语表达与学术功底也大幅提升，顺利完成大三大四学业！' }),
         nextEventId: 'cn_undergrad_grad',
       },
       {
@@ -733,7 +739,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【校友人脉内推】选择 2 年标准项目，去硅谷大厂活动混脸熟要内推 (24岁毕业)',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 10), age: s.age + 2, message: '你加了 50 个大厂学长学姐的 LinkedIn，拿到了不少直通面试机会，2年美硕顺利毕业！' }),
+        effect: (s) => ({ cash: s.cash - 1, network: Math.min(100, (s.network || 10) + 12), charm: Math.min(s.max_charm ?? 25, s.charm + 3), age: s.age + 2, message: '你加了 50 个大厂学长学姐的 LinkedIn，攒下了一大批内推人脉与直通面试机会，2年美硕顺利毕业！' }),
         nextEventId: pickCollegeEvent,
       }
     ]
@@ -942,23 +948,28 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => ((s.message || '').includes('夏威夷') ? 'phd_conference' : 'job_hunt')
       },
       {
-        text: '【申请大厂研究实习】申请 Meta FAIR / Google DeepMind 做研究实习 (耗时 1 年)',
+        text: '【申请大厂研究实习】申请 Meta FAIR / Google DeepMind 做研究实习 (耗时 1 年, 高风险高回报)',
+        // The fast lane is now a REAL gamble: on failure you do NOT get the PhD — you go
+        // back to grinding (routes to phd_mid_stage). Previously the fail branch still
+        // granted the PhD, making this a 1-year guaranteed-PhD path that dominated choice 3.
         effect: (s) => {
           const passProb = 0.40 + (s.leetcode >= 75 ? 0.30 : 0) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass
             ? { cash: s.cash + 6, health: Math.max(0, s.health - 6), age: s.age + 1, year: s.year + 1, is_phd: true, network: Math.min(100, (s.network || 10) + 15), leetcode: Math.min(100, s.leetcode + 15), message: '在顶尖 AI 工业界实验室实习收获满满！攒下了 $6w 实习薪水并发表了 Demo，回校顺利通过博士答辩 Defense，取得 PhD 学位！' }
-            : { health: Math.max(0, s.health - 10), age: s.age + 1, year: s.year + 1, is_phd: true, leetcode: Math.min(100, s.leetcode + 10), message: '顶尖 Lab 实习申请竞争太激烈被刷，你只能回校继续给导师搬砖，好在靠常规课题勉强通过答辩取得 PhD 学位。' };
+            : { health: Math.max(0, s.health - 10), age: s.age + 1, year: s.year + 1, leetcode: Math.min(100, s.leetcode + 10), message: '顶尖 Lab 实习申请竞争太激烈被刷，博士学位还得接着熬，你只能回校继续给导师搬砖。' };
         },
-        nextEventId: 'phd_job_hunt'
+        nextEventId: (s) => s.is_phd ? 'phd_job_hunt' : 'phd_mid_stage'
       },
       {
-        text: '【二线期刊保底答辩】降低身段投中档期刊与 Workshop，申请博士答辩 (耗时 2 年)',
+        text: '【二线期刊保底答辩】降低身段投中档期刊与 Workshop，申请博士答辩 (耗时 2 年, 稳妥毕业)',
+        // The reliable "safety" path: slowest (2yr) but the highest PhD-pass odds at a
+        // low health cost — a genuine low-risk alternative to the research-implant gamble.
         effect: (s) => {
-          const passProb = 0.70 + (s.leetcode >= 60 ? 0.15 : 0) + ((s.luck || 20) / 200);
+          const passProb = 0.82 + (s.leetcode >= 60 ? 0.10 : 0) + ((s.luck || 20) / 300);
           const pass = gameRandom() < passProb;
           return pass
-            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 8), is_phd: true, leetcode: Math.min(100, s.leetcode + 10), message: '你放下了追求顶会的执念，凭借多篇中档期刊论文和扎实成果顺利通过了博士答辩 Defense，成功获得 PhD 博士学位！' }
+            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 6), is_phd: true, leetcode: Math.min(100, s.leetcode + 10), message: '你放下了追求顶会的执念，凭借多篇中档期刊论文和扎实成果顺利通过了博士答辩 Defense，成功获得 PhD 博士学位！' }
             : { age: s.age + 2, year: s.year + 2, is_phd: false, is_master: true, health: Math.max(0, s.health - 12), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', message: '答辩委员会认为你的成果缺乏独创性未予通过！心力交瘁的你选择不再延毕，拿硕士学位跑路求职。' };
         },
         nextEventId: (s) => s.is_phd ? 'phd_job_hunt' : 'job_hunt'

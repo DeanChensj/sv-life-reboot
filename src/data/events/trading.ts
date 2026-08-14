@@ -116,13 +116,22 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '入职第四年，传说中的 4-Year RSU Vesting Cliff (股票归属崖) 正式到来，然而恰逢宏观加息加科技股大暴跌，公司股价从你入职时的 $380 暴跌至 $42。\n你打开 E*TRADE 账户，原本预估的 $40 万美元股票市值缩水成了“能够买两台二手特斯拉”。',
     choices: [
       {
-        text: '心理防御倒塌：“哥们，你们厂现在有 Referral 吗？包身份就行，TC 随缘！”',
-        effect: (s) => ({ tc: Math.max(10, s.tc - 5), health: s.health - 10, is_new_job: true, message: '你含泪跳槽去了一家给钱更少但至少股价底部的公司，重新开始坐 4 年股票牢。' }),
+        text: '心理防御倒塌：跳槽去股价触底的新公司，重新拿一笔低价 RSU 抄底',
+        // The story (fresh cheap grant at the bottom) is now actually implemented as a
+        // stock grant, and we no longer set is_new_job (which could reset GC progress).
+        // So it's a real "抄底" bet (health cost + slight TC dip for future equity upside).
+        effect: (s) => ({ tc: Math.max(10, s.tc - 5), stocks: (s.stocks || 0) + 8, health: Math.max(0, s.health - 10), message: '你含泪跳槽去了一家给钱更少但股价触底的公司，拿到了一大笔低价 RSU，重新开始坐 4 年股票牢，赌它触底反弹。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》',
-        effect: (s) => ({ cash: s.cash + 15, charm: Math.min(25, s.charm + 4), message: '网友太喜欢看硅谷中产受苦了！你的小红书粉丝暴涨，光是电竞椅和挂壁盒饭的广告费就填补了股票亏损。' }),
+        text: '拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》(能否爆火看运气)',
+        // No longer a free loss-eraser: going viral is a gamble with a real editing/health cost.
+        effect: (s) => {
+          const viral = gameRandom() < 0.55;
+          return viral
+            ? { cash: s.cash + 8, charm: Math.min(s.max_charm ?? 25, s.charm + 4), health: Math.max(0, s.health - 4), message: '网友太喜欢看硅谷中产受苦了！你的小红书粉丝暴涨，电竞椅和挂壁盒饭的广告费小赚一笔，稍稍填补了股票亏损。' }
+            : { cash: s.cash + 1, charm: Math.min(s.max_charm ?? 25, s.charm + 1), health: Math.max(0, s.health - 4), message: '视频反响平平，熬夜剪片却是实打实的。零星几个广告只够买杯奶茶，聊胜于无。' };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -452,12 +461,15 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '反向做空：等待非理性狂热情绪见顶，反手布局 Put 远期看跌期权',
-        effect: (s) => ({
-          cash: parseFloat((s.cash + 4.5).toFixed(1)),
-          leetcode: Math.min(100, s.leetcode + 3),
-          message: '【价值回归做空】狂欢次日妖股暴跌 45%，你的做空仓位稳稳兑现 +$4.5w 丰厚收益！'
-        }),
+        text: '反向做空：等待非理性狂热情绪见顶，反手布局 Put 远期看跌期权 (高风险)',
+        // Shorting a live short-squeeze is one of the most dangerous trades — it's now a
+        // real gamble, not a guaranteed free win that dominated the "跟风" option.
+        effect: (s) => {
+          const timedRight = gameRandom() < 0.5;
+          return timedRight
+            ? { cash: parseFloat((s.cash + 7).toFixed(1)), leetcode: Math.min(100, s.leetcode + 3), message: '【价值回归做空】狂欢次日妖股暴跌 45%，你精准抄顶的做空仓位兑现 +$7w 丰厚收益！' }
+            : { cash: Math.max(0, parseFloat((s.cash - 4).toFixed(1))), health: Math.max(0, s.health - 6), message: '【逼空绞杀】散户抱团继续拉爆，你的 Put 在 Gamma Squeeze 下被反向绞杀，倒亏 $4w！' };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {

@@ -230,13 +230,15 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.status === 'win' ? 'end' : (s.laid_off ? 'job_hunt' : h1ToH2Router(s)),
       },
       {
-        text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件)',
+        text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件, 保现金)',
+        // The defensive cash-preservation play: extends runway (gains cash, low health
+        // cost) at the price of valuation. No longer a strict trap vs the growth options.
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
-          cash: Math.max(0, parseFloat((s.cash - 1).toFixed(1))),
-          company_valuation: Math.max(80, (s.company_valuation || 180) - 80),
-          health: Math.max(0, s.health - 8),
-          message: '资金与资源有限，你决定开源节流，挥泪解雇了一批兼职与非核心人员，收缩战线艰难过冬。'
+          cash: parseFloat((s.cash + 3).toFixed(1)),
+          company_valuation: Math.max(80, (s.company_valuation || 180) - 40),
+          health: Math.max(0, s.health - 4),
+          message: '你壮士断腕开源节流，挥泪解雇了一批非核心人员。虽然公司估值缩水、士气受挫，但账上现金流大大延长了生死线 Runway。'
         }),
         nextEventId: h1ToH2Router,
       }
@@ -283,11 +285,13 @@ export const startupEvents: Record<string, GameEvent> = {
       },
       {
         text: '协商妥协：释放 5% 股权池与晋升薪酬，维持技术架构稳定推进',
+        // The "keep building" play: the retained CTO ships (leetcode) — a real edge over
+        // the VC-arbitration option (so it isn't strictly dominated once you've raised).
         effect: (s) => ({
-          health: Math.max(0, s.health - 6),
-          cash: Math.max(0, parseFloat((s.cash - 1).toFixed(1))),
-          network: Math.min(100, (s.network || 0) + 2),
-          message: '【务实维稳】你通过让渡少量期权池与奖金抚平了矛盾，CTO 同意留任继续攻坚核心大模型版本。'
+          health: Math.max(0, s.health - 4),
+          network: Math.min(100, (s.network || 0) + 4),
+          leetcode: Math.min(100, s.leetcode + 4),
+          message: '【务实维稳】你让渡少量期权池与奖金抚平了矛盾，CTO 同意留任并带队攻坚核心大模型版本，技术底盘更稳了。'
         }),
         nextEventId: 'sv_year_end_settlement',
       },
@@ -344,10 +348,12 @@ export const startupEvents: Record<string, GameEvent> = {
       },
       {
         text: '断臂求生：立刻收紧每月烧钱率，全员降薪延缓 Runway',
+        // Cutting burn actually preserves cash (extends runway) — a real cash edge so
+        // it isn't dominated by the charm-gated Re-pitch option.
         effect: (s) => ({
-          health: Math.max(0, s.health - 8),
-          cash: Math.max(0, parseFloat((s.cash - 0.5).toFixed(1))),
-          message: '【开源节流】你挥泪推迟了招聘计划并砍掉非必要云服务，成功将公司生命线延长了 6 个月。'
+          health: Math.max(0, s.health - 6),
+          cash: parseFloat((s.cash + 2).toFixed(1)),
+          message: '【开源节流】你挥泪推迟了招聘计划并砍掉非必要云服务，账上留存了宝贵现金，成功将公司生命线延长了 6 个月。'
         }),
         nextEventId: 'sv_year_end_settlement',
       }

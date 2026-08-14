@@ -264,8 +264,15 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '深夜微信群被一条一亩三分地热帖刷屏，标题赫然写着《湾区某大厂 L5 避雷，分手抢搬家具 + AA 小费极品全纪录》。帖子附带了匿名聊天记录截图与你特征极度明显的描述，瞬时冲上了论坛热榜第一！',
     choices: [
       {
-        text: '亲自下场在论坛回复发帖与前任对撕澄清',
-        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 5), charm: Math.max(0, s.charm - 4), health: Math.max(0, s.health - 10), message: '两人的互撕引发了千人围观吃瓜，你在湾区华人圈与同组同事面前丢尽了颜面，人脉与形象重创！' }),
+        text: '亲自下场在论坛回复发帖与前任对撕澄清 (放手一搏挽回形象)',
+        // Now a real gamble instead of a strict loss: ~45% you clear your name
+        // (recover charm/network), else it backfires harder. vs the safe "delete" option.
+        effect: (s) => {
+          const clearsName = gameRandom() < 0.45;
+          return clearsName
+            ? { charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.max(0, s.health - 6), message: '你甩出完整的聊天记录逐条反击，吃瓜群众风向逆转，纷纷同情你、痛骂前任，你的形象不降反升！' }
+            : { network: Math.max(0, (s.network || 0) - 5), charm: Math.max(0, s.charm - 4), health: Math.max(0, s.health - 10), message: '两人的互撕越描越黑引发千人围观，你在湾区华人圈与同组同事面前丢尽了颜面，人脉与形象重创！' };
+        },
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -453,6 +460,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.min(100, s.health + 20),
           charm: Math.min(s.max_charm ?? 25, s.charm + 4),
+          network: Math.min(100, (s.network || 10) + 3), // match the "拉进高端俱乐部群" flavor
           message: '你的正手上旋与发球统治了全场！球友们直呼“湾区费德勒”，纷纷拉你进南湾高端网球俱乐部群，相亲与社交胜率大增！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -641,13 +649,16 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【黄牛高溢价买单】不想费脑子，直接在 StubHub 豪掷千金买下山顶看台票 ($0.8w)',
+        text: '【黄牛高溢价买单】不想费脑子，直接在 StubHub 豪掷千金买下内场票 ($0.8w)',
         condition: (s) => s.cash >= 0.8,
+        // Same concert experience as the scripted route (charm+3, health+15); the
+        // ONLY downside is the higher ticket price — a real convenience premium, not
+        // an inferior experience (was charm+2/health+10, strictly worse than the script).
         effect: (s) => ({
           cash: s.cash - 0.8,
-          health: Math.min(100, s.health + 10),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-          message: '【千金难买心头好】虽然黄牛溢价让人肉疼，但现场全场挥舞荧光棒的震撼合唱让你彻底忘却了本季度的 Perf 焦虑。'
+          health: Math.min(100, s.health + 15),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          message: '【千金难买心头好】虽然黄牛溢价让人肉疼，但你不费吹灰之力就拿下内场，现场震撼合唱让你彻底忘却了本季度的 Perf 焦虑。'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -680,7 +691,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '冒着被店员白眼的风险，眯着眼准确点击极小的字体 Custom Tip -> $0.50',
         // A $13 boba + tip is ~$13-16 = ~0.0013-0.0016w, not $1000-2000 (100x slip).
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.0013), charm: Math.max(0, s.charm - 1), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.0013), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -773,10 +784,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '拒绝，并去厨房找多力多滋和可乐',
+        // Comfort-food relief instead of a pure double-penalty (was health-2 & charm-2,
+        // a strict loss). You skip the woo and just enjoy yourself.
         effect: (s) => ({ 
-          health: s.health - 2,
-          charm: s.charm - 2, 
-          message: '你在这个满是生酮饮食者的派对里大嚼碳水，被大家用异样的眼光注视。'
+          health: Math.min(100, s.health + 3),
+          charm: Math.max(0, s.charm - 2), 
+          message: '你在这个满是生酮饮食者的派对里旁若无人地大嚼碳水，虽被投以异样目光，但吃得那叫一个爽快！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -800,9 +813,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你的智齿突然发炎，痛得满地打滚，必须拔除。',
     choices: [
       {
-        text: '在湾区看牙医',
+        text: '在湾区看牙医 (贵但顶级医疗，无需奔波)',
         condition: (s) => s.cash >= 0.5,
-        effect: (s) => ({ cash: s.cash - 0.5, health: s.health + 10, message: '拔了两颗智齿，虽然有保险，但自付额还是高达 $5000，美国医疗名不虚传。' }),
+        // Pay more for better care + zero travel hassle: now beats the fly-home option
+        // on health, so the higher cost buys something (was strictly dominated).
+        effect: (s) => ({ cash: s.cash - 0.5, health: Math.min(100, s.health + 22), message: '拔了两颗智齿，顶级麻醉与术后护理让你几乎无痛恢复，虽然自付额高达 $5000，但省心省事。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -827,18 +842,18 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【开卡礼狂魔】一口气申 4 张大额神卡，刷满开卡礼点数兑头等舱 (消耗 $0.5w, 收益 $1.2w 积分价值)',
         effect: (s) => ({
-          cash: s.cash - 0.5 + 1.2, // apply the stated $0.5w spend (was silently omitted → net +1.2)
+          cash: s.cash - 0.5 + 1.2, // net +0.7 in perks value + charm (the "status" play)
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
-          health: Math.min(100, s.health + 5),
           message: '成功拿到了 300,000 Amex/Chase 积分！直接兑换了旧金山直飞东京的日航全平躺头等舱，精算理财智商彻底碾压同行！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【DoorDash 薅羊毛】研究 Uber Eats / DoorDash 满减优惠券',
+        text: '【DoorDash 薅羊毛】研究 Uber Eats / DoorDash 满减优惠券 (纯攒钱)',
         effect: (s) => ({
-          cash: s.cash + 0.3,
-          message: '虽然每天在不同 App 里切账号领优惠券只省了几百刀，但薅到羊毛的成就感让你乐此不疲！'
+          // Distinct raw-cash play: beats churning's +0.7 net on pure cash, no charm.
+          cash: s.cash + 0.8,
+          message: '你把满减、代金券和限时折扣薅到了极致，实打实攒下了一笔生活费！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -897,12 +912,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '给爸妈报华人大巴老年团，让他们自己去黄石公园与大峡谷 (花费 $0.15w)',
         condition: (s) => s.cash >= 0.15,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.15), health: Math.min(100, s.health + 5), message: '老两口在大巴团里结识了一圈同龄阿姨叔叔，每天聊得热火朝天，顺便还帮你拉到了几个潜在相亲对象的信息。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.15), health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '老两口在大巴团里结识了一圈同龄阿姨叔叔，每天聊得热火朝天，顺便还帮你拉到了几个潜在相亲对象的信息。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '工作太忙无暇陪同，让爸妈自己在 South Bay 散步看戏',
-        effect: (s) => ({ health: Math.max(0, s.health - 5), message: '老爸因后院翻土种韭菜遭到了 HOA 邻居联名警告，老妈抱怨湾区除了大超市啥都没有像大农村，老两口带着满腹牢骚提前回国了。' }),
+        text: '工作太忙无暇陪同，让爸妈自己在 South Bay 散步看戏 (换来加班时间)',
+        // Not a pure penalty: the time you didn't spend went into work (leetcode).
+        effect: (s) => ({ health: Math.max(0, s.health - 5), leetcode: Math.min(100, s.leetcode + 3), message: '你埋头加班，老爸因后院翻土种韭菜遭到 HOA 邻居联名警告，老妈抱怨湾区像大农村，老两口带着满腹牢骚提前回国 —— 但你的项目倒是赶出来了。' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -915,11 +931,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【Vibecoding 狂魔】开启 Cursor Pro + Claude 3.5 Sonnet，一个人顶一个 5 人团队',
+        // No longer a pure-upside no-brainer: heavy AI reliance burns you out and
+        // slightly atrophies raw fundamentals — a real trade vs the risky "push to prod" gamble.
         effect: (s) => ({
-          leetcode: Math.min(100, s.leetcode + 15),
-          health: Math.min(100, s.health + 10),
+          leetcode: Math.min(100, s.leetcode + 12),
+          health: Math.max(0, s.health - 5),
           tc: s.tc > 0 ? s.tc + 5 : s.tc,
-          message: '你成为了组里的 Vibecoding 大师！别人用两周写的功能你半天提交 PR，经理惊呼你一个人就是一支队伍！'
+          message: '你成为了组里的 Vibecoding 大师！别人用两周写的功能你半天提交 PR，经理惊呼你一个人就是一支队伍！但连轴转的 Agent 协作让你身心俱疲。'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -1084,8 +1102,10 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你急于拓展圈子，用自动化脚本向湾区 200 多位大厂 Director / VP 批量发送了推销自己的 Cold Message。结果被某总监截图发在 Pulse 专栏吐槽“缺乏基本职业素养”...',
     choices: [
       {
-        text: '在评论区与发帖总监论战维护尊严',
-        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 5), health: Math.max(0, s.health - 5), message: '你在评论区的生硬辩解招致了更多业内大佬的抵触，人脉网络受损。' }),
+        text: '在评论区与发帖总监论战维护尊严 (硬刚涨黑粉气场)',
+        // No longer a strict loss: fighting back costs network but a vocal minority
+        // finds you "based" (charm up), so it trades network for charm vs the apology.
+        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 4), charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.max(0, s.health - 3), message: '你在评论区舌战群儒，虽然得罪了部分业内大佬(人脉受损)，但你的犀利与硬气也圈了一批欣赏你的粉丝！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -1163,11 +1183,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '下场 17-Mile 沿海公路体验极限跑山 (消耗 $0.5w)',
+        // Distinct payoff (charm + car-scene clout as luck) so it isn't just a
+        // worse version of the networking option for employed players.
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.5),
           charm: Math.min(s.max_charm ?? 25, s.charm + 5),
+          luck: Math.min(99, s.luck + 3),
           health: Math.max(0, s.health - 5),
-          message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪！'
+          message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪，还结识了一群玩改装的性情中人！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1180,9 +1203,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周六下午，你开车去旧金山 Mission 区吃网红 Tacos。停在路边仅 1 小时，回来赫然发现后车窗被打碎，后备箱里的健身包被搜刮一空...',
     choices: [
       {
-        text: '自认倒霉走自付费 Deductible 换玻璃 (消耗 $0.1w)',
+        text: '自认倒霉走自付费 Deductible 立刻换玻璃 (消耗 $0.1w，省心)',
         condition: (s) => s.cash >= 0.1,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), health: s.health - 5, message: '你自费修好了车窗玻璃，领教到了旧金山最真实的治安“震撼”。' }),
+        // Fixing it promptly = no lingering stress (no health hit); the tradeoff is
+        // paying $0.1w vs the free "post it online" option that keeps the -5 health.
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), message: '你当天就把车窗修好，没让这事继续糟心，领教到了旧金山最真实的治安“震撼”。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -1271,7 +1296,9 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '无视它，“程序员靠硬核算法实力说话，不靠颜值”',
-        effect: (s) => ({ charm: Math.max(0, s.charm - 4), health: Math.max(0, s.health - 5), message: '你放任了体态衰退，虽然省下了精力，但在同龄社交局中显得愈发沧桑。' }),
+        // The time/energy saved goes into code (leetcode), so ignoring looks is a real
+        // charm-vs-skill trade, not a pure double-penalty.
+        effect: (s) => ({ charm: Math.max(0, s.charm - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你把照镜子的时间都拿去刷题攻坚了，颜值形象是滑坡了，但算法功底又精进了一层。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {

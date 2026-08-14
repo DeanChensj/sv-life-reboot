@@ -124,19 +124,27 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
         condition: (s) => s.visa === 'H1B (工签)',
-        // RFE now carries a real ~20% denial risk (was a guaranteed save).
+        // Diligence pays: lower health cost and higher (85%) survival than before, so
+        // it isn't dominated by the lazy option (which now gambles the visa).
         effect: (s) => {
-          const survive = gameRandom() < 0.80;
+          const survive = gameRandom() < 0.85;
           return survive
-            ? { health: Math.max(0, s.health - 15), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }
-            : { health: Math.max(0, s.health - 15), message: '移民局最终驳回了你的 RFE 答复，H1B 身份岌岌可危！你被迫紧急寻找其他身份自救方案！' };
+            ? { health: Math.max(0, s.health - 8), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！虽然熬了几个通宵，但身份稳了。' }
+            : { health: Math.max(0, s.health - 10), message: '移民局最终驳回了你的 RFE 答复，H1B 身份岌岌可危！你被迫紧急寻找其他身份自救方案！' };
         },
         nextEventId: (s) => (s.message || '').includes('驳回') ? 'h1b_fallback_options' : h1ToH2Router(s),
       },
       {
-        text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
-        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1), message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
-        nextEventId: h1ToH2Router,
+        text: '摆烂：把 RFE 抛诸脑后，先跟老妈吐槽一通 (不答复 RFE，赌它平稳失效)',
+        // No longer a free crisis solver: ignoring the RFE is a real gamble — 35% the
+        // visa falls into jeopardy. It trades health relief for that risk vs choice 1.
+        effect: (s) => {
+          const ignoredOk = gameRandom() < 0.65;
+          return ignoredOk
+            ? { health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1), message: '你把 RFE 抛诸脑后，跟老妈吐槽一通后耳根神奇清静了半年，律所也帮你压线补交了材料，有惊无险。' }
+            : { health: Math.max(0, s.health - 5), message: '你对 RFE 置之不理，结果错过了补件窗口，H1B 身份告急，只能紧急寻找其他自救方案！' };
+        },
+        nextEventId: (s) => (s.message || '').includes('自救') ? 'h1b_fallback_options' : h1ToH2Router(s),
       }
     ]
   },

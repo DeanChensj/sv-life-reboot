@@ -216,7 +216,8 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         text: '邀请同事与邻居来庭院做天幕 BBQ 派对 (消耗 $0.3w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.3),
-          charm: Math.min(25, s.charm + 4),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 4),
+          network: Math.min(100, (s.network || 10) + 3), // "社交圈口碑暴涨" now grants network
           health: Math.min(100, s.health + 15),
           message: '烤肉香气扑鼻，大家纷纷夸赞你的眼光与房产品质！社交圈口碑暴涨！'
         }),
@@ -254,7 +255,8 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '观望不投，只去品尝顶级红酒与交流网络',
         effect: (s) => ({
-          charm: Math.min(25, s.charm + 2),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 2),
+          network: Math.min(100, (s.network || 10) + 3), // "拓展资本圈高管人脉" now grants network
           health: Math.min(100, s.health + 5),
           message: '你保持了理智，蹭到了昂贵的红酒并拓展了资本圈高管人脉。'
         }),
@@ -279,10 +281,13 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       },
       {
         text: '【加入 HOA 业委会抗争】在社区业主大会上与 HOA 主席展开大战',
+        // Actually charge the reduced $1.5w assessment the message states (was $0 —
+        // the stated cost was silently omitted, making this a near-free option).
         effect: (s) => ({
-          charm: Math.min(s.max_charm || 25, s.charm + 3),
+          cash: Math.max(-0.5, s.cash - 1.5),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           health: Math.max(0, s.health - 15),
-          message: '你在邻居群里化身意见领袖，成功把摊派金额砍到了 $1.5w！虽然省了钱，但整整三个星期都在和业委会扯皮，身心俱疲。'
+          message: '你在邻居群里化身意见领袖，成功把摊派金额砍到了 $1.5w！虽然省了一大笔，但整整三个星期都在和业委会扯皮，身心俱疲。'
         }),
         nextEventId: 'sv_year_end_settlement'
       }

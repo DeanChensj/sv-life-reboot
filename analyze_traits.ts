@@ -62,10 +62,6 @@ function runFuzzTest(iterations: number) {
         }
 
         const nextId = typeof randomChoice.nextEventId === 'function' ? randomChoice.nextEventId(currentState) : randomChoice.nextEventId;
-        
-        if (['sv_daily_life', 'startup_founder_daily'].includes(currentEventId)) {
-          currentState.ap = Math.max(0, (currentState.ap || 3) - 1);
-        }
 
         currentEventId = nextId;
 

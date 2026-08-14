@@ -119,10 +119,11 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     };
 
     const finalCash = typeof gameState.cash === 'number' ? (gameState.cash + (gameState.stocks || 0)).toFixed(1) : '0.0';
-    const finalTC = typeof gameState.tc === 'number' ? gameState.tc.toFixed(1) : '0.0';
+    // True all-time peak TC (falls back to current tc for legacy saves without max_tc).
+    const peakTC = Math.max(gameState.max_tc || 0, gameState.tc || 0).toFixed(1);
 
     drawStatBox(70, 360, 315, 110, '最终净资产 (NET WORTH)', `$${finalCash}w`, '#34d399');
-    drawStatBox(415, 360, 315, 110, '峰值年薪总包 (TC)', `$${finalTC}w`, '#f4f4f5');
+    drawStatBox(415, 360, 315, 110, '峰值年薪总包 (TC)', `$${peakTC}w`, '#f4f4f5');
 
     drawStatBox(70, 490, 315, 110, 'LEETCODE 解题量', `${gameState.leetcode ?? 0} 题`, '#fbbf24');
     drawStatBox(415, 490, 315, 110, '存活年龄 / 奋斗时长', `${gameState.age ?? 18} 岁 / 奋斗 ${Math.max(1, (gameState.age || 18) - 17)} 年`, '#a78bfa');

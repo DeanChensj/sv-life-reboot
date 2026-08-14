@@ -55,6 +55,7 @@ export interface GameState {
   leetcode: number; // 0-100
   visa: VisaStatus;
   tc: number; // 万美元
+  max_tc?: number; // 历史最高年薪总包 (峰值 TC, 不受裁员归零影响)
   rent: number; // 万美元
   charm: number; // 颜值 1-10
   max_charm?: number; // 个人遗传魅力上限

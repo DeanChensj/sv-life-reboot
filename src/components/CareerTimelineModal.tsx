@@ -80,8 +80,11 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
     ? timeline 
     : timeline.filter(t => t.category === filterCategory);
 
-  // Compute key career milestones
-  const peakNetWorth = Math.max(currentNetWorth, ...chartHistory.map(h => h.netWorth));
+  // Compute key career milestones. Derive the peak from the ROUNDED chart points only
+  // (they already include the rounded current value as the last point) so the peak
+  // highlight / "巅峰" badge actually matches a point — mixing in the unrounded
+  // currentNetWorth made the `=== peakNetWorth` comparisons silently never fire.
+  const peakNetWorth = chartHistory.length ? Math.max(...chartHistory.map(h => h.netWorth)) : currentNetWorth;
   const initialNetWorth = chartHistory[0]?.netWorth || 1;
   const growthMultiplier = initialNetWorth > 0 ? (currentNetWorth / initialNetWorth).toFixed(1) : '1.0';
   const yearsPlayed = Math.max(1, chartHistory.length);

@@ -86,7 +86,18 @@ export function applyStateTransition(
   newState.charm = sanitizeNum(newState.charm, 10, 0, maxCharmLimit);
   newState.network = sanitizeNum(newState.network, 10, 0, 100);
   newState.cash = parseFloat(sanitizeNum(newState.cash, 0).toFixed(2));
-  newState.stocks = parseFloat(sanitizeNum(newState.stocks, 0, 0).toFixed(2));
+  // Stock overdraw guard: if an effect drove stocks negative (it tried to spend
+  // more stock than the player actually holds), push the shortfall onto CASH
+  // instead of silently erasing it to 0. Clamping to 0 here was a free purchase —
+  // the player "paid" in stock they didn't own. The resulting negative cash then
+  // flows through the auto-liquidation / insolvency path below.
+  const rawStocks = sanitizeNum(newState.stocks, 0);
+  if (rawStocks < 0) {
+    newState.cash = parseFloat((newState.cash + rawStocks).toFixed(2));
+    newState.stocks = 0;
+  } else {
+    newState.stocks = parseFloat(rawStocks.toFixed(2));
+  }
   newState.tc = parseFloat(sanitizeNum(newState.tc, 0, 0).toFixed(2));
 
   // 3. Global Invariant Guard: Protect Citizen & Green Card status against accidental downgrades

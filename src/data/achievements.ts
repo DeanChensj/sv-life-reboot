@@ -1,6 +1,6 @@
 import type { Achievement, GameState } from '../types';
 import { safeStorage } from '../utils/safeStorage';
-import { STORAGE_KEYS, HOUSING_NAMES, isPermanentVisa } from '../constants/gameConstants';
+import { STORAGE_KEYS, isPermanentVisa } from '../constants/gameConstants';
 
 export const ACHIEVEMENTS: Achievement[] = [
   {
@@ -170,7 +170,9 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');
   }
 
-  if (msg.includes('币圈') || msg.includes('Crypto') || msg.includes('土狗币') || (state.cash >= 300 && currentEventId === 'crypto_scam' && (msg.includes('土狗币') || msg.includes('狠赚了一笔')))) {
+  // Only on actually WINNING the crypto gamble — not on any message that merely
+  // mentions crypto (which previously fired on losses and warnings too).
+  if (currentEventId === 'crypto_scam' && msg.includes('狠赚了一笔')) {
     if (unlockAchievement('crypto_whale')) newlyUnlocked.push('crypto_whale');
   }
 
@@ -178,16 +180,21 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('vancouver_l1_chill')) newlyUnlocked.push('vancouver_l1_chill');
   }
 
+  // Landlord achievements require ACTUAL passive rental income, matching their
+  // hint text — not merely owning a house / having high net worth (bay_area_landlord)
+  // or merely owning the 4-Plex while it sits vacant (passive_cashflow_king).
   if (state.has_housing || (state.rental_income || 0) > 0 || (state.investment_properties || []).length > 0) {
-    if ((state.rental_income || 0) >= 2.0 || ((state.cash + (state.stocks || 0)) >= 200 && state.has_housing)) {
+    if ((state.rental_income || 0) >= 2.0 && state.has_housing) {
       if (unlockAchievement('bay_area_landlord')) newlyUnlocked.push('bay_area_landlord');
     }
-    if ((state.rental_income || 0) >= 10.0 || (state.investment_properties || []).includes(HOUSING_NAMES.SUNNYVALE_4PLEX)) {
+    if ((state.rental_income || 0) >= 10.0) {
       if (unlockAchievement('passive_cashflow_king')) newlyUnlocked.push('passive_cashflow_king');
     }
   }
 
-  if (state.is_married && (msg.includes('双职工') || currentEventId === 'dating_market')) {
+  // "大厂双职工" couple: married to a fellow big-tech engineer (structural check,
+  // not a fragile substring match on the current message / event id).
+  if (state.is_married && state.partner_type === 'engineer') {
     if (unlockAchievement('boba_power_couple')) newlyUnlocked.push('boba_power_couple');
   }
 
@@ -195,7 +202,8 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('leetcode_master')) newlyUnlocked.push('leetcode_master');
   }
 
-  if (state.company === 'nvidia' || state.job_type === 'nvidia') {
+  // Win via the AI-chip stock surge — not merely being hired at Nvidia.
+  if ((state.company === 'nvidia' || state.job_type === 'nvidia') && state.status === 'win') {
     if (unlockAchievement('nvidia_nasdaq_god')) newlyUnlocked.push('nvidia_nasdaq_god');
   }
 
@@ -219,19 +227,21 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('no_gc_fire')) newlyUnlocked.push('no_gc_fire');
   }
 
-  if (state.level === 'L7 (Senior Staff)' || (state.level && state.level.includes('L7'))) {
+  if ((state.level || '').startsWith('L7 ')) {
     if (unlockAchievement('l7_senior_staff_architect')) newlyUnlocked.push('l7_senior_staff_architect');
   }
 
-  if (state.level === 'L8 (Principal)' || (state.level && state.level.includes('L8'))) {
+  if ((state.level || '').startsWith('L8 ')) {
     if (unlockAchievement('l8_principal_architect')) newlyUnlocked.push('l8_principal_architect');
   }
 
-  if (msg.includes('暴富奇迹！')) {
+  // Gate the options-gamble outcomes on the actual gamble event, so unrelated
+  // flavor text that happens to contain these idioms can't award them.
+  if (currentEventId === 'stock_market_annual_gamble' && msg.includes('暴富奇迹！')) {
     if (unlockAchievement('wall_street_wolf')) newlyUnlocked.push('wall_street_wolf');
   }
 
-  if (msg.includes('血本无归')) {
+  if (currentEventId === 'stock_market_annual_gamble' && msg.includes('血本无归')) {
     if (unlockAchievement('wsb_leek')) newlyUnlocked.push('wsb_leek');
   }
 

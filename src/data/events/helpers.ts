@@ -5,6 +5,29 @@ import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '.
 
 export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 
+// College random-event pool. The ids are written INLINE (not behind another
+// indirection) so the reachability audit — which parses nextEventId.toString()
+// for quoted event ids — discovers every event in the pool.
+export const pickCollegeEvent = (): string => {
+  const pool = [
+    'college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala',
+    'college_dorm_roommate', 'college_road_trip', 'college_internship_grind', 'college_heartbreak',
+    'college_health_scare', 'college_side_gig', 'college_culture_shock', 'college_viral_moment',
+  ];
+  return pool[Math.floor(gameRandom() * pool.length)];
+};
+
+// Where a college random event routes AFTER it resolves. Honors the `college_next`
+// flag set by the year event so the same pool can fire both mid-college (-> junior
+// year) and in the final year (-> graduation), across undergrad / master / domestic.
+export const collegeNextStage = (s: GameState): string => {
+  const next = s.story_flags?.college_next;
+  if (next === 'us_undergrad_grad') return 'us_undergrad_grad';
+  if (next === 'cn_undergrad_grad') return 'cn_undergrad_grad';
+  // Master students settle to master graduation; undergrad mid-college -> junior year.
+  return (s.is_master || (s.housing_name || '').includes('美硕')) ? 'us_master_grad' : 'us_undergrad_year3';
+};
+
 // Shared O1 (extraordinary-ability visa) approval probability, so every event that
 // offers O1 uses the same odds keyed on the same predicate as its condition (was
 // inconsistent: 0.30/0.35 non-PhD and 0.70/0.75 PhD across different events, and

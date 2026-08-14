@@ -1,6 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, gameRandom } from './helpers';
-import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { h1ToH2Router, gameRandom, o1PassProb } from './helpers';
 import { HOUSING_NAMES, VISA_STATUS } from '../../constants/gameConstants';
 
 export const immigrationEvents: Record<string, GameEvent> = {
@@ -32,7 +31,10 @@ export const immigrationEvents: Record<string, GameEvent> = {
             message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或继续维持合法工签！'
           };
         },
-        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options',
+        // A non-citizen spouse outcome routes OUT of the crisis (was looping back to
+        // the same event, letting the 40% citizen-spouse roll be re-clicked to a
+        // guaranteed green card). You married; you live with the outcome this year.
+        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'sv_year_end_settlement',
       },
       {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
@@ -71,8 +73,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         reqBadge: '需PhD或硬核算法背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const passProb = s.is_phd ? 0.75 : 0.30;
-          const win = gameRandom() < passProb;
+          const win = gameRandom() < o1PassProb(s); // shared, consistent O1 odds across all events
           return win
             ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, health: Math.max(0, s.health - 5), message: '凭硬核论文与行业大牛推荐信，移民局批复了你的 O1 杰出人才签证！成功自救！' }
             : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。' };
@@ -80,16 +81,24 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
       },
       {
-        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w)',
-        reqBadge: '现金>=80w',
+        text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w 总资产)',
+        reqBadge: '总资产>=80w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' }),
+        // Liquidate stocks to cover the cost when cash is short (was cash-80 only,
+        // leaving transient negative cash that poisoned downstream cash-based rolls).
+        effect: (s) => {
+          const fromStocks = Math.max(0, 80 - s.cash);
+          return { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - Math.min(s.cash, 80), stocks: Math.max(0, (s.stocks || 0) - fromStocks), message: '凭雄厚资金实力，全额出资 $80w 办妥了新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' };
+        },
         nextEventId: 'post_green_card',
       },
       {
-        text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国)',
+        text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国, 搬迁成本)',
+        // Kept universally available (it is the crisis's guaranteed fallback so the
+        // screen always has an actionable choice), but no longer FREE — a relocation
+        // year now costs cash + health.
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, message: '你外派加拿大一年后凭 L1 签证顺利调回湾区总部！' }),
+        effect: (s) => ({ visa: 'L1 (外派)', l1_relocated: true, cash: Math.max(0, s.cash - 3), health: Math.max(0, s.health - 10), message: '你申请外派加拿大温哥华 Office，举家搬迁折腾了一整年 (花费搬迁费与精力)，一年后凭 L1 签证顺利调回湾区总部！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -115,12 +124,18 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
         condition: (s) => s.visa === 'H1B (工签)',
-        effect: (s) => ({ health: Math.max(0, s.health - 15), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }),
-        nextEventId: h1ToH2Router,
+        // RFE now carries a real ~20% denial risk (was a guaranteed save).
+        effect: (s) => {
+          const survive = gameRandom() < 0.80;
+          return survive
+            ? { health: Math.max(0, s.health - 15), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！但你的头发掉了三分之一。' }
+            : { health: Math.max(0, s.health - 15), message: '移民局最终驳回了你的 RFE 答复，H1B 身份岌岌可危！你被迫紧急寻找其他身份自救方案！' };
+        },
+        nextEventId: (s) => (s.message || '').includes('驳回') ? 'h1b_fallback_options' : h1ToH2Router(s),
       },
       {
         text: '直接把 RFE 截屏发给老妈：“妈，我在美国连狗都不如，随时可能被遣返，别催了，祈祷我别回老家啃老吧”',
-        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: (s.charm || 10) + 1, message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1), message: '电话那头沉默了。老妈第二天默默给你转了 5000 人民币并附言：“儿子，实在不行咱们回省城考公”。耳朵清静了半年！' }),
         nextEventId: h1ToH2Router,
       }
     ]
@@ -134,13 +149,13 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '在国内每天熬夜，按美国时间远程上班',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ health: s.health - 15, cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 15), cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '管他呢，直接请无薪假在国内到处旅游！',
         condition: (s) => s.cash >= 20 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ cash: s.cash - 20, health: s.health + 30, leetcode: s.leetcode - 10, imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
+        effect: (s) => ({ cash: s.cash - 20, health: Math.min(100, s.health + 30), leetcode: Math.max(0, s.leetcode - 10), imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -180,7 +195,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
             message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或通过 Day 1 CPT / 外派维持合法留美工签！'
           };
         },
-        nextEventId: (s: GameState) => s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis',
+        // Non-citizen spouse outcome routes OUT (no infinite re-roll for a guaranteed GC).
+        nextEventId: (s: GameState) => s.visa === '绿卡' ? 'post_green_card' : 'sv_year_end_settlement',
       },
       {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
@@ -230,7 +246,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const pass = gameRandom() < (s.is_phd ? 0.70 : 0.35);
+          const pass = gameRandom() < o1PassProb(s); // shared, consistent O1 odds
           return pass
             ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
             : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
@@ -238,20 +254,26 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
       },
       {
-        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w)',
-        reqBadge: '现金>=80w',
+        text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w 总资产)',
+        reqBadge: '总资产>=80w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' }),
+        effect: (s) => {
+          const fromStocks = Math.max(0, 80 - s.cash);
+          return { visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - Math.min(s.cash, 80), stocks: Math.max(0, (s.stocks || 0) - fromStocks), message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底解决在美身份枷锁！' };
+        },
         nextEventId: 'post_green_card',
       },
       {
-        text: '接受外派温哥华/多伦多 L1 办公室 (曲线救国)',
-        costBadge: '免费外派',
+        text: '接受外派温哥华/多伦多 L1 办公室 (曲线救国, 搬迁成本)',
+        costBadge: '搬迁成本',
+        // Kept universal (guaranteed crisis fallback → no dead-end) but no longer free.
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           visa: 'L1 (外派)',
           l1_relocated: true,
-          message: '你转到了温哥华分公司，凭 L1 签证曲线救国保住了工作！一年后顺利申请调回湾区 Headquarters！'
+          cash: Math.max(0, s.cash - 3),
+          health: Math.max(0, s.health - 10),
+          message: '你转到了温哥华分公司，举家搬迁折腾了一整年，凭 L1 签证曲线救国保住了工作！一年后顺利申请调回湾区 Headquarters！'
         }),
         nextEventId: 'sv_year_end_settlement',
       }

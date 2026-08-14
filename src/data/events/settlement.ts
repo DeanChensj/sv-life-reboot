@@ -33,7 +33,15 @@ export const settlementEvents: Record<string, GameEvent> = {
 
            let newEconomy = s.macro_economy || 'neutral';
            let economyMsg = '';
-           
+
+           // Mean-reversion: a bull/bear market drifts back toward neutral (~40%/yr)
+           // so no single event can pin the economy to a perpetual bull that
+           // compounds the stock pile at +25%/yr past the FIRE gates.
+           if (newEconomy !== 'neutral' && gameRandom() < 0.4) {
+             newEconomy = 'neutral';
+             economyMsg = ' 宏观经济周期逐步回归常态。';
+           }
+
            // Stock market fluctuation
            let currentStocks = s.stocks || 0;
            let stockFluctuation = 0;
@@ -207,8 +215,11 @@ export const settlementEvents: Record<string, GameEvent> = {
 
             if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.company !== 'cn_big_tech') {
               newAttempts += 1;
-              const baseWinRate = s.difficulty_title === '简单难度' ? 0.65 : s.difficulty_title === '困难难度' ? 0.20 : 0.40;
-              const winRate = baseWinRate + (s.luck / 100) * 0.2;
+              // Consistent with the first-attempt odds (career.ts big_tech_work) and
+              // realistic H1B lottery rates (~25-40%); was 0.40-0.65 base which made
+              // later attempts EASIER than the first and the 3-strike crisis unreachable.
+              const baseWinRate = s.difficulty_title === '简单难度' ? 0.35 : s.difficulty_title === '困难难度' ? 0.20 : 0.27;
+              const winRate = baseWinRate + (s.luck / 100) * 0.15;
               const win = gameRandom() < winRate;
               if (win) {
                 newVisa = 'H1B (工签)';
@@ -405,16 +416,24 @@ export const settlementEvents: Record<string, GameEvent> = {
       {
         text: '【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 200,
+        // Start the actual FOUNDER flow (founder_annual_strategy) with proper founder
+        // state — was routing into the rank-and-file employee `startup_work` event,
+        // which could dump a brand-new founder into 'unemployed'.
         effect: (s) => ({
           has_reached_initial_fire: true,
           win_threshold: 1500,
           fire_tier: 'luxury',
           job_type: 'startup_founder',
+          founder_stage: 'pre_seed',
+          company_valuation: 500,
+          tc: 6,
+          level: undefined,
+          company: undefined,
           laid_off: false,
           health: Math.min(100, s.health + 10),
           message: '【创办独角兽】你拿着充裕的启动资金辞职创业，正式成立 AI Agent 独角兽公司，开启传奇创始人之路！'
         }),
-        nextEventId: 'startup_work',
+        nextEventId: 'founder_annual_strategy',
       }
     ]
   },

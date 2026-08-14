@@ -361,7 +361,9 @@ export function getTCBreakdown(state: GameState): TCBreakdown {
 
   const preTaxBase = parseFloat((preTaxTC * baseRatio).toFixed(2));
   const preTaxRSU = parseFloat((preTaxTC * rsuRatio).toFixed(2));
-  const taxRate = 0.25;
+  // Progressive effective rate (fed + CA + FICA) by TC band — was a flat 25%,
+  // which under-taxed everyone (esp. high earners) vs the realistic ~30-38%.
+  const taxRate = preTaxTC >= 60 ? 0.36 : preTaxTC >= 30 ? 0.32 : 0.28;
   const taxAmount = parseFloat((preTaxBase * taxRate).toFixed(2));
   const postTaxBase = parseFloat((preTaxBase * (1 - taxRate)).toFixed(2));
   const rsuTaxAmount = parseFloat((preTaxRSU * taxRate).toFixed(2));

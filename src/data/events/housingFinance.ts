@@ -89,7 +89,9 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
         condition: (s) => (s.cash + (s.stocks || 0)) < 40 && !s.parents_helped_house,
-        effect: (s) => ({ cash: 0, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
+        // Player chips in a small fixed contribution; parents cover the rest (was
+        // cash:0, which discarded up to ~$40w of the player's existing savings).
+        effect: (s) => ({ cash: Math.max(0, s.cash - 3), has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
         nextEventId: 'house_slave',
       },
       {
@@ -114,23 +116,30 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         text: '把次卧与车库偷偷出租给转码留学生（每年回血 $1.5w 被动现金流）',
         effect: (s) => {
           const badTenant = gameRandom() > 0.65;
+          // Renting a spare room does NOT reduce your own mortgage carry; the benefit
+          // is only the rental income (was double-counted by also lowering `rent`).
           return badTenant
-            ? { rent: 1.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.0, health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$1.0w/年)，但把你折腾得够呛。' }
-            : { rent: 0.8, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+1.5w/年)！' };
+            ? { rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.0, health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$1.0w/年)，但把你折腾得够呛。' }
+            : { rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+1.5w/年)！' };
         },
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '断供卖房！回归租房生活的自由',
         condition: (s) => s.cash < 50,
-        effect: (s) => ({ cash: s.cash + 35, has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
+        // Foreclosure recovers real buyer equity only — nothing if parents funded it
+        // (closes the parents-buy → default-sell free-cash exploit). Also stop the
+        // phantom ADU rent: clear has_adu_rented and remove the ADU income portion.
+        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: Math.max(0, (s.rental_income || 0) - 1.5), health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '感觉人生一眼望到头，卖房去创业！(要求 100 万现金)',
         condition: (s) => s.cash >= 100,
-        effect: (s) => ({ cash: s.cash - 50, message: '你受够了温水煮青蛙，卖了房子拿着巨资投入到了创业大潮中！' }),
-        nextEventId: 'startup_work',
+        // Selling ADDS home equity (was subtracting $50w while keeping the house).
+        // Actually liquidate the home and start the FOUNDER path (not the employee event).
+        effect: (s) => ({ cash: s.cash + 35, has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: Math.max(0, (s.rental_income || 0) - 1.5), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 500, tc: 6, level: undefined, company: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
+        nextEventId: 'founder_annual_strategy',
       }
     ]
   },
@@ -142,51 +151,51 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     imageUrl: 'images/house.jpg',
     choices: [
       {
-        text: '【自住房改造】搭建后院 ADU 独立套间并出租 (耗费 $1.5w · 产生 +$2.0w/年 租金净流)',
+        text: '【自住房改造】搭建后院 ADU 独立套间并出租 (耗费 $1.5w · 产生 +$1.2w/年 租金净流)',
         costBadge: '花费 $1.5w',
         condition: (s) => s.has_housing && !s.has_adu_rented && (s.cash + (s.stocks || 0)) >= 1.5 && isOwnedHousing(s.housing_name),
         effect: (s) => ({
           cash: s.cash - 1.5,
           has_adu_rented: true,
-          rental_income: (s.rental_income || 0) + 2.0,
-          message: '【ADU 改造完成】你在后院建起了一套带独立卫浴的预制 ADU，挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$2.0w 净租金流！'
+          rental_income: (s.rental_income || 0) + 1.2,
+          message: '【ADU 改造完成】你在后院建起了一套带独立卫浴的预制 ADU，挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$1.2w 净租金流！'
         }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【外州远程投资】购入 Austin/Seattle 精装独栋别墅 (首付 $25w · 产生 +$2.2w/年 租金净流)',
+        text: '【外州远程投资】购入 Austin/Seattle 精装独栋别墅 (首付 $25w · 产生 +$1.2w/年 租金净流)',
         costBadge: '首付 $25w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 25 && !(s.investment_properties || []).includes('Austin 远程独栋屋'),
         effect: (s) => ({
           cash: s.cash - 25,
-          rental_income: (s.rental_income || 0) + 2.2,
+          rental_income: (s.rental_income || 0) + 1.2,
           investment_properties: [...(s.investment_properties || []), 'Austin 远程独栋屋'],
-          message: '【外州资产配置】借助全美远程物业托管，你在德州 Austin 核心科技园区拿下了一套独栋屋，租给 Tesla/Apple 工程师，每年被动落袋 +$2.2w 纯现金流！'
+          message: '【外州资产配置】借助全美远程物业托管，你在德州 Austin 核心科技园区拿下了一套独栋屋，租给 Tesla/Apple 工程师，每年被动落袋 +$1.2w 纯现金流！'
         }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【湾区核心投资】购入东湾 Hayward/Fremont 独栋出租房 (首付 $45w · 产生 +$3.8w/年 租金净流)',
+        text: '【湾区核心投资】购入东湾 Hayward/Fremont 独栋出租房 (首付 $45w · 产生 +$2.2w/年 租金净流)',
         costBadge: '首付 $45w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 45 && !(s.investment_properties || []).includes('Hayward 独立投资房'),
         effect: (s) => ({
           cash: s.cash - 45,
-          rental_income: (s.rental_income || 0) + 3.8,
+          rental_income: (s.rental_income || 0) + 2.2,
           investment_properties: [...(s.investment_properties || []), 'Hayward 独立投资房'],
-          message: '【湾区核心资产】拿下东湾优质通勤独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$3.8w 租金现金流！'
+          message: '【湾区核心资产】拿下东湾优质通勤独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$2.2w 租金现金流！'
         }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【大地主终极资产】全款/杠杆拿下 Sunnyvale 4-Plex 核心多户公寓楼 (首付 $120w · 产生 +$11.0w/年 巨额租金)',
+        text: '【大地主终极资产】全款/杠杆拿下 Sunnyvale 4-Plex 核心多户公寓楼 (首付 $120w · 产生 +$6.0w/年 巨额租金)',
         costBadge: '首付 $120w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 120 && !(s.investment_properties || []).includes(HOUSING_NAMES.SUNNYVALE_4PLEX),
         effect: (s) => ({
           cash: s.cash - 120,
-          rental_income: (s.rental_income || 0) + 11.0,
+          rental_income: (s.rental_income || 0) + 6.0,
           investment_properties: [...(s.investment_properties || []), HOUSING_NAMES.SUNNYVALE_4PLEX],
           charm: Math.min(25, (s.charm || 10) + 5),
-          message: '【加州大地主登顶】你拿下了 Sunnyvale 黄金地段 4 套相连的公寓楼！光靠收租每年就能躺赚 +$11.0w 净现金流，彻底告别打工内卷！'
+          message: '【加州大地主登顶】你拿下了 Sunnyvale 黄金地段 4 套相连的公寓楼！光靠收租每年就能躺赚 +$6.0w 净现金流，彻底告别打工内卷！'
         }),
         nextEventId: 'sv_year_end_settlement',
       },
@@ -232,10 +241,12 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '出资 $20w 成为 AI 独角兽 Seed 轮天使投资人 (高风险)',
+        // Heavy-tailed like real angel investing: mostly a loss, rare 5x. Stake is
+        // deducted up front so a win nets stake×5 − stake = +$80w (was +$100w & +EV).
         effect: (s) => {
-          const win = gameRandom() < 0.4;
+          const win = gameRandom() < 0.12;
           return win 
-            ? { cash: s.cash + 100, message: '爆火升值！你投资的 AI 独角兽被巨头高价买断，天使轮获得 5 倍天价回报 (+$100w)！' }
+            ? { cash: s.cash + 80, message: '万里挑一！你投资的 AI 独角兽被巨头高价买断，天使轮获得 5 倍天价回报 (净 +$80w)！' }
             : { cash: Math.max(0, s.cash - 20), health: s.health - 10, message: 'AI 大模型算力消耗太快，创业团队见底倒闭。你交了 20 万美元天使投资学费。' };
         },
         nextEventId: 'sv_year_end_settlement'

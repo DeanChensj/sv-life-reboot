@@ -52,7 +52,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         text: '【梭哈期权】拼了！用小额现金炒 0DTE 末日期权 (投入 $5w)',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
-          const hit = gameRandom() < (0.08 + s.luck / 500); // 8% base chance
+          const hit = gameRandom() < (0.08 + Math.min(45, s.luck) / 1000); // 8%-12.5%: stays a losing lottery even at high luck
           if (hit) {
             return {
               cash: s.cash + 20, // Turn 5w into 25w (+$20w net cash)
@@ -177,7 +177,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
-          const winRate = isBull ? 0.60 : (isBear ? 0.35 : 0.48);
+          const winRate = isBull ? 0.55 : (isBear ? 0.32 : 0.45);
           const isWin = gameRandom() < winRate;
           if (isWin) {
             const gain = Math.min(45, s.cash * 0.30);
@@ -189,7 +189,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               message: ` 飞天暴赚！你重仓的 AI 科技巨头股价随着算力风口暴涨！现金暴增 +$${gain.toFixed(1)}w 美元！`
             };
           } else {
-            const loss = Math.min(s.cash * 0.20, 30);
+            const loss = Math.min(s.cash * 0.28, 35);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
@@ -243,18 +243,23 @@ export const tradingEvents: Record<string, GameEvent> = {
       {
         text: '【开发量化自动套利系统】手写 Python/C++ 跨期网格与均值回归算法，部署低延迟机房',
         condition: (s) => s.job_type === 'trader',
+        // No longer a strictly-dominant guaranteed money printer: the yield can be
+        // negative in a bear market (real drawdown), there is no +$6w floor, and it
+        // costs a little health instead of healing.
         effect: (s) => {
           const leetBonus = Math.min(0.08, (s.leetcode / 1000));
-          const ecoBonus = s.macro_economy === 'bull' ? 0.06 : (s.macro_economy === 'bear' ? 0.02 : 0.04);
-          const yieldRate = 0.08 + leetBonus + ecoBonus;
-          const profit = Math.min(25, Math.max(6, s.cash * yieldRate));
+          const ecoBonus = s.macro_economy === 'bull' ? 0.06 : (s.macro_economy === 'bear' ? -0.06 : 0.02);
+          const yieldRate = 0.04 + leetBonus + ecoBonus; // can go negative
+          const pnl = Math.max(-25, Math.min(20, parseFloat((s.cash * yieldRate).toFixed(1))));
           return {
             mid_year: true, season_stage: 'h1',
             tc: 0,
-            cash: parseFloat((s.cash + profit).toFixed(1)),
+            cash: Math.max(2, parseFloat((s.cash + pnl).toFixed(1))),
             leetcode: s.leetcode + 4,
-            health: Math.min(100, s.health + 6),
-            message: `【量化算法自动赚钱】你编写的自动套利脚本在 AWS 低延迟服务器全自动跑通！免去了手动盯盘的精神压力，算法稳健捕获 +$${profit.toFixed(1)}w Alpha 超额收益！`
+            health: Math.max(0, s.health - 4),
+            message: pnl >= 0
+              ? `【量化算法】你的自动套利脚本在低延迟机房跑通，算法捕获 +$${pnl.toFixed(1)}w Alpha 超额收益！`
+              : `【量化模型回撤】市场结构突变，你的均值回归模型连环止损，本年策略回撤 -$${Math.abs(pnl).toFixed(1)}w。`
           };
         },
         nextEventId: h1ToH2Router,
@@ -294,12 +299,14 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '最近股市剧烈波动，你的量化策略出现了巨大的 Drawdown (回撤)。',
     choices: [
       {
-        text: '顶着高压，手动干预策略并加大杠杆！(45% 概率获得 $250w 巨额 Bonus)',
+        text: '顶着高压，手动干预策略并加大杠杆！(40% 概率获得 $60w 巨额 Bonus, 否则爆仓被裁)',
+        // Jackpot cut from a degenerate $250w (which alone cleared FIRE) to a
+        // realistic top-quant bonus of $60w; the loss still fires you.
         effect: (s) => {
-          const win = gameRandom() < 0.45;
+          const win = gameRandom() < 0.40;
           return win 
-            ? { cash: s.cash + 250, health: s.health - 15, message: ' 华尔街之狼！这波疯狂杠杆让你单月帮基金出海捕捞暴赚！老板亲手为你颁发了 $250w 美金的年终 Bonus 巨额支票！' }
-            : { cash: Math.max(0, s.cash - 15), health: s.health - 15, laid_off: true, tc: 0, job_type: 'unemployed', message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
+            ? { cash: s.cash + 60, health: Math.max(0, s.health - 15), message: ' 华尔街之狼！这波杠杆让你单月帮基金暴赚，老板亲手为你颁发了 $60w 美金的年终 Bonus 巨额支票！' }
+            : { cash: Math.max(0, s.cash - 15), health: Math.max(0, s.health - 15), laid_off: true, tc: 0, job_type: 'unemployed', message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
         },
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },

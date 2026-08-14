@@ -77,18 +77,39 @@ export const startupEvents: Record<string, GameEvent> = {
                 health: Math.max(0, s.health - 6),
                 message: '【突破 A 轮死亡谷】经过残酷的 Series A 筛选，一线 VC 领投 $350w（估值 $2200w）！公司完成 PMF 突破，创始人津贴提升至 $16w！'
               };
-            } else {
+            } else if (stage === 'series_a') {
               return {
                 mid_year: true, season_stage: 'h1',
-                founder_stage: 'exit',
+                founder_stage: 'series_b',
                 company_valuation: 7500,
                 cash: parseFloat((s.cash + 18).toFixed(1)),
                 tc: 24,
                 health: Math.max(0, s.health - 8),
                 message: '【B 轮超级融资】红杉与 A16Z 联合领投，公司估值冲上 $7500w 美元！ARR 突破 $800w，准独角兽地位确立！'
               };
+            } else {
+              // series_b (or already at exit): advance to exit; never DROP valuation.
+              return {
+                mid_year: true, season_stage: 'h1',
+                founder_stage: 'exit',
+                company_valuation: Math.max(s.company_valuation || 15000, 15000),
+                cash: parseFloat((s.cash + 30).toFixed(1)),
+                tc: 30,
+                health: Math.max(0, s.health - 8),
+                message: '【终局轮/Pre-IPO】主权基金与顶级 Crossover 基金入场，公司估值突破 $1.5亿+，独角兽地位坐实，只待敲钟或并购！'
+              };
             }
           } else {
+            // Failed raise. If the war chest is empty, the company runs out of
+            // runway and dies — a real founder ruin outcome (was impossible before).
+            if ((s.cash + (s.stocks || 0)) < 3) {
+              return {
+                status: 'game_over',
+                cash: Math.max(0, parseFloat((s.cash - 1).toFixed(1))),
+                health: Math.max(0, s.health - 12),
+                message: '【弹尽粮绝】融资失败且账上现金见底，无力支付团队工资与云账单，公司被迫关停清算。你的创业梦碎，背负债务黯然离场。'
+              };
+            }
             const isDownRound = gameRandom() < 0.35;
             if (isDownRound) {
               return {
@@ -159,7 +180,7 @@ export const startupEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
       {
         text: '【终局 Exit】考虑公司并购 Acqui-hire 或准备 纳斯达克 IPO 敲钟上市 (需估值>=3000w)',
@@ -168,15 +189,15 @@ export const startupEvents: Record<string, GameEvent> = {
           const val = s.company_valuation || 3000;
           const isHuge = val >= 6000;
           const roll = gameRandom();
-          if (isHuge && roll < 0.40) {
-            // 40% IPO Win
+          if (isHuge && roll < 0.30) {
+            // 30% IPO Win (was 40%; exits should be rarer wins)
             return {
               status: 'win',
               cash: parseFloat((s.cash + 350).toFixed(1)),
               message: '【纳斯达克敲钟！】公司成功在纳斯达克挂牌敲钟！扣除 VC 稀释后创始人股权套现 $350w 美元，圆满达成 FIRE 终局！'
             };
-          } else if (roll < 0.80) {
-            // Acqui-hire (Safe landing with solid cash & Staff position)
+          } else if (roll < 0.62) {
+            // Acqui-hire (safe landing); the remaining ~38% is the fire-sale downside
             return {
               cash: parseFloat((s.cash + 90).toFixed(1)),
               job_type: 'big_tech',

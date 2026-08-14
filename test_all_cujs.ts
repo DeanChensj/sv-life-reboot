@@ -171,8 +171,9 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   const tcBreakdown = getTCBreakdown(appleState);
   assert(tcBreakdown.preTaxBase === 22, 'Big Tech cash base is 55% of $40w ($22w)');
   assert(tcBreakdown.preTaxRSU === 18, 'Big Tech RSU is 45% of $40w ($18w)');
-  assert(tcBreakdown.postTaxBase === 16.5, 'Post-tax cash is $16.5w');
-  assert(tcBreakdown.postTaxRSU === 13.5, 'Post-tax RSU is $13.5w');
+  // Progressive tax: $40w TC is in the 32% band → base 22*0.68=14.96, RSU 18*0.68=12.24
+  assert(tcBreakdown.postTaxBase === 14.96, 'Post-tax cash is $14.96w (32% band)');
+  assert(tcBreakdown.postTaxRSU === 12.24, 'Post-tax RSU is $12.24w (32% band)');
 
   // 11. Housing event routing check: Renter must never trigger house_warming_party
   const renterState: GameState = {

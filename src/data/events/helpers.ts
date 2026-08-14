@@ -5,6 +5,13 @@ import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '.
 
 export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 
+// Shared O1 (extraordinary-ability visa) approval probability, so every event that
+// offers O1 uses the same odds keyed on the same predicate as its condition (was
+// inconsistent: 0.30/0.35 non-PhD and 0.70/0.75 PhD across different events, and
+// ai_research applicants got the low rate in some events but the high rate in others).
+export const o1PassProb = (s: GameState): number =>
+  (s.is_phd || s.job_type === 'ai_research' || s.leetcode >= 85) ? 0.72 : 0.32;
+
 // Helper to scale job hunt TC based on candidate's existing engineering level (benchmarked to levels.fyi)
 export const getLevelScaledTC = (baseL3TC: number, level?: string): number => {
   if (level === 'L8 (Principal)' || level === 'Principal' || level === 'Fellow') return Math.min(220, Math.floor(baseL3TC * 7.2));
@@ -59,8 +66,10 @@ export const generateInitialState = (customSeed?: number): GameState => {
   }
 
   let bgMessage = '';
-  if (cash > 60) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';
-  else if (cash < 20) bgMessage += '你出生在一个普通家庭，预算非常吃紧。';
+  // Rich roll produces cash 25-50, so the threshold must be 25, not 60 (which was
+  // unreachable — every 富二代 was mislabeled a 小康/普通家庭).
+  if (cash >= 25) bgMessage += '你出生在一个富裕的家庭，启动资金充足！';
+  else if (cash < 15) bgMessage += '你出生在一个普通家庭，预算非常吃紧。';
   else bgMessage += '你出生在一个小康家庭。';
 
   if (charm >= 9) bgMessage += ' 顺便一提，你从小就长得像大明星，走到哪里都是焦点。';
@@ -88,7 +97,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
     network: 10,
     is_married: false,
     relationship_status: 'single',
-    win_threshold: 1000,
+    win_threshold: 500, // basic FIRE tier; choose_trait overwrites with the trait-specific goal
     laid_off: false,
     has_housing: false,
     housing_name: '国内老家',

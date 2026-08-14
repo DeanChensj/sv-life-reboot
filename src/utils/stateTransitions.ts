@@ -116,6 +116,10 @@ export function applyStateTransition(
     newState.tc = 0;
   }
 
+  // Track the all-time peak TC (BEFORE any layoff can zero it out for the year) so
+  // the war report / HUD "峰值总包" is a true peak, not the current (possibly $0) TC.
+  newState.max_tc = Math.max(newState.max_tc || 0, prevState.tc || 0, newState.tc || 0);
+
   // 5. Auto Liquidate Stocks if Cash < 0 on Purchases
   let liquidationNote = '';
   if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {

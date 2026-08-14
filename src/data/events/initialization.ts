@@ -397,23 +397,27 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【量化金融】加入校内量化/学生投资俱乐部 (Quant & Trading Club)',
-        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 5), health: s.health - 3, age: s.age + 2, message: '在模拟盘实盘操作中大获全胜，赚到了第一笔金融交易收益！两年时光弹指一挥间。' }),
+        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(s.max_charm ?? 25, s.charm + 5), network: Math.min(100, (s.network || 10) + 4), health: s.health - 3, age: s.age + 2, message: '在模拟盘实盘操作中大获全胜，赚到了第一笔金融交易收益，还结识了一圈金融圈同好！两年时光弹指一挥间。' }),
         nextEventId: pickCollegeEvent,
       },
       {
         text: '【竞技体育】加入校队竞技体育 (网球/抱石/橄榄球)',
-        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(25, s.charm + 5), cash: Math.max(0, s.cash - 1), age: s.age + 2, message: '高强度体育训练拉满！体能与气场全面大爆发！两年时光弹指一挥间。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(s.max_charm ?? 25, s.charm + 5), network: Math.min(100, (s.network || 10) + 4), cash: Math.max(0, s.cash - 1), age: s.age + 2, message: '高强度体育训练拉满！体能与气场全面大爆发，还和队友结下了铁哥们儿情谊！两年时光弹指一挥间。' }),
         nextEventId: pickCollegeEvent,
       },
       {
-        text: '【文娱社团】组建校园摇滚乐队举办草坪音乐节',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 8), health: Math.min(100, s.health + 5), cash: Math.max(0, s.cash - 1), age: s.age + 2, message: '你在音乐节上作为主唱震撼全场，成为了校园里的风云人物！两年时光弹指一挥间。' }),
+        text: '【文娱社团】组建校园摇滚乐队举办草坪音乐节 (颜值路线)',
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 8), network: Math.min(100, (s.network || 10) + 5), health: Math.min(100, s.health + 5), cash: Math.max(0, s.cash - 1), age: s.age + 2, message: '你在音乐节上作为主唱震撼全场，成为了校园里的风云人物！两年时光弹指一挥间。' }),
         nextEventId: pickCollegeEvent,
       },
       {
-        text: '【兄弟会社交】加入兄弟会/姐妹会 (Frat Party 社交局)',
+        text: '【兄弟会社交】加入兄弟会/姐妹会 (Frat Party 人脉路线)',
         condition: (s) => s.cash >= 2,
-        effect: (s) => ({ cash: s.cash - 2, charm: Math.min(25, s.charm + 8), health: s.health - 10, age: s.age + 2, message: '每周 Party，在啤酒乒乓桌上认识了一堆富二代与校友朋友。两年时光弹指一挥间。' }),
+        // Differentiated from 文娱 (charm route) into the NETWORK specialist: big
+        // social capital + luck, at a real health/cash cost. Was strictly dominated
+        // by 文娱 (same charm+8 but worse on every other axis) and, ironically,
+        // granted 0 network despite its "认识一堆校友" flavor.
+        effect: (s) => ({ cash: s.cash - 2, charm: Math.min(s.max_charm ?? 25, s.charm + 4), network: Math.min(100, (s.network || 10) + 14), luck: Math.min(99, s.luck + 3), health: Math.max(0, s.health - 8), age: s.age + 2, message: '每周 Party，在啤酒乒乓桌上认识了一堆富二代与校友大佬，攒下了一张厚厚的人脉网！两年时光弹指一挥间。' }),
         nextEventId: pickCollegeEvent,
       }
     ]
@@ -672,12 +676,15 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【大厂实习冲刺】海投 500 份简历，疯狂刷 LeetCode 冲大厂',
-        effect: (s) => ({ leetcode: s.leetcode + 12, health: s.health - 10, age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '你拿到了硅谷大厂的暑期实习 Offer，顺利完成了大三与大四学业！' }),
+        // The single biggest early-career lever (summer intern -> return offer) now
+        // pays off concretely: intern salary + industry network, on top of the
+        // LeetCode gain. Previously it was strictly dominated by the research option.
+        effect: (s) => ({ leetcode: s.leetcode + 12, cash: s.cash + 2, network: Math.min(100, (s.network || 10) + 6), health: s.health - 10, age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '你拿到了硅谷大厂的暑期实习 Offer 并转正在望，还赚到了丰厚的实习工资，顺利完成了大三与大四学业！' }),
         nextEventId: pickCollegeEvent,
       },
       {
         text: '【华尔街金融实习】冲击纽约投资银行/量化基金 Quant 实习',
-        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 5), health: s.health - 10, age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '成功斩获纽约名企实习！年薪高昂，顺利完成大学最后两年！' }),
+        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(s.max_charm ?? 25, s.charm + 5), network: Math.min(100, (s.network || 10) + 4), health: s.health - 10, age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '成功斩获纽约名企实习！年薪高昂，还打入了华尔街金融圈，顺利完成大学最后两年！' }),
         nextEventId: pickCollegeEvent,
       },
       {
@@ -690,7 +697,9 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【校友人脉内推】去硅谷大厂 Career Fair 活动混脸熟要内推',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(25, s.charm + 8), age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '你加了几十位大厂校友，拿到不少内推机会，顺利拿到学位！' }),
+        // The dedicated networking choice now actually builds network (was 0 despite
+        // the "加了几十位大厂校友/内推机会" flavor).
+        effect: (s) => ({ cash: s.cash - 1, charm: Math.min(s.max_charm ?? 25, s.charm + 6), network: Math.min(100, (s.network || 10) + 12), age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '你加了几十位大厂校友，拿到不少内推机会与人脉资源，顺利拿到学位！' }),
         nextEventId: pickCollegeEvent,
       },
       {

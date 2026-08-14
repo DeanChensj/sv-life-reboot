@@ -1,6 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, gameRandom } from './helpers';
-import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { getLevelScaledTC, gameRandom } from './helpers';
 import { HOUSING_NAMES } from '../../constants/gameConstants';
 
 export const lifestyleEvents: Record<string, GameEvent> = {
@@ -35,10 +34,10 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【周末交友】周末 Santana Row 喝奶茶 (Coffee Meets Bagel)',
         condition: (s) => !s.relationship_status || s.relationship_status === 'single',
         effect: (s) => {
-          const winRate = 0.35 + (s.charm * 0.02) + (s.luck * 0.002) + (s.has_pet ? 0.20 : 0);
+          const winRate = Math.min(0.95, 0.35 + (s.charm * 0.02) + (s.luck * 0.002) + (s.has_pet ? 0.20 : 0));
           const pass = gameRandom() < winRate;
           return pass 
-            ? { relationship_status: 'matched', partner_type: 'random', charm: Math.min(25, s.charm + 2), message: '【匹配成功】因为主页挂了滑雪和宠物照片，你成功匹配到了一位湾区打工人！双方聊得非常投机，进入 Matched 阶段！' }
+            ? { relationship_status: 'matched', partner_type: 'random', charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '【匹配成功】因为主页挂了滑雪和宠物照片，你成功匹配到了一位湾区打工人！双方聊得非常投机，进入 Matched 阶段！' }
             : { cash: Math.max(0, s.cash - 0.2), health: s.health - 5, message: '【匹配失败】连喝了三杯 Boba，对方一听你还没买房且身份未定，默默选择了 AA。你不仅花了钱还受到了真实伤害。' };
         },
         nextEventId: 'sv_year_end_settlement',
@@ -51,7 +50,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const isArtist = s.partner_type === 'artist';
           const pass = gameRandom() < (isArtist ? 0.4 : 0.7); // 文青比较难搞
           return pass
-            ? { relationship_status: 'dating', charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: `【正式确立关系】Tahoe 的雪景与小木屋篝火让两人的感情迅速升温！你们正式官宣成为湾区情侣 (Dating)！` }
+            ? { relationship_status: 'dating', charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: `【正式确立关系】Tahoe 的雪景与小木屋篝火让两人的感情迅速升温！你们正式官宣成为湾区情侣 (Dating)！` }
             : { relationship_status: 'single', partner_type: undefined, health: s.health - 10, message: '【分道扬镳】滑雪途中因为路线分配和谁洗碗产生了严重分歧。回到湾区后双方互删，退回单身。' };
         },
         nextEventId: 'sv_year_end_settlement',
@@ -105,18 +104,22 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '由于湾区高压的生活节奏、永远在比拼薪资的焦虑、以及你长期对伴侣的忽视，你们的感情走到了破裂的边缘。对方正式向你提出了分手/离婚。',
     choices: [
       {
-        text: '和平分手，资产平分',
-        effect: (s) => ({ cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产 (现金与股票均分)，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }),
+        text: '和平分手 / 离婚',
+        // Only a MARRIED split divides assets (community property). A dating breakup
+        // has no merged finances, so no asset division.
+        effect: (s) => s.is_married
+          ? { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产 (现金与股票均分)，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }
+          : { relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 10), message: '你们和平分手，各自安好。恋爱期间财务独立，没有财产纠纷，只是心里空落落的。' },
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '花 $10w 请湾区顶级离婚律师打官司 (高风险)',
-        condition: (s) => s.cash >= 15,
+        text: '花 $10w 请湾区顶级离婚律师打官司 (仅限已婚, 高风险)',
+        condition: (s) => s.is_married === true && s.cash >= 15,
         effect: (s) => {
           const win = gameRandom() > 0.5;
           return win
-            ? { cash: (s.cash - 10) * 0.9, stocks: (s.stocks || 0) * 0.9, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师非常给力！你成功保住了 90% 的婚内资产 (现金与股票同比例)，但漫长的官司让你心力交瘁，头发白了一半。' }
-            : { cash: (s.cash - 10) * 0.6, stocks: (s.stocks || 0) * 0.6, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产 (现金与股票同比例)，你痛心不已！' };
+            ? { cash: (s.cash - 10) * 0.9, stocks: (s.stocks || 0) * 0.9, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '律师非常给力！你成功保住了 90% 的婚内资产 (现金与股票同比例)，但漫长的官司让你心力交瘁，头发白了一半。' }
+            : { cash: (s.cash - 10) * 0.6, stocks: (s.stocks || 0) * 0.6, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产 (现金与股票同比例)，你痛心不已！' };
         },
         nextEventId: 'sv_year_end_settlement'
       },
@@ -124,9 +127,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '痛哭流涕挽留，发誓每天准时 5 点下班做饭',
         effect: (s) => {
           const win = s.charm >= 10 && gameRandom() > 0.5;
-          return win
-            ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，虽然职场发展受阻，但保住了这个家。' }
-            : { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', health: Math.max(0, s.health - 15), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产 (现金与股票均分)。' };
+          if (win) {
+            return s.is_married
+              ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，但保住了这个家。' }
+              : { health: Math.min(100, s.health + 10), message: '对方被你的诚意打动，你们和好如初，感情更进一步。' };
+          }
+          return s.is_married
+            ? { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产 (现金与股票均分)。' }
+            : { relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 12), message: '破镜难重圆。对方觉得你只是在画大饼，还是离开了你。' };
         },
         nextEventId: 'sv_year_end_settlement'
       }
@@ -184,14 +192,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
           return pass
             ? {
-                charm: Math.min(25, (s.charm || 10) + 3),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
                 health: Math.min(100, s.health + 12),
                 relationship_status: 'dating',
                 partner_type: 'random',
                 message: '【终极告白牵手】你的真诚、沉稳与厨艺打动了心动嘉宾！在告白夜双向奔赴牵手成功 (进入 Dating 状态)，全网嗑糖破百万播放！'
               }
             : {
-                charm: Math.min(25, (s.charm || 10) + 2),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
                 health: Math.min(100, s.health + 6),
                 message: '【体面错付与遗憾】虽然在厨房的交心十分温馨，但心动嘉宾最终在告白夜被另一位进攻性更强的嘉宾打动。你体面送上祝福，真诚克制的表现为你在全网赢得了极佳路人缘。'
               };
@@ -202,7 +210,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【大厂硬核炫技】约会时在白板上手撕红黑树与分布式一致性协议，疯狂输出 TC 与大厂光环',
         effect: (s) => ({
           cash: s.cash + 3,
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           leetcode: Math.min(100, s.leetcode + 5),
           message: '【硬核出圈】“约会手撕分布式系统”的名场面直接登顶全网热搜！虽然没能牵手成功，但你被奉为“硅谷最纯粹的硬核做题家码农”，疯狂恰饭赚到了 $3w 品牌代言费！'
         }),
@@ -214,7 +222,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const win = gameRandom() < (0.50 + ((s.luck || 20) / 200));
           return win
             ? {
-                charm: Math.min(25, (s.charm || 10) + 6),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 6),
                 cash: s.cash + 2,
                 relationship_status: 'dating',
                 partner_type: 'vc',
@@ -338,7 +346,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
           if (isUnemployed && !canLandJob) {
             return {
-              charm: Math.min(25, s.charm + 5),
+              charm: Math.min(s.max_charm ?? 25, s.charm + 5),
               health: Math.min(100, s.health + 15),
               message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！有投资人给你推了独角兽面试，但你太久不练算法，白板编程没有通过面试。'
             };
@@ -350,7 +358,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
             level: targetLvl,
             job_type: isUnemployed ? 'big_tech' : s.job_type,
             laid_off: false,
-            charm: Math.min(25, s.charm + 5),
+            charm: Math.min(s.max_charm ?? 25, s.charm + 5),
             health: Math.min(100, s.health + 15),
             message: isUnemployed
               ? `多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人引荐你去 AI 独角兽，你扎实的算法基础顺利通过面试，空降高薪 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)！`
@@ -367,12 +375,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
           const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
           if (win && isUnemployed && !canLandJob) {
-            return { cash: s.cash - 1, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档并获推面试，但算法生疏未能拿到 Offer。' };
+            return { cash: s.cash - 1, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档并获推面试，但算法生疏未能拿到 Offer。' };
           }
           const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
           const newTC = isUnemployed ? getLevelScaledTC(20, targetLvl) : s.tc + 5;
           return win
-            ? { cash: s.cash - 1, tc: newTC, level: targetLvl, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: `你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司 (定级 ${targetLvl} · 总包 ${newTC}w)！` }
+            ? { cash: s.cash - 1, tc: newTC, level: targetLvl, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: `你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司 (定级 ${targetLvl} · 总包 ${newTC}w)！` }
             : { cash: s.cash - 1, health: Math.max(0, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -394,7 +402,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '挑战 V5 难度黑点路线 (体验攀岩硬核快感)',
         effect: (s) => ({
           health: Math.min(100, s.health + 20),
-          charm: Math.min(25, s.charm + 3),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           message: '你顶住了侧拉与脚尖 Hook 挂墙，成功 Top out 登顶！虽然前臂肌肉酸痛，但心理压力一扫而空，神清气爽！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -407,7 +415,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const canLandJob = !isUnemployed || s.leetcode >= 45 || (s.network || 0) >= 30;
           if (win && isUnemployed && !canLandJob) {
             return {
-              charm: Math.min(25, s.charm + 4),
+              charm: Math.min(s.max_charm ?? 25, s.charm + 4),
               health: Math.min(100, s.health + 15),
               message: '老哥极为欣赏你的解题节奏并为你推荐了 AI 团队面试，可惜你长期没练算法没能通过白板面试。'
             };
@@ -420,13 +428,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
                 level: targetLvl,
                 job_type: isUnemployed ? 'big_tech' : s.job_type,
                 laid_off: false,
-                charm: Math.min(25, s.charm + 4),
+                charm: Math.min(s.max_charm ?? 25, s.charm + 4),
                 health: Math.min(100, s.health + 15),
                 message: `聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，直通推荐你去了核心 AI 算力架构团队 (定级 ${targetLvl} · 总包 ${newTC}w)！`
               }
             : {
                 health: Math.min(100, s.health + 20),
-                charm: Math.min(25, s.charm + 2),
+                charm: Math.min(s.max_charm ?? 25, s.charm + 2),
                 message: '老哥热情地向你分享了他的动态挂脚技巧，你们加了 Strava 好友，约定下周末继续来刷 V5 路线。'
               };
         },
@@ -444,7 +452,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '轰出 100mph 强力发球，统治比赛',
         effect: (s) => ({
           health: Math.min(100, s.health + 20),
-          charm: Math.min(25, s.charm + 4),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 4),
           message: '你的正手上旋与发球统治了全场！球友们直呼“湾区费德勒”，纷纷拉你进南湾高端网球俱乐部群，相亲与社交胜率大增！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -454,7 +462,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: s.cash + 4,
           health: Math.min(100, s.health + 10),
-          charm: Math.min(25, s.charm + 2),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 2),
           message: '打完球后大家在场边喝电解质水，搭档大佬随口指点了你几只算力概念股，你果断跟进，随后获得了 $4w 美金的短期投资回报！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -471,7 +479,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '一口气冲上山顶，在拔剑柱前拍 OOTD 大片',
         effect: (s) => ({
           health: Math.min(100, s.health + 15),
-          charm: Math.min(25, s.charm + 3),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           message: '站在 Mission Peak 顶峰俯瞰整个旧金山湾区与 237 公路！你在拔剑柱前拍的帅气写真在朋友圈和小红书获得了上百个赞！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -525,7 +533,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.8),
           health: Math.min(100, s.health + 18),
-          charm: Math.min(25, s.charm + 4),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 4),
           message: '太平洋的海浪与彩虹彻底洗去了写代码的疲惫！你的体能恢复满格，带着一身健康的阳光小麦肤色重返硅谷！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -552,7 +560,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1.5),
           health: Math.min(100, s.health + 15),
-          charm: Math.min(25, s.charm + 5),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 5),
           message: '你享受了最高规格的日式招待！品尝了顶配和牛与怀石料理，在银座彻底放空身心！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -577,12 +585,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '入坑购买 2 箱高端红酒并订阅 Wine Club 会员 (花费 $0.8w)',
         condition: (s) => s.cash >= 0.8,
-        effect: (s) => ({ cash: s.cash - 0.8, charm: Math.min(25, s.charm + 4), health: Math.min(100, s.health + 10), message: '你体验到了正宗的湾区中产生活方式，品味大幅上升，社交话题更加丰富！' }),
+        effect: (s) => ({ cash: s.cash - 0.8, charm: Math.min(s.max_charm ?? 25, s.charm + 4), health: Math.min(100, s.health + 10), message: '你体验到了正宗的湾区中产生活方式，品味大幅上升，社交话题更加丰富！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '纯打卡拍照发朋友圈，喝葡萄汁享受阳光',
-        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(25, s.charm + 2), message: '纳帕谷的明媚阳光与绿油油的葡萄园让你极度放松，身心得到了全面滋养！' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '纳帕谷的明媚阳光与绿油油的葡萄园让你极度放松，身心得到了全面滋养！' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -626,7 +634,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 30 && s.cash >= 0.4,
         effect: (s) => ({
           cash: s.cash - 0.4,
-          charm: Math.min(25, (s.charm || 10) + 4),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
           health: Math.min(100, s.health + 15),
           message: '【VIP 内场狂欢】你的高并发抢票脚本在 0.1 秒内秒杀下两张内场票！在 Levi\'s Stadium 烟火下全场大合唱，身心得到极致释放，朋友圈点赞破 300！'
         }),
@@ -638,7 +646,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: s.cash - 0.8,
           health: Math.min(100, s.health + 10),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           message: '【千金难买心头好】虽然黄牛溢价让人肉疼，但现场全场挥舞荧光棒的震撼合唱让你彻底忘却了本季度的 Perf 焦虑。'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -671,12 +679,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '冒着被店员白眼的风险，眯着眼准确点击极小的字体 Custom Tip -> $0.50',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), charm: Math.max(0, s.charm - 1), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
+        // A $13 boba + tip is ~$13-16 = ~0.0013-0.0016w, not $1000-2000 (100x slip).
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.0013), charm: Math.max(0, s.charm - 1), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '痛快点击 25%，拍照发朋友圈：“湾区物价让硅谷 L5 活得不如国内县城中产 [流泪]”',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 2), message: '你的朋友圈成功引起了老同学的围观和暗酸，完成了标准的硅谷式哭穷炫耀。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.0016), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你的朋友圈成功引起了老同学的围观和暗酸，完成了标准的硅谷式哭穷炫耀。' }),
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -716,7 +725,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < 0.70;
           return win
-            ? { cash: Math.max(0, s.cash - 0.02), charm: Math.min(25, s.charm + 2), health: Math.max(0, s.health - 3), message: '排队 2.5 小时终于喝到了！随手加了滤镜发小红书获得了 200+ 点赞，极大满足了湾区潮人的虚荣心！' }
+            ? { cash: Math.max(0, s.cash - 0.02), charm: Math.min(s.max_charm ?? 25, s.charm + 2), health: Math.max(0, s.health - 3), message: '排队 2.5 小时终于喝到了！随手加了滤镜发小红书获得了 200+ 点赞，极大满足了湾区潮人的虚荣心！' }
             : { cash: Math.max(0, s.cash - 0.02), health: Math.max(0, s.health - 6), message: '排队两小时，一口喝下去发现又甜又贵纯纯智商税！不仅被加州阳光晒脱皮，还因高糖奶茶腹泻了半天。' };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -724,7 +733,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '闪送黄牛代排！多花钱找跑腿黄牛送至办公室 (花费 $0.08w)',
         condition: (s) => s.cash >= 0.08,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.08), charm: Math.min(25, s.charm + 1), message: '多花了几万韩元/跑腿费免去了排队晒太阳之苦，你在办公室悠闲地喝着网红奶茶，收获了同事羡慕的目光。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.08), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '多花了几万韩元/跑腿费免去了排队晒太阳之苦，你在办公室悠闲地喝着网红奶茶，收获了同事羡慕的目光。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -773,10 +782,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '跟他探讨脑机接口，看能不能弄点融资',
+        // Trimmed from a free +$10w to a plausible small pre-seed check.
         effect: (s) => ({ 
-          charm: s.charm + 3,
-          cash: s.cash + 10,
-          message: '你成功用一些炫酷的词汇忽悠了他，他当场决定给你打钱让你帮他开发一个“量子睡眠追踪”App。'
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
+          cash: s.cash + 3,
+          message: '你成功用一些炫酷的词汇忽悠了他，他当场决定给你打一小笔钱让你帮他开发一个“量子睡眠追踪”App。'
         }),
         nextEventId: 'sv_year_end_settlement',
         condition: (s) => s.charm > 5
@@ -817,8 +827,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【开卡礼狂魔】一口气申 4 张大额神卡，刷满开卡礼点数兑头等舱 (消耗 $0.5w, 收益 $1.2w 积分价值)',
         effect: (s) => ({
-          cash: s.cash + 1.2,
-          charm: Math.min(25, s.charm + 3),
+          cash: s.cash - 0.5 + 1.2, // apply the stated $0.5w spend (was silently omitted → net +1.2)
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           health: Math.min(100, s.health + 5),
           message: '成功拿到了 300,000 Amex/Chase 积分！直接兑换了旧金山直飞东京的日航全平躺头等舱，精算理财智商彻底碾压同行！'
         }),
@@ -843,7 +853,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '刷信用卡加码买入 2 块金条避险 (消耗 $0.4w 现金)',
         condition: (s) => s.cash >= 0.4,
-        effect: (s) => ({ cash: s.cash - 0.4, luck: Math.min(99, s.luck + 2), message: '你成功抢到了两块实物金条装进保险柜，踏实感满满！' }),
+        // Gold is a store of value: the $0.4w converts into a tradeable asset (stocks), not vanishes.
+        effect: (s) => ({ cash: s.cash - 0.4, stocks: (s.stocks || 0) + 0.4, luck: Math.min(99, s.luck + 2), message: '你成功抢到了两块实物金条装进保险柜，踏实感满满！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -861,12 +872,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '讲座后抢占 Q&A 提问环节，自信展示技术见解',
-        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), charm: Math.min(25, s.charm + 3), message: '你的提问得到了老黄的幽默点评，现场几位 VC 主动递上了名片！' }),
+        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你的提问得到了老黄的幽默点评，现场几位 VC 主动递上了名片！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '默默听完讲座，去大学路吃一碗热气腾腾的拉面',
-        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(25, s.charm + 1), message: '顶级思维碰撞加上一碗热拉面，让你度过了一个充实而愉快的周五夜晚。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '顶级思维碰撞加上一碗热拉面，让你度过了一个充实而愉快的周五夜晚。' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -880,7 +891,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '全程陪同！请假带爸妈自驾一号公路去 17 Mile 与 Napa 品酒 (花费 $0.3w)',
         condition: (s) => s.cash >= 0.3,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.3), health: Math.min(100, s.health + 5), charm: Math.min(25, s.charm + 2), network: Math.min(100, (s.network || 0) + 2), message: '虽然老妈一路吐槽加州紫外线强且嫌纳帕红酒贵，但看到朋友圈晒满照片并收获老家亲戚数百赞，你感受到了久违的家庭温暖。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.3), health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 2), network: Math.min(100, (s.network || 0) + 2), message: '虽然老妈一路吐槽加州紫外线强且嫌纳帕红酒贵，但看到朋友圈晒满照片并收获老家亲戚数百赞，你感受到了久违的家庭温暖。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -931,11 +942,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你在周末 Hackathon 上用 AI Agent 搭建了一个全自动替工程师开 Zoom 会与自动写 Weekly Report 的 Agent 助手，在 Twitter/X 上暴火！',
     choices: [
       {
-        text: '【VC 争相送钱】接受 a16z / YC 的 $50w 种子轮打款',
+        text: '【VC 争相送钱】接受 a16z / YC 的 $15w 种子轮打款',
+        // Text now matches the effect (+$15w), and it no longer silently flips
+        // job_type to 'startup' while keeping the player's big-tech level/TC.
         effect: (s) => ({
           cash: s.cash + 15,
-          charm: Math.min(25, (s.charm || 10) + 6),
-          job_type: 'startup',
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 6),
           message: 'a16z 领投种子轮！获得 $15 万美金天使现金，你登上了 TechCrunch 头条，成为硅谷最炙手可热的 AI Agent 创业明星！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -943,7 +955,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【开源上星】在 GitHub 开源该项目，收割 15k Stars',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 5),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 8),
           leetcode: Math.min(100, s.leetcode + 10),
           message: '项目登上了 GitHub Trending 榜首！全球几万开发者给你送 Star，连 Sam Altman 都转发了你的 Tweet！'
@@ -1010,7 +1022,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '折腾三天环境，发小红书“湾区码农客厅 AI 服务器” (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 2), message: '你的客厅 Mac Mini 服务器组照获得了 200+ 赞，不少极客同仁在评论区交流开源部署心得。' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你的客厅 Mac Mini 服务器组照获得了 200+ 赞，不少极客同仁在评论区交流开源部署心得。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -1028,14 +1040,20 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你自己写了一套 Multi-Agent 架构，全网 24 小时自动化抓取美股财报、套利与量化小工具。',
     choices: [
       {
-        text: '定时提现副业收益 (现金 +$12w)',
-        effect: (s) => ({ cash: s.cash + 12, health: Math.max(0, s.health - 5), message: 'Multi-Agent 自动套利脚本为你带来了 $12w 额外副业现金流！' }),
+        // Was an unconditional +$12w faucet with a strictly-worse alternative. Now a
+        // modest, genuinely risky side income (EV ~ +$1.75w/yr).
+        text: '全力运行 Multi-Agent 自动套利脚本 (高波动副业)',
+        effect: (s) => {
+          const win = gameRandom() < 0.55;
+          return win
+            ? { cash: s.cash + 4, health: Math.max(0, s.health - 5), message: 'Multi-Agent 自动套利脚本跑通，为你带来了 $4w 额外副业现金流！' }
+            : { cash: Math.max(0, s.cash - 1), message: '规模过大触发 Cloudflare 封禁 IP，脚本失效并倒贴了一笔服务器租金 ($1w)。' };
+        },
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '规模过大被 Cloudflare 封禁 IP，倒贴伺服器租金 (消耗 $1w)',
-        condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 1), message: '频繁并发触发了云端防爬虫拦截，脚本失效并损失了一笔服务器租金。' }),
+        text: '浅尝辄止，不大规模部署',
+        effect: () => ({ message: '你担心合规与封号风险，只把它当成一个玩具项目，没有实际收益。' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1054,7 +1072,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '痛下决心，去 Santana Row 购买几套修身休闲装 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(25, s.charm + 3), message: '换上合身的新衣服后，你整个人精神焕发，颜值与个人吸引力大幅提升！' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '换上合身的新衣服后，你整个人精神焕发，颜值与个人吸引力大幅提升！' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1072,7 +1090,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '私信向对方诚恳致歉并主动关闭脚本',
-        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), charm: Math.min(25, s.charm + 1), message: '你的诚恳态度平息了波澜，成功控制住了负面影响。' }),
+        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '你的诚恳态度平息了波澜，成功控制住了负面影响。' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1085,12 +1103,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '接下品牌商业植入推广，开启副业变现！',
-        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 1), message: ' 爆款变现！商业合作广告大获成功，你轻松斩获 $2w 美元额外副业收益！' }),
+        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: ' 爆款变现！商业合作广告大获成功，你轻松斩获 $2w 美元额外副业收益！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '保持纯粹，只分享生活日常，拒绝硬广洗脑',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 5), message: '你的真实与接地气圈粉无数，获得了绝佳的粉丝口碑！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 5), message: '你的真实与接地气圈粉无数，获得了绝佳的粉丝口碑！' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1127,19 +1145,27 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '和 VC / 大厂 Director 交流豪车与独角兽投资',
-        effect: (s) => ({
-          tc: s.tc + 5,
-          charm: Math.min(25, s.charm + 3),
-          health: Math.min(100, s.health + 10),
-          message: '车友会里藏龙卧虎！你结识了一位科技基金合伙人，对方为你推荐了一个高薪岗位机会，TC 再次提升！'
-        }),
+        // Only raise TC if actually employed (middleware zeroes tc for unemployed,
+        // silently voiding the promised raise); otherwise it's a networking gain.
+        effect: (s) => {
+          const employed = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+          return {
+            tc: employed ? s.tc + 5 : s.tc,
+            network: Math.min(100, (s.network || 10) + 5),
+            charm: Math.min(s.max_charm ?? 25, s.charm + 3),
+            health: Math.min(100, s.health + 10),
+            message: employed
+              ? '车友会里藏龙卧虎！你结识了一位科技基金合伙人，帮你争取到了一笔加薪，TC 再次提升！'
+              : '车友会里藏龙卧虎！你结识了一位科技基金合伙人，拓展了宝贵的高端人脉资源！'
+          };
+        },
         nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '下场 17-Mile 沿海公路体验极限跑山 (消耗 $0.5w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.5),
-          charm: Math.min(25, s.charm + 5),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 5),
           health: Math.max(0, s.health - 5),
           message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪！'
         }),
@@ -1161,7 +1187,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '拍照发小红书“旧金山治安体验”，引发热烈围观',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: s.health - 5, message: '你的小红书帖子获得了 300+ 赞，不少湾区博主在评论区感同身受地交流防砸车经验。' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: s.health - 5, message: '你的小红书帖子获得了 300+ 赞，不少湾区博主在评论区感同身受地交流防砸车经验。' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1179,7 +1205,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '把行车记录仪视频剪辑发 YouTube / B站爆火',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 4), message: '你的幽灵刹车测试视频获得了 50,000+ 播放，吸引了大批极客粉丝关注！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 4), message: '你的幽灵刹车测试视频获得了 50,000+ 播放，吸引了大批极客粉丝关注！' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1199,7 +1225,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '找律师控诉并录制视频发小红书/YouTube 曝光 (消耗 $0.5w 现金)',
         condition: (s) => s.cash >= 0.5,
-        effect: (s) => ({ cash: s.cash - 0.5, health: s.health - 10, charm: Math.min(25, s.charm + 3), message: '你的曝光视频引发了舆论关注，拖车公司迫于压力退还了赎车费，但你折腾得精疲力竭。' }),
+        effect: (s) => ({ cash: s.cash - 0.5, health: s.health - 10, charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你的曝光视频引发了舆论关注，拖车公司迫于压力退还了赎车费，但你折腾得精疲力竭。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -1251,7 +1277,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '预约土耳其植发与高端体态矫正普拉提 (花费 $0.5w)',
         condition: (s) => s.cash >= 0.5,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 10), message: '植发与体态矫正效果显著！你的精气神与个人吸引力大幅度恢复！' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: '植发与体态矫正效果显著！你的精气神与个人吸引力大幅度恢复！' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1270,7 +1296,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '强迫自己报名湾区狼人杀局与攀岩圈 (花费 $0.05w)',
         condition: (s) => s.cash >= 0.05,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), charm: Math.min(25, s.charm + 2), network: Math.min(100, (s.network || 0) + 3), message: '在桌游与攀岩中你结识了多位开朗的新朋友，重新找回了社交节奏！' }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), charm: Math.min(s.max_charm ?? 25, s.charm + 2), network: Math.min(100, (s.network || 0) + 3), message: '在桌游与攀岩中你结识了多位开朗的新朋友，重新找回了社交节奏！' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -1296,7 +1322,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【边摘边吃】在樱桃树荫下大饱口福，拍照发小红书“湾区精致农家乐”',
         effect: (s) => ({
           health: Math.max(0, s.health - 6),
-          charm: Math.min(25, s.charm + 1),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 1),
           message: '【果糖超标与写真出片】新鲜甜脆的白樱桃让你停不下来，结果因为糖分和果酸超标导致下午严重腹胀腹泻。不过在果园拍的田园写真在小红书斩获了不少点赞。'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -1335,7 +1361,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【穷游特价红眼航班】用信用卡积分兑换经济舱，在海滩晒太阳吃街头 Taco',
         effect: (s) => ({
           health: Math.max(0, s.health - 5),
-          charm: Math.min(25, s.charm + 1),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 1),
           message: '【红眼腰酸与街头烟火】为了省钱坐了凌晨两点的廉航红眼航班，逼仄的座位让你落枕腰酸。好在加勒比海的阳光同样明媚，你在街头 Taco 摊吃得心满意足。'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -1362,7 +1388,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【坚守前卫潮流】坚持走自己的时尚路线，拒绝千篇一律的程序员穿搭',
         effect: (s) => ({
-          charm: Math.min(25, s.charm + 2),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 2),
           network: Math.max(0, (s.network || 0) - 2),
           message: '【时尚出圈与格格不入】你穿着剪裁利落的大衣走在满地拖鞋马甲的工程师堆里，显得与大环境格格不入。直男同事们甚至私下揣测你是不是准备转去 Product 或 Design 部门。'
         }),

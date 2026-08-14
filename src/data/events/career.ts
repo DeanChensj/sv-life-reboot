@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 
 export const careerEvents: Record<string, GameEvent> = {
@@ -189,6 +189,8 @@ export const careerEvents: Record<string, GameEvent> = {
           else if (s.leetcode >= 60) winRate += 0.15;
           if (s.school === 'cmu' && s.is_phd) winRate += 0.20;
           winRate += (s.luck / 100) * 0.10;
+          // Floor so a bear-market low-leetcode attempt isn't a guaranteed 0% loss.
+          winRate = Math.max(0.05, winRate);
 
           const pass = gameRandom() < winRate;
           const lvl = s.level ? s.level : 'Quant';
@@ -210,7 +212,9 @@ export const careerEvents: Record<string, GameEvent> = {
           company: undefined,
           tc: 0,
           health: Math.min(100, s.health + 25),
-          cash: Math.max(0, s.cash - (s.rent ? s.rent * 12 : 2.5)),
+          // rent is an ANNUAL figure; a gap year costs one year of rent + living,
+          // not rent*12 (that 12x overcharge instantly bankrupted most players).
+          cash: Math.max(0, s.cash - ((s.rent ? s.rent : 4) + 3)),
           message: '【开启慢生活 Gap Year】你决定暂停无休止的内卷与面试焦虑，给自己放个大假！每天睡到自然醒、徒步、做饭、打游戏，身心得到了彻底的治愈与恢复！'
         }),
         nextEventId: (s: GameState) => {
@@ -362,7 +366,7 @@ export const careerEvents: Record<string, GameEvent> = {
             health: Math.max(0, s.health - 15),
             laid_off: false,
             is_new_job: true,
-            message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -18)。`
+            message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -15)。`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
@@ -412,7 +416,7 @@ export const careerEvents: Record<string, GameEvent> = {
             health: Math.max(0, s.health - 15),
             laid_off: false,
             is_new_job: true,
-            message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -18)。`
+            message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -15)。`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
@@ -446,7 +450,9 @@ export const careerEvents: Record<string, GameEvent> = {
           is_new_job: true,
           message: '【加入 AI Startup】你接受了一家顶级风投领投的早期初创团队 Offer！虽然现金略微下调，但分到了极其丰厚的早期期权股份！'
         }),
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : midYearEventRouter(s)),
+        // Route to the employee-at-startup episode (keeps startup_work reachable now
+        // that the founder paths correctly go to founder_annual_strategy).
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'startup_work'),
       },
       {
         text: '【签约入职 Apple】加入库比蒂诺巨头，享受极致稳定性与顶尖硬件生态',
@@ -515,7 +521,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '老老实实祈祷 H1B 中签 (免费)',
         effect: (s) => {
-          const winRate = 0.25 + (s.luck / 100) * 0.4; // 幸运值越高越容易中签 (25% - 65%)
+          const winRate = 0.25 + (s.luck / 100) * 0.15; // 25% - ~40%, realistic H1B lottery odds
           const win = gameRandom() < winRate;
           return win 
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
@@ -528,7 +534,7 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.job_type === 'ai_research' || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
-          const passProb = (s.is_phd || s.job_type === 'ai_research') ? 0.75 : 0.35;
+          const passProb = o1PassProb(s);
           const win = gameRandom() < passProb;
           return win
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'O1 (杰出人才)', cash: s.cash - 8, message: '凭硬核的学术论文与顶会引用，律所成功帮你拿下了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
@@ -1094,7 +1100,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => true,
         effect: (s) => {
           if (s.leetcode >= 40 && gameRandom() < (0.05 + (s.luck || 20) / 500)) {
-            return { mid_year: true, season_stage: 'h1', cash: s.cash + 35, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 15), message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 50 万美元收购了你的项目！' };
+            return { mid_year: true, season_stage: 'h1', cash: s.cash + 35, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 15), message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 35 万美元收购了你的项目！' };
           }
           let winRate = (s.charm || 10) >= 12 ? 0.9 : ((s.charm || 10) >= 7 ? 0.6 : 0.2);
           if (gameRandom() < winRate) {
@@ -1410,8 +1416,9 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需 当前L6 & 算法≥70 & 跨部门统筹与高管背书',
         costBadge: '消耗健康与高阶政治与战略心智',
         effect: (s) => {
-          const winRate = 0.12 + ((s.charm || 10) / 100) * 0.20 + ((s.network || 10) / 100) * 0.20 + (s.leetcode / 100) * 0.08;
-          const win = gameRandom() < winRate;
+          const winRate = 0.05 + ((s.charm || 10) / 100) * 0.20 + ((s.network || 10) / 100) * 0.20 + (s.leetcode / 100) * 0.08;
+          // Cap so L7 stays rarer than the capped-0.18 L6 (was uncapped ~32-45%).
+          const win = gameRandom() < Math.min(0.10, winRate);
           return win 
             ? { level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: ' 战略封神！你在跨部门架构评审中凭借高层 VP Sponsor 撑腰与无可撼动的技术领导力，正式晋升为 L7 Senior Staff Engineer 资深架构师！总包 (TC) 狂飙 +20 万美元！' }
             : { health: Math.max(0, s.health - 15), message: '晋升委员会否决了你的 L7 Senior Staff 申请，认为你在高层政治阵营拉拢与全公司级战略视野上仍需深耕。白卷了一整年。' };
@@ -1427,8 +1434,9 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需 当前L7 & 算法≥80 & 行业泰斗与战略决策力',
         costBadge: '消耗健康与终极政治心智',
         effect: (s) => {
-          const winRate = 0.10 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.05;
-          const win = gameRandom() < winRate;
+          const winRate = 0.04 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.05;
+          // Cap so L8 (Principal) stays the rarest band (was uncapped ~24-34%).
+          const win = gameRandom() < Math.min(0.06, winRate);
           return win 
             ? { level: 'L8 (Principal)', tc: s.tc + 35, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: ' 硅谷传世神话！你在董事会闭门答辩中赢得 CEO 与顶级投资人一致肯定，破格受聘为全公司屈指可数的 L8 Principal Engineer 首席架构师/技术院士！年薪总包与期权暴涨 (+$35w TC)！' }
             : { health: Math.max(0, s.health - 15), message: 'L8 职级名额受全公司顶层 Quota 严格限制，尽管你的产出极其卓越，但在董事会与高管派系答辩中仍以一票之差抱憾延期。白卷了一整年。' };
@@ -1464,7 +1472,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '立刻开始刷题，准备后路',
-        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 10, cash: s.cash, message: '你偷偷在上班时间刷题。果不其然，你被裁了，但你已经做好了准备。' }),
+        effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 10, cash: s.cash, laid_off: true, tc: 0, job_type: 'unemployed', message: '你偷偷在上班时间刷题。果不其然，你被裁了，但你已经做好了准备。' }),
         nextEventId: 'layoff_hit',
       }
     ]
@@ -1516,7 +1524,9 @@ export const careerEvents: Record<string, GameEvent> = {
           ];
           const rescue = rescueCompanies[Math.floor(gameRandom() * rescueCompanies.length)];
           return {
-            tc: Math.max(22, s.tc || 22),
+            // Rescue TC tracks the retained level (was a flat 22 = new-grad band,
+            // since tc is 0 at layoff — a former L6 shouldn't be rescued at $22w).
+            tc: getLevelScaledTC(22, s.level ?? (s.is_phd ? 'L4' : 'L3')),
             company: rescue.company,
             job_type: 'big_tech',
             laid_off: false,
@@ -1863,15 +1873,20 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '疯狂写代码，用硬实力说话',
-        effect: (s) => ({ health: Math.max(0, s.health - 15), charm: Math.max(0, (s.charm || 10) - 2), message: 'Raj 用你写的硬核代码做了一份精美的 PPT 向上汇报，他获得了晋升。虽然你被边缘化，但你依然手握绿卡拿着高薪大包稳坐工位。' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 5), charm: Math.max(0, (s.charm || 10) - 2), message: 'Raj 用你写的硬核代码做了一份精美的 PPT 向上汇报，他获得了晋升。你被边缘化，但硬核攻坚让你的算法功底更上一层楼，依旧手握高薪大包稳坐工位。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '放下 IDE，打开 PPT 开始高强度向上管理',
+        text: '放下 IDE，打开 PPT 开始高强度向上管理 (成败取决于社交手腕)',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
-        effect: (s) => s.charm >= 12
-          ? { tc: (s.tc || 0) + 15, cash: s.cash + 15, charm: Math.min(25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功升职加薪！' }
-          : { health: Math.max(0, s.health - 15), charm: Math.max(0, s.charm - 2), message: '缺乏社交情商，你的汇报被对手挑出毛病，功劳全被同事占了。' },
+        // No longer a deterministic +$30w no-brainer: it's a charm-scaled gamble
+        // with a real failure branch, and the reward is a modest raise.
+        effect: (s) => {
+          const win = gameRandom() < Math.min(0.7, 0.15 + (s.charm || 10) * 0.03);
+          return win
+            ? { tc: (s.tc || 0) + 6, cash: s.cash + 4, charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功升职加薪！' }
+            : { health: Math.max(0, s.health - 12), charm: Math.max(0, s.charm - 2), message: '缺乏火候，你的汇报被对手当场挑出破绽，功劳全被同事占了，还搭上了信誉。' };
+        },
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -1891,7 +1906,9 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { tc: 0, laid_off: true, job_type: 'unemployed', health: Math.max(0, s.health - 15), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
             : { cash: s.cash + s.tc, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 5, message: '你用两台电脑同时开会，成功拿到了双倍工资！但是巨大的上下文切换让你精神分裂。' };
         },
-        nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_daily_life'
+        // Route to the H2/settlement flow like other H2 events — NOT back to the
+        // annual action hub (which handed out a free extra income + promo cycle).
+        nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s)
       },
       {
         text: '算了吧，安分守己',
@@ -1913,7 +1930,8 @@ export const careerEvents: Record<string, GameEvent> = {
           // L6 Staff 非常难 (18% 成功率，需过硬架构与内卷)
           const isEligible = s.leetcode >= 60 && (s.network || 10) >= 20;
           const win = isEligible && gameRandom() < 0.18;
-          const newTc = Math.min(68, s.tc + 14);
+          // A promotion must never LOWER pay: never below current, capped at the L6 band top.
+          const newTc = Math.max(s.tc, Math.min(85, s.tc + 14));
           return win 
             ? { level: 'L6 (Staff)', tc: newTc, health: Math.max(0, s.health - 15), imageUrl: 'images/burnout.jpg', message: `你干掉了同组全部竞争对手，在严苛的委员会评审中突破天堑晋升为 Meta M1 / L6 Staff TLM！当前总包提升至 $${newTc.toFixed(1)}w！` }
             : { health: Math.max(0, s.health - 15), imageUrl: 'images/burnout.jpg', message: '在 Meta 残酷的 TLM 竞争中，Staff 晋升名额被更高影响力的资深嫡系抢走，未能通过 L6 评审。' };
@@ -2028,16 +2046,14 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【转型 M1/EM 管理岗】承担背指标背 PIP 责任，管理 12 人团队',
         condition: (s) => isCorporateEmployee(s) && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)' || s.level === 'MTS'),
-        effect: (s) => {
-          const nextLvl = (s.level === 'L5 (Senior)') ? 'L6 (Staff)' : (s.level === 'L6 (Staff)') ? 'L7 (Senior Staff)' : s.level;
-          return {
-            tc: s.tc + 10,
-            level: nextLvl,
-            health: Math.max(0, s.health - 15),
-            charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3),
-            message: `你升任了 EM 管理岗 (职级对齐为 ${nextLvl})！TC 增加 $10w，但每天要在各类汇报与背 PIP 的沉重压力下度过，白头发暴增。`
-          };
-        },
+        // Lateral move into management — NOT a free promotion into Staff/Senior-Staff
+        // (the rarest bands). Same level, a modest management raise.
+        effect: (s) => ({
+          tc: s.tc + 6,
+          health: Math.max(0, s.health - 15),
+          charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3),
+          message: `你转任了同级 M1/EM 管理岗 (职级维持 ${s.level})！TC 增加 $6w，但每天要在各类汇报与背 PIP 的沉重压力下度过，白头发暴增。`
+        }),
         nextEventId: h1ToH2Router
       },
       {
@@ -2104,22 +2120,26 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '公司全员接入最新的自研代码大模型！你过去写了 5 年的 Java/C++ 中台系统被 AI Agent 在 10 分钟内全自动用 Rust 重构并部署完成。VP 宣布部门将“精简 30% 传统开发人员”。',
     choices: [
       {
-        text: '【拥抱 AI 全面重构】主动领头组建 AI Agent 工作流，把所有业务线接入 LLM',
+        text: '【拥抱 AI 全面重构】主动领头组建 AI Agent 工作流，把所有业务线接入 LLM (安全但极度耗神)',
+        // Safe path, but no longer free: leading the transformation burns you out.
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 15),
-          tc: s.tc + 10,
-          luck: Math.min(99, s.luck + 5),
-          message: '你成为了公司的 AI 转型功臣！不仅免受裁员波及，还被 VP 点名表彰带头领跑 AI 新时代！'
+          tc: s.tc + 6,
+          luck: Math.min(99, s.luck + 2),
+          health: Math.max(0, s.health - 15),
+          message: '你成为了公司的 AI 转型功臣！免受裁员波及，但没日没夜地推动全线接入 LLM 让你身心俱疲。'
         }),
         nextEventId: h1ToH2Router
       },
       {
-        text: '【死守传统底层系统】强调 Legacy Code 维护的重要性与安全性',
+        text: '【死守传统底层系统】赌 Legacy Code 的稀缺维护价值 (高风险高回报)',
         effect: (s) => {
           const win = gameRandom() < 0.40;
           return win
-            ? { health: s.health + 5, message: '老系统发生重大产线事故，全球只有你懂得如何救火！你成功凭借稀缺性保住了铁饭碗！' }
-            : { laid_off: true, tc: 0, job_type: 'unemployed', health: s.health - 15, message: '部门最终决定整体重组裁撤！你拿着 Severance 遣散费步入了中年求职市场。' };
+            // Survival now carries real rarity value (retention bonus), so the
+            // gamble is a genuine trade-off against the safe path above.
+            ? { health: Math.min(100, s.health + 5), tc: s.tc + 12, cash: s.cash + 5, message: '老系统发生重大产线事故，全球只有你懂得如何救火！公司开出天价挽留包裹，你凭稀缺性坐地起价！' }
+            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 15), message: '部门最终决定整体重组裁撤！你拿着 Severance 遣散费步入了中年求职市场。' };
         },
         nextEventId: (s) => s.laid_off ? 'layoff_hit' : h1ToH2Router(s)
       }

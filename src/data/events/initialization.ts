@@ -38,17 +38,21 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，人脉背景深厚。',
-        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 70, network: 25, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 450 }),
+        // Trimmed the outlier +70 cash head-start to +50 (still the biggest by far).
+        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 50, network: 25, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 450 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
-        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), network: 20, leetcode: s.leetcode + 8, charm: s.charm + 5, win_threshold: 400 }),
+        // Drawback added: pure-luck build, no coding-skill edge (was leetcode +8, strictly upside).
+        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), network: 15, leetcode: Math.max(0, s.leetcode - 5), charm: s.charm + 5, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
-        effect: (s) => ({ trait_title: '小镇做题家', network: 10, win_threshold: 360 }),
+        // Was strictly dominated (no bonuses at all). Now a genuine skill-focused build
+        // with the lowest FIRE threshold.
+        effect: (s) => ({ trait_title: '小镇做题家', leetcode: s.leetcode + 10, luck: Math.min(99, s.luck + 3), network: 12, win_threshold: 350 }),
         nextEventId: 'choose_year',
       }
     ]
@@ -61,7 +65,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【简单难度 (宽松周期)】硅谷黄金时代，Headcount 充沛，升职加薪顺水推舟。',
-        effect: (s) => ({ year: 2014, difficulty_title: '简单难度', luck: (s.luck || 20) + 10 }),
+        effect: (s) => ({ year: 2014, difficulty_title: '简单难度', luck: Math.min(99, (s.luck ?? 20) + 10) }),
         nextEventId: 'choose_school',
       },
       {
@@ -89,16 +93,16 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '理工强校大U (如 UIUC/UW/UMich) (四年总开销 25 万美元)',
-        condition: (s) => s.cash >= 25,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 25), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
+        text: '理工强校大U (如 UIUC/UW/UMich) (四年总开销 18 万美元)',
+        condition: (s) => s.cash >= 18,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 18), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '美国普通公立大学 (四年总开销 15 万美元, 美籍/绿卡含州内补贴只需 5 万)',
-        condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? 5 : 15),
+        text: '美国普通公立大学 (四年总开销 10 万美元, 美籍/绿卡含州内补贴只需 4 万)',
+        condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? 4 : 10),
         effect: (s) => {
-          const cost = (s.visa === '公民' || s.visa === '绿卡') ? 5 : 15;
+          const cost = (s.visa === '公民' || s.visa === '绿卡') ? 4 : 10;
           return { cash: Math.max(0, s.cash - cost), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + 2, housing_name: '美大U 校内宿舍', message: '你飞往美国，准备开启无忧无虑的本科生活。' };
         },
         nextEventId: 'us_undergrad_year1',
@@ -289,7 +293,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         text: '申请北美顶尖 PhD (录取率低, 需 LeetCode >= 50)',
         condition: (s) => s.leetcode >= 50,
         effect: (s) => {
-          const pass = gameRandom() < (0.20 + (s.school === 'cmu' ? 0.20 : 0) + (s.leetcode >= 80 ? 0.15 : 0));
+          const pass = gameRandom() < (0.20 + (s.school === 'cmu' ? 0.20 : 0) + (s.leetcode >= 80 ? 0.15 : 0) + (s.story_flags?.phd_ready ? 0.15 : 0));
           return pass 
             ? { cash: s.cash + 2, age: s.age + 1, is_phd: true, housing_name: '美国 博士实验室', message: '大喜讯！你战胜了数千名申请者，斩获北美顶级 CS 全奖 PhD Offer！' }
             : { health: Math.max(0, s.health - 15), age: s.age + 1, message: '今年 CS 顶校 PhD 全奖录取率极低，你的推荐信被审稿人刷了，惨遭拒信。' };
@@ -299,9 +303,9 @@ export const initializationEvents: Record<string, GameEvent> = {
 
       {
         text: '直接找工作 (开始受苦)',
-        effect: (s) => s.year === 2020 
-          ? { message: '疫情爆发！各大公司全面冻结招聘，应届生找工作异常艰难！你被迫留在学校延长毕业一年。', health: s.health - 10, year: s.year + 1, age: s.age + 1 }
-          : { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' },
+        // (Removed a dead `year === 2020` pandemic branch: year is frozen during
+        // school so it could never fire. Graduation now cleanly activates OPT.)
+        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' }),
         nextEventId: (s) => s.visa === 'F1 (学生)' ? 'us_undergrad_grad' : 'job_hunt',
       },
       {
@@ -532,7 +536,9 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【前沿学术科研】跟教授进 AI 实验室做 Research (冲全奖 PhD)',
-        effect: (s) => ({ leetcode: s.leetcode + 10, charm: Math.min(25, s.charm + 4), health: s.health - 8, age: s.age + 2, is_phd: true, message: '你拿到了顶尖教授的强力推荐信，具备了申请顶尖 PhD 的资本！顺利毕业！' }),
+        // Being research-ready is NOT the same as holding a PhD. Track it as a flag
+        // that boosts PhD-admit odds; is_phd is only set where a PhD is actually earned.
+        effect: (s) => ({ leetcode: s.leetcode + 12, charm: Math.min(25, s.charm + 4), health: s.health - 8, age: s.age + 2, story_flags: { ...(s.story_flags || {}), phd_ready: true }, message: '你拿到了顶尖教授的强力推荐信，具备了申请顶尖 PhD 的资本！顺利毕业！' }),
         nextEventId: 'us_undergrad_grad',
       },
       {
@@ -609,7 +615,9 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '加入一家刚成立的 AI 初创公司 (高风险高回报)',
-        condition: (s) => s.year >= 2023,
+        // Available to any master's grad (was gated on year>=2023, which is unreachable
+        // because `year` is frozen during school — the option could never appear).
+        condition: (s) => s.is_master === true || s.has_us_degree === true,
         effect: (s) => {
           const win = gameRandom() < 0.08;
           return win 
@@ -761,7 +769,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '顶着 AI 方向 PhD 的光环，你进入了人才市场。这不再是一般的刷题找工作，而是直接面 Research 岗位。',
     choices: [
       {
-        text: '申请 OpenAI / Anthropic 核心研究员 (地狱面试, 胜率约 25%)',
+        text: '申请 OpenAI / Anthropic 核心研究员 (地狱面试, 胜率约 30-45%)',
         effect: (s) => {
           // Remove 100% auto win exploit! Base pass chance 22%, bonus up to 20% for high leetcode
           const winRate = 0.22 + (s.leetcode >= 80 ? 0.18 : 0.08) + ((s.charm || 10) >= 15 ? 0.05 : 0);

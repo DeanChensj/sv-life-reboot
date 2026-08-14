@@ -216,8 +216,16 @@ routerTestStates.forEach(st => {
   } catch (e) {}
 });
 
-// Also scan source code for event IDs referenced in router functions and workEvents / lifeEvents arrays
-const eventsSource = fs.readFileSync('./src/data/events.ts', 'utf8');
+// Also scan source code for event IDs referenced in router functions and workEvents / lifeEvents arrays.
+// NOTE: events live in the modular `src/data/events/` directory now; `events.ts` is just a
+// 2-line re-export proxy, so reading it made this whole scan a no-op. Concatenate every module
+// (helpers.ts holds the routers + workEvents/lifeEvents arrays) so the source scan works again.
+const eventsDir = './src/data/events';
+const eventsSource = fs
+  .readdirSync(eventsDir)
+  .filter((f) => f.endsWith('.ts'))
+  .map((f) => fs.readFileSync(`${eventsDir}/${f}`, 'utf8'))
+  .join('\n');
 
 // Extract all event IDs in router workEvents and lifeEvents arrays
 const routerEventRegex = /(?:workEvents|lifeEvents)\.push\(([^)]+)\)|const\s+(?:workEvents|lifeEvents)\s*=\s*\[([^\]]+)\]/g;

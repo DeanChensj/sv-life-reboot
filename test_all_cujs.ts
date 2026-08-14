@@ -424,7 +424,7 @@ console.log('--- [CUJ 7] Game Over / Bankruptcy & Burnout Handlers ---');
   state3.stocks = 10;
   let transition3 = applyStateTransition(state3, { cash: state3.cash - 6 });
   assert(transition3.nextState.cash >= 0, 'Auto liquidation covered negative cash');
-  assert(transition3.nextState.stocks < 10, 'Stocks decreased by deficit amount');
+  assert((transition3.nextState.stocks ?? 0) < 10, 'Stocks decreased by deficit amount');
   assert(transition3.nextState.status === 'playing', 'Game continues after auto-liquidation');
 
   console.log('✅ CUJ 7 Passed\n');

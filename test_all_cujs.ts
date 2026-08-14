@@ -221,7 +221,7 @@ console.log('--- [CUJ 2] Native US Citizen SSR Journey ---');
 }
 
 // =========================================================================
-// CUJ 3: PhD Academic / AI Researcher / MTS Journey
+// CUJ 3: PhD Academic / AI Researcher / MTS Journey & Anti-Loop Test
 // =========================================================================
 console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
 {
@@ -229,7 +229,7 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   state.cash = 35;
   state.leetcode = 80;
 
-  // Setup Undergrad Grad -> PhD
+  // 1. Setup Undergrad Grad -> PhD
   state.school = 'cmu';
   let res = stepChoice(state, 'us_undergrad_grad', 0, { is_phd: true, housing_name: '美国 博士实验室' });
   state = res.nextState;
@@ -239,8 +239,37 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   const jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.levelLabel === '全奖博士', 'Level displays 全奖博士 before job');
 
-  // PhD Graduation -> OpenAI MTS Offer
-  res = stepChoice(state, 'phd_life', 0, { company: 'openai', job_type: 'ai_research', tc: 45, level: 'MTS', visa: 'O1 (杰出人才)' });
+  // 2. Anti-Loop Verification: Choice 2 (Tahoe Vacation) routes to phd_mid_stage (not looping back to phd_life)
+  let vacationRes = stepChoice(state, 'phd_life', 2);
+  assert(vacationRes.nextEventId === 'phd_mid_stage', 'PhD Tahoe vacation properly advances to phd_mid_stage (no infinite loop back to phd_life)');
+  assert(vacationRes.nextState.age === state.age + 1, 'Age increments by 1 on vacation');
+  assert(vacationRes.nextState.year === state.year + 1, 'Year increments by 1 on vacation');
+  assert(vacationRes.nextState.health === 100, 'Health restored on Tahoe ski vacation');
+
+  // 3. PhD Mid Stage Choice 3 (Master Out) routes to job_hunt
+  let midStageMasterOutRes = stepChoice(vacationRes.nextState, 'phd_mid_stage', 3);
+  assert(midStageMasterOutRes.nextEventId === 'job_hunt', 'PhD Master Out routes to job_hunt');
+  assert(midStageMasterOutRes.nextState.is_phd === false, 'PhD status revoked on master out');
+  assert(midStageMasterOutRes.nextState.is_master === true, 'Player receives master degree on master out');
+
+  // 4. PhD Mid Stage Choice 1 (DeepMind / FAIR Research Intern) grants cash and graduation
+  let internRes = stepChoice(vacationRes.nextState, 'phd_mid_stage', 1);
+  assert(internRes.nextEventId === 'phd_job_hunt', 'AI research internship successfully completes PhD defense');
+  assert(internRes.nextState.is_phd === true, 'PhD degree maintained after research internship');
+  assert(internRes.nextState.cash > vacationRes.nextState.cash, 'Earned stipend from research internship');
+
+  // 5. PhD Direct Paper Success -> phd_conference -> phd_job_hunt -> OpenAI MTS Offer
+  res = stepChoice(state, 'phd_life', 0, { message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会接收，老板决定带你去夏威夷参加顶级学术会议！' });
+  assert(res.nextEventId === 'phd_conference', 'Successful paper routes to phd_conference');
+  state = res.nextState;
+
+  res = stepChoice(state, 'phd_conference', 0);
+  assert(res.nextEventId === 'phd_job_hunt', 'Conference networking routes to phd_job_hunt');
+  state = res.nextState;
+  assert(state.is_phd === true, 'PhD degree awarded after conference defense');
+
+  // Apply to OpenAI MTS
+  res = stepChoice(state, 'phd_job_hunt', 0, { company: 'openai', job_type: 'ai_research', tc: 45, level: 'MTS', visa: 'O1 (杰出人才)' });
   state = res.nextState;
   assert(state.job_type === 'ai_research', 'Job type is ai_research');
   assert(state.visa === 'O1 (杰出人才)', 'Visa is O1');

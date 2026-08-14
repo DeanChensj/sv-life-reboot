@@ -688,8 +688,9 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           last_limited_opp_year: s.year,
           cash: s.cash - 1.0,
-          charm: Math.min(25, (s.charm || 10) + 4),
-          luck: Math.min(99, (s.luck || 20) + 6),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
+          network: Math.min(100, (s.network || 10) + 6), // "拓展顶层人脉/结识VC" now actually grants network
+          luck: Math.min(99, (s.luck || 20) + 3),
           message: '【拓展顶层人脉】在沙丘路红木私宅里结识了数位顶级 VC 合伙人与独角兽创始人，手握核心行业内幕与优质天使跟投名额！'
         }),
         nextEventId: 'sv_daily_life',
@@ -1791,7 +1792,9 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '混水摸鱼匿名跟帖：“TC 380k，做过同组，TL 人格分裂确实坑”',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 2), health: s.health - 5, message: '你出了一口恶气，但第二天看到 Manager 脸色阴沉地在全员会强调“我们要加强团队信任与通力协作”。' }),
+        // Anonymous-solidarity flavor now grants a little network and costs less health,
+        // so it's a real alt to the "add on WeChat" option (was worse on charm AND health).
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 2), network: Math.min(100, (s.network || 10) + 2), health: Math.max(0, s.health - 2), message: '你出了一口恶气，还在匿名区结识了几个同病相怜的战友，但第二天看到 Manager 脸色阴沉地在全员会强调“我们要加强团队信任与通力协作”。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -2541,8 +2544,11 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【一票否决 (Veto)】在系统写下 "Technical Depth 不足，Strong Reject"',
+        // Petty revenge pays in schadenfreude (luck), so it isn't strictly dominated
+        // by the "hire him as a subordinate" option (which gives more charm + an NPC).
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          luck: Math.min(99, (s.luck || 20) + 3),
           health: Math.min(100, s.health + 10),
           story_flags: {
             ...(s.story_flags || {}),

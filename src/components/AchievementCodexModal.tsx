@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ACHIEVEMENTS, getUnlockedAchievements } from '../data/achievements';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface AchievementCodexModalProps {
   onClose: () => void;
@@ -43,6 +44,8 @@ const renderIcon = (iconKey: string) => {
 };
 
 export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ onClose }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const unlockedIds = getUnlockedAchievements();
   const progressPercent = Math.round((unlockedIds.length / ACHIEVEMENTS.length) * 100);
@@ -54,7 +57,7 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
 
   return (
     <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xl animate-in fade-in duration-200 overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col font-sans">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="codex-modal-title" tabIndex={-1} className="relative w-full max-w-3xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col font-sans">
         
         {/* Modal Header */}
         <div className="p-6 md:p-8 border-b border-zinc-800 bg-zinc-950/50 flex flex-col gap-4">
@@ -64,7 +67,7 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
               </div>
               <div>
-                <h2 className="text-xl md:text-2xl font-black text-zinc-100 tracking-tight">
+                <h2 id="codex-modal-title" className="text-xl md:text-2xl font-black text-zinc-100 tracking-tight">
                   硅谷成就与隐藏结局图鉴
                 </h2>
                 <p className="text-xs text-zinc-400 font-mono mt-0.5">

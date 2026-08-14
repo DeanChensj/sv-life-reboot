@@ -129,9 +129,13 @@ export function applyStateTransition(
   }
 
   // 6. Automated Independent Timeline Milestone Capture
+  //    Record milestones at the age/year the event actually happened, i.e. the
+  //    PRE-increment values. Year-end settlement effects bump age/year in the same
+  //    effect that also flips visa/level/etc; reading newState.age here logged those
+  //    milestones one year late and disagreed with settlement's own s.age entries.
   const updatedTimeline: TimelineRecord[] = [...(newState.timeline || [])];
-  const recAge = newState.age;
-  const recYear = newState.year;
+  const recAge = prevState.age;
+  const recYear = prevState.year;
 
   if (context.eventId === 'choose_trait' && normalizedEffect.trait_title) {
     updatedTimeline.push({

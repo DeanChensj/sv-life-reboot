@@ -1,19 +1,22 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface WelcomeModalProps {
   onStart: () => void;
 }
 
 export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onStart }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-zinc-950/95 backdrop-blur-3xl animate-in fade-in duration-500 p-3 sm:p-6 flex items-center justify-center min-h-screen">
-      <div className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-700/80 rounded-3xl p-5 sm:p-10 shadow-2xl overflow-y-auto max-h-[88vh] flex flex-col items-center text-center my-auto border-emerald-500/20">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="welcome-modal-title" tabIndex={-1} className="relative w-full max-w-2xl bg-zinc-900 border border-zinc-700/80 rounded-3xl p-5 sm:p-10 shadow-2xl overflow-y-auto max-h-[88vh] flex flex-col items-center text-center my-auto border-emerald-500/20">
         
         {/* Top Decorative Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
 
         {/* Title Section */}
-        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-2 sm:mb-4 mt-1 sm:mt-4">
+        <h1 id="welcome-modal-title" className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-2 sm:mb-4 mt-1 sm:mt-4">
           硅谷人生重启模拟器
         </h1>
         <p className="text-zinc-400 text-xs sm:text-base leading-relaxed max-w-lg mb-6 sm:mb-8">

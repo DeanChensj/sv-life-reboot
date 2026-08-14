@@ -32,8 +32,8 @@ export class ErrorBoundary extends Component<Props, State> {
   private handleResetGame = () => {
     try {
       safeStorage.removeItem(STORAGE_KEYS.GAME_SAVE);
+      safeStorage.removeItem(STORAGE_KEYS.GAME_SAVE_BACKUP);
       safeStorage.removeItem(STORAGE_KEYS.INITIAL_SEED);
-      safeStorage.removeItem(STORAGE_KEYS.SSR_STATUS);
       safeStorage.removeItem(STORAGE_KEYS.WELCOME_SEEN);
     } catch {
       // Ignore cleanup error

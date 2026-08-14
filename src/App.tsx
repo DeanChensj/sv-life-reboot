@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import type { GameState, Choice } from './types';
 import { generateInitialState, events, midYearEventRouter } from './data/events';
 import { BentoStatsPanel } from './components/BentoStatsPanel';
@@ -82,20 +82,55 @@ export default function App() {
   const [hasUnlockedShopToast, setHasUnlockedShopToast] = useState<boolean>(initialGameData.hasUnlockedShopToast);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
   const [isCoolingDown, setIsCoolingDown] = useState<boolean>(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-Save progress whenever gameState or currentEventId updates
+  // Auto-Save progress whenever gameState or currentEventId updates.
+  // Debounced (coalesces input bursts into one write) and array-capped (bounds
+  // localStorage so long "explore beyond FIRE" runs can't hit the quota and
+  // silently lose saves), with an immediate flush when the tab is hidden/closed.
   useEffect(() => {
-    if (gameState && currentEventId) {
+    if (!gameState || !currentEventId) return;
+
+    const writeSave = () => {
+      const MAX_ENTRIES = 300; // generous; a normal 40y game has far fewer
+      const trimmedState: GameState = {
+        ...gameState,
+        timeline: (gameState.timeline || []).slice(-MAX_ENTRIES),
+        history_net_worth: (gameState.history_net_worth || []).slice(-MAX_ENTRIES),
+      };
       const saveData = {
         version: CURRENT_SAVE_VERSION,
         savedAt: Date.now(),
-        gameState,
+        gameState: trimmedState,
         currentEventId,
         hasUnlockedShopToast,
         hasOpenedShop,
       };
       safeStorage.setItem(STORAGE_KEYS.GAME_SAVE, JSON.stringify(saveData));
-    }
+    };
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(writeSave, 500);
+
+    // Flush synchronously if the page is being hidden/closed so the most recent
+    // turn is never lost inside the debounce window.
+    const flush = () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      writeSave();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [gameState, currentEventId, hasUnlockedShopToast, hasOpenedShop]);
 
   // One-time notice if the previous save was corrupt: we backed it up to `.bak`
@@ -313,7 +348,6 @@ export default function App() {
   const resetGame = () => {
     safeStorage.removeItem(STORAGE_KEYS.GAME_SAVE);
     safeStorage.removeItem(STORAGE_KEYS.INITIAL_SEED);
-    safeStorage.removeItem(STORAGE_KEYS.SSR_STATUS);
     setGameState(generateInitialState());
     setCurrentEventId('choose_trait');
     setShowWarReport(false);

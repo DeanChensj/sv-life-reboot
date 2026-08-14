@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { GameState } from '../types';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface CareerTimelineModalProps {
   gameState: GameState;
@@ -12,6 +13,8 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
   onClose,
   initialTab = 'chart'
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   const [activeTab, setActiveTab] = useState<'timeline' | 'chart' | 'summary'>(initialTab);
   const [chartMode, setChartMode] = useState<'line' | 'bar'>('line');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -200,6 +203,11 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
       onClick={onClose}
     >
       <div 
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="timeline-modal-title"
+        tabIndex={-1}
         className="bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
@@ -217,7 +225,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
               </svg>
             </div>
             <div>
-              <h2 className="text-lg sm:text-2xl font-black tracking-tight text-zinc-100 flex items-center gap-2">
+              <h2 id="timeline-modal-title" className="text-lg sm:text-2xl font-black tracking-tight text-zinc-100 flex items-center gap-2">
                 <span>生涯大事记 · 资产走势</span>
                 <span className="text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   {gameState.age} 岁 · {gameState.year} 年

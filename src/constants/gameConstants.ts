@@ -4,7 +4,6 @@ export const STORAGE_KEYS = {
   GAME_SAVE: 'sv_life_game_save',
   GAME_SAVE_BACKUP: 'sv_life_game_save.bak',
   INITIAL_SEED: 'sv_life_initial_seed',
-  SSR_STATUS: 'sv_life_ssr_status',
   WELCOME_SEEN: 'sv_life_welcome_seen',
   SOUND_MUTED: 'sv_sound_muted',
   ACHIEVEMENTS: 'sv_life_achievements',

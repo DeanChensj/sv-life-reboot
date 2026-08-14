@@ -5,6 +5,7 @@ import { STORAGE_KEYS } from '../constants/gameConstants';
 class SoundManager {
   private audioCtx: AudioContext | null = null;
   private isMuted: boolean = false;
+  private warnedOnce: boolean = false;
 
   constructor() {
     // Load mute preference safely
@@ -23,7 +24,11 @@ class SoundManager {
       }
     }
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
+      // resume() is async and returns a Promise. Don't leave it floating — on
+      // older Safari without a user gesture it rejects, producing an unhandled
+      // rejection. Sounds are also scheduled a few ms ahead (see `play`) so the
+      // first sample after unlocking isn't stranded in the past.
+      this.audioCtx.resume().catch(() => {});
     }
   }
 
@@ -47,7 +52,11 @@ class SoundManager {
       this.initCtx();
       if (!this.audioCtx) return;
       const ctx = this.audioCtx;
-      const now = ctx.currentTime;
+      // Schedule slightly ahead of the current clock. When the context has just
+      // resumed from 'suspended' (the first sound after a user gesture, common on
+      // iOS Safari), ctx.currentTime can lag; scheduling exactly at the current
+      // time drops the sound. A small lookahead keeps the start reliably future.
+      const now = ctx.currentTime + 0.03;
 
       switch (type) {
         case 'click': {
@@ -187,8 +196,13 @@ class SoundManager {
           break;
         }
       }
-    } catch {
-      // AudioContext might be blocked or uninitialized
+    } catch (e) {
+      // AudioContext might be blocked or uninitialized. Log once so the failure
+      // isn't completely invisible during development, but never spam.
+      if (!this.warnedOnce) {
+        this.warnedOnce = true;
+        console.warn('[sound] audio playback failed', e);
+      }
     }
   }
 }

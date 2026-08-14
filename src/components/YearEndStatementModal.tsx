@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { GameState } from '../types';
 import { getTCBreakdown } from '../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing } from '../constants/gameConstants';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface YearEndStatementModalProps {
   gameState: GameState;
@@ -9,6 +10,8 @@ interface YearEndStatementModalProps {
 }
 
 export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ gameState, onContinue }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
   const isHomeowner = isOwnedHousing(gameState.housing_name);
   
   const tcInfo = getTCBreakdown(gameState);
@@ -41,7 +44,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
 
   return (
     <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-3 sm:p-4 bg-zinc-950/85 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto">
-      <div className="relative w-full max-w-lg bg-zinc-900 border border-zinc-700/80 rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="yearend-modal-title" tabIndex={-1} className="relative w-full max-w-lg bg-zinc-900 border border-zinc-700/80 rounded-3xl p-5 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Background Accent */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
@@ -51,7 +54,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
             <span className="text-[11px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
               ANNUAL FINANCIAL & STATUS REPORT
             </span>
-            <h3 className="text-2xl font-extrabold text-zinc-50 tracking-tight mt-0.5">
+            <h3 id="yearend-modal-title" className="text-2xl font-extrabold text-zinc-50 tracking-tight mt-0.5">
               第 {Math.max(1, gameState.age - 17)} 年 · 年终财务与人生账单
             </h3>
           </div>

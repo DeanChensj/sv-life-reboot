@@ -11,6 +11,7 @@ import { settlementEvents } from './settlement';
 import { companyEvents } from './companyEvents';
 import { personaEvents } from './personaEvents';
 import { levelEvents } from './levelEvents';
+import { dilemmaEvents } from './dilemmaEvents';
 
 export * from './helpers';
 
@@ -20,6 +21,7 @@ export const events: Record<string, GameEvent> = {
   ...companyEvents,
   ...personaEvents,
   ...levelEvents,
+  ...dilemmaEvents,
   ...immigrationEvents,
   ...startupEvents,
   ...tradingEvents,

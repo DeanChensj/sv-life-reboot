@@ -1,9 +1,26 @@
-import type { GameState } from '../../types';
+import type { GameState, StoryFlags } from '../../types';
 import { safeStorage } from '../../utils/safeStorage';
 import { STORAGE_KEYS, isOwnedHousing, VISA_STATUS, isPermanentVisa } from '../../constants/gameConstants';
 import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '../../utils/random';
 
 export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
+
+// True when the player currently has a live partner whose feelings a "career over
+// family" choice can strain (married, or actively dating/married status).
+export const hasPartner = (s: GameState): boolean =>
+  s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating';
+
+// Stamp a once-per-life「seen」flag AND (optionally) accrue partner_strain — but only
+// when the player actually has a partner to neglect. Used by "career over family" crunch
+// choices so the family-neglect → breakup_crisis causal loop is real, not random. Merges
+// into story_flags without clobbering other flags.
+export const stampSeen = (s: GameState, id: string, strainDelta = 0): StoryFlags => {
+  const flags: StoryFlags = { ...(s.story_flags || {}), [`${id}_seen`]: true };
+  if (strainDelta > 0 && hasPartner(s)) {
+    flags.partner_strain = (s.story_flags?.partner_strain || 0) + strainDelta;
+  }
+  return flags;
+};
 
 // Where a college random event routes AFTER it resolves (also the "skip" target
 // when no random event fires). Honors the `college_next` flag set by the year
@@ -190,9 +207,16 @@ export const midYearEventRouter = (s: GameState): string => {
   // Stage H1 (Spring/Summer: Career & Major Work Events)
   if (s.season_stage === 'h1' || !s.season_stage) {
      if (s.job_type === 'trader') return 'trader_annual_strategy';
-     if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
+     if (s.job_type === 'startup_founder') {
+       // 两难：All-in 冲刺 vs 家庭 (dilemmaEvents.ts)，一局至多一次
+       if (hasPartner(s) && !s.story_flags?.dilemma_startup_allin_family_seen && gameRandom() < 0.3) return 'dilemma_startup_allin_family';
+       return 'founder_annual_strategy';
+     }
      if (!isWorking) return 'job_hunt';
-     if (s.job_type === 'startup') return 'startup_crisis';
+     if (s.job_type === 'startup') {
+       if (hasPartner(s) && !s.story_flags?.dilemma_startup_allin_family_seen && gameRandom() < 0.3) return 'dilemma_startup_allin_family';
+       return 'startup_crisis';
+     }
      if (s.job_type === 'ai_research') {
        // OpenAI / 前沿实验室专属标志事件：一局至多一次，未触发前 ~30%/年 (companyEvents.ts)
        if (isWorking && !s.story_flags?.openai_launch_crunch_seen && gameRandom() < 0.3) return 'openai_launch_crunch';
@@ -204,9 +228,19 @@ export const midYearEventRouter = (s: GameState): string => {
      // 直接 early-return（而非入池），既能精确控制概率，也让它成为该公司路径的年度里程碑；
      // 一旦 story_flags.<id>_seen 置位便不再触发，回落到常规工作事件池，避免重复廉价化。
      // 每行写成字面量 return，便于 audit_all_flows.ts 的源码扫描确定性识别可达性。
-     if (isWorking) {
-       const sig = s.story_flags || {};
-       if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
+      if (isWorking) {
+        const sig = s.story_flags || {};
+        const lvl = s.level;
+
+        // 两难抉择「有牙的 Trade-off」(dilemmaEvents.ts)：把已有机制戏剧化成两个选项都疼的抉择，一局各一次。
+        // 优先于下方的公司/人设/职级 flavor 事件——两难是核心体验，且触发门槛更窄，应先派发。
+        // ① 有毒老板 vs 绿卡人质：仅当临时签证 + PERM/I-140 尚未获批时成立（跳槽会触发 stateTransitions 的绿卡重置）。
+        const gcMidPerm = s.gc_stage === 'perm_processing' || s.gc_stage === 'perm_audit' || s.gc_stage === 'i140_processing' || s.gc_stage === 'i140_rfe';
+        if (!isPermanentVisa(s.visa) && s.visa !== '无' && !s.is_phd && gcMidPerm && !sig.dilemma_toxic_boss_gc_hostage_seen && gameRandom() < 0.3) return 'dilemma_toxic_boss_gc_hostage';
+        // ② 独吞功劳 vs 提携恩情：中层最纠结。
+        if ((lvl === 'L4' || lvl === 'L5 (Senior)' || lvl === 'L6 (Staff)') && !sig.dilemma_credit_grab_mentor_seen && gameRandom() < 0.3) return 'dilemma_credit_grab_mentor';
+
+        if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
        if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';
        if ((s.company === 'nvidia' || s.job_type === 'nvidia') && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';
         if (s.company === 'tiktok' && !sig.tiktok_us_ban_hearing_seen && gameRandom() < 0.3) return 'tiktok_us_ban_hearing';
@@ -218,7 +252,6 @@ export const midYearEventRouter = (s: GameState): string => {
 
          // 职级阶段「标志事件」(levelEvents.ts)：按 entry / senior / staff+ 三档各一局一次、命中前 ~30%/年。
          // 注：trader/founder/startup/ai_research/quant 走各自专属分支已提前 return，此处仅覆盖标准大厂阶梯。
-         const lvl = s.level;
          const isEntryLvl = !lvl || lvl === 'L3' || lvl === 'L4' || lvl === '初级研发';
          const isSeniorLvl = lvl === 'L5 (Senior)' || lvl === 'L5';
          const isStaffPlusLvl = lvl === 'L6 (Staff)' || lvl === 'Staff' || lvl === 'L7 (Senior Staff)' || lvl === 'L7' || lvl === 'L8 (Principal)' || lvl === 'Principal' || lvl === 'Fellow';
@@ -274,6 +307,12 @@ export const midYearEventRouter = (s: GameState): string => {
   const isCorporate = isWorking && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
   const isFounder = s.job_type === 'startup_founder';
   const isTrader = s.job_type === 'trader';
+
+  // 因果离婚 (T1)：长期以事业压倒家庭累积的 partner_strain 越线，感情危机由「随机」升级为「高概率必来」。
+  // breakup_crisis 的挽留成功分支会把 partner_strain 清零，避免同一裂痕反复触发。
+  if (hasPartner(s) && (s.story_flags?.partner_strain || 0) >= 3 && gameRandom() < 0.55) {
+    return 'breakup_crisis';
+  }
 
   // 人设专属生活「标志事件」(personaEvents.ts)：一局至多一次、命中前 ~30%/年，优先于常规生活事件。
   // 字面量 return 便于 audit_all_flows.ts 源码扫描确定性识别可达性。

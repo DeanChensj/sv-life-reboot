@@ -707,22 +707,28 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'xhs_boba': {
     id: 'xhs_boba',
-    title: '小红书探店日常',
-    description: '周末不知道干什么，你打开小红书，看到首页全在推南湾新开的一家“绝绝子”网红奶茶店。',
+    title: '【南湾美食探店】Cupertino 川湘菜与早茶打卡',
+    description: '周末不知道吃什么，你打开小红书，看到首页全在推 Cupertino Main Street 新开的排队王川湘菜馆与粤式早茶。',
     choices: [
       {
-        text: '跟风去排队！并在小红书打卡发帖',
-        effect: (s) => {
-          const viral = gameRandom() > 0.8;
-          return viral 
-            ? { charm: s.charm + 10, health: s.health + 10, cash: Math.max(0, s.cash - 0.0015), message: '排队 2 小时买到了。你随手拍的照片加了滤镜发到小红书，居然成了爆款！涨粉 1000 人，极大地满足了虚荣心。' }
-            : { health: s.health - 10, cash: Math.max(0, s.cash - 0.0015), message: '在烈日下排队 2 小时，喝了一口发现又贵又难喝，纯纯智商税。' };
-        },
+        text: '约上两位大厂好友前去拼桌大快朵颐 (花费 $0.05w)',
+        condition: (s) => s.cash >= 0.05,
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '地道的辣子鸡与虾饺治愈了一整周的工位内耗，大家边吃边聊硅谷八卦，身心愉悦！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '去大厂食堂薅羊毛拿免费气泡水',
-        effect: (s) => ({ health: s.health + 2, cash: s.cash + 0.1, message: '你拒绝被消费主义洗脑。周末假装去公司加班，从 MicroKitchen (MK) 顺走了两罐 La Croix 气泡水和几包零食，完美解决下午茶。' }),
+        text: '看着人均 $70+ 账单与 18% 强制服务费，果断回家煮螺蛳粉与煎蛋',
+        effect: (s) => ({ health: Math.min(100, s.health + 2), cash: s.cash + 0.05, message: '你拒绝为湾区溢价买单。自己在家煮了螺蛳粉加溏心蛋，省下一大笔钱，主打一个平平淡淡才是真。' }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '探店拍照发小红书写深度避坑攻略',
+        effect: (s) => {
+          const viral = gameRandom() > 0.65;
+          return viral 
+            ? { charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 3), cash: Math.max(0, s.cash - 0.05), message: '排队 1 小时就餐打卡。你随手拍的九宫格美图与菜品打分在小红书成了爆款，收获数百点赞收藏！' }
+            : { health: Math.max(0, s.health - 4), cash: Math.max(0, s.cash - 0.05), message: '在餐厅等位 1 小时，菜品平平无奇还踩了雷，回家连夜写了差评避坑贴。' };
+        },
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -1137,30 +1143,6 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     ]
   },
 
-  'car_broken': {
-    id: 'car_broken',
-    title: '三藩市特产：零元购',
-    description: '周末你开车去三藩市吃早茶，吃完回来发现自己的车窗被砸了，放在后座的 Macbook 被偷了。',
-    choices: [
-
-      {
-        text: '报警认栽，自认倒霉',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), health: s.health - 10, message: '警察让你填了个表就没下文了，你花了 $5000 换玻璃和买新电脑。' }),
-        nextEventId: 'sv_year_end_settlement',
-      },
-      {
-        text: '定位电脑，勇闯奥克兰黑市！',
-        effect: (s) => {
-          const win = gameRandom() > 0.7;
-          return win 
-            ? { charm: s.charm + 2, cash: s.cash, message: '你像叶问一样一打十，从黑帮手里夺回了电脑，成为了湾区传说！' }
-            : { health: s.health - 15, cash: Math.max(0, s.cash - 0.5), message: '你不仅没找回电脑，还被打了一顿，医药费花了好几千。' };
-        },
-        nextEventId: 'sv_year_end_settlement',
-      }
-    ]
-  },
-
   'luxury_car_meet': {
     id: 'luxury_car_meet',
     title: '【湾区豪车车友会】Skyline Blvd 跑山',
@@ -1203,7 +1185,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
   'san_francisco_car_window_smash': {
     id: 'san_francisco_car_window_smash',
     title: '【旧金山特色】Mission 区吃 Tacos 车窗惨遭砸破',
-    description: '周六下午，你开车去旧金山 Mission 区吃网红 Tacos。停在路边仅 1 小时，回来赫然发现后车窗被打碎，后备箱里的健身包被搜刮一空...',
+    description: '周六下午，你开车去旧金山 Mission 区吃网红 Tacos。停在路边仅 1 小时，回来赫然发现后车窗被打碎，后备箱里的健身包与备用笔记本被搜刮一空...',
     choices: [
       {
         text: '自认倒霉走自付费 Deductible 立刻换玻璃 (消耗 $0.1w，省心)',
@@ -1215,7 +1197,17 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '拍照发小红书“旧金山治安体验”，引发热烈围观',
-        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: s.health - 5, message: '你的小红书帖子获得了 300+ 赞，不少湾区博主在评论区感同身受地交流防砸车经验。' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.max(0, s.health - 5), message: '你的小红书帖子获得了 300+ 赞，不少湾区博主在评论区感同身受地交流防砸车经验。' }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【高危操作】根据 AirTag 设备定位，勇闯奥克兰黑市跳蚤市场！',
+        effect: (s) => {
+          const win = gameRandom() > 0.7;
+          return win 
+            ? { charm: Math.min(s.max_charm ?? 25, s.charm + 3), luck: Math.min(99, s.luck + 2), message: '你像动作大片主角一样智勇双全，在巡警协助下从销赃点夺回了财物，成为了湾区传奇！' }
+            : { health: Math.max(0, s.health - 15), cash: Math.max(0, s.cash - 0.5), message: '你不仅没找回财物，还险些遭遇劫匪围堵，仓皇逃回南湾，医药费与修车费花了好几千。' };
+        },
         nextEventId: 'sv_year_end_settlement'
       }
     ]

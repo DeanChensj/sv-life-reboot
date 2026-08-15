@@ -291,7 +291,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'us_undergrad_grad': {
     id: 'us_undergrad_grad',
-    title: '走出象牙塔：何去何从',
+    title: '走出象牙塔：北美本科毕业何去何从',
     description: '四年过去了，你顺利从美国大学毕业，目前持有 OPT。现在是找工作还是继续深造？',
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
@@ -325,7 +325,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_undergrad_grad': {
     id: 'cn_undergrad_grad',
-    title: '走出象牙塔：何去何从',
+    title: '走出象牙塔：国内本科毕业抉择',
     description: '四年过去了，你在国内大学打下了坚实的代码基础。接下来去哪里？',
     choices: [
       {

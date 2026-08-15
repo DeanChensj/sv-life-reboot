@@ -5,7 +5,7 @@ import { applyStateTransition } from './src/utils/stateTransitions';
 console.log('🎰 === 启动蒙特卡洛数值平衡与寿命保障自动化门禁 (Monte Carlo Balance CI) ===\n');
 
 function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_healer'): {
-  status: 'win' | 'game_over' | 'playing';
+  status: 'win' | 'game_over' | 'playing' | 'retired';
   age: number;
   netWorth: number;
   tc: number;

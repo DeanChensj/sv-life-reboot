@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import type { GameState } from '../types';
 import { isOwnedHousing } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
+import { determineEnding } from '../utils/endings';
 
 interface WarReportModalProps {
   gameState: GameState;
@@ -32,10 +33,11 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, 800, 1200);
 
-    // Glowing Neon Accent Orbs
-    const isWin = gameState.status === 'win';
-    const primaryColor = isWin ? '#10b981' : '#ef4444';
-    const primaryColorAlpha = isWin ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+    // Classified ending drives the headline + palette (triumph/content/tragedy).
+    const ending = determineEnding(gameState);
+    const isPositive = ending.tone !== 'tragedy';
+    const primaryColor = ending.tone === 'triumph' ? '#10b981' : ending.tone === 'content' ? '#f59e0b' : '#ef4444';
+    const primaryColorAlpha = ending.tone === 'triumph' ? 'rgba(16, 185, 129, 0.15)' : ending.tone === 'content' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)';
 
     const orbGradient = ctx.createRadialGradient(700, 100, 10, 700, 100, 300);
     orbGradient.addColorStop(0, primaryColorAlpha);
@@ -56,7 +58,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
 
     ctx.font = '600 18px monospace';
     ctx.fillStyle = primaryColor;
-    ctx.fillText(isWin ? 'STATUS: FIRE ACHIEVED // 胜利通关' : 'STATUS: SURVIVAL TERMINATED // 生存终止', 70, 135);
+    ctx.fillText(`${ending.subtitle} // [${ending.rarity}] 结局`, 70, 135);
 
     // Divider Line
     ctx.strokeStyle = '#3f3f46';
@@ -69,13 +71,13 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     // Summary Box
     ctx.fillStyle = '#18181b';
     ctx.fillRect(70, 190, 660, 140);
-    ctx.strokeStyle = isWin ? '#10b981' : '#ef4444';
+    ctx.strokeStyle = primaryColor;
     ctx.lineWidth = 2;
     ctx.strokeRect(70, 190, 660, 140);
 
     ctx.font = '700 24px sans-serif';
-    ctx.fillStyle = isWin ? '#34d399' : '#f87171';
-    ctx.fillText(isWin ? '成功撕掉社畜标签，实现财务自由！' : '硅谷生存中断战报', 95, 235);
+    ctx.fillStyle = isPositive ? (ending.tone === 'triumph' ? '#34d399' : '#fbbf24') : '#f87171';
+    ctx.fillText(`${ending.emoji} ${ending.title}`, 95, 235);
 
     // Wrap long message text
     ctx.font = '500 18px sans-serif';

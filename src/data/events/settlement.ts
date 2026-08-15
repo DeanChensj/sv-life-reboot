@@ -355,11 +355,15 @@ export const settlementEvents: Record<string, GameEvent> = {
               story_flags: newStoryFlags,
               timeline: newTimeline,
               history_net_worth: newHistory,
-              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${spouseMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}` 
+              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${spouseMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}`,
+              // Natural-life ending: at the lifespan cap the game resolves even if the
+              // player never hit FIRE and never died — enabling the "content" endings
+              // (中产退休/海归/上岸/佛系). The `message`/`status` spread overrides above.
+              ...(s.age + 1 >= 55 ? { status: 'retired' as const } : {}),
            };
         },
         nextEventId: (s) => {
-          if (s.status === 'win') return 'end';
+          if (s.status === 'win' || s.status === 'retired') return 'end';
           if ((s.cash + (s.stocks || 0)) >= s.win_threshold && !s.has_reached_initial_fire) {
             return 'fire_milestone_choice';
           }

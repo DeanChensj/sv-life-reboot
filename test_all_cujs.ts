@@ -4,6 +4,7 @@ import { applyStateTransition } from './src/utils/stateTransitions';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown } from './src/utils/gameStateSelectors';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
 import { setGameSeed, gameRandom } from './src/utils/random';
+import { determineEnding } from './src/utils/endings';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
@@ -472,6 +473,39 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(run1[0] === run2[0] && run1[1] === run2[1] && run1[2] === run2[2], 'PRNG is 100% deterministic given same seed');
 
   console.log('✅ CUJ 8 Passed\n');
+}
+
+// CUJ 9: Multi-ending classifier (determineEnding)
+{
+  console.log('--- [CUJ 9] Multi-Ending Classifier ---');
+  const base = () => generateInitialState();
+  const end = (over: Partial<GameState>) => determineEnding({ ...base(), ...over } as GameState).id;
+
+  // Tragedies
+  assert(end({ status: 'game_over', health: 0 }) === 'burnout', 'game_over + health 0 -> burnout');
+  assert(end({ status: 'game_over', health: 40, cash: 0, stocks: 0 }) === 'bankruptcy', 'game_over + no cash -> bankruptcy');
+  assert(end({ status: 'game_over', health: 40, cash: 5, message: '被迫登机回国，签证失效' }) === 'deported', 'game_over + deport message -> deported');
+  assert(end({ status: 'game_over', health: 40, cash: 5, job_type: 'startup_founder' }) === 'startup_ruin', 'game_over + founder -> startup_ruin');
+
+  // Triumphs (win, or retired while wealthy)
+  assert(end({ status: 'win', cash: 600, stocks: 0, founder_stage: 'exit' }) === 'unicorn_founder', 'win + founder exit -> unicorn');
+  assert(end({ status: 'win', cash: 600, stocks: 0, job_type: 'trader' }) === 'wall_street_wolf', 'win + trader -> wall_street_wolf');
+  assert(end({ status: 'win', cash: 600, stocks: 0, is_phd: true, job_type: 'ai_research' }) === 'ai_academic', 'win + phd research -> academic');
+  assert(end({ status: 'win', cash: 600, stocks: 0, level: 'L8 (Principal)' }) === 'tech_totem', 'win + L8 -> tech_totem');
+  assert(end({ status: 'win', cash: 600, stocks: 0, rental_income: 12 }) === 'real_estate_mogul', 'win + rental -> mogul');
+  assert(end({ status: 'win', cash: 1600, stocks: 0 }) === 'atherton_lord', 'win + 1600 assets -> atherton');
+  assert(end({ status: 'win', cash: 550, stocks: 0, job_type: 'big_tech', level: 'L5 (Senior)' }) === 'fire_basic', 'plain win -> fire_basic');
+
+  // Content (retired, not wealthy)
+  assert(end({ status: 'retired', cash: 100, stocks: 0, visa: '无' }) === 'homecoming', 'retired + no US visa -> homecoming (海归)');
+  assert(end({ status: 'retired', cash: 100, stocks: 0, visa: '公民', is_married: true }) === 'settled_family', 'retired + citizen + married -> settled_family');
+  assert(end({ status: 'retired', cash: 50, stocks: 0, health: 90, is_married: false, visa: 'H1B (工签)' }) === 'zen_hermit', 'retired + healthy + poor -> zen_hermit');
+  assert(end({ status: 'retired', cash: 250, stocks: 0, health: 50, is_married: false, visa: 'H1B (工签)' }) === 'middle_class', 'retired + modest -> middle_class');
+
+  // Always returns a defined ending (never crashes / unknown)
+  assert(!!determineEnding(base()).id, 'determineEnding always returns an ending');
+
+  console.log('✅ CUJ 9 Passed\n');
 }
 
 console.log(`\n======================================================`);

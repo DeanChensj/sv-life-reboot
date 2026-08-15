@@ -128,9 +128,10 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = s.charm >= 10 && gameRandom() > 0.5;
           if (win) {
+            // 挽留成功、关系存续 → 清零 partner_strain，裂痕暂时愈合。
             return s.is_married
-              ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，但保住了这个家。' }
-              : { health: Math.min(100, s.health + 10), message: '对方被你的诚意打动，你们和好如初，感情更进一步。' };
+              ? { tc: Math.max(0, s.tc - 5), health: Math.min(100, s.health + 10), story_flags: { ...(s.story_flags || {}), partner_strain: 0 }, message: '对方心软了。你为了家庭减少了工作投入，甚至放弃了升职机会，但保住了这个家。' }
+              : { health: Math.min(100, s.health + 10), story_flags: { ...(s.story_flags || {}), partner_strain: 0 }, message: '对方被你的诚意打动，你们和好如初，感情更进一步。' };
           }
           return s.is_married
             ? { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产 (现金与股票均分)。' }

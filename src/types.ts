@@ -40,6 +40,10 @@ export interface StoryFlags {
   met_sam?: boolean;
   sam_zero_day_done?: boolean;
   in_gap_year?: boolean;
+  partner_strain?: number; // 因长期以事业压倒家庭累积的婚恋裂痕；越线会因果触发 breakup_crisis
+  dilemma_toxic_boss_gc_hostage_seen?: boolean;
+  dilemma_startup_allin_family_seen?: boolean;
+  dilemma_credit_grab_mentor_seen?: boolean;
   milestone_100w?: boolean;
   milestone_300w?: boolean;
   milestone_500w?: boolean;

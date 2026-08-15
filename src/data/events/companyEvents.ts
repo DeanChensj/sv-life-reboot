@@ -1,5 +1,5 @@
 import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, gameRandom } from './helpers';
+import { h1ToH2Router, gameRandom, stampSeen } from './helpers';
 
 // 公司专属随机事件 (Company-specific flavor events).
 // Each is a once-per-life SIGNATURE beat for its company path, injected from
@@ -156,7 +156,7 @@ export const companyEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           network: Math.min(100, (s.network || 10) + 4),
           health: Math.max(0, s.health - 15),
-          story_flags: seen(s, 'openai_launch_crunch'),
+          story_flags: stampSeen(s, 'openai_launch_crunch', 1),
           message: '你的 Demo 在发布会上惊艳全场，直播观看破千万！你一战成名，成了组里炙手可热的明星工程师，代价是熬到脱相。',
         }),
         nextEventId: h1ToH2Router,

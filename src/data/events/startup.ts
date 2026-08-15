@@ -129,7 +129,9 @@ export const startupEvents: Record<string, GameEvent> = {
             }
           }
         },
-        nextEventId: h1ToH2Router,
+        // 弹尽粮绝分支会设 status:'game_over'（cash>=0，中间件不会兜底 target='end'），
+        // 故此处须像其他 game_over 出口一样显式路由到 'end'，与全代码库惯例一致。
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
       {
         text: '【死磕产品 PMF 与企业大单】带领全员冲刺 ARR 经常性收入并拿下企业采购',

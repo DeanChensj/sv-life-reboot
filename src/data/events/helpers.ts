@@ -473,10 +473,6 @@ export const midYearEventRouter = (s: GameState): string => {
   } else {
       lifeEvents.push('boardgame_dating', 'dating_market');
   }
-
-  if (s.car && s.car !== 'none') {
-    lifeEvents.push('car_broken');
-  }
   
   return gamePick(lifeEvents) || 'sv_year_end_settlement';
 };

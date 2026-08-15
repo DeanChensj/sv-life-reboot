@@ -272,6 +272,9 @@ export const midYearEventRouter = (s: GameState): string => {
          if (isEntryLvl && !sig.level_entry_grunt_work_seen && gameRandom() < 0.3) return 'level_entry_grunt_work';
          if (isSeniorLvl && !sig.level_senior_plateau_seen && gameRandom() < 0.3) return 'level_senior_plateau';
          if (isStaffPlusLvl && !sig.level_staff_glue_work_seen && gameRandom() < 0.3) return 'level_staff_glue_work';
+
+         // 中后期身份抉择 (lateGameEvents.ts, T2 非破坏性)：中年 IC vs 管理，一局一次。
+         if (s.age >= 34 && !sig.late_ic_vs_management_seen && gameRandom() < 0.3) return 'late_ic_vs_management';
        }
 
      const isCorporate = isWorking;
@@ -356,6 +359,12 @@ export const midYearEventRouter = (s: GameState): string => {
     if (s.trait_title === '原生美籍' && !sig.persona_native_hometown_edge_seen && gameRandom() < 0.3) return 'persona_native_hometown_edge';
     if (s.trait_title === '家里有矿' && !sig.persona_rich_family_offer_seen && gameRandom() < 0.3) return 'persona_rich_family_offer';
     if (s.trait_title === '天选之子' && !sig.persona_chosen_windfall_seen && gameRandom() < 0.3) return 'persona_chosen_windfall';
+
+    // 中后期生活「标志事件」(lateGameEvents.ts, T2 非破坏性)：一局各一次、命中前 ~30%/年。
+    // Post-FIRE 探索优先（FIRE 后玩家的核心体验），其次养生长寿、影响力传承。
+    if (s.has_reached_initial_fire && !sig.late_post_fire_exploration_seen && gameRandom() < 0.3) return 'late_post_fire_exploration';
+    if (s.age >= 35 && !sig.late_longevity_investment_seen && gameRandom() < 0.3) return 'late_longevity_investment';
+    if (s.age >= 36 && !sig.late_mentor_legacy_seen && gameRandom() < 0.3) return 'late_mentor_legacy';
   }
 
   const lifeEvents = [

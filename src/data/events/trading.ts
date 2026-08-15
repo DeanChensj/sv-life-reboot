@@ -57,12 +57,16 @@ export const tradingEvents: Record<string, GameEvent> = {
             return {
               cash: s.cash + 20, // Turn 5w into 25w (+$20w net cash)
               charm: Math.max(0, s.charm - 2),
+              // Durable flag so the achievement can unlock — by the time achievements are
+              // checked, currentEventId has advanced away from this gamble event.
+              story_flags: { ...(s.story_flags || {}), wsb_wolf_win: true },
               message: '【暴富奇迹！】你赌对了非农数据日的末日期权，一夜之间 $5w 变成了 $25w！截图发在群里被尊称为华尔街之狼，但也有不少人觉得你是个疯狂赌徒敬而远之。'
             };
           } else {
             return {
               cash: s.cash - 5, // Lose all
               health: Math.max(0, s.health - 12),
+              story_flags: { ...(s.story_flags || {}), wsb_leek: true },
               message: '【血本无归】期权在归零那刻一文不值...你的 $5w 投资瞬间蒸发。你痛苦地删掉了交易软件。'
             };
           }
@@ -339,7 +343,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           const winRate = 0.01 + (Math.min(45, s.luck) / 100) * 0.15;
           const win = gameRandom() < winRate;
           return win 
-            ? { cash: s.cash + 15, message: '你买的土狗币居然真的小火了一把！你在高点果断卖出提现，狠赚了一笔！' }
+            ? { cash: s.cash + 15, story_flags: { ...(s.story_flags || {}), crypto_whale_win: true }, message: '你买的土狗币居然真的小火了一把！你在高点果断卖出提现，狠赚了一笔！' }
             : { cash: Math.max(0, s.cash - 5), health: Math.max(0, s.health - 7), imageUrl: 'images/crypto_crash.jpg', message: '经典的杀猪盘。项目方第二天就跑路了，你的钱全都变成了空气币。' };
         },
         nextEventId: 'sv_year_end_settlement'

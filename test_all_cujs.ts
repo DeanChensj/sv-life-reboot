@@ -342,15 +342,31 @@ console.log('--- [CUJ 5] Domestic Undergrad to Overseas Tech Journey ---');
   assert(visaInfo.visaLabel === '暂无 (未赴美)', 'Displays 暂无 (未赴美)');
 
   // 2. Graduate into domestic big tech
-  state.job_type = 'cn_tech';
-  state.company = 'cn_big_tech';
-  state.level = '国内研发';
+  res = stepChoice(state, 'cn_undergrad_grad', 3);
+  state = res.nextState;
+  assert(res.nextEventId === 'cn_work', 'Routed to cn_work');
+  assert(state.company === 'cn_big_tech', 'Company is cn_big_tech');
+  assert(state.job_type === 'cn_tech', 'Job type is cn_tech');
+
   const jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.companyLabel === '国内互联网大厂', 'Displays 国内互联网大厂');
   assert(jobInfo.levelLabel === '国内研发', 'Displays 国内研发');
 
   const visaInfo2 = getVisaDisplayInfo(state);
   assert(visaInfo2.visaLabel === '暂无 (国内在职)', 'Displays 暂无 (国内在职)');
+
+  // 3. Early career 996 work (anti-loop check: advances to cn_work_mid)
+  let midRes = stepChoice(state, 'cn_work', 0);
+  assert(midRes.nextEventId === 'cn_work_mid', 'Early domestic work advances to cn_work_mid (no self loop)');
+  assert(midRes.nextState.age === state.age + 1, 'Age advances 1 year');
+  assert(midRes.nextState.year === state.year + 1, 'Year advances 1 year');
+  assert(midRes.nextState.cash > state.cash, 'Saved net salary');
+
+  // 4. Mid stage N+3 layoff package -> US Master
+  let masterRes = stepChoice(midRes.nextState, 'cn_work_mid', 1);
+  assert(masterRes.nextEventId === 'us_master_year1', 'N+3 layoff package routes to us_master_year1');
+  assert(masterRes.nextState.visa === 'F1 (学生)', 'F1 visa acquired');
+  assert(masterRes.nextState.is_master === true, 'US master status activated');
 
   console.log('✅ CUJ 5 Passed\n');
 }

@@ -374,7 +374,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '在国内大厂打工攒钱 (积累工作经验)',
         effect: (s) => ({
-          cash: s.cash + 8,
+          cash: s.cash + 2.5,
           health: Math.max(30, s.health - 12),
           tc: 8,
           company: 'cn_big_tech',
@@ -383,6 +383,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '无',
           laid_off: false,
           age: s.age + 1,
+          year: s.year + 1,
           housing_name: '国内 厂区单间',
           message: '你入职了国内一线互联网大厂，开启了打工攒钱与积累硬核算法经验的职场生涯。'
         }),
@@ -795,24 +796,41 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_work': {
     id: 'cn_work',
-    title: '国内大厂体验期',
-    description: '你在国内大厂打工攒钱，积累硬核工程经验与算法能力，为后续赴美做准备。',
+    title: '国内大厂体验期 (新人起步)',
+    description: '你在国内一线互联网大厂入职。每天早 10 晚 10 挤地铁、写业务需求、参与大促压测。扣除北上深高额房租、五险一金与日常税费开销，你正全力攒下赴美的第一桶金。',
     choices: [
       {
-        text: '【打工攒钱】积累赴美存款 (积累 $8w 存款)',
+        text: '【996 拼命攒钱】高强度加班与硬核业务落地 (耗时 1 年, 净攒 $2.5w)',
         effect: (s) => ({
-          health: Math.max(25, s.health - 12),
-          cash: s.cash + 8,
+          health: Math.max(15, s.health - 15),
+          cash: s.cash + 2.5,
           age: s.age + 1,
           year: s.year + 1,
-          leetcode: s.leetcode + 15,
+          leetcode: s.leetcode + 12,
           company: 'cn_big_tech',
           job_type: 'cn_tech',
-          level: '国内研发',
+          level: '初级研发',
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '无',
-          message: '你在国内大厂打工一年攒下了 8 万美金存款，算法与硬核项目经验有了显著提升！'
+          message: '在 996 的高强度磨砺下，扣除房租和税费后你攒下了 $2.5w 留学专款！但也感受到了身心疲惫。'
         }),
-        nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work',
+        nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work_mid',
+      },
+      {
+        text: '【白天打工，周末备考】平衡作息，死磕托福/GRE 与算法 (耗时 1 年, 净攒 $1.8w)',
+        effect: (s) => ({
+          health: Math.max(20, s.health - 8),
+          cash: s.cash + 1.8,
+          age: s.age + 1,
+          year: s.year + 1,
+          leetcode: s.leetcode + 18,
+          charm: Math.min(25, (s.charm || 10) + 1),
+          company: 'cn_big_tech',
+          job_type: 'cn_tech',
+          level: '初级研发',
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '无',
+          message: '你拒绝了无效加班，利用周末在图书馆死磕托福和 LeetCode，为赴美申请打下了扎实功底！'
+        }),
+        nextEventId: 'cn_work_mid',
       },
       {
         text: '【申请美硕】拿着积蓄申请美国 CS 硕士 (顺利赴美)',
@@ -854,6 +872,157 @@ export const initializationEvents: Record<string, GameEvent> = {
     ]
   },
 
+  'cn_work_mid': {
+    id: 'cn_work_mid',
+    title: '国内大厂发展期 (晋升与优化潮)',
+    description: '你在大厂已工作数年，代码能力与业务理解日臻成熟。面对互联网行业的降本增效与职场竞争，你面临着关键的人生路线选择：',
+    choices: [
+      {
+        text: '【冲击 P7 核心研发晋升】带团队攻坚高并发大模型业务 (耗时 2 年, 净攒 $7w)',
+        effect: (s) => ({
+          health: Math.max(10, s.health - 18),
+          cash: s.cash + 7,
+          age: s.age + 2,
+          year: s.year + 2,
+          leetcode: s.leetcode + 15,
+          company: 'cn_big_tech',
+          job_type: 'cn_tech',
+          level: '资深研发/Tech Lead',
+          message: '晋升答辩顺利通过！你成功晋升资深研发并拿到丰厚年终奖与股票，两年扣税和生活开销后净攒下 $7w 储蓄！'
+        }),
+        nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work_late',
+      },
+      {
+        text: '【大厂业务优化：拿 N+3 大礼包润美】主动拿大额裁员赔偿直接出国 (耗时 1 年, 获 $5w 赔偿)',
+        effect: (s) => ({
+          cash: s.cash + 5,
+          health: Math.min(100, s.health + 15),
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          company: undefined,
+          job_type: undefined,
+          level: undefined,
+          tc: 0,
+          school: 'state',
+          has_us_degree: true,
+          is_master: true,
+          age: s.age + 1,
+          year: s.year + 1,
+          message: '趁着部门业务线调整，你果断签字拿了 N+3 丰厚裁员大礼包 (+$5w)！告别 996 内卷，手握充足学费飞赴北美开启 CS 硕士生涯！'
+        }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【全款申请美硕】手握大厂积蓄，申请美国 CS 硕士深造',
+        condition: (s) => s.cash >= 4,
+        effect: (s) => ({
+          cash: s.cash - 4,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          company: undefined,
+          job_type: undefined,
+          level: undefined,
+          tc: 0,
+          school: 'state',
+          has_us_degree: true,
+          is_master: true,
+          age: s.age,
+          message: '拿着国内大厂积累的工程经验与积蓄，你成功获批 F-1 签证，飞赴加州入读 CS 硕士！'
+        }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【跨国 L1 调动申请】凭借资深大厂背景申请硅谷总部岗位 (需算法 >= 60)',
+        condition: (s) => s.leetcode >= 60,
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'L1 (外派)',
+          tc: 35,
+          company: 'google',
+          job_type: 'big_tech',
+          level: 'L4',
+          laid_off: false,
+          cash: s.cash + 6,
+          age: s.age + 1,
+          year: s.year + 1,
+          message: '凭借扎实的系统工程经历，你成功通过跨国调动面试，以 L1 身份直接调往硅谷总部 (年薪 $35w L4)！'
+        }),
+        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
+      }
+    ]
+  },
+
+  'cn_work_late': {
+    id: 'cn_work_late',
+    title: '国内大厂成熟期 (35岁分水岭与终极出路)',
+    description: '年近三十，你在国内已是资深技术骨干。面对 35 岁职场分水岭与全球 AI 浪潮，你必须敲定人生的下半场：',
+    choices: [
+      {
+        text: '【带资大龄留学赴美】作为资深架构师赴美读研，降维打击硅谷秋招 (耗时 1 年)',
+        condition: (s) => s.cash >= 5,
+        effect: (s) => ({
+          cash: s.cash - 5,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          company: undefined,
+          job_type: undefined,
+          level: undefined,
+          tc: 0,
+          school: 'cmu',
+          has_us_degree: true,
+          is_master: true,
+          leetcode: Math.min(100, s.leetcode + 15),
+          age: s.age + 1,
+          year: s.year + 1,
+          message: '带着十万美金积蓄与大厂资深架构经验，你飞赴北美名校读研！深厚的工程底子让你在求职市场所向披靡！'
+        }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【跨国总监/资深调动】以 Staff/L5 资历直调加州总部 (年薪 $45w, 耗时 1 年)',
+        condition: (s) => s.leetcode >= 70,
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'L1 (外派)',
+          tc: 45,
+          company: 'google',
+          job_type: 'big_tech',
+          level: 'L5 (Senior)',
+          laid_off: false,
+          cash: s.cash + 10,
+          age: s.age + 1,
+          year: s.year + 1,
+          message: '你以资深架构师身份完成了跨国技术转移，以 L5 Senior SDE 入驻湾区总部 (年薪 $45w)！'
+        }),
+        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
+      },
+      {
+        text: '【国内 AI 初创合伙人】担任国内知名 AI 独角兽 CTO / 联合创始人 (转为创业线)',
+        effect: (s) => ({
+          cash: s.cash + 12,
+          tc: 15,
+          job_type: 'startup_founder',
+          founder_stage: 'series_a',
+          company_valuation: 2000,
+          company: 'AI 独角兽 (国内)',
+          level: 'CTO & Co-Founder',
+          health: Math.max(0, s.health - 15),
+          age: s.age + 1,
+          year: s.year + 1,
+          message: '你选择留在国内，作为 CTO 加入顶级资本领投的 AI 大模型初创公司，分得核心股权并开启创业新征程！'
+        }),
+        nextEventId: 'founder_annual_strategy'
+      },
+      {
+        text: '【急流勇退：佛系定居/养生】套现部分期权，告别内卷享受慢节奏生活 (达成国内隐居结局)',
+        effect: (s) => ({
+          cash: s.cash + 15,
+          health: Math.min(100, s.health + 30),
+          age: s.age + 1,
+          year: s.year + 1,
+          status: 'win',
+          message: '你告别了 996 内卷，在二线城市全款置业养生，过上了有房有存款的舒适慢节奏生活！(佛系隐居结局)'
+        }),
+        nextEventId: 'end'
+      }
+    ]
+  },
+
   'cn_burnout': {
     id: 'cn_burnout',
     title: '职场调养：体检警示',
@@ -862,7 +1031,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '公司医保大部分报销治病休养 (花费 1 万美元)',
         effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 40), age: s.age + 1, year: s.year + 1, message: '在医保绝大部分报销后，你休养了半个月恢复了健康！' }),
-        nextEventId: 'cn_work'
+        nextEventId: (s) => (s.level?.includes('资深') || s.level?.includes('Tech Lead')) ? 'cn_work_late' : 'cn_work_mid'
       },
       {
         text: '趁机申请美硕离开 (留学贷款 + TA 助教，需评估项目背景与算法)',
@@ -870,10 +1039,10 @@ export const initializationEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const pass = (s.leetcode >= 20) || (gameRandom() < 0.50 + (s.luck / 200));
           return pass
-            ? { cash: Math.max(0, s.cash - 2), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
+            ? { cash: Math.max(0, s.cash - 2), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', school: 'state', has_us_degree: true, is_master: true, age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
             : { health: s.health - 10, message: ' 申请被拒！留学贷款机构与校方评估认为你负债风险过高，贷款未获批准。你只能留在本地继续调养或打工。' };
         },
-        nextEventId: (s: GameState) => (s.message || '').includes('赴美新生活') ? 'us_master_year1' : 'cn_work'
+        nextEventId: (s: GameState) => (s.message || '').includes('赴美新生活') ? 'us_master_year1' : ((s.level?.includes('资深') || s.level?.includes('Tech Lead')) ? 'cn_work_late' : 'cn_work_mid')
       }
     ]
   },

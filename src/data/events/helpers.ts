@@ -215,14 +215,28 @@ export const midYearEventRouter = (s: GameState): string => {
      if (!isWorking) return 'job_hunt';
      if (s.job_type === 'startup') {
        if (hasPartner(s) && !s.story_flags?.dilemma_startup_allin_family_seen && gameRandom() < 0.3) return 'dilemma_startup_allin_family';
-       return 'startup_crisis';
+       // 反 pool-starving：初创路径过去每年必是 startup_crisis（且三个选项都会失业→job_hunt，
+       // 导致 startup 生涯根本无法存续）。改为加权池：以可存续的 startup_work 为主，掺入危机与
+       // 跨切事件，既多样、又不再每年必然被裁。
+       const startupPool = ['startup_work', 'startup_work', 'startup_crisis'];
+       if (s.year >= 2024) startupPool.push('ai_disruption_existential');
+       if (gameRandom() < 0.3) startupPool.push('layoff_rumor');
+       return gamePick(startupPool);
      }
      if (s.job_type === 'ai_research') {
        // OpenAI / 前沿实验室专属标志事件：一局至多一次，未触发前 ~30%/年 (companyEvents.ts)
        if (isWorking && !s.story_flags?.openai_launch_crunch_seen && gameRandom() < 0.3) return 'openai_launch_crunch';
-       return 'ai_research_crisis';
+       // 反 pool-starving：AI 实验室路径不再每年固定 ai_research_crisis。
+       const aiPool = ['ai_research_crisis', 'ai_research_crisis', 'layoff_rumor'];
+       if (s.year >= 2024) aiPool.push('ai_disruption_existential');
+       return gamePick(aiPool);
      }
-     if (s.job_type === 'quant') return 'quant_stress';
+     if (s.job_type === 'quant') {
+       // 反 pool-starving：量化路径不再每年固定 quant_stress。
+       const quantPool = ['quant_stress', 'quant_stress', 'layoff_rumor'];
+       if (s.year >= 2024) quantPool.push('ai_disruption_existential');
+       return gamePick(quantPool);
+     }
 
      // 公司专属年度「标志事件」(companyEvents.ts)：每局至多触发一次，命中前 ~30%/年。
      // 直接 early-return（而非入池），既能精确控制概率，也让它成为该公司路径的年度里程碑；

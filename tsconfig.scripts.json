@@ -27,6 +27,7 @@
     "test_all_cujs.ts",
     "test_monte_carlo_balance.ts",
     "test_routing_guards.ts",
+    "test_pool_diversity.ts",
     "analyze_traits.ts"
   ]
 }

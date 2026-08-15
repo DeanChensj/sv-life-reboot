@@ -232,8 +232,10 @@ export const midYearEventRouter = (s: GameState): string => {
        workEvents.push('rto_wars');
      }
 
-     // 2023+ 大模型机房跳闸事故（AI 训练与大模型浪潮）
-     if (isCorporate && s.year >= 2023 && (s.job_type === 'ai_research' || s.company === 'google' || s.company === 'meta' || s.company === 'openai' || s.transferred_to_ai) && gameRandom() < 0.30) {
+     // 2023+ 大模型机房跳闸事故（AI 训练与大模型浪潮）。
+     // 注：ai_research 岗位在上方已提前 return（走 openai_launch_crunch / ai_research_crisis），
+     // 到不了这里，故不再判断 s.job_type === 'ai_research'（否则 TS 视为不可达比较而报错）。
+     if (isCorporate && s.year >= 2023 && (s.company === 'google' || s.company === 'meta' || s.company === 'openai' || s.transferred_to_ai) && gameRandom() < 0.30) {
        workEvents.push('llm_datacenter_power_outage');
      }
 

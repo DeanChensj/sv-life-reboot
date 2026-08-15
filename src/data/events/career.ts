@@ -857,11 +857,16 @@ export const careerEvents: Record<string, GameEvent> = {
           return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 1.0, message: '【高压内卷苦战】虽然抗住了高强度 Oncall，但因为大厂组织架构调整，功劳被大领导收割，只拿到了普调。' };
         },
         nextEventId: (s) => {
-          const msg = s.message || '';
-          if (s.level === 'L8 (Principal)' && msg.includes('晋升')) return 'l8_principal_celebration';
-          if (s.level === 'L7 (Senior Staff)' && msg.includes('晋升')) return 'l7_senior_staff_celebration';
-          if (s.level === 'L6 (Staff)' && msg.includes('晋升')) return 'l6_staff_celebration';
-          if (msg.includes('晋升')) return 'promo_celebration';
+          // Route on the ACTUAL promotion (last_promo_age is set to s.age ONLY on a
+          // successful promo), not message.includes('晋升'): the rejection message
+          // ('晋升委员会认为…') also contains 晋升 (→ celebrated a rejection), and the L8
+          // success copy ('登顶/获聘') does NOT contain 晋升 (→ L8 celebration was missed).
+          if (s.last_promo_age === s.age) {
+            if (s.level === 'L8 (Principal)') return 'l8_principal_celebration';
+            if (s.level === 'L7 (Senior Staff)') return 'l7_senior_staff_celebration';
+            if (s.level === 'L6 (Staff)') return 'l6_staff_celebration';
+            return 'promo_celebration';
+          }
           return midYearEventRouter(s);
         },
       },
@@ -990,11 +995,16 @@ export const careerEvents: Record<string, GameEvent> = {
           return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + meritBonus, message: isKingOfRoll ? `【卷王日常高产】你高质高效交付了核心模块，拿到了项目奖金 (+${meritBonus}w TC)！` : `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年部门升职 Quota 紧张，你的指标已入库，明年一定为你申请！”` };
         },
         nextEventId: (s) => {
-          const msg = s.message || '';
-          if (s.level === 'L8 (Principal)' && msg.includes('晋升')) return 'l8_principal_celebration';
-          if (s.level === 'L7 (Senior Staff)' && msg.includes('晋升')) return 'l7_senior_staff_celebration';
-          if (s.level === 'L6 (Staff)' && msg.includes('晋升')) return 'l6_staff_celebration';
-          if (msg.includes('晋升')) return 'promo_celebration';
+          // Route on the ACTUAL promotion (last_promo_age is set to s.age ONLY on a
+          // successful promo), not message.includes('晋升'): the rejection message
+          // ('晋升委员会认为…') also contains 晋升 (→ celebrated a rejection), and the L8
+          // success copy ('登顶/获聘') does NOT contain 晋升 (→ L8 celebration was missed).
+          if (s.last_promo_age === s.age) {
+            if (s.level === 'L8 (Principal)') return 'l8_principal_celebration';
+            if (s.level === 'L7 (Senior Staff)') return 'l7_senior_staff_celebration';
+            if (s.level === 'L6 (Staff)') return 'l6_staff_celebration';
+            return 'promo_celebration';
+          }
           return midYearEventRouter(s);
         },
       },

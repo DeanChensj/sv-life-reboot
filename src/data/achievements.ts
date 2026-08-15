@@ -162,7 +162,7 @@ export function unlockAchievement(id: string): boolean {
   return false;
 }
 
-export function checkAndUnlockAchievements(state: GameState, currentEventId: string): string[] {
+export function checkAndUnlockAchievements(state: GameState): string[] {
   const newlyUnlocked: string[] = [];
   const msg = state.message || '';
 
@@ -170,9 +170,10 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');
   }
 
-  // Only on actually WINNING the crypto gamble — not on any message that merely
-  // mentions crypto (which previously fired on losses and warnings too).
-  if (currentEventId === 'crypto_scam' && msg.includes('狠赚了一笔')) {
+  // Gate on a durable flag set in the winning effect. (Was `currentEventId ===
+  // 'crypto_scam' && msg.includes(...)`, but by the time achievements are checked
+  // currentEventId has advanced to the destination event →永远不触发.)
+  if (state.story_flags?.crypto_whale_win) {
     if (unlockAchievement('crypto_whale')) newlyUnlocked.push('crypto_whale');
   }
 
@@ -207,7 +208,9 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('nvidia_nasdaq_god')) newlyUnlocked.push('nvidia_nasdaq_god');
   }
 
-  if ((state.health < 30 || msg.includes('ICU') || msg.includes('猝死') || msg.includes('过劳猝死')) && state.status === 'win') {
+  // Won while still in poor health. State-based only — the old msg.includes('猝死')
+  // false-fired on the health-positive「养生防猝死储备」message (carried over into a win).
+  if (state.health < 30 && state.status === 'win') {
     if (unlockAchievement('icu_resurrection')) newlyUnlocked.push('icu_resurrection');
   }
 
@@ -235,13 +238,15 @@ export function checkAndUnlockAchievements(state: GameState, currentEventId: str
     if (unlockAchievement('l8_principal_architect')) newlyUnlocked.push('l8_principal_architect');
   }
 
-  // Gate the options-gamble outcomes on the actual gamble event, so unrelated
-  // flavor text that happens to contain these idioms can't award them.
-  if (currentEventId === 'stock_market_annual_gamble' && msg.includes('暴富奇迹！')) {
+  // Gate on durable flags set in the gamble's win/loss effects. (Was
+  // `currentEventId === 'stock_market_annual_gamble' && msg.includes(...)`, but
+  // currentEventId has already advanced by the time achievements are checked, so
+  // these three were permanently unobtainable.)
+  if (state.story_flags?.wsb_wolf_win) {
     if (unlockAchievement('wall_street_wolf')) newlyUnlocked.push('wall_street_wolf');
   }
 
-  if (currentEventId === 'stock_market_annual_gamble' && msg.includes('血本无归')) {
+  if (state.story_flags?.wsb_leek) {
     if (unlockAchievement('wsb_leek')) newlyUnlocked.push('wsb_leek');
   }
 

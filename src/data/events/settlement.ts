@@ -88,12 +88,15 @@ export const settlementEvents: Record<string, GameEvent> = {
            let healthDrain = 0;
            let companyMsg = '';
            if (!s.laid_off && s.job_type !== 'unemployed') {
-             if (s.job_type === 'tiktok') { healthDrain = 8; companyMsg = ' 字节的高强度对齐让你略感疲惫 (健康 -8)。'; }
-             else if (s.job_type === 'quant') { healthDrain = 6; companyMsg = ' 高频交易的紧绷节奏消耗了体力 (健康 -6)。'; }
-             else if (s.company === 'meta') { healthDrain = 4; companyMsg = ' Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。'; }
-             else if (s.job_type === 'amazon') { healthDrain = 3; companyMsg = ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。'; }
-             else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
-             else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
+              // TikTok is stored as company:'tiktok' with job_type:'big_tech' (job_type is
+              // never 'tiktok'), so match on company or it would fall into the 养老大厂 +10 branch.
+              if (s.company === 'tiktok') { healthDrain = 8; companyMsg = ' 字节的高强度对齐让你略感疲惫 (健康 -8)。'; }
+              else if (s.job_type === 'quant') { healthDrain = 6; companyMsg = ' 高频交易的紧绷节奏消耗了体力 (健康 -6)。'; }
+              else if (s.job_type === 'nvidia' || s.company === 'nvidia') { healthDrain = 4; companyMsg = ' 英伟达 AI 芯片军备竞赛节奏紧张，让你不敢松懈 (健康 -4)。'; }
+              else if (s.company === 'meta') { healthDrain = 4; companyMsg = ' Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。'; }
+              else if (s.job_type === 'amazon') { healthDrain = 3; companyMsg = ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。'; }
+              else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
+              else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
              // AI labs (OpenAI/Anthropic MTS) are prestigious but intense — not a 养老大厂.
              else if (s.job_type === 'ai_research') { healthDrain = 3; companyMsg = ' 前沿 AI 实验室的 AGI 军备竞赛节奏紧绷，但你站在技术浪潮之巅 (健康 -3)。'; }
              // Internal transfer to a big-tech 前沿 AI 大模型组: still WLB, but AI-flavored (was
@@ -124,7 +127,9 @@ export const settlementEvents: Record<string, GameEvent> = {
            } else if (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)' || s.visa === 'L1 (外派)' || s.visa === 'Day 1 CPT') {
               const isO1 = s.visa === 'O1 (杰出人才)';
               const isPhd = s.is_phd;
-              const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
+              // Big-tech-tier sponsors for PERM (better green-card odds). Include AI labs,
+              // quant, and TikTok-by-company (which is stored job_type:'big_tech' anyway).
+              const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia' || s.job_type === 'ai_research' || s.job_type === 'quant' || s.company === 'tiktok';
 
               if (!s.job_type || s.job_type === 'unemployed' || s.laid_off) {
                  if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {

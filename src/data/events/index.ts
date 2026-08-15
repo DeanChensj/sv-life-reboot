@@ -12,6 +12,7 @@ import { companyEvents } from './companyEvents';
 import { personaEvents } from './personaEvents';
 import { levelEvents } from './levelEvents';
 import { dilemmaEvents } from './dilemmaEvents';
+import { interviewEvents } from './interviewEvents';
 
 export * from './helpers';
 
@@ -22,6 +23,7 @@ export const events: Record<string, GameEvent> = {
   ...personaEvents,
   ...levelEvents,
   ...dilemmaEvents,
+  ...interviewEvents,
   ...immigrationEvents,
   ...startupEvents,
   ...tradingEvents,

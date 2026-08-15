@@ -5,7 +5,7 @@
 [![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Events Count](https://img.shields.io/badge/Total_Events-159+-FF6B6B)](src/data/events/)
-[![Test Suite](https://img.shields.io/badge/CUJ_Tests-9_Suites_Passed-success)](test_all_cujs.ts)
+[![Test Suite](https://img.shields.io/badge/CUJ_Tests-11_Suites_Passed-success)](test_all_cujs.ts)
 [![Fuzz Testing](https://img.shields.io/badge/Fuzzing-10%2C000_Runs-blueviolet)](fuzz_test.ts)
 [![Monte Carlo Balance](https://img.shields.io/badge/Monte_Carlo-3%2C000_Simulations-teal)](test_monte_carlo_balance.ts)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -73,7 +73,7 @@
 
 ## 🧪 自动化测试防御矩阵 (Testing Matrix)
 
-本项目配置了严苛的 CI/CD 自动化全量测试套件，执行 `npm test` 会依次运行以下 5 大测试门禁：
+本项目配置了严苛的 CI/CD 自动化全量测试套件，执行 `npm test` 会依次运行以下 6 大测试门禁：
 
 ```bash
 npm test
@@ -83,9 +83,10 @@ npm test
 | :--- | :--- |
 | **1. `audit.ts`** | 全量事件路由连通性校验，确保无死胡同与非法 `nextEventId`。 |
 | **2. `audit_all_flows.ts`** | 基于有向图 BFS 遍历 159 个节点的可达性分析与文案合规性审计。 |
-| **3. `test_all_cujs.ts`** | **9 大核心用户旅程 (CUJs)** 场景级端到端测试，409+ 项断言 100% 通过。 |
-| **4. `fuzz_test.ts`** | **10,000 局**全自动随机决策 Fuzzing，验证 500,000+ 次状态流转的状态不变性。 |
-| **5. `test_monte_carlo_balance.ts`** | **3,000 局**蒙特卡洛数值平衡模拟，确保平均寿命 35~55 岁、FIRE 胜率 20%~40%。 |
+| **3. `test_routing_guards.ts`** | 路由防劣化棘轮机制 (Ratchet)，严禁新增基于文案子串的分支路由，强制驱动状态化控制流。 |
+| **4. `test_all_cujs.ts`** | **11 大核心用户旅程 (CUJs)** 场景级端到端测试，482+ 项断言 100% 通过。 |
+| **5. `fuzz_test.ts`** | **10,000 局**全自动随机决策 Fuzzing，验证 500,000+ 次状态流转的状态不变性。 |
+| **6. `test_monte_carlo_balance.ts`** | **3,000 局**蒙特卡洛数值平衡模拟，确保平均寿命 35~55 岁、FIRE 胜率 20%~40%。 |
 
 ---
 
@@ -135,7 +136,8 @@ sv-life-reboot/
 │   └── main.tsx                # Vite 渲染主入口
 ├── audit.ts                    # 路由连通性自动化测试
 ├── audit_all_flows.ts          # 有向图 BFS 孤岛可达性自动化审计
-├── test_all_cujs.ts            # 9 大核心用户旅程 CUJ 场景测试
+├── test_routing_guards.ts      # 路由防劣化棘轮测试
+├── test_all_cujs.ts            # 11 大核心用户旅程 CUJ 场景测试
 ├── fuzz_test.ts                # 10,000 局状态不变性 Fuzz 测试
 ├── test_monte_carlo_balance.ts # 3,000 局蒙特卡洛数值平衡 CI 测试
 ├── package.json

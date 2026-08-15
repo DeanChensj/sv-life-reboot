@@ -563,6 +563,61 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 11 Passed\n');
 }
 
+// CUJ 12: 4-Year RSU Vesting Cliff only triggers for Big Tech employees with tenure >= 3 (year 4+)
+{
+  console.log('--- [CUJ 12] RSU 4-Year Vesting Cliff tenure gate ---');
+  // At year 1 (age 24, job_start_age 24, tenure 0), rsu_vesting_crash is NEVER picked across 100 trials
+  const stYear1: GameState = {
+    ...generateInitialState(),
+    age: 24,
+    job_start_age: 24,
+    job_type: 'big_tech',
+    company: 'google',
+    season_stage: 'h2',
+    laid_off: false,
+    mid_year: true,
+  };
+  for (let i = 0; i < 100; i++) {
+    const picked = midYearEventRouter(stYear1);
+    assert(picked !== 'rsu_vesting_crash', `Year 1 (tenure 0) must never trigger rsu_vesting_crash (got ${picked})`);
+  }
+
+  // At year 2 (age 25, job_start_age 24, tenure 1), rsu_vesting_crash is NEVER picked across 100 trials
+  const stYear2: GameState = { ...stYear1, age: 25, job_start_age: 24 };
+  for (let i = 0; i < 100; i++) {
+    const picked = midYearEventRouter(stYear2);
+    assert(picked !== 'rsu_vesting_crash', `Year 2 (tenure 1) must never trigger rsu_vesting_crash (got ${picked})`);
+  }
+
+  // At year 3 (age 26, job_start_age 24, tenure 2), rsu_vesting_crash is NEVER picked across 100 trials
+  const stYear3: GameState = { ...stYear1, age: 26, job_start_age: 24 };
+  for (let i = 0; i < 100; i++) {
+    const picked = midYearEventRouter(stYear3);
+    assert(picked !== 'rsu_vesting_crash', `Year 3 (tenure 2) must never trigger rsu_vesting_crash (got ${picked})`);
+  }
+
+  // At year 4+ (age 27, job_start_age 24, tenure 3), rsu_vesting_crash IS allowed and CAN be picked
+  const stYear4: GameState = { ...stYear1, age: 27, job_start_age: 24 };
+  let sawCliffAtYear4 = false;
+  for (let i = 0; i < 500; i++) {
+    const picked = midYearEventRouter(stYear4);
+    if (picked === 'rsu_vesting_crash') {
+      sawCliffAtYear4 = true;
+      break;
+    }
+  }
+  assert(sawCliffAtYear4, 'Year 4 (tenure 3) in Big Tech is allowed to trigger rsu_vesting_crash');
+
+  // Once rsu_cliff_done is set, it must not trigger again at the same company
+  const stYear4Done: GameState = { ...stYear4, story_flags: { rsu_cliff_done: true } };
+  for (let i = 0; i < 100; i++) {
+    const picked = midYearEventRouter(stYear4Done);
+    assert(picked !== 'rsu_vesting_crash', `When rsu_cliff_done is true, must never trigger rsu_vesting_crash (got ${picked})`);
+  }
+
+  console.log('✅ CUJ 12 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

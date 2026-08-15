@@ -124,7 +124,14 @@ export const tradingEvents: Record<string, GameEvent> = {
         // The story (fresh cheap grant at the bottom) is now actually implemented as a
         // stock grant, and we no longer set is_new_job (which could reset GC progress).
         // So it's a real "抄底" bet (health cost + slight TC dip for future equity upside).
-        effect: (s) => ({ tc: Math.max(10, s.tc - 5), stocks: (s.stocks || 0) + 8, health: Math.max(0, s.health - 10), message: '你含泪跳槽去了一家给钱更少但股价触底的公司，拿到了一大笔低价 RSU，重新开始坐 4 年股票牢，赌它触底反弹。' }),
+        effect: (s) => ({
+          tc: Math.max(10, s.tc - 5),
+          stocks: (s.stocks || 0) + 8,
+          health: Math.max(0, s.health - 10),
+          job_start_age: s.age,
+          story_flags: { ...(s.story_flags || {}), rsu_cliff_done: true },
+          message: '你含泪跳槽去了一家给钱更少但股价触底的公司，拿到了一大笔低价 RSU，重新开始坐 4 年股票牢，赌它触底反弹。',
+        }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -133,14 +140,14 @@ export const tradingEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const viral = gameRandom() < 0.55;
           return viral
-            ? { cash: s.cash + 8, charm: Math.min(s.max_charm ?? 25, s.charm + 4), health: Math.max(0, s.health - 4), message: '网友太喜欢看硅谷中产受苦了！你的小红书粉丝暴涨，电竞椅和挂壁盒饭的广告费小赚一笔，稍稍填补了股票亏损。' }
-            : { cash: s.cash + 1, charm: Math.min(s.max_charm ?? 25, s.charm + 1), health: Math.max(0, s.health - 4), message: '视频反响平平，熬夜剪片却是实打实的。零星几个广告只够买杯奶茶，聊胜于无。' };
+            ? { cash: s.cash + 8, charm: Math.min(s.max_charm ?? 25, s.charm + 4), health: Math.max(0, s.health - 4), story_flags: { ...(s.story_flags || {}), rsu_cliff_done: true }, message: '网友太喜欢看硅谷中产受苦了！你的小红书粉丝暴涨，电竞椅和挂壁盒饭的广告费小赚一笔，稍稍填补了股票亏损。' }
+            : { cash: s.cash + 1, charm: Math.min(s.max_charm ?? 25, s.charm + 1), health: Math.max(0, s.health - 4), story_flags: { ...(s.story_flags || {}), rsu_cliff_done: true }, message: '视频反响平平，熬夜剪片却是实打实的。零星几个广告只够买杯奶茶，聊胜于无。' };
         },
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '死扛信仰！每天去大华超市买促销打折盒饭，熬到中东主权基金收购',
-        effect: (s) => ({ health: s.health - 12, luck: Math.min(99, (s.luck || 20) + 8), message: '你开启了硅谷极简苦行僧模式，胃功能下降了，但心智磨砺得坚不可催。' }),
+        effect: (s) => ({ health: s.health - 12, luck: Math.min(99, (s.luck || 20) + 8), story_flags: { ...(s.story_flags || {}), rsu_cliff_done: true }, message: '你开启了硅谷极简苦行僧模式，胃功能下降了，但心智磨砺得坚不可催。' }),
         nextEventId: 'sv_year_end_settlement',
       }
     ]

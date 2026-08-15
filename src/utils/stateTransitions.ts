@@ -111,9 +111,19 @@ export function applyStateTransition(
     newState.gc_stage = 'approved';
   }
 
-  // 4. Global Invariant Guard: Unemployment TC must be 0
+  // 4. Global Invariant Guard: Unemployment TC must be 0 & Job Start Age Tracking
   if (newState.laid_off || newState.job_type === 'unemployed') {
     newState.tc = 0;
+    newState.job_start_age = undefined;
+  } else if (isNewJob && newState.job_type) {
+    newState.job_start_age = newState.age;
+    if (newState.story_flags) {
+      const updatedFlags = { ...newState.story_flags };
+      delete (updatedFlags as Record<string, unknown>).rsu_cliff_done;
+      newState.story_flags = updatedFlags;
+    }
+  } else if (newState.job_start_age === undefined && newState.job_type) {
+    newState.job_start_age = newState.age;
   }
 
   // Track the all-time peak TC (BEFORE any layoff can zero it out for the year) so

@@ -307,7 +307,8 @@ export const midYearEventRouter = (s: GameState): string => {
       lifeEvents.push('ikea_furniture_fight');
   }
   
-  if (isBigTech) {
+  const companyTenure = s.job_start_age !== undefined ? (s.age - s.job_start_age) : 0;
+  if (isBigTech && companyTenure >= 3 && !s.story_flags?.rsu_cliff_done) {
       lifeEvents.push('rsu_vesting_crash');
   }
 

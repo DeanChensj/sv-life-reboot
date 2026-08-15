@@ -219,6 +219,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, s.charm + 4),
           network: Math.min(100, (s.network || 10) + 3), // "社交圈口碑暴涨" now grants network
           health: Math.min(100, s.health + 15),
+          story_flags: { ...(s.story_flags || {}), housewarming_done: true },
           message: '烤肉香气扑鼻，大家纷纷夸赞你的眼光与房产品质！社交圈口碑暴涨！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -228,6 +229,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           charm: Math.min(25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 5),
+          story_flags: { ...(s.story_flags || {}), housewarming_done: true },
           message: '爆款文章收割了上千点赞！你成为了小红书湾区家居/房产圈的顶流 Blogger！'
         }),
         nextEventId: 'sv_year_end_settlement'

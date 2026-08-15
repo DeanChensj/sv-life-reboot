@@ -1784,7 +1784,12 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '老老实实搬回湾区租昂贵的公寓 (房租重置为 4w)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
-        effect: (s) => ({ rent: 4, health: s.health - 15, message: '你极不情愿地回到了湾区，每个月的房租让你心如刀割，但至少保住了工作。' }),
+        effect: (s) => ({
+          rent: 4,
+          health: s.health - 15,
+          story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
+          message: '你极不情愿地回到了湾区，每个月的房租让你心如刀割，但至少保住了工作。'
+        }),
         nextEventId: h1ToH2Router
       },
       {
@@ -1793,8 +1798,20 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const caught = gameRandom() < 0.3;
           return caught
-            ? { tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 15, message: '你的代刷工牌行为被 HR 发现，直接以违纪名义当天开除！' }
-            : { cash: s.cash + 5, charm: s.charm + 2, message: '成功瞒天过海！你一边拿着加州的工资，一边享受着外州的低物价。' };
+            ? {
+                tc: 0,
+                laid_off: true,
+                job_type: 'unemployed',
+                health: s.health - 15,
+                story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
+                message: '你的代刷工牌行为被 HR 发现，直接以违纪名义当天开除！'
+              }
+            : {
+                cash: s.cash + 5,
+                charm: s.charm + 2,
+                story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
+                message: '成功瞒天过海！你一边拿着加州的工资，一边享受着外州的低物价。'
+              };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s)
       },
@@ -1804,8 +1821,19 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = s.leetcode >= 70 && gameRandom() < 0.5;
           return win
-            ? { tc: s.tc + 2, charm: Math.min(25, s.charm + 5), message: '由于你是团队的核心骨干（High Performer），Manager 妥协了，给你申请了特殊的 Remote Exception！' }
-            : { tc: 0, laid_off: true, job_type: 'unemployed', message: 'Manager 冷笑一声：“现在是买方市场，门在那边。” 你被解雇了。' };
+            ? {
+                tc: s.tc + 2,
+                charm: Math.min(25, s.charm + 5),
+                story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
+                message: '由于你是团队的核心骨干（High Performer），Manager 妥协了，给你申请了特殊的 Remote Exception！'
+              }
+            : {
+                tc: 0,
+                laid_off: true,
+                job_type: 'unemployed',
+                story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
+                message: 'Manager 冷笑一声：“现在是买方市场，门在那边。” 你被解雇了。'
+              };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s)
       }
@@ -2038,13 +2066,23 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵手写 SQL 脚本与备份恢复',
-        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), message: '凭借硬核的数据库恢复功底，你连夜恢复了绝大部分备份，保住了生产环境！' }),
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 10),
+          health: Math.max(0, s.health - 15),
+          story_flags: { ...(s.story_flags || {}), agent_prod_disaster_seen: true },
+          message: '凭借硬核的数据库恢复功底，你连夜恢复了绝大部分备份，保住了生产环境！'
+        }),
         nextEventId: h1ToH2Router
       },
       {
         text: '甩锅给大模型 API 供应商，申请专项赔偿 (消耗 $0.5w)',
         condition: (s) => s.cash >= 0.5,
-        effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), cash: Math.max(0, s.cash - 0.5), message: '虽然倒贴了一些补偿金，但团队把主要责任交给了云端模型供应商的幻觉缺陷。' }),
+        effect: (s) => ({
+          network: Math.max(0, (s.network || 0) - 2),
+          cash: Math.max(0, s.cash - 0.5),
+          story_flags: { ...(s.story_flags || {}), agent_prod_disaster_seen: true },
+          message: '虽然倒贴了一些补偿金，但团队把主要责任交给了云端模型供应商的幻觉缺陷。'
+        }),
         nextEventId: h1ToH2Router
       }
     ]

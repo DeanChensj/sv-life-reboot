@@ -261,8 +261,31 @@ export const midYearEventRouter = (s: GameState): string => {
        }
 
      const isCorporate = isWorking;
+     const workEvents = [
+       'perf_review',
+       'layoff_rumor',
+       'meta_reorg_manager_left',
+       'friday_p0_outage_crisis',
+       'empty_promotion_promise',
+       'multi_timezone_calendar_hell'
+     ];
+     
+     // RTO 考勤打卡大战（一局至多 1 次）
+     if (isCorporate && !s.story_flags?.rto_wars_seen && gameRandom() < 0.35) {
+       workEvents.push('rto_wars');
+     }
 
-     const workEvents = ['perf_review', 'layoff_rumor', 'rto_wars', 'llm_datacenter_power_outage', 'meta_reorg_manager_left', 'agent_hallucination_prod_disaster'];
+     // 2023+ 大模型机房跳闸事故（AI 训练与大模型浪潮）。
+     // 注：ai_research 岗位在上方已提前 return（走 openai_launch_crunch / ai_research_crisis），
+     // 到不了这里，故不再判断 s.job_type === 'ai_research'（否则 TS 视为不可达比较而报错）。
+     if (isCorporate && s.year >= 2023 && (s.company === 'google' || s.company === 'meta' || s.company === 'openai' || s.transferred_to_ai) && gameRandom() < 0.30) {
+       workEvents.push('llm_datacenter_power_outage');
+     }
+
+     // 2024+ 自主 Agent 删库事故（大模型 Agent 时代，一局至多 1 次）
+     if (isCorporate && !s.story_flags?.agent_prod_disaster_seen && s.year >= 2024 && gameRandom() < 0.30) {
+       workEvents.push('agent_hallucination_prod_disaster');
+     }
      
      // Meta 专属 Tech Lead Manager 卷王挑战
      if (s.company === 'meta') {
@@ -296,9 +319,6 @@ export const midYearEventRouter = (s: GameState): string => {
      if (isCorporate && gameRandom() < 0.25) workEvents.push('influencer_vp_drama');
      if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && gameRandom() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
      if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
-     if (isCorporate) {
-       workEvents.push('friday_p0_outage_crisis', 'empty_promotion_promise', 'multi_timezone_calendar_hell');
-     }
 
      return gamePick(workEvents);
   }
@@ -357,9 +377,6 @@ export const midYearEventRouter = (s: GameState): string => {
       if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') {
           lifeEvents.push('ex_1point3acres_expose');
       }
-      if (gameRandom() < 0.20) {
-        return 'team_offsite';
-      }
   }
 
   if (isFounder) {
@@ -392,49 +409,45 @@ export const midYearEventRouter = (s: GameState): string => {
       lifeEvents.push('rsu_vesting_crash');
   }
 
-  if (isPermanentVisa(s.visa) && gameRandom() < 0.25) {
-    return 'japan_trip';
+  if (isPermanentVisa(s.visa) && !s.story_flags?.japan_trip_seen) {
+    lifeEvents.push('japan_trip');
   }
 
-  if (s.visa === 'H1B (工签)' && gameRandom() < 0.18) {
-    return 'h1b_visa_stamping_crisis';
+  if (s.visa === 'H1B (工签)') {
+    lifeEvents.push('h1b_visa_stamping_crisis');
   }
 
-  if ((s.car === 'porsche' || s.car === 'cybertruck') && gameRandom() < 0.25) {
-    return 'luxury_car_meet';
+  if (s.car === 'porsche' || s.car === 'cybertruck') {
+    lifeEvents.push('luxury_car_meet', 'luxury_car_vandalism_towing');
   }
 
   const isHomeowner = isOwnedHousing(s.housing_name);
-  if (isHomeowner && gameRandom() < 0.25) {
-    return 'house_warming_party';
+  if (isHomeowner && !s.story_flags?.housewarming_done) {
+    lifeEvents.push('house_warming_party');
   }
 
-  if (s.cash >= 100 && gameRandom() < 0.25) {
-    return 'startup_angel_investing';
+  if (s.cash >= 100) {
+    lifeEvents.push('startup_angel_investing');
   }
 
-  if ((s.is_married || s.relationship_status === 'married') && gameRandom() < 0.25) {
-    return 'bay_area_dink_vs_kids';
+  if ((s.is_married || s.relationship_status === 'married') && !s.has_child) {
+    lifeEvents.push('bay_area_dink_vs_kids');
   }
 
-  if (isHomeowner && s.cash >= 30 && gameRandom() < 0.25) {
-    return 'property_supplemental_tax_hike';
+  if (isHomeowner && s.cash >= 30) {
+    lifeEvents.push('property_supplemental_tax_hike');
   }
 
-  if ((s.car === 'porsche' || s.car === 'cybertruck') && gameRandom() < 0.25) {
-    return 'luxury_car_vandalism_towing';
+  if (s.cash >= 80 || s.tc >= 45) {
+    lifeEvents.push('irs_tax_audit_crisis');
   }
 
-  if ((s.cash >= 80 || s.tc >= 45) && gameRandom() < 0.25) {
-    return 'irs_tax_audit_crisis';
+  if (isHomeowner && s.age >= 32) {
+    lifeEvents.push('property_hoa_special_assessment');
   }
 
-  if (isHomeowner && s.age >= 32 && gameRandom() < 0.25) {
-    return 'property_hoa_special_assessment';
-  }
-
-  if (isWorking && s.age >= 35 && s.health <= 60 && gameRandom() < 0.30) {
-    return 'health_burnout_warning';
+  if (isWorking && s.age >= 35 && s.health <= 60) {
+    lifeEvents.push('health_burnout_warning');
   }
 
   if (!isPermanentVisa(s.visa) && s.visa !== '无') {
@@ -444,14 +457,12 @@ export const midYearEventRouter = (s: GameState): string => {
   if (s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating') {
       lifeEvents.push('breakup_crisis');
   } else {
-      lifeEvents.push('boardgame_dating');
+      lifeEvents.push('boardgame_dating', 'dating_market');
   }
 
-  if (!s.is_married && s.relationship_status !== 'married' && gameRandom() < 0.25) {
-      return 'dating_market';
+  if (s.car && s.car !== 'none') {
+    lifeEvents.push('car_broken');
   }
-
-  if (s.car && s.car !== 'none' && gameRandom() < 0.25) return 'car_broken';
   
   return gamePick(lifeEvents) || 'sv_year_end_settlement';
 };

@@ -570,6 +570,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           cash: Math.max(0, s.cash - 1.5),
           health: Math.min(100, s.health + 15),
           charm: Math.min(s.max_charm ?? 25, s.charm + 5),
+          story_flags: { ...(s.story_flags || {}), japan_trip_seen: true },
           message: '你享受了最高规格的日式招待！品尝了顶配和牛与怀石料理，在银座彻底放空身心！'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -579,6 +580,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.8),
           health: Math.min(100, s.health + 20),
+          story_flags: { ...(s.story_flags || {}), japan_trip_seen: true },
           message: '望着富士山雪景泡温泉，热气腾腾中所有的湾区职场焦虑烟消云散！'
         }),
         nextEventId: 'sv_year_end_settlement'

@@ -193,7 +193,11 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
      if (!isWorking) return 'job_hunt';
      if (s.job_type === 'startup') return 'startup_crisis';
-     if (s.job_type === 'ai_research') return 'ai_research_crisis';
+     if (s.job_type === 'ai_research') {
+       // OpenAI / 前沿实验室专属：下一代模型发布会通宵 crunch (companyEvents.ts)
+       if (gameRandom() < 0.4) return 'openai_launch_crunch';
+       return 'ai_research_crisis';
+     }
      if (s.job_type === 'quant') return 'quant_stress';
 
      const isCorporate = isWorking;
@@ -209,6 +213,14 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.company === 'apple') {
        workEvents.push('apple_vision_pro_demo');
      }
+
+     // 公司专属剧情事件 (companyEvents.ts)：各大厂差异化的年度职场遭遇，丰富重开体验。
+     // 遵循 meta_tlm / apple_vision_pro_demo 先例：命中即入池，由 gamePick 均匀抽取保持稀有度。
+     if (s.company === 'google') workEvents.push('google_reorg_limbo');
+     if (s.company === 'meta') workEvents.push('meta_metaverse_pivot');
+     if (s.company === 'apple') workEvents.push('apple_secrecy_crackdown');
+     if (s.company === 'tiktok') workEvents.push('tiktok_us_ban_hearing');
+     if (s.company === 'nvidia' || s.job_type === 'nvidia') workEvents.push('nvidia_rsu_moonshot');
      
      // 公司专属 PIP 概率区分：亚麻与 Meta 具有高强度末位淘汰 / PIP 指标，皮衣黄 Nvidia 及 Google / Apple 的 PIP 概率极低
      const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';

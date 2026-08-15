@@ -8,12 +8,14 @@ import { lifestyleEvents } from './lifestyle';
 import { housingFinanceEvents } from './housingFinance';
 import { macroNewsEvents } from './macroNews';
 import { settlementEvents } from './settlement';
+import { companyEvents } from './companyEvents';
 
 export * from './helpers';
 
 export const events: Record<string, GameEvent> = {
   ...initializationEvents,
   ...careerEvents,
+  ...companyEvents,
   ...immigrationEvents,
   ...startupEvents,
   ...tradingEvents,

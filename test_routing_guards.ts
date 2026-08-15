@@ -12,7 +12,7 @@
 import fs from 'fs';
 
 const EVENTS_DIR = './src/data/events';
-const BASELINE = 12; // known message-substring routings remaining (2026-08); only ever decrease.
+const BASELINE = 0; // 0 message-substring routings remaining; permanently lock in 0.
 
 let count = 0;
 const hits: string[] = [];

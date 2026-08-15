@@ -369,7 +369,7 @@ export const initializationEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: (s: GameState) => (s.message || '').includes('申请成功') ? 'us_master_year1' : 'cn_undergrad_grad',
+        nextEventId: (s: GameState) => s.is_master ? 'us_master_year1' : 'cn_undergrad_grad',
       },
       {
         text: '在国内大厂打工攒钱 (积累工作经验)',
@@ -1046,7 +1046,7 @@ export const initializationEvents: Record<string, GameEvent> = {
             ? { cash: Math.max(0, s.cash - 2), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', school: 'state', has_us_degree: true, is_master: true, age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
             : { health: s.health - 10, message: ' 申请被拒！留学贷款机构与校方评估认为你负债风险过高，贷款未获批准。你只能留在本地继续调养或打工。' };
         },
-        nextEventId: (s: GameState) => (s.message || '').includes('赴美新生活') ? 'us_master_year1' : ((s.level?.includes('资深') || s.level?.includes('Tech Lead')) ? 'cn_work_late' : 'cn_work_mid')
+        nextEventId: (s: GameState) => s.is_master ? 'us_master_year1' : ((s.level?.includes('资深') || s.level?.includes('Tech Lead')) ? 'cn_work_late' : 'cn_work_mid')
       }
     ]
   },
@@ -1062,10 +1062,10 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.40 + (s.leetcode >= 70 ? 0.20 : 0) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass 
-            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 20), message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，老板决定带你去夏威夷参加顶级学术会议！' }
+            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 20), story_flags: { ...(s.story_flags || {}), hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，老板决定带你去夏威夷参加顶级学术会议！' }
             : { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), leetcode: Math.min(100, s.leetcode + 15), message: '首篇顶会审稿激烈惨遭拒稿，但你摸清了顶会评审偏好并积累了大量实验基准。进入博三博四攻坚！' };
         },
-        nextEventId: (s) => ((s.message || '').includes('夏威夷') ? 'phd_conference' : 'phd_mid_stage')
+        nextEventId: (s) => (s.story_flags?.hawaii_conf ? 'phd_conference' : 'phd_mid_stage')
       },
       {
         text: '【跟组稳扎稳打】与实验室师兄合作发表中档二作，稳过资格考 Quals (耗时 2 年)',
@@ -1118,7 +1118,7 @@ export const initializationEvents: Record<string, GameEvent> = {
             ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 20), message: '奇迹！两年的厚积薄发终于开花结果，你的大模型推理架构论文被顶会 Oral 接收！老板大喜，带你去夏威夷顶会！' }
             : { age: s.age + 2, year: s.year + 2, is_phd: false, is_master: true, health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 15), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', message: '顶会再次惨遭拒稿！导师 Funding 彻底耗尽，系里启动学术委员会评估，建议你 Master Out 毕业找工作。' };
         },
-        nextEventId: (s) => ((s.message || '').includes('夏威夷') ? 'phd_conference' : 'job_hunt')
+        nextEventId: (s) => (s.is_phd ? 'phd_conference' : 'job_hunt')
       },
       {
         text: '【申请大厂研究实习】申请 Meta FAIR / Google DeepMind 做研究实习 (耗时 1 年, 高风险高回报)',

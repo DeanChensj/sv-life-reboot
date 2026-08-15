@@ -1,6 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
+import { isPermanentVisa } from '../../constants/gameConstants';
 
 export const careerEvents: Record<string, GameEvent> = {
   'job_hunt': {
@@ -527,7 +528,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
             : { h1b_attempts: 1, cash: s.cash, health: s.health - 5, message: '第一年 H1B 没抽中！已自动激活 STEM OPT 延期，继续在大厂奋斗并可在年底迎来后续抽签！' };
         },
-        nextEventId: (s) => (s.message && s.message.includes('没抽中') && gameRandom() < 0.35 ? 'h1b_fallback_options' : 'sv_daily_life'),
+        nextEventId: (s) => (!isPermanentVisa(s.visa) && s.visa !== 'H1B (工签)' && s.visa !== 'O1 (杰出人才)' && gameRandom() < 0.35 ? 'h1b_fallback_options' : 'sv_daily_life'),
       },
       {
         text: '砸 $8w 现金找顶级律所申办 O1 杰出人才签证 (需现金 >= $8w, 限 PhD/AI研究员/硬核算法背景)',
@@ -902,7 +903,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', transferred_to_ai: true, health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, message: '【成功转岗】顺利 Transfer 到了前沿 AI 研发组！既拥有神仙级的 WLB 作息，又接触到了顶尖行业架构！' }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【安稳养老】原组 Manager 极力挽留，你继续享受着下午 5 点准时下班的惬意大厂时光。' };
         },
-        nextEventId: (s) => ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : midYearEventRouter(s)),
       },
       {
         text: '【前沿 AI 团队攻坚】主导大模型低延迟推理架构落地，兼顾神仙级 WLB',
@@ -935,7 +936,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评，工作与生活达到完美平衡！' }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【惬意养老】AI 组内节奏舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客。' };
         },
-        nextEventId: (s) => ((s.message || '').includes('晋升') ? 'promo_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : midYearEventRouter(s)),
       },
       {
         text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
@@ -2295,7 +2296,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { cash: s.cash + 60, message: '稳扎稳打！公司被大厂收购了，你的期权兑现了 $60w 现金！' }
             : { cash: Math.max(0, s.cash - 5), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸，你不得不重新进入求职市场。' };
         },
-        nextEventId: (s) => (s.message || '').includes('收购') ? 'sv_daily_life' : 'job_hunt',
+        nextEventId: (s) => (s.laid_off || s.job_type === 'unemployed' ? 'job_hunt' : 'sv_daily_life'),
       },
       {
         text: '立刻 Pivot (转型) 做 AI / 大模型架构',
@@ -2308,7 +2309,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { cash: s.cash + 35, stocks: (s.stocks || 0) + 45, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产，顺便拿到了 EB-1 绿卡！' }
             : { cash: Math.max(0, s.cash - 10), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜抱起铺盖重新刷题求职。' };
         },
-        nextEventId: (s) => (s.message || '').includes('绿卡') ? 'post_green_card' : 'job_hunt',
+        nextEventId: (s) => (s.laid_off || s.job_type === 'unemployed' ? 'job_hunt' : 'post_green_card'),
       }
     ]
   },

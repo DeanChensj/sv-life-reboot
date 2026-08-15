@@ -39,9 +39,9 @@ export const careerEvents: Record<string, GameEvent> = {
           const econBonus = s.macro_economy === 'bull' ? 0.14 : (s.macro_economy === 'bear' ? -0.20 : 0);
           const charmBonus = ((s.charm || 10) - 10) / 140;
           const luckBonus = ((s.luck || 20) - 20) / 300;
-          // 中年 ageism (T2)：科技行业对 40+ 候选人的隐性年龄歧视 —— 面试通过率随年龄递减
-          // (40 岁起每岁 -1.5%，最多 -18%)，让中后期失业/跳槽不再稳稳翻身，制造真实存亡压力。
-          const ageBonus = s.age >= 40 ? -Math.min(0.18, (s.age - 40) * 0.015) : 0;
+          // 中年 ageism (T2)：科技行业的隐性年龄歧视现实里从 ~35 岁就开始 —— 面试通过率随年龄递减
+          // (35 岁起每岁 -1.5%，最多 -18%)，让中后期失业/跳槽不再稳稳翻身，制造真实存亡压力。
+          const ageBonus = s.age >= 35 ? -Math.min(0.18, (s.age - 35) * 0.015) : 0;
 
           for (const comp of targetCompanies) {
             if (newLeet >= comp.minLeet) {
@@ -1053,9 +1053,9 @@ export const careerEvents: Record<string, GameEvent> = {
           const econBonus = s.macro_economy === 'bull' ? 0.14 : (s.macro_economy === 'bear' ? -0.20 : 0);
           const charmBonus = ((s.charm || 10) - 10) / 140;
           const luckBonus = ((s.luck || 20) - 20) / 300;
-          // 中年 ageism (T2)：科技行业对 40+ 候选人的隐性年龄歧视 —— 面试通过率随年龄递减
-          // (40 岁起每岁 -1.5%，最多 -18%)，让中后期失业/跳槽不再稳稳翻身，制造真实存亡压力。
-          const ageBonus = s.age >= 40 ? -Math.min(0.18, (s.age - 40) * 0.015) : 0;
+          // 中年 ageism (T2)：科技行业的隐性年龄歧视现实里从 ~35 岁就开始 —— 面试通过率随年龄递减
+          // (35 岁起每岁 -1.5%，最多 -18%)，让中后期失业/跳槽不再稳稳翻身，制造真实存亡压力。
+          const ageBonus = s.age >= 35 ? -Math.min(0.18, (s.age - 35) * 0.015) : 0;
 
           for (const comp of targetCompanies) {
             if (newLeet >= comp.minLeet) {

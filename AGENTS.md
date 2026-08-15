@@ -30,9 +30,22 @@
      # 1. audit.ts (路由连通性与死胡同校验)
      # 2. audit_all_flows.ts (有向图 BFS 孤岛可达性与文案合规校验)
      # 3. test_all_cujs.ts (7 大核心用户旅程 CUJ 场景断言)
-     # 4. fuzz_test.ts (10,000 局状态不变性 Fuzzing)
-     # 5. test_monte_carlo_balance.ts (3,000 局蒙特卡洛数值平衡与寿命保障 CI 门禁)
-     ```
+      # 4. fuzz_test.ts (10,000 局状态不变性 + 路由不变量 Fuzzing)
+      # 5. test_monte_carlo_balance.ts (3,000 局蒙特卡洛数值平衡与寿命保障 CI 门禁)
+      # 6. test_routing_guards.ts (禁止基于文案子串的路由/判断，防回归)
+      ```
+
+4. **路由与分支判断规范 (防两类高频 Bug)**：
+   - **禁止用文案子串做控制流/判定**：`nextEventId`、成就解锁、任何分支逻辑都**不得**依赖
+     `message.includes('X')`/`msg.includes('X')` —— 非目标结局的文案也可能含 X（假阳性），
+     目标文案也可能不含（假阴性）。请改用**状态字段**判断：`level` / `last_promo_age`
+     (本回合是否真晋升) / `visa` / `status` / `story_flags`。`test_routing_guards.ts` 会对
+     此设 ratchet 门禁；`fuzz_test.ts` 校验「进入晋升庆祝事件 ⇒ 本回合确实晋升」。
+   - **`job_type`/`company` 分支链必须覆盖所有取值**：新增 `job_type` 时，务必检查
+     `settlement.ts`(年终健康文案/税/PERM 担保)、`gameStateSelectors.ts`(职业/签证/职级标签)
+     等分支链是否都处理了该值，否则会静默落入错误的 fallback（如 TikTok 曾误判为「养老大厂」）。
+     `test_all_cujs.ts` CUJ 11 会枚举所有 `job_type` 校验年终文案覆盖。
+     ⚠️ 注意：TikTok 存储为 `company:'tiktok', job_type:'big_tech'`，判断时须用 `company` 而非 `job_type`。
 
 ---
 

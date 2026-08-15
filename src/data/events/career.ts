@@ -337,7 +337,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'google',
             job_type: 'big_tech',
-            level: nextLvl,
+            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
             tc: newTC,
             health: Math.min(100, s.health + 12),
             laid_off: false,
@@ -360,7 +360,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'meta',
             job_type: 'big_tech',
-            level: nextLvl,
+            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
             tc: newTC,
             cash: s.cash + (s.macro_economy === 'bull' ? 8 : 4),
             health: Math.max(0, s.health - 15),
@@ -385,7 +385,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'nvidia',
             job_type: 'nvidia',
-            level: nextLvl,
+            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
             tc: newTC,
             cash: s.cash + (isBull ? 4 : 2),
             laid_off: false,
@@ -410,7 +410,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'tiktok',
             job_type: 'big_tech',
-            level: nextLvl,
+            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
             tc: newTC,
             cash: s.cash + 10,
             health: Math.max(0, s.health - 15),
@@ -467,7 +467,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'apple',
             job_type: 'big_tech',
-            level: nextLvl,
+            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
             tc: newTC,
             health: Math.min(100, s.health + 10),
             laid_off: false,
@@ -2491,7 +2491,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const nextLvl = (cur === 'L3') ? 'L4' : (cur === 'L4') ? 'L5 (Senior)' : cur;
           return {
             tc: s.tc + 4.5,
-            level: nextLvl,
+            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
             health: Math.min(100, s.health + 8),
             charm: Math.min(25, (s.charm || 10) + 3),
             npcs: {

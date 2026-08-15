@@ -26,6 +26,7 @@
     "fuzz_test.ts",
     "test_all_cujs.ts",
     "test_monte_carlo_balance.ts",
+    "test_routing_guards.ts",
     "analyze_traits.ts"
   ]
 }

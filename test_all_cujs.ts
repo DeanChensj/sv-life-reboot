@@ -541,6 +541,28 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 10 Passed\n');
 }
 
+// CUJ 11: Year-end company-health message must cover EVERY job_type/company
+// (guards the branch-gap class: a value falling into the wrong fallback, e.g.
+// TikTok/ai_research/nvidia previously hitting the generic "养老大厂/带薪年假").
+{
+  console.log('--- [CUJ 11] Year-end company message covers every job_type ---');
+  const settleMsg = (over: Partial<GameState>): string => {
+    const st = { ...generateInitialState(), health: 60, tc: 30, cash: 20, stocks: 0, laid_off: false, mid_year: false, ...over } as GameState;
+    return stepChoice(st, 'sv_year_end_settlement', 0).nextState.message || '';
+  };
+  assert(settleMsg({ company: 'tiktok', job_type: 'big_tech' }).includes('字节'), 'TikTok -> 字节 (not 养老大厂)');
+  assert(settleMsg({ job_type: 'quant' }).includes('高频交易'), 'quant -> 高频交易');
+  assert(settleMsg({ job_type: 'nvidia', company: 'nvidia' }).includes('英伟达'), 'nvidia -> 英伟达 (not generic +6)');
+  assert(settleMsg({ company: 'meta', job_type: 'big_tech' }).includes('Meta'), 'meta -> Meta');
+  assert(settleMsg({ job_type: 'startup' }).includes('创业公司'), 'startup -> 创业公司');
+  assert(settleMsg({ job_type: 'startup_founder' }).includes('创业找融资'), 'startup_founder -> 创业找融资');
+  assert(settleMsg({ job_type: 'ai_research', company: 'openai' }).includes('前沿 AI 实验室'), 'ai_research -> 前沿 AI 实验室 (not 养老大厂)');
+  assert(settleMsg({ job_type: 'big_tech', transferred_to_ai: true }).includes('大厂前沿 AI 大模型组'), 'transferred_to_ai -> AI 大模型组 (not 养老大厂)');
+  assert(settleMsg({ job_type: 'big_tech', company: 'google' }).includes('养老大厂'), 'plain big_tech -> 养老大厂');
+  assert(settleMsg({ job_type: 'cn_tech', company: 'cn_big_tech' }).includes('国内大厂'), 'cn_tech -> 国内大厂');
+  console.log('✅ CUJ 11 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

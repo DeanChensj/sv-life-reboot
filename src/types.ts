@@ -44,6 +44,7 @@ export interface StoryFlags {
   dilemma_toxic_boss_gc_hostage_seen?: boolean;
   dilemma_startup_allin_family_seen?: boolean;
   dilemma_credit_grab_mentor_seen?: boolean;
+  iv_score?: number; // 多轮「见招拆招」终面链的临场累计评分（链内临时状态，resolve 后清零）
   milestone_100w?: boolean;
   milestone_300w?: boolean;
   milestone_500w?: boolean;

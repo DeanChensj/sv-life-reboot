@@ -260,7 +260,12 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   assert(internRes.nextState.cash > vacationRes.nextState.cash, 'Earned stipend from research internship');
 
   // 5. PhD Direct Paper Success -> phd_conference -> phd_job_hunt -> OpenAI MTS Offer
-  res = stepChoice(state, 'phd_life', 0, { message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会接收，老板决定带你去夏威夷参加顶级学术会议！' });
+  // Force the SUCCESS branch deterministically: phd_life choice 0 routes on
+  // story_flags.hawaii_conf, which the effect only sets on a gameRandom() pass. This
+  // CUJ runs without reseeding, so its roll depends on the global PRNG state left by
+  // the prior test scripts — inject the flag so the "Successful paper" path is stable
+  // regardless of upstream gameRandom call counts.
+  res = stepChoice(state, 'phd_life', 0, { is_phd: true, story_flags: { ...state.story_flags, hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会接收，老板决定带你去夏威夷参加顶级学术会议！' });
   assert(res.nextEventId === 'phd_conference', 'Successful paper routes to phd_conference');
   state = res.nextState;
 

@@ -164,7 +164,7 @@ export default function App() {
   }, [gameState.job_type, hasUnlockedShopToast]);
 
   useEffect(() => {
-    const newlyUnlocked = checkAndUnlockAchievements(gameState, currentEventId);
+    const newlyUnlocked = checkAndUnlockAchievements(gameState);
     if (newlyUnlocked.length > 0) {
       const ach = ACHIEVEMENTS.find(a => a.id === newlyUnlocked[0]);
       if (ach) {
@@ -173,7 +173,7 @@ export default function App() {
         setTimeout(() => setAchievementToast(null), 4500);
       }
     }
-  }, [gameState, currentEventId]);
+  }, [gameState]);
 
   useEffect(() => {
     setIsCoolingDown(true);

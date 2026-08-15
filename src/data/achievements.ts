@@ -162,7 +162,7 @@ export function unlockAchievement(id: string): boolean {
   return false;
 }
 
-export function checkAndUnlockAchievements(state: GameState, currentEventId: string): string[] {
+export function checkAndUnlockAchievements(state: GameState): string[] {
   const newlyUnlocked: string[] = [];
   const msg = state.message || '';
 

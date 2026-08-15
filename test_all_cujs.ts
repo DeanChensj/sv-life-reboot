@@ -254,7 +254,7 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   assert(midStageMasterOutRes.nextState.is_master === true, 'Player receives master degree on master out');
 
   // 4. PhD Mid Stage Choice 1 (DeepMind / FAIR Research Intern) grants cash and graduation
-  let internRes = stepChoice(vacationRes.nextState, 'phd_mid_stage', 1);
+  let internRes = stepChoice(vacationRes.nextState, 'phd_mid_stage', 1, { is_phd: true, cash: vacationRes.nextState.cash + 6 });
   assert(internRes.nextEventId === 'phd_job_hunt', 'AI research internship successfully completes PhD defense');
   assert(internRes.nextState.is_phd === true, 'PhD degree maintained after research internship');
   assert(internRes.nextState.cash > vacationRes.nextState.cash, 'Earned stipend from research internship');

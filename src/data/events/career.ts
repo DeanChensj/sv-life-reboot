@@ -1406,7 +1406,10 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { level: 'L6 (Staff)', tc: s.tc + 12, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: '奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构与跨团队沟通，打破硅谷天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +12 万美元！' }
             : { health: Math.max(0, s.health - 15), message: '晋升委员会否决了你的 L6 Staff 申请，认为你在部门影响力与政治 Sponsorship 上仍缺一把火。白卷了一整年。' };
         },
-        nextEventId: (s) => ((s.level === 'L6 (Staff)' && (s.message || '').includes('晋升')) ? 'l6_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : h1ToH2Router(s))),
+        // Route on the ACTUAL level change, not message.includes('晋升') — the failure
+        // message ("晋升委员会否决…") also contains 晋升, which wrongly triggered the
+        // 职级大晋升喜报 celebration on a rejection.
+        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【角逐 L7 Senior Staff 资深架构师】统领跨部门级核心技术战略与下一代基建 (L6 升 L7 专属)',
@@ -1424,7 +1427,8 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: ' 战略封神！你在跨部门架构评审中凭借高层 VP Sponsor 撑腰与无可撼动的技术领导力，正式晋升为 L7 Senior Staff Engineer 资深架构师！总包 (TC) 狂飙 +20 万美元！' }
             : { health: Math.max(0, s.health - 15), message: '晋升委员会否决了你的 L7 Senior Staff 申请，认为你在高层政治阵营拉拢与全公司级战略视野上仍需深耕。白卷了一整年。' };
         },
-        nextEventId: (s) => ((s.level === 'L7 (Senior Staff)' && (s.message || '').includes('晋升')) ? 'l7_senior_staff_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : h1ToH2Router(s))),
+        // Route on the ACTUAL level change (the rejection message also contains 晋升).
+        nextEventId: (s) => (s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【登顶 L8 Principal 首席架构师】定义行业技术范式与下一代算力/模型标准 (L7 升 L8 终极天堑)',
@@ -1442,7 +1446,8 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { level: 'L8 (Principal)', tc: s.tc + 35, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: ' 硅谷传世神话！你在董事会闭门答辩中赢得 CEO 与顶级投资人一致肯定，破格受聘为全公司屈指可数的 L8 Principal Engineer 首席架构师/技术院士！年薪总包与期权暴涨 (+$35w TC)！' }
             : { health: Math.max(0, s.health - 15), message: 'L8 职级名额受全公司顶层 Quota 严格限制，尽管你的产出极其卓越，但在董事会与高管派系答辩中仍以一票之差抱憾延期。白卷了一整年。' };
         },
-        nextEventId: (s) => ((s.level === 'L8 (Principal)' && (s.message || '').includes('晋升')) ? 'l8_principal_celebration' : ((s.message || '').includes('晋升') ? 'promo_celebration' : h1ToH2Router(s))),
+        // Route on the ACTUAL level change (harden against the substring bug).
+        nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : h1ToH2Router(s)),
       },
       {
         text: '准点下班，躺平拿 Meets (保重身体)',

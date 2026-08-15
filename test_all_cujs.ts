@@ -525,6 +525,22 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 9 Passed\n');
 }
 
+// CUJ 10: Promotion routing must not show 职级大晋升喜报 on a rejection
+{
+  console.log('--- [CUJ 10] Promotion routing (no false 喜报 on rejection) ---');
+  const perf = events['perf_review'];
+  const l7 = perf.choices.find((c) => c.text.includes('L7 Senior Staff'))!;
+  const route = l7.nextEventId as (s: GameState) => string;
+  // Rejection: level unchanged (MTS/L6), message contains 晋升委员会否决
+  const rejected = { ...generateInitialState(), level: 'MTS', message: '晋升委员会否决了你的 L7 Senior Staff 申请，认为你…白卷了一整年。' } as GameState;
+  const rid = route(rejected);
+  assert(rid !== 'l7_senior_staff_celebration' && rid !== 'promo_celebration', 'L7 rejection does NOT route to any 晋升喜报 celebration');
+  // Success: level actually became L7
+  const promoted = { ...generateInitialState(), level: 'L7 (Senior Staff)' } as GameState;
+  assert(route(promoted) === 'l7_senior_staff_celebration', 'L7 success routes to l7_senior_staff_celebration');
+  console.log('✅ CUJ 10 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

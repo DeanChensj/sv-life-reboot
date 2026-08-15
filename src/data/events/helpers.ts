@@ -193,8 +193,25 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
      if (!isWorking) return 'job_hunt';
      if (s.job_type === 'startup') return 'startup_crisis';
-     if (s.job_type === 'ai_research') return 'ai_research_crisis';
+     if (s.job_type === 'ai_research') {
+       // OpenAI / 前沿实验室专属标志事件：一局至多一次，未触发前 ~30%/年 (companyEvents.ts)
+       if (isWorking && !s.story_flags?.openai_launch_crunch_seen && gameRandom() < 0.3) return 'openai_launch_crunch';
+       return 'ai_research_crisis';
+     }
      if (s.job_type === 'quant') return 'quant_stress';
+
+     // 公司专属年度「标志事件」(companyEvents.ts)：每局至多触发一次，命中前 ~30%/年。
+     // 直接 early-return（而非入池），既能精确控制概率，也让它成为该公司路径的年度里程碑；
+     // 一旦 story_flags.<id>_seen 置位便不再触发，回落到常规工作事件池，避免重复廉价化。
+     // 每行写成字面量 return，便于 audit_all_flows.ts 的源码扫描确定性识别可达性。
+     if (isWorking) {
+       const sig = s.story_flags || {};
+       if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
+       if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';
+       if ((s.company === 'nvidia' || s.job_type === 'nvidia') && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';
+       if (s.company === 'tiktok' && !sig.tiktok_us_ban_hearing_seen && gameRandom() < 0.3) return 'tiktok_us_ban_hearing';
+       if (s.company === 'apple' && !sig.apple_secrecy_crackdown_seen && gameRandom() < 0.3) return 'apple_secrecy_crackdown';
+     }
 
      const isCorporate = isWorking;
 

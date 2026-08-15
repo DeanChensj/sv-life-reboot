@@ -209,9 +209,13 @@ export const midYearEventRouter = (s: GameState): string => {
        if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
        if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';
        if ((s.company === 'nvidia' || s.job_type === 'nvidia') && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';
-       if (s.company === 'tiktok' && !sig.tiktok_us_ban_hearing_seen && gameRandom() < 0.3) return 'tiktok_us_ban_hearing';
-       if (s.company === 'apple' && !sig.apple_secrecy_crackdown_seen && gameRandom() < 0.3) return 'apple_secrecy_crackdown';
-     }
+        if (s.company === 'tiktok' && !sig.tiktok_us_ban_hearing_seen && gameRandom() < 0.3) return 'tiktok_us_ban_hearing';
+        if (s.company === 'apple' && !sig.apple_secrecy_crackdown_seen && gameRandom() < 0.3) return 'apple_secrecy_crackdown';
+
+        // 人设专属职场「标志事件」(personaEvents.ts)：同样一局至多一次、命中前 ~30%/年。
+        if (s.trait_title === '卷王之王' && !sig.persona_grind_king_crunch_seen && gameRandom() < 0.3) return 'persona_grind_king_crunch';
+        if (s.trait_title === '小镇做题家' && !sig.persona_impostor_syndrome_seen && gameRandom() < 0.3) return 'persona_impostor_syndrome';
+      }
 
      const isCorporate = isWorking;
 
@@ -260,6 +264,16 @@ export const midYearEventRouter = (s: GameState): string => {
   const isCorporate = isWorking && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
   const isFounder = s.job_type === 'startup_founder';
   const isTrader = s.job_type === 'trader';
+
+  // 人设专属生活「标志事件」(personaEvents.ts)：一局至多一次、命中前 ~30%/年，优先于常规生活事件。
+  // 字面量 return 便于 audit_all_flows.ts 源码扫描确定性识别可达性。
+  {
+    const sig = s.story_flags || {};
+    if (s.trait_title === '湾区海王' && !sig.persona_playboy_high_society_seen && gameRandom() < 0.3) return 'persona_playboy_high_society';
+    if (s.trait_title === '原生美籍' && !sig.persona_native_hometown_edge_seen && gameRandom() < 0.3) return 'persona_native_hometown_edge';
+    if (s.trait_title === '家里有矿' && !sig.persona_rich_family_offer_seen && gameRandom() < 0.3) return 'persona_rich_family_offer';
+    if (s.trait_title === '天选之子' && !sig.persona_chosen_windfall_seen && gameRandom() < 0.3) return 'persona_chosen_windfall';
+  }
 
   const lifeEvents = [
     'pickleball_networking', 'dental_emergency', 'crypto_scam', 

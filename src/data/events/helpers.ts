@@ -212,10 +212,20 @@ export const midYearEventRouter = (s: GameState): string => {
         if (s.company === 'tiktok' && !sig.tiktok_us_ban_hearing_seen && gameRandom() < 0.3) return 'tiktok_us_ban_hearing';
         if (s.company === 'apple' && !sig.apple_secrecy_crackdown_seen && gameRandom() < 0.3) return 'apple_secrecy_crackdown';
 
-        // 人设专属职场「标志事件」(personaEvents.ts)：同样一局至多一次、命中前 ~30%/年。
-        if (s.trait_title === '卷王之王' && !sig.persona_grind_king_crunch_seen && gameRandom() < 0.3) return 'persona_grind_king_crunch';
-        if (s.trait_title === '小镇做题家' && !sig.persona_impostor_syndrome_seen && gameRandom() < 0.3) return 'persona_impostor_syndrome';
-      }
+         // 人设专属职场「标志事件」(personaEvents.ts)：同样一局至多一次、命中前 ~30%/年。
+         if (s.trait_title === '卷王之王' && !sig.persona_grind_king_crunch_seen && gameRandom() < 0.3) return 'persona_grind_king_crunch';
+         if (s.trait_title === '小镇做题家' && !sig.persona_impostor_syndrome_seen && gameRandom() < 0.3) return 'persona_impostor_syndrome';
+
+         // 职级阶段「标志事件」(levelEvents.ts)：按 entry / senior / staff+ 三档各一局一次、命中前 ~30%/年。
+         // 注：trader/founder/startup/ai_research/quant 走各自专属分支已提前 return，此处仅覆盖标准大厂阶梯。
+         const lvl = s.level;
+         const isEntryLvl = !lvl || lvl === 'L3' || lvl === 'L4' || lvl === '初级研发';
+         const isSeniorLvl = lvl === 'L5 (Senior)' || lvl === 'L5';
+         const isStaffPlusLvl = lvl === 'L6 (Staff)' || lvl === 'Staff' || lvl === 'L7 (Senior Staff)' || lvl === 'L7' || lvl === 'L8 (Principal)' || lvl === 'Principal' || lvl === 'Fellow';
+         if (isEntryLvl && !sig.level_entry_grunt_work_seen && gameRandom() < 0.3) return 'level_entry_grunt_work';
+         if (isSeniorLvl && !sig.level_senior_plateau_seen && gameRandom() < 0.3) return 'level_senior_plateau';
+         if (isStaffPlusLvl && !sig.level_staff_glue_work_seen && gameRandom() < 0.3) return 'level_staff_glue_work';
+       }
 
      const isCorporate = isWorking;
 

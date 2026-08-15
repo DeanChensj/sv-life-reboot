@@ -14,6 +14,7 @@ import { levelEvents } from './levelEvents';
 import { dilemmaEvents } from './dilemmaEvents';
 import { interviewEvents } from './interviewEvents';
 import { lateGameEvents } from './lateGameEvents';
+import { midGameCrisisEvents } from './midGameCrisisEvents';
 
 export * from './helpers';
 
@@ -26,6 +27,7 @@ export const events: Record<string, GameEvent> = {
   ...dilemmaEvents,
   ...interviewEvents,
   ...lateGameEvents,
+  ...midGameCrisisEvents,
   ...immigrationEvents,
   ...startupEvents,
   ...tradingEvents,

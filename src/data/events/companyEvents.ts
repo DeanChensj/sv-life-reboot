@@ -1,14 +1,19 @@
-import type { GameEvent, GameState } from '../../types';
+import type { GameEvent, GameState, StoryFlags } from '../../types';
 import { h1ToH2Router, gameRandom } from './helpers';
 
 // 公司专属随机事件 (Company-specific flavor events).
-// Injected probabilistically from midYearEventRouter's H1 work pool (or the
-// ai_research branch), gated on the player's company/job_type, so each company
-// path feels distinct without padding every year. Rules followed:
+// Each is a once-per-life SIGNATURE beat for its company path, injected from
+// midYearEventRouter with a ~30% yearly chance UNTIL it has fired once (tracked
+// via story_flags.<id>_seen), so it feels like a memorable landmark rather than
+// a recurring chore. Rules followed:
 //  - single-choice health loss <= 15; charm capped at max_charm; no money printers.
 //  - route on STATE (h1ToH2Router / laid_off), never on message substrings.
 //  - every event has an unconditional "safe" choice → no dead-ends.
+//  - EVERY choice/outcome stamps story_flags.<id>_seen so the router won't repeat it.
 const employed = (s: GameState): boolean => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+
+// Merge-in the once-only "seen" flag without clobbering other story_flags.
+const seen = (s: GameState, id: string): StoryFlags => ({ ...(s.story_flags || {}), [`${id}_seen`]: true });
 
 export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Google: 养老厂反复重组 ----------------
@@ -23,6 +28,7 @@ export const companyEvents: Record<string, GameEvent> = {
           network: Math.min(100, (s.network || 10) + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           health: Math.max(0, s.health - 8),
+          story_flags: seen(s, 'google_reorg_limbo'),
           message: '你请了半个部门喝咖啡、刷遍了内部 Tech Talk，成功拿到了热门 AI 组的转岗内诺，人脉大涨！',
         }),
         nextEventId: h1ToH2Router,
@@ -32,6 +38,7 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.min(100, s.health + 12),
           leetcode: Math.max(0, s.leetcode - 3),
+          story_flags: seen(s, 'google_reorg_limbo'),
           message: '你把重组当带薪疗养，每天班车、食堂、健身房三点一线，身体养得倍儿棒，就是手感生疏了点。',
         }),
         nextEventId: h1ToH2Router,
@@ -51,8 +58,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.35 + ((s.network || 10) / 100) * 0.5);
           return win
-            ? { tc: s.tc + 8, leetcode: Math.min(100, s.leetcode + 5), health: Math.max(0, s.health - 12), message: '你压中了风口！新方向拿下高层背书，你作为核心成员吃到了丰厚的股票刷新与影响力红利！' }
-            : { health: Math.max(0, s.health - 12), charm: Math.max(0, (s.charm || 10) - 1), message: '新方向半年后又被砍，你的产出打了水漂，白忙一场还落了一身疲惫。' };
+            ? { tc: s.tc + 8, leetcode: Math.min(100, s.leetcode + 5), health: Math.max(0, s.health - 12), story_flags: seen(s, 'meta_metaverse_pivot'), message: '你压中了风口！新方向拿下高层背书，你作为核心成员吃到了丰厚的股票刷新与影响力红利！' }
+            : { health: Math.max(0, s.health - 12), charm: Math.max(0, (s.charm || 10) - 1), story_flags: seen(s, 'meta_metaverse_pivot'), message: '新方向半年后又被砍，你的产出打了水漂，白忙一场还落了一身疲惫。' };
         },
         nextEventId: h1ToH2Router,
       },
@@ -60,6 +67,7 @@ export const companyEvents: Record<string, GameEvent> = {
         text: '稳一手：低调维持 Meets 绩效，不掺和高层路线斗争',
         effect: (s) => ({
           health: Math.max(0, s.health - 4),
+          story_flags: seen(s, 'meta_metaverse_pivot'),
           message: '你选择了明哲保身，安稳拿着标准包裹，避开了这场豪赌的腥风血雨。',
         }),
         nextEventId: h1ToH2Router,
@@ -80,6 +88,7 @@ export const companyEvents: Record<string, GameEvent> = {
           stocks: Math.max(0, (s.stocks || 0) - 8),
           cash: s.cash + 8,
           health: Math.min(100, s.health + 5),
+          story_flags: seen(s, 'nvidia_rsu_moonshot'),
           message: '你冷静地卖出了一部分持仓，把纸面富贵变成了实打实的现金，睡得踏实多了。',
         }),
         nextEventId: h1ToH2Router,
@@ -90,8 +99,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const moon = gameRandom() < Math.min(0.6, 0.45 + (Math.min(60, s.luck) / 100) * 0.2);
           return moon
-            ? { stocks: (s.stocks || 0) + 10, message: '信仰充值成功！财报再超预期，股价又一波拉升，你的持仓继续膨胀！' }
-            : { stocks: Math.max(0, (s.stocks || 0) - 6), health: Math.max(0, s.health - 4), message: '一次获利回吐让股价短线回调，你的账户缩水了一截，钻石手也有点发抖。' };
+            ? { stocks: (s.stocks || 0) + 10, story_flags: seen(s, 'nvidia_rsu_moonshot'), message: '信仰充值成功！财报再超预期，股价又一波拉升，你的持仓继续膨胀！' }
+            : { stocks: Math.max(0, (s.stocks || 0) - 6), health: Math.max(0, s.health - 4), story_flags: seen(s, 'nvidia_rsu_moonshot'), message: '一次获利回吐让股价短线回调，你的账户缩水了一截，钻石手也有点发抖。' };
         },
         nextEventId: h1ToH2Router,
       },
@@ -110,8 +119,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const survive = gameRandom() < 0.6;
           return survive
-            ? { cash: s.cash + 3, tc: s.tc + 4, health: Math.max(0, s.health - 6), message: '虚惊一场！业务顺利完成剥离重组，公司为留任员工发了慰问留任奖金，你稳住了。' }
-            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), message: '最坏的结果发生了：美国业务被迫关停，整个组一夜之间被裁，你拿着 N+1 走人。' };
+            ? { cash: s.cash + 3, tc: s.tc + 4, health: Math.max(0, s.health - 6), story_flags: seen(s, 'tiktok_us_ban_hearing'), message: '虚惊一场！业务顺利完成剥离重组，公司为留任员工发了慰问留任奖金，你稳住了。' }
+            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), story_flags: seen(s, 'tiktok_us_ban_hearing'), message: '最坏的结果发生了：美国业务被迫关停，整个组一夜之间被裁，你拿着 N+1 走人。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
@@ -125,6 +134,7 @@ export const companyEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           network: Math.min(100, (s.network || 10) + 3),
           is_new_job: true,
+          story_flags: seen(s, 'tiktok_us_ban_hearing'),
           message: '你未雨绸缪，赶在风暴前跳去了以稳定著称的大厂。虽然全现金包裹略有回落，但换来了安稳。',
         }),
         nextEventId: h1ToH2Router,
@@ -146,6 +156,7 @@ export const companyEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           network: Math.min(100, (s.network || 10) + 4),
           health: Math.max(0, s.health - 15),
+          story_flags: seen(s, 'openai_launch_crunch'),
           message: '你的 Demo 在发布会上惊艳全场，直播观看破千万！你一战成名，成了组里炙手可热的明星工程师，代价是熬到脱相。',
         }),
         nextEventId: h1ToH2Router,
@@ -155,6 +166,7 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 3),
           health: Math.max(0, s.health - 4),
+          story_flags: seen(s, 'openai_launch_crunch'),
           message: '你没有卷入通宵的军备竞赛，扎实做好了模型评测与发布保障，虽不出风头，但身心稳健。',
         }),
         nextEventId: h1ToH2Router,
@@ -173,6 +185,7 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.max(0, s.health - 8),
           charm: Math.max(0, (s.charm || 10) - 1),
+          story_flags: seen(s, 'apple_secrecy_crackdown'),
           message: '你态度良好地配合了调查，虚惊一场保住了工作，但也被扣了当季的一部分信誉分，心有余悸。',
         }),
         nextEventId: h1ToH2Router,
@@ -183,8 +196,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const ok = gameRandom() < Math.min(0.7, 0.4 + ((s.charm || 10) / 100) * 0.3);
           return ok
-            ? { charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), health: Math.max(0, s.health - 4), message: '你有理有据地申辩，合规团队认定情节轻微不予追究，你还因不卑不亢赢得了同事敬重。' }
-            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), message: '你的强硬触怒了合规团队，泄密条款零容忍，你被以违反保密协议为由直接解雇。' };
+            ? { charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), health: Math.max(0, s.health - 4), story_flags: seen(s, 'apple_secrecy_crackdown'), message: '你有理有据地申辩，合规团队认定情节轻微不予追究，你还因不卑不亢赢得了同事敬重。' }
+            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), story_flags: seen(s, 'apple_secrecy_crackdown'), message: '你的强硬触怒了合规团队，泄密条款零容忍，你被以违反保密协议为由直接解雇。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },

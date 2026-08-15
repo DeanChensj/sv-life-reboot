@@ -332,7 +332,20 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '相信数学，不干预策略 (求稳退守)',
-        effect: (s) => ({ health: s.health - 10, cash: s.cash + 15, message: '虽然每天看着回撤心惊肉跳，但你还是忍住了干预的冲动。最终策略慢慢回本，年底拿到了小额 Bonus。' }),
+        // 反软印钞机：原为无条件 +$15w 现金（每逢 quant_stress 稳拿，健康可回血 → 变相印钞）。
+        // 改为随宏观周期与运气小幅波动的「小额 Bonus」，可正可负、上限低，符合「求稳退守」定位。
+        effect: (s) => {
+          const base = s.macro_economy === 'bull' ? 5 : s.macro_economy === 'bear' ? -5 : 1;
+          const luckAdj = Math.floor((Math.min(60, s.luck) - 30) / 12); // 约 -2 ~ +2
+          const pnl = Math.max(-6, Math.min(8, base + luckAdj));
+          return {
+            health: Math.max(0, s.health - 8),
+            cash: Math.max(2, parseFloat((s.cash + pnl).toFixed(1))),
+            message: pnl >= 0
+              ? `你忍住了干预的冲动，策略慢慢回本，年底拿到了小幅 Bonus (+$${pnl}w)。`
+              : `你坚持不干预，但回撤未能及时收复，策略小幅亏损 (-$${Math.abs(pnl)}w)，好在没伤筋动骨。`,
+          };
+        },
         nextEventId: h1ToH2Router,
       }
     ]

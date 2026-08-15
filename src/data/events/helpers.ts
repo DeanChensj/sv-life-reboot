@@ -257,7 +257,7 @@ export const midYearEventRouter = (s: GameState): string => {
         // 中后期系统性危机 (midGameCrisisEvents.ts, T2 破坏性)：一局各一次，能真正抹掉收入/职级。
         // ① 整组被 AI 砍：2024+ 大模型时代的系统性裁撤。② 中年 ageism：40+ 的性价比之殇。
         if (s.year >= 2024 && !sig.org_ai_wipeout_seen && gameRandom() < 0.15) return 'org_ai_wipeout';
-        if (s.age >= 42 && !sig.midlife_ageism_squeeze_seen && gameRandom() < 0.22) return 'midlife_ageism_squeeze';
+        if (s.age >= 38 && !sig.midlife_ageism_squeeze_seen && gameRandom() < 0.22) return 'midlife_ageism_squeeze';
 
         if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
        if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';

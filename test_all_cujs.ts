@@ -513,6 +513,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(end({ status: 'win', cash: 550, stocks: 0, job_type: 'big_tech', level: 'L5 (Senior)' }) === 'fire_basic', 'plain win -> fire_basic');
 
   // Content (retired, not wealthy)
+  assert(end({ status: 'retired', cash: 25, stocks: 0, visa: '无', job_type: 'cn_tech', story_flags: { cn_hermit: true } } as any) === 'cn_hermit', 'retired + cn_hermit flag -> 国内隐居 (not FIRE triumph)');
   assert(end({ status: 'retired', cash: 100, stocks: 0, visa: '无' }) === 'homecoming', 'retired + no US visa -> homecoming (海归)');
   assert(end({ status: 'retired', cash: 100, stocks: 0, visa: '公民', is_married: true }) === 'settled_family', 'retired + citizen + married -> settled_family');
   assert(end({ status: 'retired', cash: 50, stocks: 0, health: 90, is_married: false, visa: 'H1B (工签)' }) === 'zen_hermit', 'retired + healthy + poor -> zen_hermit');

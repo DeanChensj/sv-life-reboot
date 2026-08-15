@@ -130,6 +130,14 @@ export function determineEnding(s: GameState): EndingResult {
   }
 
   // ---------- Content (natural life, no jackpot: status 'retired') ----------
+  // Intentional domestic slow-life retirement (the cn_work_late 急流勇退 choice).
+  if (s.story_flags?.cn_hermit) {
+    return {
+      id: 'cn_hermit', emoji: '🏯', title: '国内隐居 · 佛系定居',
+      subtitle: 'STATUS: SLOW LIFE', tone: 'content', rarity: 'R',
+      flavor: '你告别了硅谷与 996 的双重内卷，回到二线城市全款置业养生，把日子过成了自己喜欢的慢节奏。',
+    };
+  }
   // No US visa at retirement = never emigrated / went home — the domestic-path life.
   if (s.visa === '无') {
     return {

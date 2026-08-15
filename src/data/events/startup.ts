@@ -16,7 +16,7 @@ export const startupEvents: Record<string, GameEvent> = {
             ? { cash: s.cash + 150, message: ' 奇迹爆发！公司被大厂以数亿美元溢价收购，你的早期期权直接兑现 $150w 现金！' }
             : { cash: Math.max(0, s.cash - 5), tc: 0, health: s.health - 15, laid_off: true, job_type: 'unemployed', message: '风口过了，投资人撤资，公司倒闭，你不得不重新找工作。' };
         },
-        nextEventId: (s: GameState) => (s.message || '').includes('收购') ? h1ToH2Router(s) : 'job_hunt',
+        nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
         text: '【带资领投】自己掏 $10w 领投公司 Seed 轮自救',

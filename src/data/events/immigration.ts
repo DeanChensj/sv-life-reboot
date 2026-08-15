@@ -130,9 +130,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
           const survive = gameRandom() < 0.85;
           return survive
             ? { health: Math.max(0, s.health - 8), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！虽然熬了几个通宵，但身份稳了。' }
-            : { health: Math.max(0, s.health - 10), message: '移民局最终驳回了你的 RFE 答复，H1B 身份岌岌可危！你被迫紧急寻找其他身份自救方案！' };
+            : { health: Math.max(0, s.health - 10), story_flags: { ...(s.story_flags || {}), h1b_rfe_denied: true }, message: '移民局最终驳回了你的 RFE 答复，H1B 身份岌岌可危！你被迫紧急寻找其他身份自救方案！' };
         },
-        nextEventId: (s) => (s.message || '').includes('驳回') ? 'h1b_fallback_options' : h1ToH2Router(s),
+        nextEventId: (s) => (s.story_flags?.h1b_rfe_denied ? 'h1b_fallback_options' : h1ToH2Router(s)),
       },
       {
         text: '摆烂：把 RFE 抛诸脑后，先跟老妈吐槽一通 (不答复 RFE，赌它平稳失效)',
@@ -142,9 +142,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
           const ignoredOk = gameRandom() < 0.65;
           return ignoredOk
             ? { health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1), message: '你把 RFE 抛诸脑后，跟老妈吐槽一通后耳根神奇清静了半年，律所也帮你压线补交了材料，有惊无险。' }
-            : { health: Math.max(0, s.health - 5), message: '你对 RFE 置之不理，结果错过了补件窗口，H1B 身份告急，只能紧急寻找其他自救方案！' };
+            : { health: Math.max(0, s.health - 5), story_flags: { ...(s.story_flags || {}), h1b_rfe_denied: true }, message: '你对 RFE 置之不理，结果错过了补件窗口，H1B 身份告急，只能紧急寻找其他自救方案！' };
         },
-        nextEventId: (s) => (s.message || '').includes('自救') ? 'h1b_fallback_options' : h1ToH2Router(s),
+        nextEventId: (s) => (s.story_flags?.h1b_rfe_denied ? 'h1b_fallback_options' : h1ToH2Router(s)),
       }
     ]
   },

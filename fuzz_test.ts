@@ -117,6 +117,15 @@ function runFuzzTest(iterations: number) {
         }
 
         const nextId = transition.targetEventId || (typeof randomChoice.nextEventId === 'function' ? randomChoice.nextEventId(currentState) : randomChoice.nextEventId);
+
+        // 路由不变量：只有本回合真正晋升 (last_promo_age === age) 才允许进入「晋升庆祝」事件。
+        // 这道防线专治反复出现的 message.includes('晋升') 误路由 (被拒/无关文案含"晋升" → 误弹喜报)。
+        if (typeof nextId === 'string' && nextId.endsWith('_celebration') && currentState.last_promo_age !== currentState.age) {
+          console.error(`❌ [路由不变量] 进入晋升庆祝 '${nextId}'，但本回合未实际晋升 (last_promo_age=${currentState.last_promo_age}, age=${currentState.age}) —— 疑似 message 子串误路由！事件='${currentEventId}'`);
+          errorsFound++;
+          break;
+        }
+
         currentEventId = nextId;
 
       } catch (e: any) {

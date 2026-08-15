@@ -9,6 +9,7 @@ import { housingFinanceEvents } from './housingFinance';
 import { macroNewsEvents } from './macroNews';
 import { settlementEvents } from './settlement';
 import { companyEvents } from './companyEvents';
+import { personaEvents } from './personaEvents';
 
 export * from './helpers';
 
@@ -16,6 +17,7 @@ export const events: Record<string, GameEvent> = {
   ...initializationEvents,
   ...careerEvents,
   ...companyEvents,
+  ...personaEvents,
   ...immigrationEvents,
   ...startupEvents,
   ...tradingEvents,

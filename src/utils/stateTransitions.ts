@@ -122,7 +122,7 @@ export function applyStateTransition(
 
   // 5. Auto Liquidate Stocks if Cash < 0 on Purchases
   let liquidationNote = '';
-  if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && newState.status === 'playing') {
+  if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && (newState.status === 'playing' || newState.status === 'retired')) {
     const deficit = Math.abs(newState.cash);
     const sellAmt = Math.min(newState.stocks || 0, deficit);
     newState.stocks = (newState.stocks || 0) - sellAmt;
@@ -305,15 +305,19 @@ export function applyStateTransition(
   // 7. Game State Termination & Target Event Resolution
   let targetEventId: string | undefined;
 
-  if (newState.health <= 0 && newState.status === 'playing') {
+  // Death & bankruptcy override a natural retirement set THIS turn (settlement can set
+  // status:'retired' at the age cap in the same effect that also drops health/cash),
+  // so a player who dies or goes broke in their final settlement gets the correct
+  // tragedy ending — not a peaceful "retired" one.
+  if (newState.health <= 0 && (newState.status === 'playing' || newState.status === 'retired')) {
     newState.status = 'game_over';
     newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
     targetEventId = 'end';
-  } else if (newState.cash < -0.001 && newState.status === 'playing') {
+  } else if (newState.cash < -0.001 && (newState.status === 'playing' || newState.status === 'retired')) {
     newState.status = 'game_over';
     newState.message = '你破产了，无法支付账单，游戏结束！';
     targetEventId = 'end';
-  } else if (newState.status === 'win') {
+  } else if (newState.status === 'win' || newState.status === 'retired') {
     targetEventId = 'end';
   } else if (
     (newState.cash + (newState.stocks || 0)) >= newState.win_threshold &&

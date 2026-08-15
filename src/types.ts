@@ -97,7 +97,7 @@ export interface GameState {
   investment_properties?: string[]; // 投资房产清单
   has_adu_rented?: boolean; // 是否已出租自住房次卧/ADU
   car?: 'none' | 'model_y' | 'porsche' | 'cybertruck';
-  status: 'playing' | 'game_over' | 'win';
+  status: 'playing' | 'game_over' | 'win' | 'retired'; // retired = 自然终老/寿命结算 (neutral ending)
   message: string;
   trait_title?: string;
   trait_desc?: string;

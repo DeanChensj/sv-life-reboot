@@ -7,6 +7,7 @@ import { sound } from './utils/sound';
 import { safeStorage } from './utils/safeStorage';
 import { applyStateTransition } from './utils/stateTransitions';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './utils/saveMigration';
+import { determineEnding } from './utils/endings';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy loaded heavy modals for optimized code splitting
@@ -187,6 +188,13 @@ export default function App() {
   }, [currentEventId]);
 
   const currentEvent = events[currentEventId];
+  // Classified ending archetype (only meaningful on the end screen, cheap + pure).
+  const ending = determineEnding(gameState);
+  const endingToneClass = ending.tone === 'triumph'
+    ? { text: 'text-emerald-400', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' }
+    : ending.tone === 'content'
+      ? { text: 'text-amber-400', badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20' }
+      : { text: 'text-red-400', badge: 'bg-red-500/10 text-red-400 border-red-500/20' };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -298,7 +306,7 @@ export default function App() {
     const newState = transition.nextState;
 
     // Sound FX logic
-    if (newState.status === 'win') {
+    if (newState.status === 'win' || newState.status === 'retired') {
       sound.play('win');
     } else if (newState.status === 'game_over') {
       sound.play('gameover');
@@ -763,12 +771,13 @@ export default function App() {
                ) : (
                 <div className="py-8 animate-in fade-in duration-500">
                   <div className="text-center mb-8">
-                    <span className={`text-xs font-mono font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full border ${gameState.status === 'win' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                      {gameState.status === 'win' ? 'STATUS: FIRE ACHIEVED' : 'STATUS: SURVIVAL TERMINATED'}
+                    <span className={`text-xs font-mono font-bold uppercase tracking-[0.25em] px-4 py-1.5 rounded-full border ${endingToneClass.badge}`}>
+                      {ending.subtitle} · [{ending.rarity}]
                     </span>
-                    <h2 className={`text-4xl md:text-5xl font-extrabold tracking-tight mt-4 mb-3 ${gameState.status === 'win' ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {gameState.status === 'win' ? '人生巅峰：财务自由！' : '硅谷生存结语'}
+                    <h2 className={`text-4xl md:text-5xl font-extrabold tracking-tight mt-4 mb-3 ${endingToneClass.text}`}>
+                      {ending.emoji} {ending.title}
                     </h2>
+                    <p className={`text-sm font-medium mb-2 ${endingToneClass.text}`}>{ending.flavor}</p>
                     <p className="text-zinc-300 text-lg max-w-xl mx-auto leading-relaxed mb-6">
                       {gameState.message}
                     </p>

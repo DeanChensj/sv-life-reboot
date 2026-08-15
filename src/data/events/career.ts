@@ -1401,6 +1401,10 @@ export const careerEvents: Record<string, GameEvent> = {
                 message: '你辛辛苦苦写的核心文档被 Manager Dave 拿去汇报抢了功劳！好在你暗中留存了全部 Jira Commit 与 Slack 截图证据链，等待时机反击！' 
               };
         },
+        // Route on the ACTUAL promotion (last_promo_age stamped this turn by the win
+        // branch), NOT message.includes('晋升') — mirrors the L6 fix below and the fuzz
+        // invariant「进入 *_celebration ⇒ last_promo_age===age」. The Dave-loss branch
+        // never stamps last_promo_age, so it correctly routes on to h1ToH2Router.
         nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
@@ -2709,11 +2713,13 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【化愤怒为刷题动力】推掉无意义加班，闭关两个月重刷 LeetCode 备战跳槽',
-        effect: (s) => ({
-          health: Math.max(0, s.health - 6),
-          leetcode: s.leetcode + 12,
-          message: '【重拾手感与蓄力跳槽】被画饼的憋屈激发了你的斗志。你推掉了周末应酬，闭关重刷 Hard 题与系统设计。算法手感重回巅峰，准备在即将到来的跳槽季狠狠教老板做人。'
-        }),
+        // 职级差异：资深工程师市场议价力更强，同样的闭关刷题换来更大的跳槽底气。
+        effect: (s) => {
+          const seniorPlus = s.level === 'L5 (Senior)' || s.level === 'L5' || s.level === 'L6 (Staff)' || s.level === 'Staff' || s.level === 'L7 (Senior Staff)' || s.level === 'L7' || s.level === 'L8 (Principal)' || s.level === 'MTS';
+          return seniorPlus
+            ? { health: Math.max(0, s.health - 6), leetcode: Math.min(100, s.leetcode + 15), network: Math.min(100, (s.network || 0) + 3), message: '【资深的市场底气】被画饼的憋屈点燃了斗志。你闭关重刷 Hard 与系统设计，凭借资深履历，猎头电话瞬间被打爆——你手握筹码，随时可以体面地教老板做人。' }
+            : { health: Math.max(0, s.health - 6), leetcode: Math.min(100, s.leetcode + 10), message: '【重拾手感与蓄力跳槽】被画饼的憋屈激发了你的斗志。你推掉了周末应酬，闭关重刷 Hard 题与系统设计。算法手感重回巅峰，准备在即将到来的跳槽季狠狠教老板做人。' };
+        },
         nextEventId: h1ToH2Router
       },
       {
@@ -2721,9 +2727,24 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.max(0, s.health - 3),
           network: Math.min(100, (s.network || 0) + 2),
-          charm: Math.min(25, s.charm + 1),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 1),
           message: '【跨部门破局与人脉铺路】你没有当场翻脸，而是私下找隔壁业务线的 Director 喝咖啡，凭借扎实的项目交付口碑拿到了新团队的接收意向，为无缝转岗埋下了伏笔。'
         }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        // 职级专属选项：只有 L5+ 资深工程师才有资历与市场筹码正面摊牌逼老板兑现。
+        text: '【摆资历正面摊牌】亮出手上的竞对 Offer，逼老板要么书面承诺、要么放人 (资深专属)',
+        condition: (s) => {
+          const seniorPlus = s.level === 'L5 (Senior)' || s.level === 'L5' || s.level === 'L6 (Staff)' || s.level === 'Staff' || s.level === 'L7 (Senior Staff)' || s.level === 'L7' || s.level === 'L8 (Principal)' || s.level === 'MTS';
+          return !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off && seniorPlus;
+        },
+        effect: (s) => {
+          const win = gameRandom() < Math.min(0.6, 0.35 + ((s.network || 10) / 100) * 0.4);
+          return win
+            ? { tc: s.tc + 3, network: Math.min(100, (s.network || 10) + 3), health: Math.max(0, s.health - 5), message: '【以退为进拿到 Counter】你把竞对的 Offer 摊上桌，老板连夜找 HRBP 批下了 Off-cycle 调薪来留人。资历，就是你最硬的谈判筹码。' }
+            : { health: Math.max(0, s.health - 8), charm: Math.max(0, (s.charm || 10) - 1), message: '【撕破脸的代价】老板没吃你这套，双方关系降到冰点。你骑虎难下，只能被动加速走人流程。' };
+        },
         nextEventId: h1ToH2Router
       }
     ]

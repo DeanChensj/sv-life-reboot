@@ -1010,12 +1010,16 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【急流勇退：佛系定居/养生】套现部分期权，告别内卷享受慢节奏生活 (达成国内隐居结局)',
+        // A modest domestic slow-life retirement, NOT a $500w FIRE — use 'retired'
+        // (a content ending) instead of 'win' (which the ending classifier renders as
+        // a "财务自由 · FIRE ACHIEVED" triumph). The cn_hermit flag gives it a dedicated ending.
         effect: (s) => ({
           cash: s.cash + 15,
           health: Math.min(100, s.health + 30),
           age: s.age + 1,
           year: s.year + 1,
-          status: 'win',
+          status: 'retired',
+          story_flags: { ...(s.story_flags || {}), cn_hermit: true },
           message: '你告别了 996 内卷，在二线城市全款置业养生，过上了有房有存款的舒适慢节奏生活！(佛系隐居结局)'
         }),
         nextEventId: 'end'

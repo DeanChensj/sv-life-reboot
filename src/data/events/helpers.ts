@@ -144,6 +144,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
     is_married: false,
     relationship_status: 'single',
     win_threshold: 500, // basic FIRE tier; choose_trait overwrites with the trait-specific goal
+    last_fire_milestone_reached: 0,
     laid_off: false,
     has_housing: false,
     housing_name: '国内老家',

@@ -1232,8 +1232,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【终局退场：申请巨头并购 Acqui-hire 或折价清盘】卸下创始人重担，回归职场',
         condition: (s) => s.job_type === 'startup_founder',
         hideIfUnavailable: true,
-        effect: () => ({ message: '你开始与意向买家与董事会评估并购协议与清盘退场条款。' }),
-        nextEventId: 'founder_annual_strategy',
+        effect: () => ({ message: '你召集了董事会与核心投资人，正式启动公司终局退场与并购/IPO 评估程序！' }),
+        nextEventId: 'founder_exit_event',
       },
 
       // --- 5. 【慢生活 Gap Year / 待业探索 专属年度决策】 ---

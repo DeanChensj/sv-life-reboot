@@ -514,7 +514,9 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(end({ status: 'win', cash: 600, stocks: 0, is_phd: true, job_type: 'ai_research' }) === 'ai_academic', 'win + phd research -> academic');
   assert(end({ status: 'win', cash: 600, stocks: 0, level: 'L8 (Principal)' }) === 'tech_totem', 'win + L8 -> tech_totem');
   assert(end({ status: 'win', cash: 600, stocks: 0, rental_income: 12 }) === 'real_estate_mogul', 'win + rental -> mogul');
+  assert(end({ status: 'win', cash: 3200, stocks: 0 }) === 'silicon_dynasty', 'win + 3200 assets -> silicon_dynasty');
   assert(end({ status: 'win', cash: 1600, stocks: 0 }) === 'atherton_lord', 'win + 1600 assets -> atherton');
+  assert(end({ status: 'win', cash: 900, stocks: 0 }) === 'fire_comfortable', 'win + 900 assets -> fire_comfortable');
   assert(end({ status: 'win', cash: 550, stocks: 0, job_type: 'big_tech', level: 'L5 (Senior)' }) === 'fire_basic', 'plain win -> fire_basic');
 
   // Content (retired, not wealthy)
@@ -661,6 +663,99 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert((stepPitchRes.nextState.company_valuation || 0) >= 1000, 'Advancing to seed round from high base valuation never drops below 1000w');
 
   console.log('✅ CUJ 13 Passed\n');
+}
+
+// CUJ 14: Multi-tier FIRE progression & 1500w/3000w milestones
+{
+  console.log('--- [CUJ 14] Multi-tier FIRE milestone progression ---');
+  // 1. Initial 500w milestone trigger
+  const state500w: GameState = {
+    ...generateInitialState(),
+    cash: 520,
+    stocks: 0,
+    win_threshold: 500,
+    last_fire_milestone_reached: 0,
+    status: 'playing',
+  };
+  const res500 = applyStateTransition(state500w, {}, { eventId: 'sv_daily_life' });
+  assert(res500.targetEventId === 'fire_milestone_choice', 'Hitting 500w win_threshold triggers fire_milestone_choice');
+
+  // 2. Player opts into 1500w Luxury FIRE
+  const sprintChoice = events['fire_milestone_choice'].choices.find((c) => c.text.includes('1500w') && c.text.includes('冲刺'))!;
+  assert(!!sprintChoice, '1500w sprint choice exists in fire_milestone_choice');
+  const sprintEff = sprintChoice.effect(state500w);
+  const { nextState: stateSprinting } = applyStateTransition(state500w, sprintEff, { eventId: 'fire_milestone_choice' });
+  assert(stateSprinting.win_threshold === 1500, 'win_threshold updated to 1500');
+  assert(stateSprinting.last_fire_milestone_reached === 800 || stateSprinting.last_fire_milestone_reached === 500, 'last_fire_milestone_reached tracked');
+  assert(stateSprinting.fire_tier === 'luxury', 'fire_tier set to luxury');
+
+  // 3. Player hits 1500w (Second FIRE!) -> fire_milestone_choice triggers again
+  const state1500w: GameState = {
+    ...stateSprinting,
+    cash: 1550,
+    stocks: 50,
+  };
+  const res1500 = applyStateTransition(state1500w, {}, { eventId: 'sv_daily_life' });
+  assert(res1500.targetEventId === 'fire_milestone_choice', 'Hitting 1500w win_threshold triggers fire_milestone_choice for the 2nd time');
+
+  // 4. Retiring at 1500w -> produces Luxury FIRE (atherton_lord), NOT basic "见好就收"
+  const luxuryRetireChoice = events['fire_milestone_choice'].choices.find((c) => (!c.condition || c.condition(state1500w)) && c.text.includes('奢华 FIRE') && c.text.includes('退休'))!;
+  assert(!!luxuryRetireChoice, 'Luxury retirement choice is available at 1500w');
+  const luxuryEff = luxuryRetireChoice.effect(state1500w);
+  const { nextState: stateWon } = applyStateTransition(state1500w, luxuryEff, { eventId: 'fire_milestone_choice' });
+  assert(stateWon.status === 'win', 'status is win');
+  const endResult = determineEnding(stateWon);
+  assert(endResult.id === 'atherton_lord', `1500w FIRE retirement must produce atherton_lord (got ${endResult.id} '${endResult.title}')`);
+  assert(endResult.title.includes('奢华 FIRE'), 'Title must be 奢华 FIRE (not 见好就收)');
+
+  console.log('✅ CUJ 14 Passed\n');
+}
+
+// CUJ 15: Founder Exit Event (M&A / IPO / Clean Exit)
+{
+  console.log('--- [CUJ 15] Founder exit decision & M&A/IPO resolution ---');
+  const founderState: GameState = {
+    ...generateInitialState(),
+    job_type: 'startup_founder',
+    founder_stage: 'series_b',
+    company_valuation: 4500,
+    cash: 80,
+    stocks: 0,
+    status: 'playing',
+  };
+
+  // 1. sv_daily_life choice routes to founder_exit_event
+  const dailyExit = events['sv_daily_life'].choices.find((c) => c.text.includes('终局退场') && (!c.condition || c.condition(founderState)))!;
+  assert(!!dailyExit, 'sv_daily_life has founder exit choice');
+  const exitNext = typeof dailyExit.nextEventId === 'function' ? dailyExit.nextEventId(founderState) : dailyExit.nextEventId;
+  assert(exitNext === 'founder_exit_event', 'sv_daily_life founder exit routes to founder_exit_event');
+
+  // 2. founder_annual_strategy choice routes to founder_exit_event
+  const stratExit = events['founder_annual_strategy'].choices.find((c) => c.text.includes('终局退场 Exit') && (!c.condition || c.condition(founderState)))!;
+  assert(!!stratExit, 'founder_annual_strategy has founder exit choice');
+  const stratExitNext = typeof stratExit.nextEventId === 'function' ? stratExit.nextEventId(founderState) : stratExit.nextEventId;
+  assert(stratExitNext === 'founder_exit_event', 'founder_annual_strategy exit routes to founder_exit_event');
+
+  // 3. Acqui-hire M&A converts founder to Big Tech Staff/Senior Staff and liquidates valuation
+  const exitEvent = events['founder_exit_event'];
+  const maChoice = exitEvent.choices.find((c) => c.text.includes('并购'))!;
+  assert(!!maChoice, 'founder_exit_event has Acqui-hire M&A choice');
+  const maEff = maChoice.effect(founderState);
+  const { nextState: maState } = applyStateTransition(founderState, maEff, { eventId: 'founder_exit_event' });
+  assert(maState.job_type === 'big_tech', 'Founder converted to big_tech on M&A');
+  assert(maState.level === 'L7 (Senior Staff)', 'High valuation founder becomes L7 Staff');
+  assert(maState.company_valuation === 0, 'Company valuation reset to 0 on exit');
+  assert(!maState.laid_off, 'Founder is not laid off on M&A');
+
+  // 4. IPO choice at exit stage produces unicorn triumph ending
+  const ipoChoice = exitEvent.choices.find((c) => c.text.includes('IPO'))!;
+  assert(!!ipoChoice, 'founder_exit_event has IPO choice');
+  const ipoEff = ipoChoice.effect(founderState);
+  const { nextState: ipoState } = applyStateTransition(founderState, ipoEff, { eventId: 'founder_exit_event' });
+  assert(ipoState.status === 'win', 'IPO choice sets status win');
+  assert(determineEnding(ipoState).id === 'unicorn_founder', 'IPO win produces unicorn_founder ending');
+
+  console.log('✅ CUJ 15 Passed\n');
 }
 
 console.log(`\n======================================================`);

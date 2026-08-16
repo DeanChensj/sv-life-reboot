@@ -191,51 +191,11 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
       {
-        text: '【终局 Exit】考虑公司并购 Acqui-hire 或准备 纳斯达克 IPO 敲钟上市 (需估值>=3000w)',
-        condition: (s) => (s.company_valuation || 0) >= 3000,
-        effect: (s) => {
-          const val = s.company_valuation || 3000;
-          const isHuge = val >= 6000;
-          const roll = gameRandom();
-          if (isHuge && roll < 0.30) {
-            // 30% IPO Win (was 40%; exits should be rarer wins)
-            return {
-              status: 'win',
-              cash: parseFloat((s.cash + 350).toFixed(1)),
-              message: '【纳斯达克敲钟！】公司成功在纳斯达克挂牌敲钟！扣除 VC 稀释后创始人股权套现 $350w 美元，圆满达成 FIRE 终局！'
-            };
-          } else if (roll < 0.62) {
-            // Acqui-hire (safe landing); the remaining ~38% is the fire-sale downside
-            return {
-              cash: parseFloat((s.cash + 90).toFixed(1)),
-              job_type: 'big_tech',
-              level: 'L6 (Staff)',
-              company: 'google',
-              tc: 52,
-              laid_off: false,
-              founder_stage: undefined,
-              company_valuation: 0,
-              health: Math.max(0, s.health - 4),
-              message: '【成功被巨头并购】Google/Meta 科技巨头以溢价并购了你们的公司。扣除 VC 清算优先权后，创始人获得 $90w 现金分成，并受聘为大厂 L6 Staff 架构师！'
-            };
-          } else {
-            // Fire Sale
-            return {
-              cash: parseFloat((s.cash + 15).toFixed(1)),
-              job_type: 'unemployed',
-              company: undefined,
-              level: undefined,
-              laid_off: true,
-              founder_stage: undefined,
-              company_valuation: 0,
-              tc: 0,
-              health: Math.max(0, s.health - 12),
-              network: (s.network || 0) + 6,
-              message: '【折价清算】市场行情急转直下，公司被折价清盘。VC 拿走清算优先权后，你仅分得 $15w 离场费。创业虽败，但你积累了宝贵的人脉！'
-            };
-          }
-        },
-        nextEventId: (s) => s.status === 'win' ? 'end' : (s.laid_off ? 'job_hunt' : h1ToH2Router(s)),
+        text: '【终局退场 Exit】启动并购评估 Acqui-hire 或 纳斯达克 IPO 挂牌上市',
+        condition: (s) => s.job_type === 'startup_founder',
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你召开董事会紧急闭门会议，正式启动退场与并购/IPO 评估！' }),
+        nextEventId: 'founder_exit_event',
       },
       {
         text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件, 保现金)',
@@ -249,6 +209,86 @@ export const startupEvents: Record<string, GameEvent> = {
           message: '你壮士断腕开源节流，挥泪解雇了一批非核心人员。虽然公司估值缩水、士气受挫，但账上现金流大大延长了生死线 Runway。'
         }),
         nextEventId: h1ToH2Router,
+      }
+    ]
+  },
+
+  'founder_exit_event': {
+    id: 'founder_exit_event',
+    title: '【创始人退场】初创公司终局抉择 (Exit & M&A)',
+    description: '作为初创公司 CEO，你手握公司的核心技术与商业壁垒，站在了终局退场的十字路口。请选择最符合当前利益的退场方案：',
+    choices: [
+      {
+        text: '【纳斯达克挂牌敲钟 (IPO)】向 SEC 递交招股书，实现全球资本市场上市套现 (需估值>=3000w 或 exit 阶段)',
+        condition: (s) => (s.company_valuation || 0) >= 3000 || s.founder_stage === 'exit',
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const val = s.company_valuation || 3000;
+          const isHuge = val >= 6000;
+          const founderCash = parseFloat((Math.max(isHuge ? 350 : 220, Math.round(val * 0.07))).toFixed(1));
+          return {
+            status: 'win',
+            founder_stage: 'exit',
+            company_valuation: val,
+            cash: parseFloat((s.cash + founderCash).toFixed(1)),
+            message: `【纳斯达克挂牌敲钟！】随着金色钟声在时代广场敲响，公司正式挂牌上市！扣除 VC 稀释后创始人股权套现 $${founderCash}w 美元现金，达成传奇 IPO 终局！`
+          };
+        },
+        nextEventId: 'end',
+      },
+      {
+        text: '【接受科技巨头溢价并购 (Acqui-hire)】打包技术与核心团队卖给大厂，变现套现并受聘为大厂资深架构师',
+        condition: (s) => (s.company_valuation || 0) >= 300 || s.founder_stage === 'seed' || s.founder_stage === 'series_a' || s.founder_stage === 'series_b' || s.founder_stage === 'exit',
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const val = s.company_valuation || 400;
+          const payout = val >= 5000 ? 160 : (val >= 2000 ? 95 : (val >= 800 ? 55 : 30));
+          const isHigh = val >= 3000;
+          const newLevel = isHigh ? 'L7 (Senior Staff)' : 'L6 (Staff)';
+          const newTc = isHigh ? 68 : 52;
+          return {
+            cash: parseFloat((s.cash + payout).toFixed(1)),
+            job_type: 'big_tech',
+            company: 'google',
+            level: newLevel,
+            tc: newTc,
+            laid_off: false,
+            founder_stage: undefined,
+            company_valuation: 0,
+            health: Math.max(0, s.health - 2),
+            network: Math.min(100, (s.network || 0) + 8),
+            message: `【成功被科技巨头并购】Google/Meta 科技巨头以溢价全资收购了你们团队！扣除 VC 清算优先权后，创始人分得 $${payout}w 现金，并受聘为大厂 ${newLevel} 架构师 (TC $${newTc}w)！`
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【折价清盘与友好关停】清偿员工薪酬与 VC 清算优先权，保留离场资金重返职场求职',
+        condition: (s) => true,
+        effect: (s) => {
+          const val = s.company_valuation || 180;
+          const recovery = val >= 1000 ? 30 : 15;
+          return {
+            cash: parseFloat((s.cash + recovery).toFixed(1)),
+            job_type: 'unemployed',
+            company: undefined,
+            level: undefined,
+            laid_off: true,
+            founder_stage: undefined,
+            company_valuation: 0,
+            tc: 0,
+            health: Math.max(0, s.health - 6),
+            network: Math.min(100, (s.network || 0) + 6),
+            message: `【公司清盘退场】在与董事会协商后，公司友好关停清盘。VC 拿走剩余资产后，你保留了 $${recovery}w 离场资金与核心人脉。创业告一段落，你带着宝贵经验重新回归求职市场！`
+          };
+        },
+        nextEventId: 'job_hunt',
+      },
+      {
+        text: '【暂缓退场 · 重燃斗志继续带领团队冲刺】取消退场流程，继续作为 CEO 带领团队战斗',
+        condition: (s) => true,
+        effect: () => ({ message: '你深吸一口气，决定暂缓退场计划，重新召集团队全力以赴推进业务增长！' }),
+        nextEventId: 'founder_annual_strategy',
       }
     ]
   },

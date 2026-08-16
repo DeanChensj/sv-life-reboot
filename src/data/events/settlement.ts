@@ -258,7 +258,11 @@ export const settlementEvents: Record<string, GameEvent> = {
             let updatedTC = s.tc;
             let meritMsg = '';
             const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
-            const refreshChance = newEconomy === 'bull' ? 0.50 : newEconomy === 'bear' ? 0.15 : 0.35;
+            // Merit / RSU refresh 与 impact(项目影响力)挂钩：高 impact → 加薪又频又大；躺平低 impact →
+            // 又稀又小，即使不追求升职、留在原级别，收入也会停滞被通胀/开销蚕食(躺平的隐性代价)。
+            const impactChanceMult = 0.4 + Math.min(1.0, (s.impact || 0) / 50);   // impact 0→0.4x, 50+→1.4x
+            const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60);      // impact 0→0.5x, 60+→1.5x
+            const refreshChance = (newEconomy === 'bull' ? 0.50 : newEconomy === 'bear' ? 0.15 : 0.35) * impactChanceMult;
             
             if (isEmployee && gameRandom() < refreshChance) {
               const maxCapByLevel: Record<string, number> = {
@@ -278,7 +282,8 @@ export const settlementEvents: Record<string, GameEvent> = {
               const levelCap = maxCapByLevel[curLevelKey] || 55;
               
               if (updatedTC < levelCap) {
-                const refreshAmt = gameRandom() < 0.3 ? (newEconomy === 'bull' ? 2.5 : 1.5) : (newEconomy === 'bear' ? 0.5 : 1.0);
+                const baseRefresh = gameRandom() < 0.3 ? (newEconomy === 'bull' ? 2.5 : 1.5) : (newEconomy === 'bear' ? 0.5 : 1.0);
+                const refreshAmt = parseFloat((baseRefresh * impactAmtMult).toFixed(1));
                 updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
                 meritMsg = ` 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
               }

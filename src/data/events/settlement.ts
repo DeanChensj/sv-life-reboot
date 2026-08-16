@@ -377,7 +377,7 @@ export const settlementEvents: Record<string, GameEvent> = {
         },
         nextEventId: (s) => {
           if (s.status === 'win' || s.status === 'retired') return 'end';
-          if ((s.cash + (s.stocks || 0)) >= s.win_threshold && !s.has_reached_initial_fire) {
+          if ((s.cash + (s.stocks || 0)) >= s.win_threshold && (!s.last_fire_milestone_reached || s.last_fire_milestone_reached < s.win_threshold)) {
             return 'fire_milestone_choice';
           }
           if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
@@ -398,19 +398,64 @@ export const settlementEvents: Record<string, GameEvent> = {
     imageUrl: 'images/house.jpg',
     choices: [
       {
-        text: '【见好就收 · 立即退休】宣布提前退休，正式登出硅谷内卷（进入人生胜利结算）',
+        text: '【见好就收 · 基础 FIRE 提前退休】宣布达成 $500w 基础财务自由，正式登出硅谷内卷（进入胜利结算）',
         costBadge: '终局胜利',
+        condition: (s) => (s.cash + (s.stocks || 0)) < 800,
+        hideIfUnavailable: true,
         effect: (s) => ({
           status: 'win',
-          message: `【FIRE 胜利退休】你在 ${s.age} 岁正式宣布提前退休！总资产达到 $${(s.cash + (s.stocks || 0)).toFixed(1)}w，再也不需要看任何 Manager 与排期的脸色，开启了环游世界与自由探索的璀璨余生！`
+          last_fire_milestone_reached: Math.max(s.win_threshold, 500),
+          fire_tier: 'basic',
+          message: `【基础 FIRE 胜利退休】你在 ${s.age} 岁正式宣布提前退休！总资产达到 $${(s.cash + (s.stocks || 0)).toFixed(1)}w，再也不需要看任何 Manager 与排期的脸色，开启了环游世界与自由探索的璀璨余生！`
+        }),
+        nextEventId: 'end',
+      },
+      {
+        text: '【自在人生 · 舒适 FIRE 荣耀退休】宣布达成 $800w+ 舒适财务自由，潇洒享受生活（进入胜利结算）',
+        costBadge: '终局胜利',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 800 && (s.cash + (s.stocks || 0)) < 1500,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          status: 'win',
+          last_fire_milestone_reached: Math.max(s.win_threshold, 800),
+          fire_tier: 'comfortable',
+          message: `【舒适 FIRE 荣耀退休】你在 ${s.age} 岁坐拥 $${(s.cash + (s.stocks || 0)).toFixed(1)}w 资产达成舒适 FIRE！在湾区拥有豪宅与充沛现金流，正式开启神仙养老人生！`
+        }),
+        nextEventId: 'end',
+      },
+      {
+        text: '【豪门巨擘 · 奢华 FIRE 巅峰退休】宣布达成 $1500w+ 奢华财务自由，登顶人生赢家（进入胜利结算）',
+        costBadge: '终局胜利',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1500 && (s.cash + (s.stocks || 0)) < 3000,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          status: 'win',
+          last_fire_milestone_reached: Math.max(s.win_threshold, 1500),
+          fire_tier: 'luxury',
+          message: `【奢华 FIRE 巅峰退休】你在 ${s.age} 岁总资产突破 $${(s.cash + (s.stocks || 0)).toFixed(1)}w！名列硅谷顶层名流，享受顶级豪宅与无可动摇的财富自由！`
+        }),
+        nextEventId: 'end',
+      },
+      {
+        text: '【登峰造极 · 硅谷传奇百亿退休】宣布达成 $3000w+ 硅谷传奇 FIRE，名留硅谷史册（进入胜利结算）',
+        costBadge: '终局胜利',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 3000,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          status: 'win',
+          last_fire_milestone_reached: Math.max(s.win_threshold, 3000),
+          fire_tier: 'dynasty',
+          message: `【硅谷传奇百亿终局】你在 ${s.age} 岁总资产突破 $${(s.cash + (s.stocks || 0)).toFixed(1)}w！设立家族信托与科技创投基金，书写了不可复制的硅谷传奇！`
         }),
         nextEventId: 'end',
       },
       {
         text: '【继续生活 · 探索舒适 FIRE 目标 ($800w)】留在硅谷享受生活，配置不动产与高端资产',
         condition: (s) => (s.cash + (s.stocks || 0)) < 800,
+        hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
+          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, 500),
           win_threshold: 800,
           fire_tier: 'comfortable',
           health: Math.min(100, s.health + 20),
@@ -420,9 +465,11 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【登顶硅谷 · 冲刺奢华 FIRE 目标 ($1500w+)】追逐顶级独角兽与 Atherton 庄园',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 800,
+        condition: (s) => (s.cash + (s.stocks || 0)) < 1500,
+        hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
+          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, (s.cash + (s.stocks || 0)) >= 800 ? 800 : 500),
           win_threshold: 1500,
           fire_tier: 'luxury',
           health: Math.min(100, s.health + 20),
@@ -431,14 +478,40 @@ export const settlementEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 200 && s.job_type !== 'startup_founder',
-        // Start the actual FOUNDER flow (founder_annual_strategy) with proper founder
-        // state — was routing into the rank-and-file employee `startup_work` event,
-        // which could dump a brand-new founder into 'unemployed'.
+        text: '【硅谷传奇 · 冲刺百亿传奇目标 ($3000w+)】建立家族信托与创投基金，书写时代传奇',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1500 && (s.cash + (s.stocks || 0)) < 3000,
+        hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
-          win_threshold: 1500,
+          last_fire_milestone_reached: 1500,
+          win_threshold: 3000,
+          fire_tier: 'dynasty',
+          health: Math.min(100, s.health + 20),
+          message: '【传奇家族办公室模式】你的财富已达千万量级！向着 $3000w+ 硅谷百亿巨擘与传奇家族基金全力进军！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【无界探索 · 漫游硅谷不设限】不设任何金钱目标，留在湾区尽情体验一切可能性',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 3000,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          has_reached_initial_fire: true,
+          last_fire_milestone_reached: 3000,
+          win_threshold: 99999,
+          fire_tier: 'dynasty',
+          health: Math.min(100, s.health + 20),
+          message: '【无界探索模式】金钱对你已只是数字，你开启了不设上限的硅谷自由神仙人生！'
+        }),
+        nextEventId: 'sv_daily_life',
+      },
+      {
+        text: '【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 200 && s.job_type !== 'startup_founder',
+        effect: (s) => ({
+          has_reached_initial_fire: true,
+          last_fire_milestone_reached: Math.max(s.win_threshold, 500),
+          win_threshold: Math.max(s.win_threshold, 1500),
           fire_tier: 'luxury',
           job_type: 'startup_founder',
           founder_stage: 'pre_seed',
@@ -457,7 +530,8 @@ export const settlementEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => ({
           has_reached_initial_fire: true,
-          win_threshold: 1500,
+          last_fire_milestone_reached: Math.max(s.win_threshold, 500),
+          win_threshold: Math.max(s.win_threshold, 1500),
           fire_tier: 'luxury',
           health: Math.min(100, s.health + 15),
           message: '【初心不改】你没有因为账户达到财务自由而停下脚步，继续作为 CEO 带领团队向着百亿独角兽与纳斯达克敲钟全力冲刺！'

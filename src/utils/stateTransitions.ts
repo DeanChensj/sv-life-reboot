@@ -331,11 +331,12 @@ export function applyStateTransition(
     targetEventId = 'end';
   } else if (
     (newState.cash + (newState.stocks || 0)) >= newState.win_threshold &&
-    !newState.has_reached_initial_fire &&
+    (!newState.last_fire_milestone_reached || newState.last_fire_milestone_reached < newState.win_threshold) &&
     newState.status === 'playing' &&
     context.eventId !== 'choose_trait' &&
     context.eventId !== 'choose_year' &&
-    context.eventId !== 'choose_school'
+    context.eventId !== 'choose_school' &&
+    context.eventId !== 'fire_milestone_choice'
   ) {
     newState.message = (context.customMessage || newState.message || '') + gcHopNote + liquidationNote;
     targetEventId = 'fire_milestone_choice';

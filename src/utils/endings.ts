@@ -115,11 +115,25 @@ export function determineEnding(s: GameState): EndingResult {
         flavor: '你手握一串湾区房产，每月租金自动到账。当同事还在卷 Perf，你已靠被动现金流彻底躺平。',
       };
     }
-    if (s.fire_tier === 'luxury' || assets >= 1500 || (s.housing_name === HOUSING_NAMES.ATHERTON) || isOwnedHousing(s.housing_name) && assets >= 1000) {
+    if (assets >= 3000 || s.fire_tier === 'dynasty') {
+      return {
+        id: 'silicon_dynasty', emoji: '🏛️', title: '硅谷百亿巨擘 · 家族传奇',
+        subtitle: 'STATUS: FIRE (DYNASTY)', tone: 'triumph', rarity: 'UR',
+        flavor: '你的资产突破 $3000w+，建立了家族信托与慈善基金会，成为了硅谷乃至全球科技界的殿堂级传奇。',
+      };
+    }
+    if (s.fire_tier === 'luxury' || assets >= 1500 || (s.housing_name === HOUSING_NAMES.ATHERTON) || (isOwnedHousing(s.housing_name) && assets >= 1000)) {
       return {
         id: 'atherton_lord', emoji: '💎', title: '奢华 FIRE · Atherton 庄园主',
         subtitle: 'STATUS: FIRE (LUXURY)', tone: 'triumph', rarity: 'SSR',
         flavor: '你在 Atherton 拥有了自己的庄园，跨越了硅谷最难跨越的那道阶级门槛，登顶人生赢家。',
+      };
+    }
+    if (s.fire_tier === 'comfortable' || assets >= 800) {
+      return {
+        id: 'fire_comfortable', emoji: '🏖️', title: '舒适 FIRE · 潇洒人生',
+        subtitle: 'STATUS: FIRE (COMFORTABLE)', tone: 'triumph', rarity: 'SSR',
+        flavor: '坐拥 $800w+ 充裕资产与优质被动收益，你在湾区过上了有闲有钱的松弛生活，尽享惬意人生。',
       };
     }
     return {

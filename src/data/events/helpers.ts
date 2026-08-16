@@ -462,7 +462,9 @@ export const midYearEventRouter = (s: GameState): string => {
     lifeEvents.push('bay_area_dink_vs_kids');
   }
 
-  if (isHomeowner && s.cash >= 30) {
+  // 补充房产税会砸向任何房主,与现金多寡无关。原 cash>=30 门控使得「现金吃紧申请延期」
+  // (需 cash<1) 分支永不可选(死码);去掉现金门控后,现金拮据的房主才会真正面临这个两难。
+  if (isHomeowner) {
     lifeEvents.push('property_supplemental_tax_hike');
   }
 

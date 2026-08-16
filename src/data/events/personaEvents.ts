@@ -1,5 +1,5 @@
 import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, gameRandom, stampSeen } from './helpers';
+import { h1ToH2Router, gameRandom, stampSeen, addImpact } from './helpers';
 
 // 人设 (天赋 trait_title) 专属随机事件 — Persona-specific flavor events.
 // Each is a once-per-life SIGNATURE beat for its persona, injected from
@@ -29,6 +29,7 @@ export const personaEvents: Record<string, GameEvent> = {
           network: Math.min(100, (s.network || 10) + 5),
           tc: s.tc + 4,
           health: Math.max(0, s.health - 12),
+          impact: addImpact(s, 12),
           story_flags: stampSeen(s, 'persona_grind_king_crunch', 1),
           message: '你以恐怖的产出独扛了核心模块，项目奇迹般准时上线，VP 当众点名表扬，你成了组里公认的救火队长！代价是三周没睡好，也冷落了身边人。',
         }),

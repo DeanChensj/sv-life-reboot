@@ -363,6 +363,10 @@ export const settlementEvents: Record<string, GameEvent> = {
               cash: finalCash,
               stocks: currentStocks,
               tc: updatedTC,
+              // 影响力随时间自然衰减：不持续交付项目就会「过气」。躺平一年 impact -4，
+              // 而主导项目/发 paper 等每次 +8~15，engaged 玩家净增、躺平玩家逐年归零而卡级。
+              // (非大厂路径 impact 恒为 0，Math.max 下此项为 no-op。)
+              impact: Math.max(0, (s.impact || 0) - 4),
               health: newHealth,
               macro_economy: newEconomy,
               story_flags: newStoryFlags,

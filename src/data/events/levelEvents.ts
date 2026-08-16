@@ -1,5 +1,5 @@
 import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, gameRandom, stampSeen } from './helpers';
+import { h1ToH2Router, gameRandom, stampSeen, addImpact } from './helpers';
 
 // 职级 (level) 阶段专属随机事件 — Career-level signature events.
 // One once-per-life SIGNATURE beat per ladder band (entry / senior / staff+),
@@ -72,8 +72,8 @@ export const levelEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.3 + ((s.network || 10) / 100) * 0.5);
           return win
-            ? { network: Math.min(100, (s.network || 10) + 8), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), tc: s.tc + 4, health: Math.max(0, s.health - 12), story_flags: stampSeen(s, 'level_senior_plateau', 1), message: '你顶着压力揽下了一个跨三组的硬骨头项目，并成功推动落地。一位 Director 主动表示愿意在下一轮 Promo 为你做 Sponsor，Staff 的大门第一次向你敞开了缝隙！代价是几乎缺席了家里的所有晚饭。' }
-            : { health: Math.max(0, s.health - 12), story_flags: stampSeen(s, 'level_senior_plateau', 1), message: '你试图揽下更大的 scope，却因跨组政治协调不力而收效甚微，还把自己累得够呛，也冷落了身边人。冲击 Staff 的第一次尝试无功而返。' };
+            ? { network: Math.min(100, (s.network || 10) + 8), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), tc: s.tc + 4, health: Math.max(0, s.health - 12), impact: addImpact(s, 12), story_flags: stampSeen(s, 'level_senior_plateau', 1), message: '你顶着压力揽下了一个跨三组的硬骨头项目，并成功推动落地。一位 Director 主动表示愿意在下一轮 Promo 为你做 Sponsor，Staff 的大门第一次向你敞开了缝隙！代价是几乎缺席了家里的所有晚饭。' }
+            : { health: Math.max(0, s.health - 12), impact: addImpact(s, 4), story_flags: stampSeen(s, 'level_senior_plateau', 1), message: '你试图揽下更大的 scope，却因跨组政治协调不力而收效甚微，还把自己累得够呛，也冷落了身边人。冲击 Staff 的第一次尝试无功而返。' };
         },
         nextEventId: h1ToH2Router,
       },
@@ -112,8 +112,8 @@ export const levelEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < Math.min(0.55, 0.25 + ((s.network || 10) / 100) * 0.35 + ((s.charm || 10) / 100) * 0.3);
           return win
-            ? { tc: s.tc + 8, network: Math.min(100, (s.network || 10) + 6), health: Math.max(0, s.health - 15), story_flags: stampSeen(s, 'level_staff_glue_work', 1), message: '你押注的旗舰项目一炮而红，直达 VP 视野。你拿到了梦寐以求的高管背书与丰厚回报，向 Principal 的方向又迈进了一大步！代价是长期扑在公司、亏欠了家人。' }
-            : { health: Math.max(0, s.health - 15), charm: Math.max(0, (s.charm || 10) - 1), story_flags: stampSeen(s, 'level_staff_glue_work', 1), message: '旗舰项目在高层路线摇摆中被腰斩，你不仅白忙一场，还被隐隐甩了锅，也没顾上家里。高曝光的赌注，这次输了。' };
+            ? { tc: s.tc + 8, network: Math.min(100, (s.network || 10) + 6), health: Math.max(0, s.health - 15), impact: addImpact(s, 16), story_flags: stampSeen(s, 'level_staff_glue_work', 1), message: '你押注的旗舰项目一炮而红，直达 VP 视野。你拿到了梦寐以求的高管背书与丰厚回报，向 Principal 的方向又迈进了一大步！代价是长期扑在公司、亏欠了家人。' }
+            : { health: Math.max(0, s.health - 15), charm: Math.max(0, (s.charm || 10) - 1), impact: addImpact(s, 3), story_flags: stampSeen(s, 'level_staff_glue_work', 1), message: '旗舰项目在高层路线摇摆中被腰斩，你不仅白忙一场，还被隐隐甩了锅，也没顾上家里。高曝光的赌注，这次输了。' };
         },
         nextEventId: h1ToH2Router,
       },

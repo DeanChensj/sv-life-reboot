@@ -1,5 +1,5 @@
 import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, gameRandom, stampSeen } from './helpers';
+import { h1ToH2Router, gameRandom, stampSeen, addImpact } from './helpers';
 
 // 公司专属随机事件 (Company-specific flavor events).
 // Each is a once-per-life SIGNATURE beat for its company path, injected from
@@ -38,6 +38,7 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.min(100, s.health + 12),
           leetcode: Math.max(0, s.leetcode - 3),
+          impact: addImpact(s, -8),
           story_flags: seen(s, 'google_reorg_limbo'),
           message: '你把重组当带薪疗养，每天班车、食堂、健身房三点一线，身体养得倍儿棒，就是手感生疏了点。',
         }),
@@ -156,6 +157,7 @@ export const companyEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           network: Math.min(100, (s.network || 10) + 4),
           health: Math.max(0, s.health - 15),
+          impact: addImpact(s, 14),
           story_flags: stampSeen(s, 'openai_launch_crunch', 1),
           message: '你的 Demo 在发布会上惊艳全场，直播观看破千万！你一战成名，成了组里炙手可热的明星工程师，代价是熬到脱相。',
         }),

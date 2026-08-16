@@ -1136,6 +1136,68 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         nextEventId: midYearEventRouter,
       },
+      {
+        text: '【职场跨界：转岗 PM】放下技术 CRUD 与代码审查，申请转任 Technical Product Manager (TPM/PM)',
+        condition: (s) => isCorporateEmployee(s) && s.job_type !== 'pm' && (s.network || 10) >= 20,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const nextLvl = s.level === 'L3' ? 'L4 (APM)' : s.level === 'L4' ? 'L5 (Senior PM)' : (s.level?.includes('L6') ? 'L6 (Lead PM)' : 'L5 (Senior PM)');
+          return {
+            mid_year: true,
+            season_stage: 'h1',
+            job_type: 'pm',
+            level: nextLvl,
+            tc: s.tc + 5,
+            charm: Math.min(25, (s.charm || 10) + 3),
+            network: Math.min(100, (s.network || 10) + 6),
+            health: Math.max(0, s.health - 6),
+            message: `【内部转岗 PM 成功】凭借出色的人际协调与业务洞察，你顺利通过了 Product 部门的评审！正式转为 ${nextLvl}。从此统领产品路线图与 OKR 汇报！`
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【产品攻坚：向上管理与 OKR 愿景画饼】向 VP 汇报虚构的 AI 战略愿景，争取 20 个 Headcount 冲刺晋升',
+        condition: (s) => s.job_type === 'pm',
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const curLevel = s.level || 'L5 (Senior PM)';
+          const lastPromoAge = s.last_promo_age ?? (s.age - 1);
+          const yearsInGrade = s.age - lastPromoAge;
+          const winRate = 0.35 + ((s.network || 10) / 200) + ((s.charm || 10) * 0.02) + ((s.luck || 20) * 0.001);
+          const pass = gameRandom() < Math.min(0.85, winRate);
+
+          if (pass) {
+            if (curLevel.includes('L4') || curLevel.includes('APM')) {
+              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 12), tc: s.tc + 5, level: 'L5 (Senior PM)', last_promo_age: s.age, network: Math.min(100, (s.network || 10) + 8), message: '【晋升 L5 Senior PM】你的 AI 概念 PRD 在大老板周会上大放异彩！成功抢下专属工程团队，顺利晋升为 L5 Senior PM！' };
+            }
+            if (curLevel.includes('L5') && yearsInGrade >= 1) {
+              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 16), tc: s.tc + 8, level: 'L6 (Lead PM)', last_promo_age: s.age, network: Math.min(100, (s.network || 10) + 12), message: '【晋升 L6 Lead PM】凭借无懈可击的向上管理与跨部门斡旋，你统领的业务线成为公司战略重点，破格晋升为 L6 Lead PM，年薪总包大幅上涨！' };
+            }
+            if (curLevel.includes('L6') && yearsInGrade >= 2) {
+              return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 20), tc: s.tc + 14, level: 'L7 (Group PM / Director)', last_promo_age: s.age, network: Math.min(100, (s.network || 10) + 15), message: '【晋升 L7 Group PM / 产品总监】你成功掌控了整个核心业务线的产品方向，晋升为 L7 Group PM / Director of Product！直接向 VP 汇报！' };
+            }
+            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 10), tc: s.tc + 3, network: Math.min(100, (s.network || 10) + 6), message: '【Top Perf 卓越绩效】虽然因年限未满未能晋升，但 VP 对你的产品交付高度赞赏，年底拿下顶级奖金与调薪！' };
+          }
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 12), message: '【OKR 遇冷】竞品业务线拿出了更成熟的 Demo，大老板将预算削减了一半。虽然画饼未完全达成，但你保住了基本盘。' };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【跨部门斡旋：撕扯核心 Feature 归属权】在业务重组中撕下竞品团队关键模块，巩固护城河',
+        condition: (s) => s.job_type === 'pm',
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true,
+          season_stage: 'h1',
+          tc: s.tc + 3.5,
+          network: Math.min(100, (s.network || 10) + 8),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          health: Math.max(0, s.health - 10),
+          message: '【地盘扩张大捷】在持续一个月的激烈撕扯与汇报 PK 中，你成功把核心 AI Feature 的所有权划入自己麾下，业务影响力大增！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
       // --- 3. 【全职 Trader 专属年度决策】 ---
       {
         text: '【全职操盘：深入美股 0DTE 末日轮与龙头博弈】根据市场宏观波动态势深入操盘',
@@ -2131,6 +2193,23 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       },
       {
+        text: '【转型 Technical PM (产品经理)】交接 Git 权限告别 Oncall，接管业务路线图与 OKR',
+        condition: (s) => isCorporateEmployee(s) && (s.network || 10) >= 20 && s.job_type !== 'pm',
+        effect: (s) => {
+          const nextLvl = s.level?.includes('L6') ? 'L6 (Lead PM)' : s.level?.includes('L7') ? 'L7 (Group PM)' : 'L5 (Senior PM)';
+          return {
+            job_type: 'pm',
+            level: nextLvl,
+            tc: s.tc + 5,
+            charm: Math.min(25, (s.charm || 10) + 4),
+            network: Math.min(100, (s.network || 10) + 8),
+            health: Math.max(0, s.health - 8),
+            message: `【转型产品经理成功】你正式转岗为 Technical Product Manager (TPM/PM)！职级调整为 ${nextLvl}。交接了所有代码仓库，不再手撕算法与夜间 Oncall，开始用 PRD、OKR 和向上管理统领业务方向！`
+          };
+        },
+        nextEventId: h1ToH2Router
+      },
+      {
         text: '【死守 IC 架构师】做纯粹的技术专家，拒绝开扯皮管理会',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 15),
@@ -2831,6 +2910,87 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 4),
           leetcode: s.leetcode + 2,
           message: '【回归正常作息】你向老板申请调动到只对接加州总部的底层基础设施组。告别了半夜和清晨的夺命连环会，你的生活重新回归了规律的加州阳光。'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'pm_launch_blame_game': {
+    id: 'pm_launch_blame_game',
+    title: '【上线延期危机】周会甩锅与政治自保',
+    description: '临近季末发布，Engineering 团队突然爆发大规模阻塞性 Bug，核心 Feature 无法按时交付！大老板在全体复盘会上脸色铁青，要求业务负责人给个交代...',
+    choices: [
+      {
+        text: '【经典甩锅技术架构】巧妙指出是后端底层重构延误了进度，保全产品线评分',
+        effect: (s) => ({
+          network: Math.max(0, (s.network || 10) - 3),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          message: '【政治自保成功】你用精准的 PPT 汇报和时间线分析将责任归因于技术架构，成功保住了自己的季度 Top Perf，虽然工程团队私下对你咬牙切齿。'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【与工程团队共进退】主动承担需求变更过多的责任，连夜砍掉非核心 Scope 强行保上线',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 12),
+          network: Math.min(100, (s.network || 10) + 8),
+          message: '【赢得工程师敬佩】虽然通宵砍需求让你精疲力竭，但你的担当彻底赢得了 Tech Lead 和全体 Dev 的信赖！工程团队士气大振！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'pm_okr_scramble': {
+    id: 'pm_okr_scramble',
+    title: '【战略争夺战】争取百人 Headcount 与核心预算',
+    description: '公司开启年度战略规划，各大业务线 PM 都在疯抢 AI Agent 相关的核心预算与招聘名额（Headcount）。这是一场决定未来三年谁是核心部门的生死之战！',
+    choices: [
+      {
+        text: '【撰写百页宏大 PRD】打造全闭环 AI 生态愿景，直接越级向 VP 汇报',
+        condition: (s) => (s.charm || 10) >= 12,
+        effect: (s) => ({
+          tc: s.tc + 4,
+          network: Math.min(100, (s.network || 10) + 6),
+          health: Math.max(0, s.health - 10),
+          message: '【斩获核心预算】VP 被你的宏大架构叙事打动，不仅批了 20 个 Headcount，还直接把你的业务线设为公司年度顶级战略重点！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【联合其他 PM 组团结盟】组建利益共同体，均分预算与资源',
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 10) + 10),
+          message: '【合纵连横】你在各大业务线 PM 之间游刃有余地拉拢盟友，建立起坚固的政治同盟网络，稳稳守住了基本盘！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'pm_user_interview_crisis': {
+    id: 'pm_user_interview_crisis',
+    title: '【用户调研翻车】核心大客户痛骂新功能难用',
+    description: '你们团队耗时半年上线的重磅 Feature 在种子用户群和大客户中遭遇严重水土不服！大客户 CTO 在电话会议上痛斥新版交互极度反人类，要求退款...',
+    choices: [
+      {
+        text: '【飞赴现场当面安抚】带上礼品直飞西雅图客户总部，一对一调研改版需求 (花费 $0.3w)',
+        condition: (s) => s.cash >= 0.3,
+        effect: (s) => ({
+          cash: parseFloat((s.cash - 0.3).toFixed(1)),
+          network: Math.min(100, (s.network || 10) + 8),
+          charm: Math.min(25, (s.charm || 10) + 3),
+          health: Math.max(0, s.health - 6),
+          message: '【危机转为转机】你极其专业的情商和敏捷行动感动了客户，不仅顺利续约，客户还主动为你引荐了另外两家企业采购！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【用数据指标教育用户】甩出 A/B 测试留存数据，证明这是“先进设计哲学”',
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 2),
+          message: '【大厂傲慢的胜利】你用花哨的统计学曲线和增长数据成功把客户忽悠瘸了，虽然用户私下吐槽，但产品指标账面上依然亮眼！'
         }),
         nextEventId: h1ToH2Router
       }

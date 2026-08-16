@@ -106,12 +106,19 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     if (state.job_type === 'quant') levelLabel = 'Quant';
     else if (state.job_type === 'ai_research') levelLabel = 'MTS';
     else if (state.job_type === 'cn_tech') levelLabel = '国内研发';
+    else if (state.job_type === 'pm') levelLabel = 'L5 (Senior PM)';
     else if (state.is_phd) levelLabel = 'L4';
     else levelLabel = 'L3';
   }
 
+  if (state.job_type === 'pm') {
+    levelHeaderLabel = '产品职级';
+  }
+
   if (!isUnemployed && !isStudent && !isTrader && !isFounder) {
-    if (levelLabel.includes('L8') || levelLabel.includes('Principal') || levelLabel.includes('Fellow')) {
+    if (state.job_type === 'pm') {
+      levelClassName = 'text-teal-300 bg-teal-500/15 border-teal-500/30 font-bold';
+    } else if (levelLabel.includes('L8') || levelLabel.includes('Principal') || levelLabel.includes('Fellow')) {
       levelClassName = 'text-amber-300 bg-amber-500/15 border-amber-500/30 shadow-[0_0_8px_rgba(251,191,36,0.3)]';
     } else if (levelLabel.includes('L7') || levelLabel.includes('Senior Staff')) {
       levelClassName = 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_8px_rgba(217,70,239,0.25)]';
@@ -135,6 +142,10 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   } else if (isUnemployed) {
     companyLabel = (state.story_flags?.in_gap_year || !state.laid_off) ? '慢生活 Gap Year' : '待业求职中';
     companyClassName = (state.story_flags?.in_gap_year || !state.laid_off) ? 'text-teal-300 bg-teal-500/15 border-teal-500/30 font-bold' : 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold';
+  } else if (state.job_type === 'pm') {
+    const coName = state.company === 'google' ? 'Google (PM)' : state.company === 'meta' ? 'Meta (PM)' : state.company === 'apple' ? 'Apple (PM)' : state.company === 'tiktok' ? 'TikTok (PM)' : state.company === 'amazon' ? 'Amazon (PM)' : state.company === 'nvidia' ? 'NVIDIA (PM)' : '硅谷大厂 (PM)';
+    companyLabel = coName;
+    companyClassName = 'text-teal-300 bg-teal-500/15 border-teal-500/30 font-bold';
   } else if (isDomestic) {
     companyLabel = '国内互联网大厂';
     companyClassName = 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold';

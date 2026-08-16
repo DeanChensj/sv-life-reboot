@@ -90,7 +90,7 @@ export interface GameState {
   last_fire_milestone_reached?: number; // 已触发过的最高 FIRE 里程碑数值 (500, 800, 1500, 3000)
   fire_tier?: 'basic' | 'comfortable' | 'luxury' | 'dynasty'; // 阶梯 FIRE 等级
   laid_off: boolean;
-  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia' | 'trader' | 'startup_founder' | 'cn_tech';
+  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'amazon' | 'tiktok' | 'nvidia' | 'trader' | 'startup_founder' | 'cn_tech' | 'pm';
   company?: string;
   level?: string;
   job_start_age?: number;

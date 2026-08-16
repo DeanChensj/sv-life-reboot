@@ -623,6 +623,46 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 12 Passed\n');
 }
 
+// CUJ 13: Founder mode valuation monotonicity & FIRE milestone protection
+{
+  console.log('--- [CUJ 13] Founder mode valuation monotonicity & FIRE milestone protection ---');
+  const founderState: GameState = {
+    ...generateInitialState(),
+    job_type: 'startup_founder',
+    founder_stage: 'seed',
+    company_valuation: 1000,
+    cash: 500,
+    stocks: 100,
+    health: 80,
+    status: 'playing',
+  };
+
+  // 1. In fire_milestone_choice, existing founder options do NOT reset valuation to 500w
+  const fireEvent = events['fire_milestone_choice'];
+  const founderChoices = fireEvent.choices.filter((c) => !c.condition || c.condition(founderState));
+  assert(founderChoices.length >= 2, 'Founder has multiple FIRE choices available');
+  founderChoices.forEach((c, idx) => {
+    const eff = c.effect(founderState);
+    const nextVal = eff.company_valuation !== undefined ? eff.company_valuation : founderState.company_valuation;
+    assert(nextVal! >= 1000, `FIRE Choice ${idx} ('${c.text}') must not downgrade valuation from $1000w (got $${nextVal}w)`);
+  });
+
+  // 2. Sand Hill Road VC Pitch advancement must not lower existing valuation
+  const founderPreSeedWith1000w: GameState = {
+    ...founderState,
+    founder_stage: 'pre_seed',
+    company_valuation: 1000,
+    network: 50,
+  };
+  const stepPitchRes = stepChoice(founderPreSeedWith1000w, 'founder_annual_strategy', 0, {
+    founder_stage: 'seed',
+    company_valuation: 1400,
+  });
+  assert((stepPitchRes.nextState.company_valuation || 0) >= 1000, 'Advancing to seed round from high base valuation never drops below 1000w');
+
+  console.log('✅ CUJ 13 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

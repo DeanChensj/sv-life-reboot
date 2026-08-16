@@ -1,6 +1,7 @@
 import React from 'react';
 import type { GameState } from '../types';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo } from '../utils/gameStateSelectors';
+import { impactTier } from '../data/events/helpers';
 
 interface BentoStatsPanelProps {
   gameState: GameState;
@@ -227,6 +228,20 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           </div>
           <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-amber-300">
             {gameState.leetcode} <span className="text-xs font-normal text-amber-500/70">题</span>
+          </div>
+        </div>
+
+        {/* Impact 影响力 — L5+ 高级晋升硬通货 */}
+        <div className="col-span-1 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40">
+          <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              IMPACT 影响力
+            </span>
+            <span className="text-[10px] text-violet-400/80 font-bold">{impactTier(gameState.impact || 0)}</span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-violet-300">
+            {Math.round(gameState.impact || 0)} <span className="text-xs font-normal text-violet-500/70">项目产出</span>
           </div>
         </div>
 

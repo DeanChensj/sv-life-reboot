@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage, addImpact } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 
 export const initializationEvents: Record<string, GameEvent> = {
@@ -1072,7 +1072,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.40 + (s.leetcode >= 70 ? 0.20 : 0) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass 
-            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 20), story_flags: { ...(s.story_flags || {}), hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，老板决定带你去夏威夷参加顶级学术会议！' }
+            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 20), impact: addImpact(s, 15), story_flags: { ...(s.story_flags || {}), hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，老板决定带你去夏威夷参加顶级学术会议！' }
             : { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), leetcode: Math.min(100, s.leetcode + 15), message: '首篇顶会审稿激烈惨遭拒稿，但你摸清了顶会评审偏好并积累了大量实验基准。进入博三博四攻坚！' };
         },
         nextEventId: (s) => (s.story_flags?.hawaii_conf ? 'phd_conference' : 'phd_mid_stage')

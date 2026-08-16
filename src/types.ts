@@ -58,6 +58,7 @@ export interface GameState {
   stocks?: number; // 股票持仓 (万美元)
   health: number; // 0-100
   leetcode: number; // 0-100
+  impact?: number; // 影响力/项目产出 — L5+ 高级晋升的硬通货；主导项目/发 paper 累积，躺平衰减
   visa: VisaStatus;
   tc: number; // 万美元
   max_tc?: number; // 历史最高年薪总包 (峰值 TC, 不受裁员归零影响)

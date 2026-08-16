@@ -1,5 +1,5 @@
 import type { GameEvent, GameState, StoryFlags, NPCState } from '../../types';
-import { h1ToH2Router } from './helpers';
+import { h1ToH2Router, addImpact } from './helpers';
 
 // 有牙的两难抉择 — Dilemma events where BOTH options genuinely hurt, binding
 // emotion / ethics / money together so there is no "always-optimal" answer. These
@@ -98,6 +98,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
             network: Math.max(0, (s.network || 10) - 6),
             charm: Math.max(0, (s.charm || 10) - 1),
             health: Math.max(0, s.health - 4),
+            impact: addImpact(s, 10),
             npcs: { ...(s.npcs || {}), mentor },
             story_flags: { ...seen(s, 'dilemma_credit_grab_mentor'), credit_grabbed: true },
             message: '你在评审会上把关键决策都包装成了自己的功劳，如愿拿下名额。但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。',

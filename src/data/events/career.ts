@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa } from '../../constants/gameConstants';
 
@@ -1399,7 +1399,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const tcIncrease = isL3 ? 3.5 : 6.5;
           const nextLevel = isL3 ? 'L4' : 'L5 (Senior)';
           return win 
-            ? { health: Math.max(0, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, last_promo_age: s.age, message: `卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
+            ? { health: Math.max(0, s.health - 12), tc: s.tc + tcIncrease, level: nextLevel, impact: addImpact(s, isL3 ? 4 : 7), last_promo_age: s.age, message: `卷赢了！你拿到了 EE 绩效，成功晋升至 ${nextLevel}，总包调薪 +${tcIncrease} 万美元！` }
             : { 
                 health: Math.max(0, s.health - 12),
                 npcs: {
@@ -1427,12 +1427,12 @@ export const careerEvents: Record<string, GameEvent> = {
           return (cur === 'L5 (Senior)' || cur === 'L5') && s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30;
         },
         effect: (s) => {
-          // L6 Staff 非常难
-          const winRate = 0.05 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.06;
-          const win = gameRandom() < Math.min(0.18, winRate);
+          // L6 Staff 非常难；impact(影响力/项目产出)是 Staff 晋升的关键杠杆 —— 躺平(低 impact)几乎升不动。
+          const winRate = 0.05 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.06 + ((s.impact || 0) / 100) * 0.22;
+          const win = gameRandom() < Math.min(0.24, winRate);
           return win 
-            ? { level: 'L6 (Staff)', tc: s.tc + 12, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: '奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构与跨团队沟通，打破硅谷天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +12 万美元！' }
-            : { health: Math.max(0, s.health - 15), message: '晋升委员会否决了你的 L6 Staff 申请，认为你在部门影响力与政治 Sponsorship 上仍缺一把火。白卷了一整年。' };
+            ? { level: 'L6 (Staff)', tc: s.tc + 12, health: Math.max(0, s.health - 15), impact: addImpact(s, 8), last_promo_age: s.age, message: '奇迹破局！你在晋升委员会 (Promo Committee) 手撕核心架构与跨团队沟通，打破硅谷天花板顺利晋升为 L6 Staff Engineer！总包 (TC) 暴涨 +12 万美元！' }
+            : { health: Math.max(0, s.health - 15), message: '晋升委员会否决了你的 L6 Staff 申请，认为你在部门影响力 (Impact) 与政治 Sponsorship 上仍缺一把火。白卷了一整年。' };
         },
         // Route on the ACTUAL level change, not message.includes('晋升') — the failure
         // message ("晋升委员会否决…") also contains 晋升, which wrongly triggered the
@@ -1443,16 +1443,16 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【角逐 L7 Senior Staff 资深架构师】统领跨部门级核心技术战略与下一代基建 (L6 升 L7 专属)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return (cur === 'L6 (Staff)' || cur === 'Staff' || cur === 'MTS') && s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45;
+          return (cur === 'L6 (Staff)' || cur === 'Staff' || cur === 'MTS') && s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && (s.impact || 0) >= 45;
         },
-        reqBadge: '需 当前L6 & 算法≥70 & 跨部门统筹与高管背书',
+        reqBadge: '需 当前L6 & 算法≥70 & 影响力≥45 & 跨部门统筹与高管背书',
         costBadge: '消耗健康与高阶政治与战略心智',
         effect: (s) => {
-          const winRate = 0.05 + ((s.charm || 10) / 100) * 0.20 + ((s.network || 10) / 100) * 0.20 + (s.leetcode / 100) * 0.08;
-          // Cap so L7 stays rarer than the capped-0.18 L6 (was uncapped ~32-45%).
-          const win = gameRandom() < Math.min(0.10, winRate);
+          const winRate = 0.05 + ((s.charm || 10) / 100) * 0.20 + ((s.network || 10) / 100) * 0.20 + (s.leetcode / 100) * 0.08 + ((s.impact || 0) / 100) * 0.25;
+          // Cap so L7 stays rarer than the capped-0.24 L6 (was uncapped ~32-45%).
+          const win = gameRandom() < Math.min(0.16, winRate);
           return win 
-            ? { level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: ' 战略封神！你在跨部门架构评审中凭借高层 VP Sponsor 撑腰与无可撼动的技术领导力，正式晋升为 L7 Senior Staff Engineer 资深架构师！总包 (TC) 狂飙 +20 万美元！' }
+            ? { level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), impact: addImpact(s, 10), last_promo_age: s.age, message: ' 战略封神！你在跨部门架构评审中凭借高层 VP Sponsor 撑腰与无可撼动的技术领导力，正式晋升为 L7 Senior Staff Engineer 资深架构师！总包 (TC) 狂飙 +20 万美元！' }
             : { health: Math.max(0, s.health - 15), message: '晋升委员会否决了你的 L7 Senior Staff 申请，认为你在高层政治阵营拉拢与全公司级战略视野上仍需深耕。白卷了一整年。' };
         },
         // Route on the ACTUAL level change (the rejection message also contains 晋升).
@@ -1462,16 +1462,16 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【登顶 L8 Principal 首席架构师】定义行业技术范式与下一代算力/模型标准 (L7 升 L8 终极天堑)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return (cur === 'L7 (Senior Staff)' || cur === 'Senior Staff' || cur === 'L7') && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65;
+          return (cur === 'L7 (Senior Staff)' || cur === 'Senior Staff' || cur === 'L7') && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && (s.impact || 0) >= 80;
         },
-        reqBadge: '需 当前L7 & 算法≥80 & 行业泰斗与战略决策力',
+        reqBadge: '需 当前L7 & 算法≥80 & 影响力≥80 & 行业泰斗与战略决策力',
         costBadge: '消耗健康与终极政治心智',
         effect: (s) => {
-          const winRate = 0.04 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.05;
+          const winRate = 0.04 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.05 + ((s.impact || 0) / 100) * 0.20;
           // Cap so L8 (Principal) stays the rarest band (was uncapped ~24-34%).
-          const win = gameRandom() < Math.min(0.06, winRate);
+          const win = gameRandom() < Math.min(0.11, winRate);
           return win 
-            ? { level: 'L8 (Principal)', tc: s.tc + 35, health: Math.max(0, s.health - 15), last_promo_age: s.age, message: ' 硅谷传世神话！你在董事会闭门答辩中赢得 CEO 与顶级投资人一致肯定，破格受聘为全公司屈指可数的 L8 Principal Engineer 首席架构师/技术院士！年薪总包与期权暴涨 (+$35w TC)！' }
+            ? { level: 'L8 (Principal)', tc: s.tc + 35, health: Math.max(0, s.health - 15), impact: addImpact(s, 12), last_promo_age: s.age, message: ' 硅谷传世神话！你在董事会闭门答辩中赢得 CEO 与顶级投资人一致肯定，破格受聘为全公司屈指可数的 L8 Principal Engineer 首席架构师/技术院士！年薪总包与期权暴涨 (+$35w TC)！' }
             : { health: Math.max(0, s.health - 15), message: 'L8 职级名额受全公司顶层 Quota 严格限制，尽管你的产出极其卓越，但在董事会与高管派系答辩中仍以一票之差抱憾延期。白卷了一整年。' };
         },
         // Route on the ACTUAL level change (harden against the substring bug).
@@ -2018,7 +2018,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '主动约新 Manager 1:1，带上精心准备的 30 页 PPT 汇报展现价值',
-        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), health: Math.max(0, s.health - 10), message: '你的主动与专业打动了新老板，成功保住了原本的项目 Owner 身份！' }),
+        effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), health: Math.max(0, s.health - 10), impact: addImpact(s, 5), message: '你的主动与专业打动了新老板，成功保住了原本的项目 Owner 身份！' }),
         nextEventId: h1ToH2Router
       },
       {
@@ -2054,7 +2054,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵 48 小时手写 Recovery 恢复脚本救回权重',
-        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), message: '凭借硬核的 Infra 恢复脚本，你奇迹般地挽回了 90% 的权重数据，VP 在 Slack 全员频道为你点赞！' }),
+        effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), impact: addImpact(s, 8), message: '凭借硬核的 Infra 恢复脚本，你奇迹般地挽回了 90% 的权重数据，VP 在 Slack 全员频道为你点赞！' }),
         nextEventId: h1ToH2Router
       },
       {
@@ -2075,6 +2075,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 10),
           health: Math.max(0, s.health - 15),
+          impact: addImpact(s, 8),
           story_flags: { ...(s.story_flags || {}), agent_prod_disaster_seen: true },
           message: '凭借硬核的数据库恢复功底，你连夜恢复了绝大部分备份，保住了生产环境！'
         }),
@@ -2101,7 +2102,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '通宵加班重头学习最新 Infra 业务架构',
-        effect: (s) => ({ health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 10), message: '凭着硬核的学习能力，你咬牙掌握了新架构，重新站稳了团队的核心位置！' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 10), impact: addImpact(s, 6), message: '凭着硬核的学习能力，你咬牙掌握了新架构，重新站稳了团队的核心位置！' }),
         nextEventId: h1ToH2Router
       },
       {
@@ -2725,6 +2726,7 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 8),
           network: Math.min(100, (s.network || 0) + 3),
           cash: s.cash + 0.5,
+          impact: addImpact(s, 7),
           message: '【凌晨救火与高管点赞】连灌两罐红牛，在 War Room 排查到凌晨 4 点终于定位到坏配置并修复。虽然周末泡汤、眼圈发黑，但在全组事后复盘邮件中获得了高管点名感谢与特别奖金。'
         }),
         nextEventId: h1ToH2Router
@@ -2758,7 +2760,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【开启 Quiet Quitting 摸鱼】看透大厂零和博弈，准点下班把精力留给自己',
         effect: (s) => ({
           health: Math.min(100, s.health + 8),
-          message: '【拒绝内耗与专注生活】你关掉了下班后的工作通知，准点打卡下班去健身、做饭、睡足 8 小时。既然没有实际加薪，就把精力转化为实打实的身体健康与内心宁静。'
+          impact: addImpact(s, -6),
+          message: '【拒绝内耗与专注生活】你关掉了下班后的工作通知，准点打卡下班去健身、做饭、睡足 8 小时。既然没有实际加薪，就把精力转化为实打实的身体健康与内心宁静，但你的项目影响力 (Impact) 也在悄悄流失。'
         }),
         nextEventId: h1ToH2Router
       },
@@ -2812,6 +2815,7 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 8),
           network: Math.min(100, (s.network || 0) + 3),
           charm: Math.min(25, s.charm + 1),
+          impact: addImpact(s, 5),
           message: '【全球影响力与黑眼圈】早上在被窝里对接伦敦，深夜在书房连线北京。虽然作息紊乱且黑眼圈深重，但你在跨国团队中树立了极强的技术号召力与跨区域影响力。'
         }),
         nextEventId: h1ToH2Router

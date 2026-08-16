@@ -10,6 +10,26 @@ export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 export const hasPartner = (s: GameState): boolean =>
   s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating';
 
+// ── Impact (影响力) — L5+ 高级晋升的硬通货 ─────────────────────────────
+// leetcode 管「进厂/初级/面试」，impact 管「往上爬到 Staff/Principal」。主导项目 / 发 paper /
+// 爆肝冲刺 累积 impact；躺平摸鱼衰减。L5 以后的晋升与高级跳槽看它。可见于 Bento 面板(分档)。
+export const IMPACT_TIERS: { min: number; label: string }[] = [
+  { min: 120, label: '行业传奇' },
+  { min: 80, label: '跨组标杆' },
+  { min: 45, label: '关键先生' },
+  { min: 20, label: '团队中坚' },
+  { min: 0, label: '崭露头角' },
+];
+export const impactTier = (n: number): string => (IMPACT_TIERS.find((t) => (n || 0) >= t.min) || IMPACT_TIERS[IMPACT_TIERS.length - 1]).label;
+
+// 加/减 impact 的安全封装(下限 0，无硬上限但天然被衰减压住)。
+export const addImpact = (s: GameState, delta: number): number => Math.max(0, (s.impact || 0) + delta);
+
+// impact 只对标准大厂/研究/量化阶梯有意义(founder/trader/unemployed 无此概念)。
+export const isImpactCareer = (s: GameState): boolean =>
+  s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' ||
+  s.job_type === 'nvidia' || s.job_type === 'ai_research' || s.job_type === 'quant' || s.job_type === 'cn_tech';
+
 // Stamp a once-per-life「seen」flag AND (optionally) accrue partner_strain — but only
 // when the player actually has a partner to neglect. Used by "career over family" crunch
 // choices so the family-neglect → breakup_crisis causal loop is real, not random. Merges
@@ -127,6 +147,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
     stocks: 0,
     health: 100,
     leetcode: 10,
+    impact: 0,
     visa: '无',
     tc: 0,
     macro_economy: 'neutral',

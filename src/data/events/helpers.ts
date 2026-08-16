@@ -211,6 +211,16 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.job_type === 'startup_founder') {
        // 两难：All-in 冲刺 vs 家庭 (dilemmaEvents.ts)，一局至多一次
        if (hasPartner(s) && !s.story_flags?.dilemma_startup_allin_family_seen && gameRandom() < 0.3) return 'dilemma_startup_allin_family';
+       // 反单调：founder 年份不再永远是同一个决策枢纽——~40% 概率触发创业专属危机剧情
+       // (合伙人撕逼 / VC 跳票 / 断粮 / 黑客松)，其余年份才回到 founder_annual_strategy 战略枢纽。
+       // 写成字面量 return 便于 audit_all_flows.ts 源码扫描确定性识别可达性。
+       if (gameRandom() < 0.4) {
+         const r = gameRandom();
+         if (r < 0.25) return 'founder_co_founder_drama';
+         if (r < 0.50) return 'founder_vc_term_sheet_ghost';
+         if (r < 0.75) return 'founder_runway_cash_crunch';
+         return 'founder_hacker_house_hackathon';
+       }
        return 'founder_annual_strategy';
      }
      if (!isWorking) return 'job_hunt';
@@ -348,7 +358,6 @@ export const midYearEventRouter = (s: GameState): string => {
 
   // Stage H2 (Autumn/Winter: Life, Social, Travel & Lifestyle Events)
   const isCorporate = isWorking && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
-  const isFounder = s.job_type === 'startup_founder';
   const isTrader = s.job_type === 'trader';
 
   // 因果离婚 (T1)：长期以事业压倒家庭累积的 partner_strain 越线，感情危机由「随机」升级为「高概率必来」。
@@ -408,14 +417,8 @@ export const midYearEventRouter = (s: GameState): string => {
       }
   }
 
-  if (isFounder) {
-      lifeEvents.push(
-        'founder_co_founder_drama',
-        'founder_vc_term_sheet_ghost',
-        'founder_runway_cash_crunch',
-        'founder_hacker_house_hackathon'
-      );
-  }
+  // 注：founder 四个专属危机事件已移到 H1 阶段按 ~40% 概率注入（见上方 startup_founder 分支），
+  // 不再埋在 H2 通用生活池里被稀释到 ~0.5%。founder 的 H2 沿用通用生活事件即可。
 
   if (isTrader) {
       lifeEvents.push(

@@ -888,6 +888,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           company: 'cn_big_tech',
           job_type: 'cn_tech',
           level: '资深研发/Tech Lead',
+          last_promo_age: s.age + 2, // 真晋升须打时间戳（与本选项 age+2 一致），与全局 last_promo_age 约定保持一致
           message: '晋升答辩顺利通过！你成功晋升资深研发并拿到丰厚年终奖与股票，两年扣税和生活开销后净攒下 $7w 储蓄！'
         }),
         nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work_late',

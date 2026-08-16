@@ -25,6 +25,20 @@ export const impactTier = (n: number): string => (IMPACT_TIERS.find((t) => (n ||
 // 加/减 impact 的安全封装(下限 0，无硬上限但天然被衰减压住)。
 export const addImpact = (s: GameState, delta: number): number => Math.max(0, (s.impact || 0) + delta);
 
+// 跳槽定级：新人按学历定级；在职者阶梯 +1，但「跳去更高级别」也要看 impact —— 影响力不够
+// 只能平跳(lateral)而非升级。L6 需 impact≥20 / L7≥45 / L8≥80(与内部晋升门槛一致)。
+export const hopTargetLevel = (s: GameState): string => {
+  const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
+  if (isNewHire) return s.is_phd ? 'L4' : 'L3';
+  const ladder = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L8 (Principal)'];
+  const curIdx = ladder.indexOf(s.level || 'L3');
+  if (curIdx < 0) return s.level || 'L3'; // 非标准阶梯(MTS/Quant 等)不变
+  const target = ladder[Math.min(ladder.length - 1, curIdx + 1)];
+  const need: Record<string, number> = { 'L6 (Staff)': 20, 'L7 (Senior Staff)': 45, 'L8 (Principal)': 80 };
+  if (need[target] && (s.impact || 0) < need[target]) return s.level || 'L3'; // impact 不够 → 平跳不升级
+  return target;
+};
+
 // impact 只对标准大厂/研究/量化阶梯有意义(founder/trader/unemployed 无此概念)。
 export const isImpactCareer = (s: GameState): boolean =>
   s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' ||

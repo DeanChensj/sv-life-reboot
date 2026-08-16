@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa } from '../../constants/gameConstants';
 
@@ -27,7 +27,8 @@ export const careerEvents: Record<string, GameEvent> = {
             { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
           ];
 
-          if (newLeet >= 70 || s.is_phd) {
+          // OpenAI/前沿 AI 实验室是高级岗，除算法/PhD 外还看项目影响力 (impact≥30)；躺平者跳不动。
+          if ((newLeet >= 70 || s.is_phd) && (s.impact || 0) >= 30) {
             allPool.push({ id: 'openai', name: 'OpenAI', minLeet: s.macro_economy === 'bull' ? 70 : 75, weight: 0.65 });
           }
 
@@ -339,8 +340,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 Google】降压养老，享受顶尖 WLB、美味食堂与稳健股票',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('google') : s.company !== 'google'),
         effect: (s) => {
-          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
-          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
+          const nextLvl = hopTargetLevel(s); // 阶梯 +1，但升到 L6+ 需足够 impact，否则平跳
           const baseBand = nextLvl === 'L8 (Principal)' ? 120 : nextLvl === 'L7 (Senior Staff)' ? 82 : nextLvl === 'L6 (Staff)' ? 58 : nextLvl === 'L5 (Senior)' ? 42 : nextLvl === 'L4' ? 30 : 22;
           const econMultiplier = s.macro_economy === 'bull' ? 1.15 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
@@ -362,8 +362,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('meta') : s.company !== 'meta'),
         effect: (s) => {
-          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
-          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
+          const nextLvl = hopTargetLevel(s); // 阶梯 +1，但升到 L6+ 需足够 impact，否则平跳
           const baseBand = nextLvl === 'L8 (Principal)' ? 135 : nextLvl === 'L7 (Senior Staff)' ? 92 : nextLvl === 'L6 (Staff)' ? 65 : nextLvl === 'L5 (Senior)' ? 46 : nextLvl === 'L4' ? 34 : 25;
           const econMultiplier = s.macro_economy === 'bull' ? 1.20 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 6, Math.floor(baseBand * econMultiplier));
@@ -387,8 +386,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('nvidia') : s.company !== 'nvidia'),
         effect: (s) => {
           const isBull = s.macro_economy === 'bull' || s.year >= 2023;
-          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
-          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
+          const nextLvl = hopTargetLevel(s); // 阶梯 +1，但升到 L6+ 需足够 impact，否则平跳
           const baseBand = nextLvl === 'L8 (Principal)' ? 130 : nextLvl === 'L7 (Senior Staff)' ? 90 : nextLvl === 'L6 (Staff)' ? 64 : nextLvl === 'L5 (Senior)' ? 45 : nextLvl === 'L4' ? 33 : 24;
           const econMultiplier = isBull ? 1.25 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
           const newTC = Math.max(s.tc + 5, Math.floor(baseBand * econMultiplier));
@@ -412,8 +410,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 TikTok / 字节】接手中美跨时区核心业务，拿顶格全现金包裹',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('tiktok') : s.company !== 'tiktok'),
         effect: (s) => {
-          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
-          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
+          const nextLvl = hopTargetLevel(s); // 阶梯 +1，但升到 L6+ 需足够 impact，否则平跳
           const baseBand = nextLvl === 'L8 (Principal)' ? 140 : nextLvl === 'L7 (Senior Staff)' ? 95 : nextLvl === 'L6 (Staff)' ? 68 : nextLvl === 'L5 (Senior)' ? 48 : nextLvl === 'L4' ? 33 : 24;
           const econMultiplier = s.macro_economy === 'bull' ? 1.18 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
           const newTC = Math.max(s.tc + 6, Math.floor(baseBand * econMultiplier));
@@ -469,8 +466,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【签约入职 Apple】加入库比蒂诺巨头，享受极致稳定性与顶尖硬件生态',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('apple') : s.company !== 'apple'),
         effect: (s) => {
-          const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
-          const nextLvl = isNewHire ? (s.is_phd ? 'L4' : 'L3') : (s.level === 'L3' ? 'L4' : s.level === 'L4' ? 'L5 (Senior)' : s.level === 'L5 (Senior)' ? 'L6 (Staff)' : s.level === 'L6 (Staff)' ? 'L7 (Senior Staff)' : s.level === 'L7 (Senior Staff)' ? 'L8 (Principal)' : s.level);
+          const nextLvl = hopTargetLevel(s); // 阶梯 +1，但升到 L6+ 需足够 impact，否则平跳
           const baseBand = nextLvl === 'L8 (Principal)' ? 125 : nextLvl === 'L7 (Senior Staff)' ? 86 : nextLvl === 'L6 (Staff)' ? 60 : nextLvl === 'L5 (Senior)' ? 44 : nextLvl === 'L4' ? 32 : 24;
           const econMultiplier = s.macro_economy === 'bull' ? 1.15 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 5, Math.floor(baseBand * econMultiplier));
@@ -1038,7 +1034,8 @@ export const careerEvents: Record<string, GameEvent> = {
             { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
           ];
 
-          if (newLeet >= 70 || s.is_phd) {
+          // OpenAI/前沿 AI 实验室是高级岗，除算法/PhD 外还看项目影响力 (impact≥30)；躺平者跳不动。
+          if ((newLeet >= 70 || s.is_phd) && (s.impact || 0) >= 30) {
             allPool.push({ id: 'openai', name: 'OpenAI', minLeet: s.macro_economy === 'bull' ? 70 : 75, weight: 0.65 });
           }
 
@@ -1424,7 +1421,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L5 升 L6 专属高门槛)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return (cur === 'L5 (Senior)' || cur === 'L5') && s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30;
+          return (cur === 'L5 (Senior)' || cur === 'L5') && s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30 && (s.impact || 0) >= 20;
         },
         effect: (s) => {
           // L6 Staff 非常难；impact(影响力/项目产出)是 Staff 晋升的关键杠杆 —— 躺平(低 impact)几乎升不动。

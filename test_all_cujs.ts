@@ -567,6 +567,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(settleMsg({ job_type: 'big_tech', transferred_to_ai: true }).includes('大厂前沿 AI 大模型组'), 'transferred_to_ai -> AI 大模型组 (not 养老大厂)');
   assert(settleMsg({ job_type: 'big_tech', company: 'google' }).includes('养老大厂'), 'plain big_tech -> 养老大厂');
   assert(settleMsg({ job_type: 'cn_tech', company: 'cn_big_tech' }).includes('国内大厂'), 'cn_tech -> 国内大厂');
+  assert(settleMsg({ job_type: 'pm' }).includes('产品经理'), 'pm -> 产品经理 (PM)');
   console.log('✅ CUJ 11 Passed\n');
 }
 
@@ -756,6 +757,48 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(determineEnding(ipoState).id === 'unicorn_founder', 'IPO win produces unicorn_founder ending');
 
   console.log('✅ CUJ 15 Passed\n');
+}
+
+// CUJ 16: Technical Product Manager (PM) Transition, Strategy & Promotion Pipeline
+{
+  console.log('--- [CUJ 16] Technical PM Career Pipeline & Annual Focus ---');
+  const engState: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech',
+    company: 'google',
+    level: 'L5 (Senior)',
+    network: 25,
+    tc: 45,
+    health: 80,
+    cash: 30,
+    stocks: 10,
+    status: 'playing',
+  };
+
+  // 1. Midlife management pivot allows transitioning to Technical PM
+  const pivotEvent = events['midlife_management_pivot'];
+  const pmChoice = pivotEvent.choices.find((c) => c.text.includes('Technical PM') && (!c.condition || c.condition(engState)))!;
+  assert(!!pmChoice, 'midlife_management_pivot has Technical PM transition choice');
+  const pmEff = pmChoice.effect(engState);
+  const { nextState: pmState } = applyStateTransition(engState, pmEff, { eventId: 'midlife_management_pivot' });
+  assert(pmState.job_type === 'pm', 'Player converted to job_type: pm');
+  assert(pmState.level === 'L5 (Senior PM)', 'L5 Senior becomes L5 Senior PM');
+  assert(pmState.tc === 50, 'PM transition awards TC boost');
+
+  // 2. sv_daily_life displays PM dedicated annual focus
+  const dailyLife = events['sv_daily_life'];
+  const okrChoice = dailyLife.choices.find((c) => c.text.includes('OKR 愿景画饼') && (!c.condition || c.condition(pmState)))!;
+  assert(!!okrChoice, 'sv_daily_life provides PM-specific OKR annual focus');
+
+  // 3. PM H1 mid-year router routes to PM event pool
+  const routerEvents = new Set<string>();
+  for (let i = 0; i < 200; i++) {
+    setGameSeed(2000 + i * 13);
+    routerEvents.add(midYearEventRouter(pmState));
+  }
+  assert(routerEvents.has('pm_launch_blame_game') || routerEvents.has('pm_okr_scramble') || routerEvents.has('pm_user_interview_crisis'), 'PM mid-year routes to PM pool');
+
+  console.log('✅ CUJ 16 Passed\n');
 }
 
 console.log(`\n======================================================`);

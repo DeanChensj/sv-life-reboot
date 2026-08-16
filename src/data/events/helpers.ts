@@ -238,6 +238,12 @@ export const midYearEventRouter = (s: GameState): string => {
        if (s.year >= 2024) quantPool.push('ai_disruption_existential');
        return gamePick(quantPool);
      }
+     if (s.job_type === 'pm') {
+       // PM 专属年中事件池：周会甩锅、争取 HC 预算、用户调研翻车等
+       const pmPool = ['pm_launch_blame_game', 'pm_okr_scramble', 'pm_user_interview_crisis', 'perf_review', 'layoff_rumor'];
+       if (s.year >= 2024) pmPool.push('ai_disruption_existential');
+       return gamePick(pmPool);
+     }
 
      // 公司专属年度「标志事件」(companyEvents.ts)：每局至多触发一次，命中前 ~30%/年。
      // 直接 early-return（而非入池），既能精确控制概率，也让它成为该公司路径的年度里程碑；

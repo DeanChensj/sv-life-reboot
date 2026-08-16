@@ -76,6 +76,9 @@ assertDiverse('quant', sampleH1({ job_type: 'quant', company: 'Citadel', level: 
 // ai_research / OpenAI：过去每年必 ai_research_crisis（openai 标志事件为一次性，样本里会被 seen 挡住，故这里不置 flag）
 assertDiverse('ai_research', sampleH1({ job_type: 'ai_research', company: 'OpenAI', level: 'MTS', tc: 75, age: 30, visa: '绿卡', year: 2025 }), 2);
 
+// pm：产品经理 H1 专属池 (甩锅、争取 HC 预算、用户调研等)
+assertDiverse('pm', sampleH1({ job_type: 'pm', company: 'meta', level: 'L5 (Senior PM)', tc: 48, age: 33, visa: '绿卡', year: 2025 }), 2);
+
 // trader / founder：H1 为「年度策略决策枢纽」(单一多选项 hub)，多样性在 H2 主题池 —— 仅校验可达。
 {
   const traderCounts = sampleH1({ job_type: 'trader', company: '全职 Day Trader', level: '全职 Trader', tc: 0, cash: 60, age: 32, visa: '公民', year: 2025 });

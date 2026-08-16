@@ -107,6 +107,7 @@ export const settlementEvents: Record<string, GameEvent> = {
              else if (s.transferred_to_ai) { healthDrain = -8; companyMsg = ' 大厂前沿 AI 大模型组：既享受神仙 WLB，又能接触顶尖架构，收获满满 (健康 +8)。'; }
              else if (s.job_type === 'big_tech') { healthDrain = -10; companyMsg = ' 养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
              else if (s.job_type === 'cn_tech' || s.company === 'cn_big_tech') { healthDrain = 6; companyMsg = ' 国内大厂的高强度业务开发消耗了精力 (健康 -6)。'; }
+             else if (s.job_type === 'pm') { healthDrain = 2; companyMsg = ' 作为产品经理 (PM)，周旋于跨部门撕扯与 OKR 对齐汇报让你心神略有消耗 (健康 -2)。'; }
              else { healthDrain = -6; companyMsg = ' 充沛的带薪年假与规律作息让你的体力得到恢复 (健康 +6)。'; }
            } else {
              healthDrain = -15;
@@ -132,7 +133,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               const isPhd = s.is_phd;
               // Big-tech-tier sponsors for PERM (better green-card odds). Include AI labs,
               // quant, and TikTok-by-company (which is stored job_type:'big_tech' anyway).
-              const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia' || s.job_type === 'ai_research' || s.job_type === 'quant' || s.company === 'tiktok';
+              const isBigTech = s.job_type === 'big_tech' || s.job_type === 'pm' || s.job_type === 'amazon' || s.job_type === 'nvidia' || s.job_type === 'ai_research' || s.job_type === 'quant' || s.company === 'tiktok';
 
               if (!s.job_type || s.job_type === 'unemployed' || s.laid_off) {
                  if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {

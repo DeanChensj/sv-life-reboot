@@ -308,10 +308,14 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
 
       {
-        text: '直接找工作 (开始受苦)',
+        text: '直接找工作 (开启大厂校招与社招海投)',
         // (Removed a dead `year === 2020` pandemic branch: year is frozen during
         // school so it could never fire. Graduation now cleanly activates OPT.)
-        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', leetcode: s.leetcode + 10, message: '你开始了漫漫求职路...' }),
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
+          leetcode: s.leetcode + 10,
+          message: '【本科毕业】顺利斩获世界名校学士学位并激活 OPT 实习签证！你带着满满的干劲投身硅谷大厂校招求职！'
+        }),
         nextEventId: (s) => s.visa === 'F1 (学生)' ? 'us_undergrad_grad' : 'job_hunt',
       },
       {
@@ -754,8 +758,13 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
 
       {
-        text: '海投简历，疯狂刷题',
-        effect: (s) => ({ visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', health: s.health - 10, leetcode: s.leetcode + 12 }),
+        text: '【硅谷大厂秋招】海投简历，疯狂刷题备战 Onsite',
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
+          health: s.health - 8,
+          leetcode: s.leetcode + 12,
+          message: '【硕士毕业】顺利斩获计算机硕士学位并激活 OPT 实习签证！你带着扎实的算法与工程背景，全力备战硅谷大厂秋招求职季！'
+        }),
         nextEventId: 'job_hunt',
       },
       {

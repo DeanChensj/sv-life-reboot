@@ -126,6 +126,22 @@ export function applyStateTransition(
     newState.job_start_age = newState.age;
   }
 
+  // Founder stage/stipend sync (monotonic, up-only): keep founder_stage and the founder
+  // stipend (tc) consistent with company_valuation, so growth via PMF / PR / hiring — not
+  // only funding rounds — advances the company and pays the founder. Without this a founder
+  // could inflate valuation to $600w+ while stuck at 'pre_seed' tc 6, slowly bleeding to
+  // bankruptcy despite building a valuable company. Never downgrades (protects down-rounds).
+  if (newState.job_type === 'startup_founder' && !newState.laid_off) {
+    const STAGES = ['pre_seed', 'seed', 'series_a', 'series_b', 'exit'] as const;
+    const STIPEND = [6, 10, 16, 24, 30];
+    const val = newState.company_valuation || 0;
+    const derivedIdx = val >= 15000 ? 4 : val >= 7500 ? 3 : val >= 2200 ? 2 : val >= 600 ? 1 : 0;
+    const curIdx = Math.max(0, STAGES.indexOf(newState.founder_stage ?? 'pre_seed'));
+    const idx = Math.max(curIdx, derivedIdx);
+    newState.founder_stage = STAGES[idx];
+    newState.tc = Math.max(newState.tc || 0, STIPEND[idx]);
+  }
+
   // Track the all-time peak TC (BEFORE any layoff can zero it out for the year) so
   // the war report / HUD "峰值总包" is a true peak, not the current (possibly $0) TC.
   newState.max_tc = Math.max(newState.max_tc || 0, prevState.tc || 0, newState.tc || 0);

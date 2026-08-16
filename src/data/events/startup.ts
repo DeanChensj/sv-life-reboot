@@ -58,45 +58,49 @@ export const startupEvents: Record<string, GameEvent> = {
 
           if (pass) {
             if (stage === 'pre_seed') {
+              const newVal = Math.max((s.company_valuation || 0) + 400, 600);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'seed',
-                company_valuation: 600,
+                company_valuation: newVal,
                 cash: parseFloat((s.cash + 4).toFixed(1)),
                 tc: 10,
                 health: Math.max(0, s.health - 4),
-                message: '【种子轮领投】凭借扎实的原型 Demo，顶级天使基金领投 $100w 支票（估值 $600w）！公司获得 18 个月跑道，创始人津贴调升至 $10w！'
+                message: `【种子轮领投】凭借扎实的原型 Demo，顶级天使基金领投 $100w 支票（估值 $${newVal}w）！公司获得 18 个月跑道，创始人津贴调升至 $10w！`
               };
             } else if (stage === 'seed') {
+              const newVal = Math.max((s.company_valuation || 0) + 1600, 2200);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'series_a',
-                company_valuation: 2200,
+                company_valuation: newVal,
                 cash: parseFloat((s.cash + 8).toFixed(1)),
                 tc: 16,
                 health: Math.max(0, s.health - 6),
-                message: '【突破 A 轮死亡谷】经过残酷的 Series A 筛选，一线 VC 领投 $350w（估值 $2200w）！公司完成 PMF 突破，创始人津贴提升至 $16w！'
+                message: `【突破 A 轮死亡谷】经过残酷的 Series A 筛选，一线 VC 领投 $350w（估值 $${newVal}w）！公司完成 PMF 突破，创始人津贴提升至 $16w！`
               };
             } else if (stage === 'series_a') {
+              const newVal = Math.max((s.company_valuation || 0) + 5000, 7500);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'series_b',
-                company_valuation: 7500,
+                company_valuation: newVal,
                 cash: parseFloat((s.cash + 18).toFixed(1)),
                 tc: 24,
                 health: Math.max(0, s.health - 8),
-                message: '【B 轮超级融资】红杉与 A16Z 联合领投，公司估值冲上 $7500w 美元！ARR 突破 $800w，准独角兽地位确立！'
+                message: `【B 轮超级融资】红杉与 A16Z 联合领投，公司估值冲上 $${newVal}w 美元！ARR 突破 $800w，准独角兽地位确立！`
               };
             } else {
               // series_b (or already at exit): advance to exit; never DROP valuation.
+              const newVal = Math.max((s.company_valuation || 0) + 7500, 15000);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'exit',
-                company_valuation: Math.max(s.company_valuation || 15000, 15000),
+                company_valuation: newVal,
                 cash: parseFloat((s.cash + 30).toFixed(1)),
                 tc: 30,
                 health: Math.max(0, s.health - 8),
-                message: '【终局轮/Pre-IPO】主权基金与顶级 Crossover 基金入场，公司估值突破 $1.5亿+，独角兽地位坐实，只待敲钟或并购！'
+                message: `【终局轮/Pre-IPO】主权基金与顶级 Crossover 基金入场，公司估值突破 $${newVal}w，独角兽地位坐实，只待敲钟或并购！`
               };
             }
           } else {
@@ -112,12 +116,14 @@ export const startupEvents: Record<string, GameEvent> = {
             }
             const isDownRound = gameRandom() < 0.35;
             if (isDownRound) {
+              const currentVal = s.company_valuation || 180;
+              const reducedVal = Math.max(100, Math.round(currentVal * 0.85));
               return {
                 mid_year: true, season_stage: 'h1',
                 cash: Math.max(0, parseFloat((s.cash - 2).toFixed(1))),
-                company_valuation: Math.max(100, (s.company_valuation || 180) - 100),
+                company_valuation: reducedVal,
                 health: Math.max(0, s.health - 12),
-                message: '【估值倒挂 (Down Round)】资本寒冬下 VC 极度挑剔，只肯给折价过桥贷款，严苛的对赌协议让你彻夜难眠。'
+                message: `【估值倒挂 (Down Round)】资本寒冬下 VC 极度挑剔，只肯给折价过桥贷款（估值折让至 $${reducedVal}w），严苛的对赌协议让你彻夜难眠。`
               };
             } else {
               return {

@@ -135,7 +135,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       },
       {
         text: '感觉人生一眼望到头，卖房去创业！(要求 100 万现金)',
-        condition: (s) => s.cash >= 100,
+        condition: (s) => s.cash >= 100 && s.job_type !== 'startup_founder',
         // Selling ADDS home equity (was subtracting $50w while keeping the house).
         // Actually liquidate the home and start the FOUNDER path (not the employee event).
         effect: (s) => ({ cash: s.cash + 35, has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: Math.max(0, (s.rental_income || 0) - 1.5), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 500, tc: 6, level: undefined, company: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),

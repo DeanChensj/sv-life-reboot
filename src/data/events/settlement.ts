@@ -432,7 +432,7 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 200,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 200 && s.job_type !== 'startup_founder',
         // Start the actual FOUNDER flow (founder_annual_strategy) with proper founder
         // state — was routing into the rank-and-file employee `startup_work` event,
         // which could dump a brand-new founder into 'unemployed'.
@@ -449,6 +449,18 @@ export const settlementEvents: Record<string, GameEvent> = {
           laid_off: false,
           health: Math.min(100, s.health + 10),
           message: '【创办独角兽】你拿着充裕的启动资金辞职创业，正式成立 AI Agent 独角兽公司，开启传奇创始人之路！'
+        }),
+        nextEventId: 'founder_annual_strategy',
+      },
+      {
+        text: '【继续领航 · 冲刺 AI 独角兽上市敲钟】带领现有初创团队全力以赴，直指独角兽敲钟上市！',
+        condition: (s) => s.job_type === 'startup_founder',
+        effect: (s) => ({
+          has_reached_initial_fire: true,
+          win_threshold: 1500,
+          fire_tier: 'luxury',
+          health: Math.min(100, s.health + 15),
+          message: '【初心不改】你没有因为账户达到财务自由而停下脚步，继续作为 CEO 带领团队向着百亿独角兽与纳斯达克敲钟全力冲刺！'
         }),
         nextEventId: 'founder_annual_strategy',
       }

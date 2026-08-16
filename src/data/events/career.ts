@@ -249,7 +249,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup (需美籍/绿卡/O1 或 现金>=45w)',
         reqBadge: '需美籍/绿卡/O1或现金>=45w',
-        condition: (s) => (s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45,
+        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'startup_founder',
         effect: (s) => {
           const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
           return {

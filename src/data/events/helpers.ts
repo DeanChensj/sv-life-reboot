@@ -165,7 +165,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
 // Weaves in 1-2 random events before year-end settlement.
 export const midYearEventRouter = (s: GameState): string => {
   const isWorking = Boolean(s.job_type && s.job_type !== 'unemployed' && !s.laid_off);
-  const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' || s.job_type === 'nvidia';
+  const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia' || s.company === 'tiktok' || s.company === 'nvidia' || s.company === 'google' || s.company === 'meta' || s.company === 'apple';
 
   // --- 0. 优先消费长线因果剧情链 (Priority Narrative Arcs) ---
   // 1) Alex 博士剧情链：Series A 创业合伙人/天使邀请

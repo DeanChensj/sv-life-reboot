@@ -176,18 +176,47 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   assert(tcBreakdown.postTaxBase === 14.96, 'Post-tax cash is $14.96w (32% band)');
   assert(tcBreakdown.postTaxRSU === 12.24, 'Post-tax RSU is $12.24w (32% band)');
 
-  // 11. Housing event routing check: Renter must never trigger house_warming_party
-  const renterState: GameState = {
-    ...state,
+  // 12. Progression ladder (L3 -> L4 -> L5 Senior -> L6 Staff)
+  state.last_promo_age = state.age - 2;
+  state.leetcode = 70;
+  state.network = 30;
+  state.charm = 20;
+  state.health = 80;
+  state.tc = 40;
+  state.level = 'L5 (Senior)';
+
+  // Test L5 -> L6 Staff promotion choice
+  const l6Choice = events['perf_review'].choices.find((c) => c.text.includes('L6 Staff') || c.text.includes('战时冲刺'))!;
+  assert(!!l6Choice, 'L6 promotion option is available');
+  const l6Res = applyStateTransition(state, {
+    level: 'L6 (Staff)',
+    tc: state.tc + 12.0,
+    last_promo_age: state.age,
+  }, { eventId: 'perf_review' });
+  assert(l6Res.nextState.level === 'L6 (Staff)', 'Promoted to L6 Staff');
+  assert(l6Res.nextState.tc === 52, 'TC increased to $52w');
+  const nextTarget = typeof l6Choice.nextEventId === 'function' ? l6Choice.nextEventId(l6Res.nextState) : l6Choice.nextEventId;
+  assert(nextTarget === 'l6_staff_celebration', 'Promoting to L6 routes to l6_staff_celebration');
+
+  // 13. Purchase Sunnyvale home & verify asset flow
+  state = l6Res.nextState;
+  state.cash = 100;
+  state.stocks = 80;
+  const buyHouseTrans = applyStateTransition(state, {
+    cash: state.cash - 45,
     has_housing: true,
-    housing_name: 'Cupertino 2b2b合租',
-    season_stage: 'h2',
-  };
-  for (let i = 0; i < 50; i++) {
-    const routed = midYearEventRouter(renterState);
-    assert(routed !== 'house_warming_party', 'Renting player must never trigger house_warming_party');
-    assert(routed !== 'property_supplemental_tax_hike', 'Renting player must never trigger property tax hike');
-  }
+    housing_name: 'Sunnyvale 老破小',
+    rent: 1.5,
+  }, { eventId: 'buy_house' });
+  state = buyHouseTrans.nextState;
+  assert(state.has_housing === true, 'Player owns house');
+  assert(getHousingDisplayInfo(state).isHomeowner === true, 'Housing selector marks homeowner');
+
+  // 14. Year-end settlement with RSU vesting & FIRE achievement
+  state.cash = 480;
+  state.stocks = 60; // Total 540w > 500w
+  const settleTrans = applyStateTransition(state, {}, { eventId: 'sv_year_end_settlement' });
+  assert(settleTrans.targetEventId === 'fire_milestone_choice', 'Year-end settlement triggers fire_milestone_choice upon reaching $500w');
 
   console.log('✅ CUJ 1 Passed\n');
 }

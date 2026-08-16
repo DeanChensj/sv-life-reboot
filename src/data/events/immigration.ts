@@ -165,13 +165,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 20 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ cash: s.cash - 20, health: Math.min(100, s.health + 30), leetcode: Math.max(0, s.leetcode - 10), imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
         nextEventId: 'sv_year_end_settlement',
-      },
-      {
-        text: '【绿卡/公民免检】出示美国护照/绿卡，免除检查直接入境',
-        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
-        effect: () => ({ message: '海关人员核验了你的永久居民/公民身份，热情祝你生活愉快！' }),
-        nextEventId: 'sv_year_end_settlement',
       }
+      // 移除了原「绿卡/公民免检」死选项：visa_check 仅在临时签证时注入 (helpers.ts: !isPermanentVisa)，
+      // 绿卡/公民永远进不到此事件，该选项恒不可选，属死码。
     ]
   },
 

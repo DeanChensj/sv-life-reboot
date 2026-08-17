@@ -217,36 +217,39 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
         {/* 3. Core Visible Stats (LeetCode & Health) */}
         
-        {/* LeetCode */}
-        <div className="col-span-1 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40">
-          <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-              LEETCODE 算法
-            </span>
-            <span className="text-[10px] text-amber-400/80 font-bold">{gameState.leetcode >= 80 ? '神仙' : gameState.leetcode >= 40 ? '熟练' : '入门'}</span>
+        {/* LeetCode — quarter width so it shares one row with Impact + Health. Label kept
+            short (icon + 算法) with the tier under the number, so nothing wraps at 1/4 width. */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40">
+          <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
+            <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            算法
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-amber-300">
-            {gameState.leetcode} <span className="text-xs font-normal text-amber-500/70">题</span>
-          </div>
-        </div>
-
-        {/* Impact 影响力 — L5+ 高级晋升硬通货 */}
-        <div className="col-span-1 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40">
-          <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              IMPACT 影响力
-            </span>
-            <span className="text-[10px] text-violet-400/80 font-bold">{impactTier(gameState.impact || 0)}</span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-violet-300">
-            {Math.round(gameState.impact || 0)} <span className="text-xs font-normal text-violet-500/70">项目产出</span>
+          <div>
+            <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-amber-300">
+              {gameState.leetcode} <span className="text-xs font-normal text-amber-500/70">题</span>
+            </div>
+            <div className="text-[10px] text-amber-400/80 font-bold mt-0.5">{gameState.leetcode >= 80 ? '神仙' : gameState.leetcode >= 40 ? '熟练' : '入门'}</div>
           </div>
         </div>
 
-        {/* Health 健康状态 */}
-        <div className="col-span-1 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl transition-all duration-300 hover:border-zinc-700/80">
+        {/* Impact 影响力 — L5+ 高级晋升硬通货 (quarter width). Short label + tier under the
+            number so it doesn't wrap at 1/4 width. */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40">
+          <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
+            <svg className="w-3.5 h-3.5 text-violet-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            影响力
+          </div>
+          <div>
+            <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-violet-300">
+              {Math.round(gameState.impact || 0)} <span className="text-xs font-normal text-violet-500/70">产出</span>
+            </div>
+            <div className="text-[10px] text-violet-400/80 font-bold mt-0.5">{impactTier(gameState.impact || 0)}</div>
+          </div>
+        </div>
+
+        {/* Health 健康状态 — fills the rest of the LeetCode/Impact row (half width on desktop,
+            full width on mobile) so the four identity badges below still form one tidy row. */}
+        <div className="col-span-2 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl transition-all duration-300 hover:border-zinc-700/80">
           <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>

@@ -25,17 +25,48 @@ export const impactTier = (n: number): string => (IMPACT_TIERS.find((t) => (n ||
 // 加/减 impact 的安全封装(下限 0，无硬上限但天然被衰减压住)。
 export const addImpact = (s: GameState, delta: number): number => Math.max(0, (s.impact || 0) + delta);
 
-// 跳槽定级：新人按学历定级；在职者阶梯 +1，但「跳去更高级别」也要看 impact —— 影响力不够
-// 只能平跳(lateral)而非升级。L6 需 impact≥20 / L7≥45 / L8≥80(与内部晋升门槛一致)。
+// 跳槽与社招定级：
+// 1. 无职级萌新/应届生按学历定级 (本科/硕士 L3, PhD L4)；
+// 2. 非标准职级映射 (OpenAI MTS 对应 L6 Staff/L5 Senior, Quant 对应 L6/L5, Founder 对应 L7/L6/L5)；
+// 3. 被裁员失业的资深工程师社招再就业时平级录用 (Lateral)，保留其多年打拼积累的资历与职级；
+// 4. 在职跳槽者阶梯 +1，但升至 L6+ 需对应 impact (L6>=20, L7>=45, L8>=80)，否则平跳。
 export const hopTargetLevel = (s: GameState): string => {
-  const isNewHire = !s.level || s.job_type === 'unemployed' || !s.job_type;
-  if (isNewHire) return s.is_phd ? 'L4' : 'L3';
   const ladder = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L8 (Principal)'];
-  const curIdx = ladder.indexOf(s.level || 'L3');
-  if (curIdx < 0) return s.level || 'L3'; // 非标准阶梯(MTS/Quant 等)不变
+  
+  // 1. 纯应届生/无往期职级记录
+  if (!s.level || s.level === '待业' || (!s.job_start_age && s.level === '初级研发')) {
+    return s.is_phd ? 'L4' : 'L3';
+  }
+
+  // 2. 非标准职级对标转换
+  let baseLevel = s.level;
+  if (baseLevel === 'MTS') {
+    // OpenAI Member of Technical Staff (MTS) 对标大厂 L6 Staff (若 TC>=60 或 impact>=20) 或 L5 Senior
+    baseLevel = (s.tc >= 60 || (s.impact || 0) >= 20) ? 'L6 (Staff)' : 'L5 (Senior)';
+  } else if (baseLevel === 'Quant') {
+    baseLevel = (s.tc >= 60 || (s.impact || 0) >= 20) ? 'L6 (Staff)' : 'L5 (Senior)';
+  } else if (baseLevel === 'CEO & Founder' || baseLevel === 'CTO & Co-Founder') {
+    baseLevel = (s.impact || 0) >= 45 ? 'L7 (Senior Staff)' : (s.impact || 0) >= 20 ? 'L6 (Staff)' : 'L5 (Senior)';
+  } else if (baseLevel === '资深研发/Tech Lead') {
+    baseLevel = 'L5 (Senior)';
+  } else if (baseLevel === '国内研发' || baseLevel === '初级研发') {
+    baseLevel = (s.age - (s.job_start_age || s.age)) >= 2 ? 'L4' : 'L3';
+  }
+
+  const curIdx = ladder.indexOf(baseLevel);
+  if (curIdx < 0) return 'L5 (Senior)';
+
+  // 3. 被裁员/待业状态的社招资深员工：平级录用 (Lateral hire)，绝不降级至应届 L3
+  if (s.laid_off || s.job_type === 'unemployed') {
+    return ladder[curIdx];
+  }
+
+  // 4. 在职主动跳槽：尝试阶梯 +1，若 impact 不足则平跳 (Lateral)
   const target = ladder[Math.min(ladder.length - 1, curIdx + 1)];
   const need: Record<string, number> = { 'L6 (Staff)': 20, 'L7 (Senior Staff)': 45, 'L8 (Principal)': 80 };
-  if (need[target] && (s.impact || 0) < need[target]) return s.level || 'L3'; // impact 不够 → 平跳不升级
+  if (need[target] && (s.impact || 0) < need[target]) {
+    return ladder[curIdx];
+  }
   return target;
 };
 

@@ -297,14 +297,19 @@ export const settlementEvents: Record<string, GameEvent> = {
             }
 
            const newNetWorth = finalCash + currentStocks;
+           // Round components first, then derive the logged netWorth from them so the
+           // logged cash + stocks always equals the logged netWorth (independent rounding
+           // otherwise lets them disagree by up to 0.1w on the chart).
+           const roundedCash = parseFloat(finalCash.toFixed(1));
+           const roundedStocks = parseFloat(currentStocks.toFixed(1));
             const newHistory = [
               ...(s.history_net_worth || []),
               {
                 age: s.age,
                 year: s.year,
-                netWorth: parseFloat(newNetWorth.toFixed(1)),
-                cash: parseFloat(finalCash.toFixed(1)),
-                stocks: parseFloat(currentStocks.toFixed(1))
+                netWorth: parseFloat((roundedCash + roundedStocks).toFixed(1)),
+                cash: roundedCash,
+                stocks: roundedStocks
               }
             ];
 

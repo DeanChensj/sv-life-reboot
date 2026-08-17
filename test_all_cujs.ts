@@ -821,6 +821,49 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 16 Passed\n');
 }
 
+// CUJ 17: Give-up / departure exit-path classification (regression for exit-path audit)
+{
+  console.log('--- [CUJ 17] Give-up & departure exit-path classification ---');
+  const findChoice = (text: string) => {
+    for (const ev of Object.values(events)) {
+      const c = (ev.choices || []).find((ch) => ch.text.includes(text));
+      if (c) return c;
+    }
+    return undefined;
+  };
+
+  // 1. 大理躺平 give-up must be a CONTENT ending, not a fire_basic FIRE triumph.
+  //    Temp-visa holder leaving for 大理 → 海归/homecoming (previously unreachable ending).
+  const dali = findChoice('回大理');
+  assert(!!dali, '大理躺平 choice exists');
+  const daliBase = { ...generateInitialState(), cash: 8, stocks: 0, health: 90, visa: 'H1B (工签)' } as GameState;
+  const { nextState: daliState } = applyStateTransition(daliBase, dali!.effect(daliBase), { eventId: 'sv_daily_life' });
+  assert(daliState.status === 'retired', '大理躺平 sets status retired (not win)');
+  const daliEnd = determineEnding(daliState);
+  assert(daliEnd.tone === 'content', `大理躺平 yields a content ending, not a FIRE triumph (got ${daliEnd.id})`);
+  assert(daliEnd.id === 'homecoming', `Temp-visa 大理躺平 -> 海归 homecoming (got ${daliEnd.id})`);
+  // Permanent resident keeps status (middleware protects 绿卡) → not homecoming.
+  const daliPerm = { ...generateInitialState(), cash: 8, stocks: 0, health: 90, visa: '绿卡' } as GameState;
+  const { nextState: daliPermState } = applyStateTransition(daliPerm, dali!.effect(daliPerm), { eventId: 'sv_daily_life' });
+  assert(daliPermState.visa === '绿卡', '大理躺平 does NOT downgrade a green card (middleware protected)');
+
+  // 2. Temp-visa 放弃求职 forced departure must classify as 'deported' (message keyword).
+  const quit = findChoice('放弃求职');
+  assert(!!quit, '放弃求职 choice exists');
+  const quitBase = { ...generateInitialState(), visa: 'H1B (工签)', cash: 10, stocks: 0 } as GameState;
+  const quitEff = quit!.effect(quitBase);
+  assert(quitEff.status === 'game_over', '放弃求职 (temp visa) is game_over');
+  assert(determineEnding({ ...quitBase, ...quitEff } as GameState).id === 'deported', 'temp-visa 放弃求职 -> deported (not generic/bankruptcy)');
+
+  // 3. Founder burnout death -> burnout card, not startup_ruin (endings priority order).
+  assert(
+    determineEnding({ ...generateInitialState(), status: 'game_over', health: 0, cash: 5, stocks: 0, job_type: 'startup_founder' } as GameState).id === 'burnout',
+    'Founder who dies of burnout (health 0) -> burnout, not startup_ruin'
+  );
+
+  console.log('✅ CUJ 17 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

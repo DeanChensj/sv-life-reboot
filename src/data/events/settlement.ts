@@ -1,7 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
-import { HOUSING_NAMES, isOwnedHousing } from '../../constants/gameConstants';
+import { HOUSING_NAMES, isOwnedHousing, liquidateStocksToCover } from '../../constants/gameConstants';
 
 export const settlementEvents: Record<string, GameEvent> = {
   'sv_year_end_settlement': {
@@ -78,18 +78,12 @@ export const settlementEvents: Record<string, GameEvent> = {
                : 0;
              const spouseMsg = spouseIncome > 0 ? ` 【双职工家庭】配偶本年度税后收入贡献 +$${spouseIncome.toFixed(1)}w！` : '';
              const netIncome = postTaxBase + rentalIncome + spouseIncome - totalExpense;
-           let finalCash = s.cash + netIncome;
-           let autoStockSellMsg = '';
-
-           if (finalCash < 0 && currentStocks > 0) {
-             const deficit = Math.abs(finalCash);
-             const sellAmt = Math.min(currentStocks, deficit);
-             currentStocks -= sellAmt;
-             finalCash += sellAmt;
-             if (sellAmt > 0) {
-               autoStockSellMsg = ` 【股票自动变现】因现金流不足结清账单，系统已自动卖出 $${sellAmt.toFixed(1)}w 股票持仓抵扣房租与生活支出！`;
-             }
-           }
+           const liq = liquidateStocksToCover(s.cash + netIncome, currentStocks);
+           const finalCash = liq.cash;
+           currentStocks = liq.stocks;
+           const autoStockSellMsg = liq.sold > 0
+             ? ` 【股票自动变现】因现金流不足结清账单，系统已自动卖出 $${liq.sold.toFixed(1)}w 股票持仓抵扣房租与生活支出！`
+             : '';
 
            let healthDrain = 0;
            let companyMsg = '';

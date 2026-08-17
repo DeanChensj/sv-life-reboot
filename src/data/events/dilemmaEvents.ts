@@ -4,7 +4,7 @@ import { h1ToH2Router, addImpact } from './helpers';
 // 有牙的两难抉择 — Dilemma events where BOTH options genuinely hurt, binding
 // emotion / ethics / money together so there is no "always-optimal" answer. These
 // dramatize mechanics that already exist in the engine (green-card PERM reset on
-// job-hop, partner_strain → breakup_crisis, NPC affinity) into explicit choices.
+// job-hop, partner_strain → breakup_crisis, NPC arcs) into explicit choices.
 // Each is once-per-life (story_flags.<id>_seen), injected from midYearEventRouter.
 // Rules: single-choice health loss <= 15; charm capped; no money printers; route on
 // STATE via h1ToH2Router; every event has an available choice (no dead-ends).
@@ -92,7 +92,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
         effect: (s): Partial<GameState> => {
           const mentor: NPCState = s.npcs?.mentor
             ? { ...s.npcs.mentor, status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' }
-            : { name: '老 Mentor', role: 'mentor', affinity: 10, status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' };
+            : { name: '老 Mentor', role: 'mentor', status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' };
           return {
             tc: s.tc + 5,
             network: Math.max(0, (s.network || 10) - 6),
@@ -111,7 +111,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
         effect: (s): Partial<GameState> => {
           const mentor: NPCState = s.npcs?.mentor
             ? { ...s.npcs.mentor, status: 'ally', note: '因你知恩图报而成为坚实盟友的老恩师' }
-            : { name: '老 Mentor', role: 'mentor', affinity: 80, status: 'ally', note: '因你知恩图报而成为坚实盟友的老恩师' };
+            : { name: '老 Mentor', role: 'mentor', status: 'ally', note: '因你知恩图报而成为坚实盟友的老恩师' };
           return {
             network: Math.min(100, (s.network || 10) + 8),
             charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),

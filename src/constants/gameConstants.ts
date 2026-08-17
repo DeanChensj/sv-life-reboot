@@ -70,6 +70,20 @@ export const isPermanentVisa = (visa?: string): boolean => {
   return Boolean(visa && PERMANENT_VISAS.has(visa));
 };
 
+// Single source of truth for the "sell stocks to cover a cash shortfall" math.
+// Two layers call it: the year-end settlement (to build its own flavored message
+// and net-worth history BEFORE returning) and the post-effect middleware (the
+// general invariant net for one-off purchases). Both keep their own message copy;
+// only the arithmetic lives here so it can't drift between the two.
+export const liquidateStocksToCover = (
+  cash: number,
+  stocks: number,
+): { cash: number; stocks: number; sold: number } => {
+  if (cash >= 0 || stocks <= 0) return { cash, stocks, sold: 0 };
+  const sold = Math.min(stocks, Math.abs(cash));
+  return { cash: cash + sold, stocks: stocks - sold, sold };
+};
+
 export const COMPANY_PRESETS = {
   GOOGLE: 'google',
   META: 'meta',

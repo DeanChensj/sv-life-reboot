@@ -7,7 +7,6 @@ export type RelationshipStatus = 'single' | 'matched' | 'dating' | 'married';
 export interface NPCState {
   name: string;
   role: 'mentor' | 'manager' | 'co_founder' | 'founder' | 'friend';
-  affinity: number; // 好感度/信任度 0-100
   status: 'active' | 'departed' | 'nemesis' | 'ally'; // 活跃/离职/宿敌/坚实盟友
   company?: string;
   note?: string;
@@ -108,8 +107,6 @@ export interface GameState {
   status: 'playing' | 'game_over' | 'win' | 'retired'; // retired = 自然终老/寿命结算 (neutral ending)
   message: string;
   trait_title?: string;
-  trait_desc?: string;
-  cpt_used?: boolean;
   l1_relocated?: boolean;
   mid_year?: boolean;
   difficulty_title?: string;
@@ -120,7 +117,7 @@ export interface GameState {
   transferred_to_ai?: boolean; // 是否已内部转岗至前沿大模型组
   last_limited_opp_year?: number; // 记录上一次参与湾区限时机会的年份 (防同一年度重复点击)
   npcs?: Record<string, NPCState>; // 具名长线 NPC 关系网
-  hop_applied_count?: number; // 当年投递面试的目标公司总数
+  hop_applied_count?: number; // 当年投递面试的目标公司总数 (蒙特卡洛平衡门禁读取,用于跳槽面试通过率)
   hop_offers?: string[]; // 当年斩获的社招 Offer 列表 (['google', 'meta', etc.])
   story_flags?: StoryFlags; // 跨多回合长线因果伏笔追踪器
   timeline?: TimelineRecord[]; // 历年生涯大事记

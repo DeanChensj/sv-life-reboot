@@ -325,7 +325,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '再读一个水硕维持身份 (Day 1 CPT) - (消耗 $5w)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)' && s.cash >= 5,
-        effect: (s) => ({ visa: 'Day 1 CPT', cpt_used: true, cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
+        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
         nextEventId: 'job_hunt',
       }
     ]
@@ -1401,7 +1401,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 health: Math.max(0, s.health - 12),
                 npcs: {
                   ...(s.npcs || {}),
-                  dave: s.npcs?.dave || { name: 'Manager Dave', role: 'manager', affinity: 30, status: 'nemesis', note: '抢占你项目功劳的经理' }
+                  dave: s.npcs?.dave || { name: 'Manager Dave', role: 'manager', status: 'nemesis', note: '抢占你项目功劳的经理' }
                 },
                 story_flags: {
                   ...(s.story_flags || {}),
@@ -1590,7 +1590,6 @@ export const careerEvents: Record<string, GameEvent> = {
           laid_off: true,
           tc: 0,
           job_type: 'unemployed',
-          cpt_used: true,
           leetcode: s.leetcode + 15,
           health: Math.min(100, s.health + 5),
           message: '【无缝转 Day 1 CPT】面对 OPT 失业期倒计时，你果断注册了 Day 1 CPT 大学维持合法留美学生身份，从容全职刷题准备下一轮跳槽面试！'
@@ -1633,7 +1632,6 @@ export const careerEvents: Record<string, GameEvent> = {
           laid_off: true,
           tc: 0,
           job_type: 'unemployed',
-          cpt_used: true,
           leetcode: s.leetcode + 15,
           message: '你将身份转为 Day 1 CPT 维持合法停留，解除 60 天遣返倒计时，开始全职闭关刷题！'
         }),
@@ -1687,7 +1685,7 @@ export const careerEvents: Record<string, GameEvent> = {
           charm: Math.min(25, (s.charm || 10) + 3),
           npcs: {
             ...(s.npcs || {}),
-            dave: { name: 'Manager Dave', role: 'manager', affinity: 0, status: 'nemesis', note: '被你反杀的职场宿敌' }
+            dave: { name: 'Manager Dave', role: 'manager', status: 'nemesis', note: '被你反杀的职场宿敌' }
           },
           story_flags: {
             ...(s.story_flags || {}),
@@ -1754,7 +1752,6 @@ export const careerEvents: Record<string, GameEvent> = {
           tc: 0,
           laid_off: true,
           job_type: 'unemployed',
-          cpt_used: true,
           leetcode: s.leetcode + 15,
           health: Math.min(100, s.health + 5),
           message: '【无缝转 Day 1 CPT】面对裁员与身份压力，你果断注册了 Day 1 CPT 大学维持合法学生身份并全职刷题准备下一轮求职，完全不受 60 天工签遣返威胁！'
@@ -2379,7 +2376,7 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 10),
           npcs: {
             ...(s.npcs || {}),
-            alex: { name: 'Alex 博士', role: 'founder', affinity: 95, status: 'ally', company: 'OmniAgent AI', note: 'OmniAgent 创始人，并肩作战' }
+            alex: { name: 'Alex 博士', role: 'founder', status: 'ally', company: 'OmniAgent AI', note: 'OmniAgent 创始人，并肩作战' }
           },
           story_flags: {
             ...(s.story_flags || {}),
@@ -2399,7 +2396,7 @@ export const careerEvents: Record<string, GameEvent> = {
           cash: s.cash - 10,
           npcs: {
             ...(s.npcs || {}),
-            alex: { name: 'Alex 博士', role: 'founder', affinity: 90, status: 'ally', company: 'OmniAgent AI', note: '天使投资项目创始人' }
+            alex: { name: 'Alex 博士', role: 'founder', status: 'ally', company: 'OmniAgent AI', note: '天使投资项目创始人' }
           },
           story_flags: {
             ...(s.story_flags || {}),
@@ -2418,7 +2415,7 @@ export const careerEvents: Record<string, GameEvent> = {
           network: Math.min(100, (s.network || 10) + 15),
           npcs: {
             ...(s.npcs || {}),
-            alex: { name: 'Alex 博士', role: 'founder', affinity: 85, status: 'ally', company: 'OmniAgent AI', note: '独角兽创始人，外部顾问' }
+            alex: { name: 'Alex 博士', role: 'founder', status: 'ally', company: 'OmniAgent AI', note: '独角兽创始人，外部顾问' }
           },
           story_flags: {
             ...(s.story_flags || {}),
@@ -2550,7 +2547,7 @@ export const careerEvents: Record<string, GameEvent> = {
             charm: Math.min(25, (s.charm || 10) + 3),
             npcs: {
               ...(s.npcs || {}),
-              dave: { name: 'Manager Dave', role: 'manager', affinity: 0, status: 'nemesis', note: '职场宿敌，被你的审计证据直接击溃' }
+              dave: { name: 'Manager Dave', role: 'manager', status: 'nemesis', note: '职场宿敌，被你的审计证据直接击溃' }
             },
             story_flags: {
               ...(s.story_flags || {}),
@@ -2578,7 +2575,7 @@ export const careerEvents: Record<string, GameEvent> = {
             health: Math.min(100, s.health + 5),
             npcs: {
               ...(s.npcs || {}),
-              dave: { name: 'Manager Dave', role: 'manager', affinity: 10, status: 'departed', note: '前组经理，已被你甩在身后' }
+              dave: { name: 'Manager Dave', role: 'manager', status: 'departed', note: '前组经理，已被你甩在身后' }
             },
             story_flags: {
               ...(s.story_flags || {}),
@@ -2634,7 +2631,7 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 10),
           npcs: {
             ...(s.npcs || {}),
-            dave: { name: 'Manager Dave', role: 'manager', affinity: 40, status: 'active', note: '如今成为向你汇报的下属' }
+            dave: { name: 'Manager Dave', role: 'manager', status: 'active', note: '如今成为向你汇报的下属' }
           },
           story_flags: {
             ...(s.story_flags || {}),
@@ -2677,7 +2674,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 health: Math.max(0, s.health - 8),
                 npcs: {
                   ...(s.npcs || {}),
-                  sam: { name: '极客 Sam', role: 'co_founder', affinity: 100, status: 'ally', note: '生死战友，安全黑客' }
+                  sam: { name: '极客 Sam', role: 'co_founder', status: 'ally', note: '生死战友，安全黑客' }
                 },
                 story_flags: {
                   ...(s.story_flags || {}),

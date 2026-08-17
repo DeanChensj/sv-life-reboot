@@ -34,11 +34,11 @@ function resolveGauntlet(s: GameState, addPts: number, healthDelta: number, flav
   if (wonOffers.length > 0) {
     const names = wonOffers.map((id) => OFFER_NAMES[id] || id).join('、');
     return {
-      health,
-      leetcode: newLeet,
-      hop_offers: wonOffers,
-      hop_applied_count: 1,
-      story_flags: flags,
+       health,
+       leetcode: newLeet,
+       hop_applied_count: 1,
+       hop_offers: wonOffers,
+       story_flags: flags,
       message: `${flavor}三轮鏖战下来，综合评分 ${total}/6——你成功拿下了 ${names} 的 Offer！请选择入职去向：`,
     };
   }

@@ -1251,7 +1251,9 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '现金不足，强行刷信用卡透支支付赎车费 (健康 -10)',
         condition: (s) => s.cash < 0.5,
-        effect: (s) => ({ health: Math.max(0, s.health - 10), cash: s.cash - 0.5, message: '在现金彻底见底的情况下，你不得不信用卡透支结清拖车费赎回了车辆。' }),
+        // Narrative is "survive via credit-card overdraft", so floor cash at 0 — never let this
+        // safe branch itself trigger bankruptcy for a sub-$0.5w player.
+        effect: (s) => ({ health: Math.max(0, s.health - 10), cash: Math.max(0, s.cash - 0.5), message: '在现金彻底见底的情况下，你不得不信用卡透支结清拖车费赎回了车辆。' }),
         nextEventId: 'sv_year_end_settlement'
       }
     ]

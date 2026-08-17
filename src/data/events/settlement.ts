@@ -95,9 +95,9 @@ export const settlementEvents: Record<string, GameEvent> = {
               // 全职 Day Trader 是自雇操盘手：没有带薪年假、盯盘精神高压。若无此分支会落入下方
               // 通用「带薪年假 健康+6」兜底（既文案错乱、又白送健康），属 job_type 分支缺失 bug。
               else if (s.job_type === 'trader') { healthDrain = 3; companyMsg = ' 全职操盘盯盘的精神高压与不规律作息消耗了体力 (健康 -3)。'; }
-              else if (s.job_type === 'nvidia' || s.company === 'nvidia') { healthDrain = 4; companyMsg = ' 英伟达 AI 芯片军备竞赛节奏紧张，让你不敢松懈 (健康 -4)。'; }
+              else if (s.company === 'nvidia') { healthDrain = 4; companyMsg = ' 英伟达 AI 芯片军备竞赛节奏紧张，让你不敢松懈 (健康 -4)。'; }
               else if (s.company === 'meta') { healthDrain = 4; companyMsg = ' Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。'; }
-              else if (s.job_type === 'amazon') { healthDrain = 3; companyMsg = ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。'; }
+              else if (s.company === 'amazon') { healthDrain = 3; companyMsg = ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。'; }
               else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
               else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
              // AI labs (OpenAI/Anthropic MTS) are prestigious but intense — not a 养老大厂.
@@ -130,9 +130,10 @@ export const settlementEvents: Record<string, GameEvent> = {
            } else if (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)' || s.visa === 'L1 (外派)' || s.visa === 'Day 1 CPT') {
               const isO1 = s.visa === 'O1 (杰出人才)';
               const isPhd = s.is_phd;
-              // Big-tech-tier sponsors for PERM (better green-card odds). Include AI labs,
-              // quant, and TikTok-by-company (which is stored job_type:'big_tech' anyway).
-              const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia' || s.job_type === 'ai_research' || s.job_type === 'quant' || s.company === 'tiktok';
+               // Big-tech-tier sponsors for PERM (better green-card odds). All standard
+               // big-tech employers (google/meta/amazon/nvidia/tiktok/...) are job_type
+               // 'big_tech'; AI labs and quant sponsor at the same tier.
+               const isBigTech = s.job_type === 'big_tech' || s.job_type === 'ai_research' || s.job_type === 'quant';
 
               if (!s.job_type || s.job_type === 'unemployed' || s.laid_off) {
                  if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {

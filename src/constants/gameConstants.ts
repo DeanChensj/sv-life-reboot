@@ -103,6 +103,9 @@ export const COMPANY_PRESETS = {
   CN_BIG_TECH: 'cn_big_tech',
 } as const;
 
+// job_type = career CATEGORY only. Specific big-tech employers live in
+// COMPANY_PRESETS and are stored as company + job_type:'big_tech'
+// (amazon/tiktok/nvidia are companies, NOT job_types).
 export const JOB_TYPES = {
   BIG_TECH: 'big_tech',
   STARTUP: 'startup',
@@ -110,9 +113,6 @@ export const JOB_TYPES = {
   TRADER: 'trader',
   QUANT: 'quant',
   AI_RESEARCH: 'ai_research',
-  AMAZON: 'amazon',
-  TIKTOK: 'tiktok',
-  NVIDIA: 'nvidia',
   CN_TECH: 'cn_tech',
   UNEMPLOYED: 'unemployed',
 } as const;

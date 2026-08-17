@@ -340,7 +340,7 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
 
   // 2. Emergency Day 1 CPT Registration
   state.cash = 10;
-  res = stepChoice(state, 'job_hunt_fail', 3, { visa: 'Day 1 CPT', cpt_used: true });
+  res = stepChoice(state, 'job_hunt_fail', 3, { visa: 'Day 1 CPT' });
   state = res.nextState;
   assert(state.visa === 'Day 1 CPT', 'Visa successfully transferred to Day 1 CPT');
 

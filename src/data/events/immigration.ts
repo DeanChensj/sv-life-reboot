@@ -104,7 +104,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
-        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, cpt_used: true, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
+        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -240,7 +240,6 @@ export const immigrationEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           visa: 'Day 1 CPT',
           cash: s.cash - 1.5,
-          cpt_used: true,
           message: '【无缝接轨 Day 1 CPT】虽然 STEM OPT 耗尽，但你成功挂靠了 Day 1 CPT 大学，白天写代码晚上交作业，成功维持合法留美身份并继续抽签！'
         }),
         nextEventId: 'sv_year_end_settlement',

@@ -1,5 +1,5 @@
 import type { GameState, TimelineRecord } from '../types';
-import { isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
+import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover } from '../constants/gameConstants';
 
 export interface TransitionContext {
   eventId?: string;
@@ -149,12 +149,11 @@ export function applyStateTransition(
   // 5. Auto Liquidate Stocks if Cash < 0 on Purchases
   let liquidationNote = '';
   if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && (newState.status === 'playing' || newState.status === 'retired')) {
-    const deficit = Math.abs(newState.cash);
-    const sellAmt = Math.min(newState.stocks || 0, deficit);
-    newState.stocks = (newState.stocks || 0) - sellAmt;
-    newState.cash = newState.cash + sellAmt;
-    if (sellAmt > 0) {
-      liquidationNote = ` 【股票自动变现】现金流不足，系统已自动变现 $${sellAmt.toFixed(1)}w 股票持仓以覆盖支出。`;
+    const liq = liquidateStocksToCover(newState.cash, newState.stocks || 0);
+    newState.stocks = liq.stocks;
+    newState.cash = liq.cash;
+    if (liq.sold > 0) {
+      liquidationNote = ` 【股票自动变现】现金流不足，系统已自动变现 $${liq.sold.toFixed(1)}w 股票持仓以覆盖支出。`;
     }
   }
 
@@ -171,7 +170,7 @@ export function applyStateTransition(
     updatedTimeline.push({
       age: recAge, year: recYear,
       title: `特质觉醒: ${normalizedEffect.trait_title}`,
-      description: normalizedEffect.trait_desc || '开启独特的硅谷人生底色与专属天赋属性',
+      description: '开启独特的硅谷人生底色与专属天赋属性',
       category: 'milestone',
     });
   }

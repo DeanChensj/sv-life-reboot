@@ -186,7 +186,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           leetcode: s.leetcode + 8,
           npcs: {
             ...(s.npcs || {}),
-            sam: { name: '极客 Sam', role: 'co_founder', affinity: 90, status: 'ally', note: '硬核黑客与全栈极客，ACM 战友' }
+            sam: { name: '极客 Sam', role: 'co_founder', status: 'ally', note: '硬核黑客与全栈极客，ACM 战友' }
           },
           story_flags: {
             ...(s.story_flags || {}),
@@ -206,7 +206,7 @@ export const initializationEvents: Record<string, GameEvent> = {
                 cash: s.cash + 0.5,
                 npcs: {
                   ...(s.npcs || {}),
-                  sam: { name: '极客 Sam', role: 'co_founder', affinity: 95, status: 'ally', note: '硬核黑客与全栈极客，ACM 战友' }
+                  sam: { name: '极客 Sam', role: 'co_founder', status: 'ally', note: '硬核黑客与全栈极客，ACM 战友' }
                 },
                 story_flags: {
                   ...(s.story_flags || {}),
@@ -448,7 +448,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           cash: s.cash + 1.5,
           npcs: {
             ...(s.npcs || {}),
-            alex: { name: 'Alex 博士', role: 'mentor', affinity: 85, status: 'ally', note: '黑客松伯乐，Stanford AI 先锋' }
+            alex: { name: 'Alex 博士', role: 'mentor', status: 'ally', note: '黑客松伯乐，Stanford AI 先锋' }
           },
           story_flags: {
             ...(s.story_flags || {}),
@@ -466,7 +466,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           cash: s.cash + 0.5,
           npcs: {
             ...(s.npcs || {}),
-            dave: { name: 'Manager Dave', role: 'manager', affinity: 65, status: 'active', note: '大厂总监，极度看重汇报与PPT' }
+            dave: { name: 'Manager Dave', role: 'manager', status: 'active', note: '大厂总监，极度看重汇报与PPT' }
           },
           story_flags: {
             ...(s.story_flags || {}),

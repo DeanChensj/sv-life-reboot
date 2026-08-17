@@ -574,6 +574,28 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   // Success: level actually became L7
   const promoted = { ...generateInitialState(), level: 'L7 (Senior Staff)' } as GameState;
   assert(route(promoted) === 'l7_senior_staff_celebration', 'L7 success routes to l7_senior_staff_celebration');
+
+  // Meta Wartime Sprint: verify fast-track promotion and message clarity
+  const dailyLife = events['sv_daily_life'];
+  const wartimeChoice = dailyLife.choices.find((c) => c.text.includes('大厂战时冲刺'))!;
+  const metaStateL3: GameState = {
+    ...generateInitialState(),
+    company: 'meta',
+    job_type: 'big_tech',
+    level: 'L3',
+    leetcode: 35,
+    age: 22,
+    last_promo_age: 22,
+    tc: 22,
+  };
+  const wartimeRes = wartimeChoice.effect(metaStateL3);
+  if (wartimeRes.level === 'L4') {
+    assert(wartimeRes.last_promo_age === 22, 'Wartime sprint promotion must stamp last_promo_age');
+    assert(Boolean(wartimeRes.message?.includes('顺利晋升') || wartimeRes.message?.includes('破格晋升')), 'Promo message indicates promotion');
+  } else {
+    assert(Boolean(wartimeRes.message?.includes('未晋升') || wartimeRes.message?.includes('暂未晋升')), 'Non-promotion message must explicitly indicate 未晋升');
+    assert(Boolean(wartimeRes.message?.includes('L3')), 'Non-promotion message must indicate current level is maintained');
+  }
   console.log('✅ CUJ 10 Passed\n');
 }
 

@@ -88,7 +88,11 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       },
       {
         text: '向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
-        condition: (s) => (s.cash + (s.stocks || 0)) < 40 && !s.parents_helped_house,
+        // Available when your own CASH can't cover a down payment (buy_house is only entered
+        // with total assets >= 40, so the old `cash+stocks < 40` was unsatisfiable → this
+        // choice and the whole house_slave storyline were dead/unreachable). Now it's the
+        // "ask parents instead of liquidating your stocks" alternative.
+        condition: (s) => s.cash < 40 && !s.parents_helped_house,
         // Player chips in a small fixed contribution; parents cover the rest (was
         // cash:0, which discarded up to ~$40w of the player's existing savings).
         effect: (s) => ({ cash: Math.max(0, s.cash - 3), has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
@@ -274,8 +278,11 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【爽快缴纳全款】咬牙拿出流动资金，彻底修缮地基屋顶',
+        // Gated on affordability (cash+stocks) so the middleware can auto-liquidate stocks;
+        // a broke homeowner takes the finance option below instead of being force-bankrupted.
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 3.5,
         effect: (s) => ({
-          cash: Math.max(-0.5, s.cash - 3.5),
+          cash: s.cash - 3.5,
           health: s.health + 5,
           message: '你痛心地划走了 3.5 万美金！但修缮后的房子在 Zillow 上的估值立刻大涨，房屋安全性大增。'
         }),
@@ -285,11 +292,23 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         text: '【加入 HOA 业委会抗争】在社区业主大会上与 HOA 主席展开大战',
         // Actually charge the reduced $1.5w assessment the message states (was $0 —
         // the stated cost was silently omitted, making this a near-free option).
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1.5,
         effect: (s) => ({
-          cash: Math.max(-0.5, s.cash - 1.5),
+          cash: s.cash - 1.5,
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           health: Math.max(0, s.health - 15),
           message: '你在邻居群里化身意见领袖，成功把摊派金额砍到了 $1.5w！虽然省了一大笔，但整整三个星期都在和业委会扯皮，身心俱疲。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        // Always-available safe branch so a cash-poor / no-stocks homeowner is never
+        // force-bankrupted by the lump-sum assessment — finance it into the yearly carry.
+        text: '【申请 HOA 分期融资】把摊派金额分摊进未来几年物业月供 (无需一次性掏现金)',
+        effect: (s) => ({
+          rent: s.rent + 0.4,
+          health: Math.max(0, s.health - 5),
+          message: '你申请把这笔专项摊派分期融资进未来几年的物业持有成本，避免了一次性掏空现金，但每年的房屋固定支出略微上升。'
         }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -320,7 +339,10 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       },
       {
         text: '现金吃紧，向县政府申请税款延期与分期还款协议 (健康 -10)',
-        condition: (s) => s.cash < 1,
+        // Safe deferral must cover EVERYONE who can't full-pay from cash (<3), not just
+        // cash<1 — otherwise cash in [1,3) with no stocks is forced into the losing appeal
+        // gamble (cash-4) and can be bankrupted with no safe alternative.
+        condition: (s) => s.cash < 3,
         effect: (s) => ({ health: Math.max(0, s.health - 10), message: '在复杂的延期申诉流程后，你成功申请了税款分期，暂时化解了滞纳金危机。' }),
         nextEventId: 'sv_year_end_settlement'
       }

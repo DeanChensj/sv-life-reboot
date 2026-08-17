@@ -984,6 +984,40 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 18 Passed\n');
 }
 
+// CUJ 19: Economy & housing edge-case fixes (PR B: #3 dead choice/orphan, #7 forced-bankruptcy, #9 h1b loop)
+{
+  console.log('--- [CUJ 19] Economy & housing edge-case fixes ---');
+  const choiceOf = (evId: string, text: string) => events[evId].choices.find((c) => c.text.includes(text));
+
+  // #3: parents-help buy_house choice is now reachable (cash<40 but total>=40) → house_slave.
+  const parents = choiceOf('buy_house', '父母紧急开支票')!;
+  assert(!!parents, 'buy_house has parents-help choice');
+  assert(parents.condition!({ ...generateInitialState(), cash: 10, stocks: 40, parents_helped_house: false } as GameState) === true, 'parents-help available when cash<40 but total>=40 (was dead code)');
+  assert(parents.condition!({ ...generateInitialState(), cash: 50, stocks: 0, parents_helped_house: false } as GameState) === false, 'parents-help hidden when cash>=40');
+  assert(parents.nextEventId === 'house_slave' && !!events['house_slave'], 'parents-help routes to (now reachable) house_slave');
+
+  // #9: h1b_final_crisis marry-non-citizen outcome moves OFF OPT/F1 → Day 1 CPT (breaks annual crisis re-loop).
+  const marry = choiceOf('h1b_final_crisis', '真爱伴侣结婚自救')!;
+  const marryBase = { ...generateInitialState(), visa: 'OPT (实习)', relationship_status: 'dating', h1b_attempts: 3, gc_stage: 'not_started', status: 'playing' } as GameState;
+  let sawNonCitizen = false;
+  for (let i = 0; i < 80; i++) {
+    const r = marry.effect(marryBase);
+    if (r.visa !== '绿卡') { sawNonCitizen = true; assert(r.visa === 'Day 1 CPT', `non-citizen marriage moves off OPT/F1 to Day 1 CPT (got ${r.visa})`); }
+  }
+  assert(sawNonCitizen, 'non-citizen marriage branch exercised');
+
+  // #7: HOA assessment always offers a safe (no-condition) finance branch; tax-hike defers for cash in [1,3).
+  assert(events['property_hoa_special_assessment'].choices.some((c) => !c.condition), 'HOA special assessment has an always-available safe finance branch (no forced bankruptcy)');
+  const taxDefer = choiceOf('property_supplemental_tax_hike', '延期与分期')!;
+  assert(taxDefer.condition!({ ...generateInitialState(), cash: 2 } as GameState) === true, 'tax-hike safe deferral covers cash in [1,3)');
+  // #7: luxury-car overdraft branch never drives cash below 0.
+  const tow = choiceOf('luxury_car_vandalism_towing', '信用卡透支')!;
+  const towRes = tow.effect({ ...generateInitialState(), cash: 0.2, stocks: 0 } as GameState);
+  assert((towRes.cash ?? 0) >= 0, 'luxury-car overdraft branch floors cash at 0 (no forced bankruptcy)');
+
+  console.log('✅ CUJ 19 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

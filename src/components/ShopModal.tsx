@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import type { GameState } from '../types';
 import { isOwnedHousing } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
+import { gameRandom } from '../utils/random';
 
 interface ShopModalProps {
   gameState: GameState;
@@ -111,13 +112,13 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 onClick={() => onBuy({
                   cash: gameState.cash - 1.5,
                   has_adu_rented: true,
-                  rental_income: (gameState.rental_income || 0) + 2.0,
-                }, '【ADU 改造出租】你改造了后院独立套间并出租给大厂实习生！每年被动收入 +$2.0w！')}
+                  rental_income: (gameState.rental_income || 0) + 1.2,
+                }, '【ADU 改造出租】你改造了后院独立套间并出租给大厂实习生！每年被动收入 +$1.2w！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">自住房 ADU 出租</span>
-                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$2.0w/年 租金</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$1.2w/年 租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {gameState.has_adu_rented 
@@ -133,14 +134,14 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 disabled={totalAssets < 25 || (gameState.investment_properties || []).includes('Austin 远程独栋屋')}
                 onClick={() => onBuy({
                   cash: gameState.cash - 25,
-                  rental_income: (gameState.rental_income || 0) + 2.2,
+                  rental_income: (gameState.rental_income || 0) + 1.2,
                   investment_properties: [...(gameState.investment_properties || []), 'Austin 远程独栋屋'],
-                }, '【外州资产配置】购入德州 Austin 核心科技园区精装独栋屋！每年被动租金净现金流 +$2.2w！')}
+                }, '【外州资产配置】购入德州 Austin 核心科技园区精装独栋屋！每年被动租金净现金流 +$1.2w！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">Austin 远程独栋投资房</span>
-                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$2.2w/年 租金</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$1.2w/年 租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {(gameState.investment_properties || []).includes('Austin 远程独栋屋')
@@ -154,14 +155,14 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 disabled={totalAssets < 45 || (gameState.investment_properties || []).includes('Hayward 独立投资房')}
                 onClick={() => onBuy({
                   cash: gameState.cash - 45,
-                  rental_income: (gameState.rental_income || 0) + 3.8,
+                  rental_income: (gameState.rental_income || 0) + 2.2,
                   investment_properties: [...(gameState.investment_properties || []), 'Hayward 独立投资房'],
-                }, '【湾区核心资产】拿下东湾优质独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$3.8w 租金现金流！')}
+                }, '【湾区核心资产】拿下东湾优质独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$2.2w 租金现金流！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">东湾 Hayward 独栋投资房</span>
-                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$3.8w/年 租金</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">+$2.2w/年 租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {(gameState.investment_properties || []).includes('Hayward 独立投资房')
@@ -175,15 +176,15 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 disabled={totalAssets < 120 || (gameState.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')}
                 onClick={() => onBuy({
                   cash: gameState.cash - 120,
-                  rental_income: (gameState.rental_income || 0) + 11.0,
+                  rental_income: (gameState.rental_income || 0) + 6.0,
                   investment_properties: [...(gameState.investment_properties || []), 'Sunnyvale 4-Plex 公寓楼'],
                   charm: Math.min(25, (gameState.charm || 10) + 5),
-                }, '【加州大地主登顶】拿下 Sunnyvale 核心区 4-Plex 公寓楼！每年躺赚 +$11.0w 净租金流，直接达成财务自由！')}
+                }, '【加州大地主登顶】拿下 Sunnyvale 核心区 4-Plex 公寓楼！每年躺赚 +$6.0w 净租金流，坐稳湾区大地主！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-400/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">Sunnyvale 4-Plex 公寓楼</span>
-                  <span className="text-[11px] font-mono text-amber-400 font-bold">+$11.0w/年 巨额租金</span>
+                  <span className="text-[11px] font-mono text-amber-400 font-bold">+$6.0w/年 巨额租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {(gameState.investment_properties || []).includes('Sunnyvale 4-Plex 公寓楼')
@@ -323,7 +324,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               <button
                 disabled={totalAssets < 5 || gameState.charm < 8}
                 onClick={() => {
-                  const success = Math.random() > 0.5;
+                  const success = gameRandom() > 0.5; // seeded PRNG for reproducibility (was Math.random)
                   if (success) onBuy({ cash: gameState.cash - 5, tc: gameState.tc + 5, charm: gameState.charm + 2 }, '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！');
                   else onBuy({ cash: gameState.cash - 5, health: gameState.health - 10 }, '去游艇派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。');
                 }}

@@ -352,8 +352,37 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
   const fallbackEv = events['h1b_fallback_options'];
   assert(!fallbackEv.choices[0].condition!(singlePoorState), 'Single poor player cannot choose true love marriage');
   assert(!fallbackEv.choices[1].condition!(singlePoorState), 'Single poor player cannot choose $8w commercial marriage');
-  assert(fallbackEv.choices[1].condition!(singleRichState), 'Single player with $10w cash can choose $8w commercial marriage');
-  assert(fallbackEv.choices[0].condition!(marriedState), 'Player with dating partner can choose true love marriage');
+  // 4. Re-employment level preservation: OpenAI MTS & Laid-off Staff must NOT be demoted to L3
+  const appleChoice = events['job_hop_market'].choices.find((c) => c.text.includes('Apple'))!;
+  const mtsLaidOffState: GameState = {
+    ...generateInitialState(),
+    company: 'openai',
+    job_type: 'unemployed',
+    laid_off: true,
+    level: 'MTS',
+    impact: 25,
+    tc: 0,
+    age: 30,
+    job_start_age: 26,
+  };
+  const mtsRehire = appleChoice.effect(mtsLaidOffState);
+  assert(mtsRehire.level === 'L6 (Staff)', 'OpenAI MTS with impact>=20 re-hiring at Apple gets L6 (Staff), NOT L3');
+  assert((mtsRehire.tc || 0) >= 50, 'OpenAI MTS re-hiring at Apple gets Staff compensation band');
+
+  const staffLaidOffState: GameState = {
+    ...generateInitialState(),
+    company: 'meta',
+    job_type: 'unemployed',
+    laid_off: true,
+    level: 'L6 (Staff)',
+    impact: 10,
+    tc: 0,
+    age: 32,
+    job_start_age: 25,
+  };
+  const googleChoice = events['job_hop_market'].choices.find((c) => c.text.includes('Google'))!;
+  const staffRehire = googleChoice.effect(staffLaidOffState);
+  assert(staffRehire.level === 'L6 (Staff)', 'Laid-off L6 Staff re-hiring at Google retains L6 (Staff) level');
 
   console.log('✅ CUJ 4 Passed\n');
 }

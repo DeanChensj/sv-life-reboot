@@ -29,7 +29,13 @@ export const settlementEvents: Record<string, GameEvent> = {
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
            const livingExpense = 3.0;
            const petExpense = s.has_pet ? 0.3 : 0;
-           const totalExpense = housingExpense + carExpense + livingExpense + petExpense;
+           // 湾区生活成本通胀：以 2018 为基准 ~2%/年复利、封顶 +80%。engaged 玩家靠 merit/晋升涨薪跑赢，
+           // 躺平(TC 停滞)玩家被持续上涨的物价蚕食 —— 与 impact 机制协同，制造「趁早 FIRE、别拖」的压力。
+           // 不影响 FIRE 目标与 TC 档,只作用于每年生活开销。
+           const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (s.year || 2018) - 2018)));
+           const totalExpense = parseFloat(((housingExpense + carExpense + livingExpense + petExpense) * inflationFactor).toFixed(2));
+           const inflationPct = Math.round((inflationFactor - 1) * 100);
+           const inflationMsg = inflationPct >= 3 ? ` 【湾区通胀】相比初入职场，物价已累计上涨 ${inflationPct}%，生活成本水涨船高。` : '';
 
            let newEconomy = s.macro_economy || 'neutral';
            let economyMsg = '';
@@ -377,7 +383,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               story_flags: newStoryFlags,
               timeline: newTimeline,
               history_net_worth: newHistory,
-              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${spouseMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${autoStockSellMsg}`,
+              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${spouseMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${inflationMsg}${autoStockSellMsg}`,
               // Natural-life ending: at the lifespan cap the game resolves even if the
               // player never hit FIRE and never died — enabling the "content" endings
               // (中产退休/海归/上岸/佛系). The `message`/`status` spread overrides above.

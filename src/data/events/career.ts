@@ -24,6 +24,8 @@ export const careerEvents: Record<string, GameEvent> = {
             { id: 'nvidia', name: 'NVIDIA', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
             { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
             { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+            // Amazon: high-volume hirer (high weight), moderate bar, but brutal PIP culture (health drain in settlement).
+            { id: 'amazon', name: 'Amazon', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 44), weight: 1.0 },
             { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
           ];
 
@@ -79,6 +81,7 @@ export const careerEvents: Record<string, GameEvent> = {
             nvidia: 'NVIDIA',
             tiktok: 'TikTok',
             apple: 'Apple',
+            amazon: 'Amazon',
             openai: 'OpenAI',
             startup: 'AI Startup'
           };
@@ -393,7 +396,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
           return {
             company: 'nvidia',
-            job_type: 'nvidia',
+            job_type: 'big_tech',
             level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
             tc: newTC,
             cash: s.cash + (isBull ? 4 : 2),
@@ -425,6 +428,29 @@ export const careerEvents: Record<string, GameEvent> = {
             laid_off: false,
             is_new_job: true,
             message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -15)。`
+          };
+        },
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
+      },
+      {
+        text: '【签约入职 Amazon】加入电商与 AWS 云计算巨头，吃满规模与股票升值，但直面高压 PIP 文化',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('amazon') : s.company !== 'amazon'),
+        effect: (s) => {
+          const nextLvl = hopTargetLevel(s); // 阶梯 +1，但升到 L6+ 需足够 impact，否则平跳
+          const baseBand = nextLvl === 'L8 (Principal)' ? 120 : nextLvl === 'L7 (Senior Staff)' ? 82 : nextLvl === 'L6 (Staff)' ? 58 : nextLvl === 'L5 (Senior)' ? 40 : nextLvl === 'L4' ? 30 : 22;
+          const econMultiplier = s.macro_economy === 'bull' ? 1.15 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
+          const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
+
+          return {
+            company: 'amazon',
+            job_type: 'big_tech',
+            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            tc: newTC,
+            cash: s.cash + (s.macro_economy === 'bull' ? 5 : 3),
+            health: Math.max(0, s.health - 12),
+            laid_off: false,
+            is_new_job: true,
+            message: `【入职 Amazon / AWS】你拿到了西雅图电商与云计算巨头的 Offer，职级定为 ${nextLvl}，总包 ${newTC}w（RSU 四年后置兑现占大头）！但著名的 PIP 高压文化与 Frugality 节俭作风让你时刻紧绷 (健康 -12)。`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
@@ -816,7 +842,7 @@ export const careerEvents: Record<string, GameEvent> = {
       // 2. 【情境定制动态专属】 (根据公司、婚姻、财富阶层动态生成)
       {
         text: '【大厂战时冲刺】主动认领 S-Level 核心架构重构，硬抗高压冲刺顶格 Perf',
-        condition: (s) => (s.company === 'meta' || s.job_type === 'tiktok' || s.job_type === 'nvidia' || s.company === 'amazon' || s.job_type === 'amazon') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
+        condition: (s) => (s.company === 'meta' || s.company === 'tiktok' || s.company === 'nvidia' || s.company === 'amazon') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         hideIfUnavailable: true,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
@@ -1031,6 +1057,8 @@ export const careerEvents: Record<string, GameEvent> = {
             { id: 'nvidia', name: 'NVIDIA', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
             { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
             { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+            // Amazon: high-volume hirer (high weight), moderate bar, but brutal PIP culture (health drain in settlement).
+            { id: 'amazon', name: 'Amazon', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 44), weight: 1.0 },
             { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
           ];
 
@@ -1094,6 +1122,7 @@ export const careerEvents: Record<string, GameEvent> = {
             nvidia: 'NVIDIA',
             tiktok: 'TikTok',
             apple: 'Apple',
+            amazon: 'Amazon',
             openai: 'OpenAI',
             startup: 'AI Startup'
           };
@@ -1700,7 +1729,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '认怂疯狂加班，证明自己的 Synergy',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
-          const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';
+          const isHighPipCompany = s.company === 'amazon' || s.company === 'meta';
           const hasNetworkProtection = (s.network || 0) >= 30;
           const passProb = hasNetworkProtection ? 0.95 : (isHighPipCompany ? 0.55 : 0.80);
           const survived = gameRandom() < passProb;
@@ -1957,7 +1986,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '接下第二份全职工作 (J2)！赚双倍的钱！',
-        condition: (s) => s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia',
+        condition: (s) => s.job_type === 'big_tech',
         effect: (s) => {
           const caught = gameRandom() < 0.25;
           return caught

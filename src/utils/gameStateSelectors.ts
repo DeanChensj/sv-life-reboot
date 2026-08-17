@@ -153,16 +153,16 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   } else if (state.company === 'meta') {
     companyLabel = 'Meta (卷王)';
     companyClassName = 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 font-bold';
-  } else if (state.company === 'nvidia' || state.job_type === 'nvidia') {
+  } else if (state.company === 'nvidia') {
     companyLabel = 'NVIDIA (英伟达)';
     companyClassName = 'text-lime-400 bg-lime-500/10 border-lime-500/20 font-bold';
-  } else if (state.company === 'tiktok' || state.job_type === 'tiktok') {
+  } else if (state.company === 'tiktok') {
     companyLabel = 'TikTok (字节)';
     companyClassName = 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold';
   } else if (state.company === 'apple') {
     companyLabel = 'Apple (苹果)';
     companyClassName = 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold';
-  } else if (state.company === 'amazon' || state.job_type === 'amazon') {
+  } else if (state.company === 'amazon') {
     companyLabel = 'Amazon (亚麻)';
     companyClassName = 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold';
   } else if (state.company === 'uber') {
@@ -336,12 +336,12 @@ export function getTCBreakdown(state: GameState): TCBreakdown {
     rsuRatio = 0.0;
   }
   // 2. High Equity Tech: Meta, Nvidia, AI Research
-  else if (state.company === 'meta' || state.company === 'nvidia' || state.job_type === 'nvidia' || state.job_type === 'ai_research') {
+  else if (state.company === 'meta' || state.company === 'nvidia' || state.job_type === 'ai_research') {
     baseRatio = 0.40;
     rsuRatio = 0.60;
   }
   // 3. High Cash Big Tech: TikTok
-  else if (state.company === 'tiktok' || state.job_type === 'tiktok') {
+  else if (state.company === 'tiktok') {
     baseRatio = 0.70;
     rsuRatio = 0.30;
   }

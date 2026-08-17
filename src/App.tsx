@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import type { GameState, Choice } from './types';
-import { generateInitialState, events, midYearEventRouter } from './data/events';
+import { generateInitialState, events, midYearEventRouter, impactTier, isImpactCareer } from './data/events';
 import { BentoStatsPanel } from './components/BentoStatsPanel';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
@@ -456,7 +456,7 @@ export default function App() {
       <div className="lg:hidden sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-800/80 px-3 py-2 shadow-2xl flex flex-col gap-1.5 text-xs font-mono">
         {/* Layer 1: Year/Age, Cash, TC, Network, LeetCode, Drawer Toggle */}
         <div className="flex items-center justify-between gap-1.5 w-full">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex flex-1 min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 pr-1">
             {/* Age Tag */}
             <span className="flex items-center gap-1 font-bold text-[11px] text-zinc-200 bg-zinc-900 px-2 py-0.5 rounded-md shrink-0 border border-zinc-800">
               <svg className="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -479,6 +479,15 @@ export default function App() {
             <span className="flex items-center gap-1 font-bold text-[10.5px] text-amber-300 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 tabular-nums">
               LC {gameState.leetcode}
             </span>
+
+            {/* Impact Tag — L5+ 高级晋升硬通货，仅在有意义时显示 */}
+            {(isImpactCareer(gameState) || (gameState.impact || 0) > 0) && (
+              <span className="flex items-center gap-1 font-bold text-[10.5px] text-violet-300 shrink-0 bg-violet-500/10 px-2 py-0.5 rounded-md border border-violet-500/20 tabular-nums">
+                <svg className="w-2.5 h-2.5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                {Math.round(gameState.impact || 0)}
+                <span className="text-violet-400/70 text-[9px]">{impactTier(gameState.impact || 0)}</span>
+              </span>
+            )}
           </div>
 
           <button
@@ -495,7 +504,7 @@ export default function App() {
 
         {/* Layer 2: Status Badges (Health, Level, Visa, Green Card, Quick Actions) */}
         <div className="flex items-center justify-between gap-1.5 w-full pt-1 border-t border-zinc-900/80">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex flex-1 min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 pr-1">
             {/* Health Tag */}
             <span className={`flex items-center gap-1 font-bold text-[11px] shrink-0 px-2 py-0.5 rounded-md border tabular-nums ${
               gameState.health >= 70 

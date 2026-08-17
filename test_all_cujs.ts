@@ -788,6 +788,39 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 15 Passed\n');
 }
 
+// CUJ 16: Voluntary early retirement (permanent visa + assets >= $200w/2M)
+// Late-game agency: step off the treadmill before hitting the $500w FIRE bar.
+// Gated on permanent status + wealth floor; below FIRE → content ending, above → triumph.
+{
+  console.log('--- [CUJ 16] Voluntary early retirement gate & ending ---');
+  const findRetire = (s: GameState) =>
+    events['sv_daily_life'].choices.find((c) => c.text.includes('提前上岸') && (!c.condition || c.condition(s)));
+
+  // 1. Eligible: permanent visa (绿卡) + assets >= 200 → choice available
+  const eligible: GameState = { ...generateInitialState(), visa: '绿卡', cash: 150, stocks: 100, health: 60, age: 42, status: 'playing' };
+  const retireChoice = findRetire(eligible);
+  assert(!!retireChoice, 'Voluntary retire choice available for permanent visa + assets >= $200w');
+
+  // 2. Ineligible: temporary visa (can't just retire in the US on a work visa)
+  assert(!findRetire({ ...eligible, visa: 'H1B (工签)' }), 'Voluntary retire NOT available on temporary H1B visa');
+  // 3. Ineligible: below the $200w wealth floor
+  assert(!findRetire({ ...eligible, cash: 80, stocks: 50 }), 'Voluntary retire NOT available below $200w assets');
+
+  // 4. Effect retires the player and routes to end; below-FIRE assets → content ending
+  const retEff = retireChoice!.effect(eligible);
+  const { nextState: retState } = applyStateTransition(eligible, retEff, { eventId: 'sv_daily_life' });
+  assert(retState.status === 'retired', 'Voluntary retire sets status retired');
+  const modestEnding = determineEnding(retState).id;
+  assert(modestEnding === 'middle_class', `Below-FIRE voluntary retire yields content ending (got ${modestEnding})`);
+
+  // 5. Retiring while already FIRE-wealthy (assets >= 500) is classified as a triumph
+  const wealthy: GameState = { ...eligible, cash: 300, stocks: 300 };
+  const { nextState: wealthyRet } = applyStateTransition(wealthy, findRetire(wealthy)!.effect(wealthy), { eventId: 'sv_daily_life' });
+  assert(determineEnding(wealthyRet).id === 'fire_basic', 'Voluntary retire with >= $500w yields FIRE triumph ending');
+
+  console.log('✅ CUJ 16 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

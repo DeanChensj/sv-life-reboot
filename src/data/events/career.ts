@@ -983,6 +983,19 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         nextEventId: midYearEventRouter,
       },
+      // 【提前上岸 · 主动退休】后期能动性:永久身份(绿卡/公民) + 资产 ≥ $200w($2M) 起可自主下车。
+      // 这是后期的真选择——用「继续冲更高 FIRE、承担健康/年龄歧视/裁员风险」换「立刻自由」——
+      // 而非再叠一个数值 debuff。结局不特判:未达 $500w FIRE 阈值 → content 结局(中产退休/佛系/上岸),
+      // 资产 ≥ $500w 时结局分类器自动判定为 triumph。仅设 status:'retired',复用既有结局系统。
+      {
+        text: '【提前上岸 · 主动退休】已上岸且攒够 $200w+，宣布告别内卷、提前退休安享余生',
+        condition: (s) => isPermanentVisa(s.visa) && (s.cash + (s.stocks || 0)) >= 200 && s.status === 'playing',
+        effect: (s) => ({
+          status: 'retired',
+          message: `你在 ${s.age} 岁做出了清醒而勇敢的决定：手握 $${(s.cash + (s.stocks || 0)).toFixed(1)}w 资产、身份再无后顾之忧，你主动从硅谷的内卷跑步机上下车。不必再看 Perf、排期与 Manager 的脸色，余生由你自己定义。`,
+        }),
+        nextEventId: 'end',
+      },
       // 3. 【常规年度重心】 (点击后进入年中/年底结算)
       {
         text: '【年度重心：疯狂内卷】拼命加班冲 Perf，争取加薪与升职',

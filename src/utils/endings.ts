@@ -46,20 +46,22 @@ export function determineEnding(s: GameState): EndingResult {
         flavor: '签证的达摩克利斯之剑终究落下，你收拾行囊，告别了这场未竟的美国梦。',
       };
     }
+    // Burnout death — checked BEFORE founder ruin so a founder who dies of overwork gets
+    // the correct 过劳猝死 card. The middleware sets the "过劳猝死 (Burnout)" message on
+    // health<=0, which would flatly contradict a 弹尽粮绝 (startup ruin) card.
+    if ((s.health ?? 0) <= 0) {
+      return {
+        id: 'burnout', emoji: '💀', title: '过劳猝死 · 荣誉社畜',
+        subtitle: 'STATUS: BURNOUT', tone: 'tragedy', rarity: 'N',
+        flavor: '你用尽最后一丝精力照亮了公司的季度 OKR，却再也没能等到属于自己的那份 RSU 归属。',
+      };
+    }
     // Founder runway bankruptcy.
     if (s.job_type === 'startup_founder' || messageIncludes(s, ['清算', '关停', '弹尽粮绝', '资金链', '倒闭'])) {
       return {
         id: 'startup_ruin', emoji: '⚰️', title: '创业梦碎 · 弹尽粮绝',
         subtitle: 'STATUS: STARTUP RUIN', tone: 'tragedy', rarity: 'N',
         flavor: '账上现金见底，融资无门，你的独角兽梦想在寒冬中清算离场，背负债务重新出发。',
-      };
-    }
-    // Burnout death.
-    if ((s.health ?? 0) <= 0) {
-      return {
-        id: 'burnout', emoji: '💀', title: '过劳猝死 · 荣誉社畜',
-        subtitle: 'STATUS: BURNOUT', tone: 'tragedy', rarity: 'N',
-        flavor: '你用尽最后一丝精力照亮了公司的季度 OKR，却再也没能等到属于自己的那份 RSU 归属。',
       };
     }
     // Bankruptcy.

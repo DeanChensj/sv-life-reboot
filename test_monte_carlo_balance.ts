@@ -30,11 +30,13 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     if (!ev || !ev.choices || ev.choices.length === 0) break;
 
     // The FIRE-win-rate metric models a player *trying* to reach FIRE, so the bot never
-    // takes the voluntary early-retire off-ramp (it ends the run as a content ending, NOT a
-    // FIRE win, which would artificially depress the rate). That path is a deliberate human
-    // agency choice and is covered for correctness by CUJ 16, not by this balance gate.
+    // takes voluntary give-up / early-exit off-ramps (they end the run as a content ending,
+    // NOT a FIRE win, which would skew the rate — and 大理躺平 previously even mis-set
+    // status:'win', inflating it). These are deliberate human-agency choices, covered for
+    // correctness by CUJ 16 / CUJ 17, not by this balance gate.
+    const GIVE_UP_MARKERS = ['提前上岸', '回大理', '放弃求职'];
     const validChoices = ev.choices.filter(c => (!c.condition || c.condition(state))
-      && !(currentEventId === 'sv_daily_life' && c.text.includes('提前上岸')));
+      && !GIVE_UP_MARKERS.some(m => c.text.includes(m)));
     if (validChoices.length === 0) break;
 
     let chosen: Choice;

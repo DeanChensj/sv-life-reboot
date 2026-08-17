@@ -306,8 +306,17 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '不卷了！回大理/清迈做数字游民躺平',
         condition: (s) => s.cash >= 5,
+        // Giving up to go be a digital nomad is a CONTENT ending, not a FIRE 'win' — a
+        // broke quitter must not render the fire_basic triumph card (endings.ts keys the
+        // FIRE triumph on status==='win'). 'retired' routes to a content ending
+        // (佛系隐者/中产退休) via determineEnding; if they happen to be wealthy (assets>=500)
+        // the classifier still credits the appropriate FIRE tier.
         effect: (s) => ({ 
-          status: 'win', 
+          status: 'retired', 
+          // Leaving for 大理/清迈 = giving up the US life → for a temp-visa holder this is the
+          // 海归/homecoming content ending (previously an unreachable ending). Permanent
+          // residents keep their status (middleware protects 绿卡/公民) → settled/中产退休.
+          visa: isPermanentVisa(s.visa) ? s.visa : '无',
           imageUrl: 'images/dali_relax.jpg', 
           message: '你带着几万美元的积蓄去了大理。每天喝咖啡、看苍山洱海。虽然彻底脱离了硅谷的内卷，但你找到内心的平静！(大理躺平结局)' 
         }),
@@ -316,11 +325,14 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '放弃求职 / 离开硅谷',
         effect: (s) => {
+          // Temp-visa branches are forced departures (visa loss) → must classify as
+          // 'deported' in endings.ts, which matches on keywords like 离境/登机. Keep such a
+          // keyword in the copy or these fall into the generic/bankruptcy ending.
           const reason = (s.visa === '公民' || s.visa === '绿卡') 
             ? '对硅谷内卷与就业市场彻底失望，你选择带上积蓄离开了加州湾区。' 
             : ((s.visa === 'F1 (学生)' || s.visa === '无') 
-                ? 'OPT到期未能上岸，你最终遗憾登上了回国的航班。' 
-                : 'H1B 60天失业期满未能找到新工作，你最终遗憾登上了回国的航班。');
+                ? 'OPT 到期未能上岸，身份到期你只能被迫离境，遗憾登机踏上回国的航班。' 
+                : 'H1B 60 天失业宽限期满仍未找到新工作，身份失效被迫离境，遗憾登机回国。');
           return { status: 'game_over', message: reason };
         },
         nextEventId: 'end',

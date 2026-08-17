@@ -867,39 +867,101 @@ export const careerEvents: Record<string, GameEvent> = {
 
           if (pass) {
             if (curLevel === 'L3') {
-              // L3 升 L4 要求算法 >= 30 (若满2年资历门槛放宽至 25)
-              if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (gameRandom() < 0.88 || isKingOfRoll)) {
-                return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 4.0, level: 'L4', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】卷王之王神功大成！你凭借硬核架构交付拿下 Top Perf 轻松破格晋升至 L4！' : '【战时冲刺成功】你带领组员完成核心交付！拿下顶格 Top Perf 顺利晋升至 L4！总包调升 +$4.0w！' };
+              // L3 升 L4：只要战时冲刺评审通过 (pass === true) 且算法基础达标 (>= 25 或卷王或已满 1 年)，即可破格快车道 (Fast-track) 晋升至 L4
+              if ((s.leetcode >= 25 || yearsInGrade >= 1 || isKingOfRoll) && (gameRandom() < 0.90 || isKingOfRoll)) {
+                return {
+                  mid_year: true,
+                  season_stage: 'h1',
+                  health: Math.max(0, s.health - drain),
+                  tc: s.tc + 4.0,
+                  level: 'L4',
+                  last_promo_age: s.age,
+                  message: isKingOfRoll
+                    ? '【战时冲刺大捷 · 破格晋升】卷王之王神功大成！你凭借硬核架构交付拿下 Top Perf 破格晋升至 L4 工程师！总包调升 +$4.0w！'
+                    : '【战时冲刺大捷 · 顺利晋升】你带领组员完成核心交付！拿下顶格 Top Perf 顺利晋升至 L4 工程师！总包调升 +$4.0w！'
+                };
               }
             }
             if (curLevel === 'L4') {
-              // L4 升 L5 Senior 要求算法 >= 48 (若满3年资历门槛放宽至 40)
-              if (yearsInGrade >= 1 && (s.leetcode >= 48 || yearsInGrade >= 3) && (gameRandom() < 0.75 || isKingOfRoll)) {
-                return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - Math.min(15, Math.max(12, drain + 2))), tc: s.tc + 6.5, level: 'L5 (Senior)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】抗下千亿流量重构！卷王底蕴爆发，全票通过晋升委员会晋级 L5 Senior！' : '【战时冲刺成功】扛下千亿流量大促！顺利通过升职委员会，正式晋升为 L5 Senior！总包调升 +$6.5w！' };
+              // L4 升 L5 Senior 要求算法 >= 45 (若满 2 年或卷王门槛放宽至 40)
+              if ((yearsInGrade >= 1 || isKingOfRoll || s.leetcode >= 45) && (s.leetcode >= 40 || yearsInGrade >= 2 || isKingOfRoll) && (gameRandom() < 0.78 || isKingOfRoll)) {
+                return {
+                  mid_year: true,
+                  season_stage: 'h1',
+                  health: Math.max(0, s.health - Math.min(15, Math.max(12, drain + 2))),
+                  tc: s.tc + 6.5,
+                  level: 'L5 (Senior)',
+                  last_promo_age: s.age,
+                  message: isKingOfRoll
+                    ? '【战时冲刺大捷 · 破格晋升】抗下千亿流量重构！卷王底蕴爆发，全票通过晋升委员会晋级 L5 Senior 资深工程师！总包调升 +$6.5w！'
+                    : '【战时冲刺大捷 · 顺利晋升】扛下千亿流量大促！顺利通过升职委员会，正式晋升为 L5 Senior 资深工程师！总包调升 +$6.5w！'
+                };
               }
             }
-            if ((curLevel === 'L5 (Senior)' || curLevel === 'L5') && yearsInGrade >= 2 && s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25) {
+            if ((curLevel === 'L5 (Senior)' || curLevel === 'L5') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 60 && (s.charm || 10) >= 15 && (s.network || 10) >= 20) {
               // L6 Staff 非常难 (最高 18% 胜率)
               const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
               if (gameRandom() < Math.min(0.18, promoChance)) {
-                return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 12.0, level: 'L6 (Staff)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】打破硅谷天花板！凭借极硬核架构与强大人脉资源，破格晋升为万里挑一的 L6 Staff 架构师！' : '【战时冲刺成功】你拉拢跨组部门资源并主导架构落地，奇迹晋升为 L6 Staff 架构师！总包大幅调升 +$12w！' };
+                return {
+                  mid_year: true,
+                  season_stage: 'h1',
+                  health: Math.max(0, s.health - 15),
+                  tc: s.tc + 12.0,
+                  level: 'L6 (Staff)',
+                  last_promo_age: s.age,
+                  message: isKingOfRoll
+                    ? '【战时冲刺大捷 · 破格晋升】打破硅谷天花板！凭借极硬核架构与强大人脉资源，破格晋升为万里挑一的 L6 Staff 架构师！总包大幅调升 +$12w！'
+                    : '【战时冲刺大捷 · 顺利晋升】你拉拢跨组部门资源并主导架构落地，奇迹晋升为 L6 Staff 架构师！总包大幅调升 +$12w！'
+                };
               }
             }
-            if ((curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') && yearsInGrade >= 2 && s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35) {
+            if ((curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 65 && (s.charm || 10) >= 16 && (s.network || 10) >= 30) {
               const promoChance = 0.16 + ((s.charm || 10) * 0.005) + ((s.network || 10) * 0.004) + (isKingOfRoll ? 0.08 : 0);
               if (gameRandom() < Math.min(0.33, promoChance)) {
-                return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】统帅战略基建！在 VP 盟友背书与跨部门拉拢中，全票通过晋升为 L7 Senior Staff 资深架构师！' : '【战时冲刺成功】你凭借雄厚的高管人脉与战略领导力重塑公司架构，正式晋升为 L7 Senior Staff 资深架构师！总包调升 +$20w！' };
+                return {
+                  mid_year: true,
+                  season_stage: 'h1',
+                  health: Math.max(0, s.health - 15),
+                  tc: s.tc + 20.0,
+                  level: 'L7 (Senior Staff)',
+                  last_promo_age: s.age,
+                  message: isKingOfRoll
+                    ? '【战时冲刺大捷 · 破格晋升】统帅战略基建！在 VP 盟友背书与跨部门拉拢中，全票通过晋升为 L7 Senior Staff 资深架构师！总包调升 +$20w！'
+                    : '【战时冲刺大捷 · 顺利晋升】你凭借雄厚的高管人脉与战略领导力重塑公司架构，正式晋升为 L7 Senior Staff 资深架构师！总包调升 +$20w！'
+                };
               }
             }
-            if ((curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') && yearsInGrade >= 2 && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50) {
+            if ((curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 75 && (s.charm || 10) >= 20 && (s.network || 10) >= 45) {
               const promoChance = 0.10 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
               if (gameRandom() < Math.min(0.20, promoChance)) {
-                return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 35.0, level: 'L8 (Principal)', last_promo_age: s.age, message: isKingOfRoll ? '【战时冲刺大捷】封神之路！获董事会联合推举与行业泰斗声望，破格登顶 L8 Principal 首席架构师/技术院士！' : '【战时冲刺成功】你在董事会闭门会议中赢得一致赞誉，登顶全公司屈指可数的 L8 Principal 首席架构师！总包暴涨 +$35w！' };
+                return {
+                  mid_year: true,
+                  season_stage: 'h1',
+                  health: Math.max(0, s.health - 15),
+                  tc: s.tc + 35.0,
+                  level: 'L8 (Principal)',
+                  last_promo_age: s.age,
+                  message: isKingOfRoll
+                    ? '【战时冲刺大捷 · 破格晋升】封神之路！获董事会联合推举与行业泰斗声望，破格登顶 L8 Principal 首席架构师/技术院士！总包暴涨 +$35w！'
+                    : '【战时冲刺大捷 · 顺利晋升】你在董事会闭门会议中赢得一致赞誉，登顶全公司屈指可数的 L8 Principal 首席架构师！总包暴涨 +$35w！'
+                };
               }
             }
-            return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 3.0, message: '【战时冲刺成功】虽然你的技术与人脉指标已全部达标，但由于今年部门 Headcount Quota 紧张，升职名额顺延至明年，仅拿下了 Top Perf 顶格绩效大包 (+3.0w TC)。' };
+            return {
+              mid_year: true,
+              season_stage: 'h1',
+              health: Math.max(0, s.health - drain),
+              tc: s.tc + 3.0,
+              message: `【战时冲刺加薪 (暂未晋升)】虽然你完成了核心交付并斩获 Top Perf 顶格绩效加薪 (+$3.0w TC)，但由于今年部门 Headcount Quota 紧张，升职名额顺延至下一考核周期 (当前职级维持 ${curLevel})。`
+            };
           }
-          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 1.0, message: '【高压内卷苦战】虽然抗住了高强度 Oncall，但因为大厂组织架构调整，功劳被大领导收割，只拿到了普调。' };
+          return {
+            mid_year: true,
+            season_stage: 'h1',
+            health: Math.max(0, s.health - drain),
+            tc: s.tc + 1.0,
+            message: `【高压内卷苦战 (未晋升)】在高压 Oncall 与大厂组织架构调整中，产出未达晋升委员会破格标准，仅获得普通普调 (+$1.0w TC，当前职级维持 ${curLevel})。`
+          };
         },
         nextEventId: (s) => {
           // Route on the ACTUAL promotion (last_promo_age is set to s.age ONLY on a

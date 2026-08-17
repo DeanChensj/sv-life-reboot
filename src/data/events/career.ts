@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa } from '../../constants/gameConstants';
 
@@ -363,7 +363,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'google',
             job_type: 'big_tech',
-            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
             health: Math.min(100, s.health + 12),
             laid_off: false,
@@ -371,7 +371,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package',
@@ -385,7 +385,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'meta',
             job_type: 'big_tech',
-            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
             cash: s.cash + (s.macro_economy === 'bull' ? 8 : 4),
             health: Math.max(0, s.health - 15),
@@ -394,7 +394,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -15)。`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 NVIDIA】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
@@ -409,7 +409,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'nvidia',
             job_type: 'big_tech',
-            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
             cash: s.cash + (isBull ? 4 : 2),
             laid_off: false,
@@ -419,7 +419,7 @@ export const careerEvents: Record<string, GameEvent> = {
               : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 TikTok / 字节】接手中美跨时区核心业务，拿顶格全现金包裹',
@@ -433,7 +433,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'tiktok',
             job_type: 'big_tech',
-            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
             cash: s.cash + 10,
             health: Math.max(0, s.health - 15),
@@ -442,7 +442,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -15)。`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 Amazon】加入电商与 AWS 云计算巨头，吃满规模与股票升值，但直面高压 PIP 文化',
@@ -456,7 +456,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'amazon',
             job_type: 'big_tech',
-            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
             cash: s.cash + (s.macro_economy === 'bull' ? 5 : 3),
             health: Math.max(0, s.health - 12),
@@ -465,7 +465,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职 Amazon / AWS】你拿到了西雅图电商与云计算巨头的 Offer，职级定为 ${nextLvl}，总包 ${newTC}w（RSU 四年后置兑现占大头）！但著名的 PIP 高压文化与 Frugality 节俭作风让你时刻紧绷 (健康 -12)。`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
       },
       {
         text: '【签约入职 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹',
@@ -512,7 +512,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             company: 'apple',
             job_type: 'big_tech',
-            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
             health: Math.min(100, s.health + 10),
             laid_off: false,
@@ -520,7 +520,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
       },
       {
         text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',
@@ -898,8 +898,8 @@ export const careerEvents: Record<string, GameEvent> = {
                 };
               }
             }
-            if ((curLevel === 'L5 (Senior)' || curLevel === 'L5') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 60 && (s.charm || 10) >= 15 && (s.network || 10) >= 20) {
-              // L6 Staff 非常难 (最高 18% 胜率)
+            if ((curLevel === 'L5 (Senior)' || curLevel === 'L5') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 60 && (s.charm || 10) >= 15 && (s.network || 10) >= 20 && (s.impact || 0) >= 20) {
+              // L6 Staff 非常难 (最高 18% 胜率;须 impact≥20,与其它晋升路径一致)
               const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
               if (gameRandom() < Math.min(0.18, promoChance)) {
                 return {
@@ -915,7 +915,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 };
               }
             }
-            if ((curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 65 && (s.charm || 10) >= 16 && (s.network || 10) >= 30) {
+            if ((curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 65 && (s.charm || 10) >= 16 && (s.network || 10) >= 30 && (s.impact || 0) >= 45) {
               const promoChance = 0.16 + ((s.charm || 10) * 0.005) + ((s.network || 10) * 0.004) + (isKingOfRoll ? 0.08 : 0);
               if (gameRandom() < Math.min(0.33, promoChance)) {
                 return {
@@ -931,7 +931,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 };
               }
             }
-            if ((curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 75 && (s.charm || 10) >= 20 && (s.network || 10) >= 45) {
+            if ((curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 75 && (s.charm || 10) >= 20 && (s.network || 10) >= 45 && (s.impact || 0) >= 80) {
               const promoChance = 0.10 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
               if (gameRandom() < Math.min(0.20, promoChance)) {
                 return {
@@ -1101,15 +1101,17 @@ export const careerEvents: Record<string, GameEvent> = {
           } else if (curLevel === 'L5 (Senior)' || curLevel === 'L5') {
             // L5 升 L6 (Staff) 非常难 (天花板天堑，要求极高架构力、跨组影响力与 VP Sponsor)
             const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
-            if (s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.18, promoChance)) {
+            // L5→L6 也要 impact≥20 (与 perf_review / hopTargetLevel 的门槛一致,否则纯靠内卷
+            // 刷题就能零 impact 登顶,架空了 Impact 机制)。
+            if (s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30 && (s.impact || 0) >= 20 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.18, promoChance)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 12.0, level: 'L6 (Staff)', last_promo_age: s.age, message: '奇迹登顶！你打破硅谷天花板，结合顶层架构产出与全公司影响力，成功晋升为万里挑一的 L6 Staff 架构师！总包调升 +$12w！' };
             }
           } else if (curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') {
             const promoChance = 0.10 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
-            if (s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.20, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', last_promo_age: s.age, message: '战略突围！凭借高层 VP Sponsor 与跨部门整合能力，全票通过晋升为 L7 Senior Staff 资深架构师！总包狂飙 +$20w！' };
+            if (s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && (s.impact || 0) >= 45 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.20, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', last_promo_age: s.age, message: '战略突围！凭借高层 VP Sponsor 与跨部门整合能力，全票通过晋升为 L7 Senior Staff 资深架构师！总包狂飙 +$20w！' };
           } else if (curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') {
             const promoChance = 0.08 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
-            if (s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 35.0, level: 'L8 (Principal)', last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
+            if (s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && (s.impact || 0) >= 80 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 35.0, level: 'L8 (Principal)', last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
           }
           const meritBonus = gameRandom() < 0.35 ? 2.0 : 1.0;
           return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + meritBonus, message: isKingOfRoll ? `【卷王日常高产】你高质高效交付了核心模块，拿到了项目奖金 (+${meritBonus}w TC)！` : `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年部门升职 Quota 紧张，你的指标已入库，明年一定为你申请！”` };
@@ -2101,13 +2103,15 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '继续卷升职 (冲击下一级别 M1 / L6 Staff)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
-          // L6 Staff 非常难 (18% 成功率，需过硬架构与内卷)
-          const isEligible = s.leetcode >= 60 && (s.network || 10) >= 20;
+          const cur = s.level || 'L5 (Senior)';
+          // 冲击 M1 / L6 Staff:只有 L5 Senior 能冲 (不可从 L3/L4 越级),且须 impact≥20 —— 与所有
+          // 其它 L6 晋升门槛一致,避免零 impact 越级登顶。18% 成功率。
+          const isEligible = (cur === 'L5 (Senior)' || cur === 'L5') && s.leetcode >= 60 && (s.network || 10) >= 20 && (s.impact || 0) >= 20;
           const win = isEligible && gameRandom() < 0.18;
           // A promotion must never LOWER pay: never below current, capped at the L6 band top.
           const newTc = Math.max(s.tc, Math.min(85, s.tc + 14));
           return win 
-            ? { level: 'L6 (Staff)', tc: newTc, health: Math.max(0, s.health - 15), imageUrl: 'images/burnout.jpg', message: `你干掉了同组全部竞争对手，在严苛的委员会评审中突破天堑晋升为 Meta M1 / L6 Staff TLM！当前总包提升至 $${newTc.toFixed(1)}w！` }
+            ? { level: 'L6 (Staff)', last_promo_age: s.age, tc: newTc, health: Math.max(0, s.health - 15), imageUrl: 'images/burnout.jpg', message: `你干掉了同组全部竞争对手，在严苛的委员会评审中突破天堑晋升为 Meta M1 / L6 Staff TLM！当前总包提升至 $${newTc.toFixed(1)}w！` }
             : { health: Math.max(0, s.health - 15), imageUrl: 'images/burnout.jpg', message: '在 Meta 残酷的 TLM 竞争中，Staff 晋升名额被更高影响力的资深嫡系抢走，未能通过 L6 评审。' };
         },
         nextEventId: (s) => s.health <= 0 ? 'end' : h1ToH2Router(s),
@@ -2656,9 +2660,10 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const cur = s.level || 'L4';
           const nextLvl = (cur === 'L3') ? 'L4' : (cur === 'L4') ? 'L5 (Senior)' : cur;
+          const promoted = nextLvl !== cur; // L5+ 只是击溃 Dave、无实际升级 → 不算晋升
           return {
             tc: s.tc + 4.5,
-            level: nextLvl, last_promo_age: s.age, // level-up (hop/story win): mark the promotion moment so the celebration routing + grade clock are correct
+            level: nextLvl, last_promo_age: promoted ? s.age : s.last_promo_age, // only stamp on a real level-up
             health: Math.min(100, s.health + 8),
             charm: Math.min(25, (s.charm || 10) + 3),
             npcs: {
@@ -2673,14 +2678,17 @@ export const careerEvents: Record<string, GameEvent> = {
             message: '【证据确凿】VP 亲自介入调查，确认 Dave 存在严重抢占成果与职场霸凌行为！Dave 被撤职调离，你因硬核技术与正直表现获得常规绩效调薪 +$4.5w！'
           };
         },
-        nextEventId: 'promo_celebration'
+        // Only celebrate when the showdown actually produced a level-up (L3→L4 / L4→L5);
+        // an L5+ player who merely defeats Dave gets no promotion → no celebration screen.
+        nextEventId: (s) => s.last_promo_age === s.age ? 'promo_celebration' : 'sv_year_end_settlement'
       },
       {
         text: '【实力跳槽降维打击】手握扎实代码，连夜接下 Meta/Nvidia 的 L5 Senior Offer',
         condition: (s) => s.leetcode >= 45,
         effect: (s) => {
           const cur = s.level || 'L4';
-          const targetLvl = (cur === 'L3') ? 'L4' : (cur === 'L4' || !s.level) ? 'L5 (Senior)' : (cur === 'L5 (Senior)') ? 'L6 (Staff)' : cur;
+          // L5→L6 也须 impact≥20 (与其它晋升门槛一致),否则平跳到 Meta 仍是 L5。
+          const targetLvl = (cur === 'L3') ? 'L4' : (cur === 'L4' || !s.level) ? 'L5 (Senior)' : (cur === 'L5 (Senior)') ? ((s.impact || 0) >= 20 ? 'L6 (Staff)' : 'L5 (Senior)') : cur;
           const baseBand = targetLvl === 'L8 (Principal)' ? 135 : targetLvl === 'L7 (Senior Staff)' ? 92 : targetLvl === 'L6 (Staff)' ? 65 : targetLvl === 'L5 (Senior)' ? 46 : 34;
           const newTC = Math.max(s.tc + 6, baseBand);
           return {

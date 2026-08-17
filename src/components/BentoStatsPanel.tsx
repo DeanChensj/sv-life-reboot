@@ -217,12 +217,12 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
         {/* 3. Core Visible Stats (LeetCode & Health) */}
         
-        {/* LeetCode — quarter width so it shares one row with Impact + Health. Label kept
-            short (icon + 算法) with the tier under the number, so nothing wraps at 1/4 width. */}
+        {/* LeetCode — quarter width so it shares one row with Impact + Health. Single-word
+            English label (game terminology) fits 1/4 width on one line; tier under number. */}
         <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40">
           <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
             <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            算法
+            LEETCODE
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-amber-300">
@@ -232,12 +232,12 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           </div>
         </div>
 
-        {/* Impact 影响力 — L5+ 高级晋升硬通货 (quarter width). Short label + tier under the
-            number so it doesn't wrap at 1/4 width. */}
+        {/* Impact — L5+ 高级晋升硬通货 (quarter width). English label (the game's own term)
+            fits 1/4 width on one line; tier under the number. */}
         <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40">
           <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
             <svg className="w-3.5 h-3.5 text-violet-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            影响力
+            IMPACT
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-violet-300">

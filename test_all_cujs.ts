@@ -692,6 +692,17 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   });
   assert((stepPitchRes.nextState.company_valuation || 0) >= 1000, 'Advancing to seed round from high base valuation never drops below 1000w');
 
+  // 3. HUD founder-stage label is driven PURELY by the authoritative founder_stage, never a
+  //    mismatched valuation threshold (regression: $500w pre_seed once mislabeled 种子轮).
+  const preSeed500 = { ...generateInitialState(), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 500 } as GameState;
+  assert(getJobDisplayInfo(preSeed500).levelLabel.includes('车库 Pre-Seed'), 'Founder pre_seed @ $500w shows 车库 Pre-Seed (not 种子轮)');
+  const seedStage = { ...preSeed500, founder_stage: 'seed', company_valuation: 700 } as GameState;
+  assert(getJobDisplayInfo(seedStage).levelLabel.includes('种子轮 Seed'), 'Founder seed stage shows 种子轮 Seed');
+  // After the middleware sync, the HUD label always matches the derived authoritative stage.
+  const synced = applyStateTransition({ ...preSeed500, company_valuation: 3000 }, {}, { eventId: 'sv_daily_life' }).nextState;
+  const stageLabels: Record<string, string> = { pre_seed: '车库 Pre-Seed', seed: '种子轮 Seed', series_a: 'A轮成长', series_b: 'B轮独角兽', exit: '准上市' };
+  assert(getJobDisplayInfo(synced).levelLabel.includes(stageLabels[synced.founder_stage!]), `HUD label matches middleware-synced founder_stage (${synced.founder_stage})`);
+
   console.log('✅ CUJ 13 Passed\n');
 }
 

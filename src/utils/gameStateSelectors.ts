@@ -78,16 +78,19 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     companyHeaderLabel = '创立企业';
     levelHeaderLabel = '企业阶段';
     const val = state.company_valuation || 180;
-    let stageName = '车库 Pre-Seed';
-    if (state.founder_stage === 'exit' || val >= 8000) {
-      stageName = '准上市';
-    } else if (state.founder_stage === 'series_b' || val >= 4500) {
-      stageName = 'B轮独角兽';
-    } else if (state.founder_stage === 'series_a' || val >= 1500) {
-      stageName = 'A轮成长';
-    } else if (state.founder_stage === 'seed' || val >= 500) {
-      stageName = '种子轮 Seed';
-    }
+    // Label the stage PURELY from the authoritative `founder_stage` (the middleware in
+    // stateTransitions.ts syncs it — monotonically up — from valuation every turn). Do NOT
+    // re-derive from valuation here with independent thresholds: that let the HUD show e.g.
+    // "种子轮" at $500w while the real stage was still pre_seed (needs $600w), a 1-turn
+    // display/state desync. founder_stage → label is 1:1 and can never disagree.
+    const FOUNDER_STAGE_LABELS: Record<string, string> = {
+      pre_seed: '车库 Pre-Seed',
+      seed: '种子轮 Seed',
+      series_a: 'A轮成长',
+      series_b: 'B轮独角兽',
+      exit: '准上市',
+    };
+    const stageName = FOUNDER_STAGE_LABELS[state.founder_stage ?? 'pre_seed'] ?? '车库 Pre-Seed';
     levelLabel = `${stageName} (估值 $${val}w)`;
     levelClassName = 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 font-bold shadow-[0_0_8px_rgba(217,70,239,0.2)]';
   } else if (isUnemployed) {

@@ -204,7 +204,7 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
   }
 
   // Win via the AI-chip stock surge — not merely being hired at Nvidia.
-  if ((state.company === 'nvidia' || state.job_type === 'nvidia') && state.status === 'win') {
+  if (state.company === 'nvidia' && state.status === 'win') {
     if (unlockAchievement('nvidia_nasdaq_god')) newlyUnlocked.push('nvidia_nasdaq_god');
   }
 

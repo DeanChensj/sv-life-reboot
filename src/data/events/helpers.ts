@@ -41,8 +41,8 @@ export const hopTargetLevel = (s: GameState): string => {
 
 // impact 只对标准大厂/研究/量化阶梯有意义(founder/trader/unemployed 无此概念)。
 export const isImpactCareer = (s: GameState): boolean =>
-  s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'tiktok' ||
-  s.job_type === 'nvidia' || s.job_type === 'ai_research' || s.job_type === 'quant' || s.job_type === 'cn_tech';
+  s.job_type === 'big_tech' || s.job_type === 'ai_research' ||
+  s.job_type === 'quant' || s.job_type === 'cn_tech';
 
 // Stamp a once-per-life「seen」flag AND (optionally) accrue partner_strain — but only
 // when the player actually has a partner to neglect. Used by "career over family" crunch
@@ -200,7 +200,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
 // Weaves in 1-2 random events before year-end settlement.
 export const midYearEventRouter = (s: GameState): string => {
   const isWorking = Boolean(s.job_type && s.job_type !== 'unemployed' && !s.laid_off);
-  const isBigTech = s.job_type === 'big_tech' || s.job_type === 'amazon' || s.job_type === 'nvidia' || s.company === 'tiktok' || s.company === 'nvidia' || s.company === 'google' || s.company === 'meta' || s.company === 'apple';
+  const isBigTech = s.job_type === 'big_tech';
 
   // --- 0. 优先消费长线因果剧情链 (Priority Narrative Arcs) ---
   // 1) Alex 博士剧情链：Series A 创业合伙人/天使邀请
@@ -307,7 +307,7 @@ export const midYearEventRouter = (s: GameState): string => {
 
         if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
        if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';
-       if ((s.company === 'nvidia' || s.job_type === 'nvidia') && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';
+       if (s.company === 'nvidia' && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';
         if (s.company === 'tiktok' && !sig.tiktok_us_ban_hearing_seen && gameRandom() < 0.3) return 'tiktok_us_ban_hearing';
         if (s.company === 'apple' && !sig.apple_secrecy_crackdown_seen && gameRandom() < 0.3) return 'apple_secrecy_crackdown';
 
@@ -366,8 +366,8 @@ export const midYearEventRouter = (s: GameState): string => {
      }
      
      // 公司专属 PIP 概率区分：亚麻与 Meta 具有高强度末位淘汰 / PIP 指标，皮衣黄 Nvidia 及 Google / Apple 的 PIP 概率极低
-     const isHighPipCompany = s.job_type === 'amazon' || s.company === 'amazon' || s.company === 'meta';
-     const isLowPipCompany = s.job_type === 'nvidia' || s.company === 'nvidia' || s.company === 'google' || s.company === 'apple';
+     const isHighPipCompany = s.company === 'amazon' || s.company === 'meta';
+     const isLowPipCompany = s.company === 'nvidia' || s.company === 'google' || s.company === 'apple';
 
      if (isHighPipCompany) {
        workEvents.push('friday_pip', 'friday_pip', 'friday_pip', 'layoff_rumor');
@@ -380,7 +380,7 @@ export const midYearEventRouter = (s: GameState): string => {
      if (s.macro_economy === 'bear' && gameRandom() < 0.25) workEvents.push('stock_crash');
      if (s.difficulty_title === '困难难度') workEvents.push('friday_pip', 'layoff_rumor');
      if (s.difficulty_title === '简单难度') workEvents.push('perf_review');
-     if ((s.company === 'nvidia' || s.job_type === 'nvidia' || (s.stocks || 0) >= 5) && s.year >= 2023 && gameRandom() < 0.35) {
+     if ((s.company === 'nvidia' || (s.stocks || 0) >= 5) && s.year >= 2023 && gameRandom() < 0.35) {
        workEvents.push('nvidia_stock_surge');
      }
      if (s.year >= 2024 && isCorporate && gameRandom() < 0.25) workEvents.push('ai_disruption_existential');

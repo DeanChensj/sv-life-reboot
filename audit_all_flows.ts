@@ -148,7 +148,7 @@ for (const [id, ev] of Object.entries(events)) {
         try {
           const eff = c.effect(st);
           const nextState = { ...st, ...eff };
-          if (!nextState.laid_off && (nextState.job_type === 'big_tech' || nextState.job_type === 'nvidia' || nextState.job_type === 'amazon' || nextState.job_type === 'tiktok')) {
+          if (!nextState.laid_off && nextState.job_type === 'big_tech') {
             const lvl = nextState.level;
             const tc = nextState.tc;
             if (lvl === 'L3' && (tc < 15 || tc > 35)) {

@@ -30,15 +30,12 @@ export const addImpact = (s: GameState, delta: number): number => Math.max(0, (s
 // 2. 非标准职级映射 (OpenAI MTS 对应 L6 Staff/L5 Senior, Quant 对应 L6/L5, Founder 对应 L7/L6/L5)；
 // 3. 被裁员失业的资深工程师社招再就业时平级录用 (Lateral)，保留其多年打拼积累的资历与职级；
 // 4. 在职跳槽者阶梯 +1，但升至 L6+ 需对应 impact (L6>=20, L7>=45, L8>=80)，否则平跳。
-export const hopTargetLevel = (s: GameState): string => {
-  const ladder = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L8 (Principal)'];
-  
-  // 1. 纯应届生/无往期职级记录
-  if (!s.level || s.level === '待业' || (!s.job_start_age && s.level === '初级研发')) {
-    return s.is_phd ? 'L4' : 'L3';
-  }
+const LADDER = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L8 (Principal)'];
 
-  // 2. 非标准职级对标转换
+// Map the player's CURRENT level — including non-standard titles (MTS/Quant/Founder/CN) —
+// onto a Big-Tech ladder rung. Returns '' for a true new grad with no prior standing.
+const currentLadderRung = (s: GameState): string => {
+  if (!s.level || s.level === '待业' || (!s.job_start_age && s.level === '初级研发')) return '';
   let baseLevel = s.level;
   if (baseLevel === 'MTS') {
     // OpenAI Member of Technical Staff (MTS) 对标大厂 L6 Staff (若 TC>=60 或 impact>=20) 或 L5 Senior
@@ -52,23 +49,32 @@ export const hopTargetLevel = (s: GameState): string => {
   } else if (baseLevel === '国内研发' || baseLevel === '初级研发') {
     baseLevel = (s.age - (s.job_start_age || s.age)) >= 2 ? 'L4' : 'L3';
   }
+  return baseLevel;
+};
 
-  const curIdx = ladder.indexOf(baseLevel);
+export const hopTargetLevel = (s: GameState): string => {
+  const rung = currentLadderRung(s);
+  if (rung === '') return s.is_phd ? 'L4' : 'L3'; // 纯应届生/无往期职级记录
+  const curIdx = LADDER.indexOf(rung);
   if (curIdx < 0) return 'L5 (Senior)';
 
-  // 3. 被裁员/待业状态的社招资深员工：平级录用 (Lateral hire)，绝不降级至应届 L3
-  if (s.laid_off || s.job_type === 'unemployed') {
-    return ladder[curIdx];
-  }
+  // 被裁员/待业状态的社招资深员工：平级录用 (Lateral hire)，绝不降级至应届 L3
+  if (s.laid_off || s.job_type === 'unemployed') return LADDER[curIdx];
 
-  // 4. 在职主动跳槽：尝试阶梯 +1，若 impact 不足则平跳 (Lateral)
-  const target = ladder[Math.min(ladder.length - 1, curIdx + 1)];
+  // 在职主动跳槽：尝试阶梯 +1，若 impact 不足则平跳 (Lateral)
+  const target = LADDER[Math.min(LADDER.length - 1, curIdx + 1)];
   const need: Record<string, number> = { 'L6 (Staff)': 20, 'L7 (Senior Staff)': 45, 'L8 (Principal)': 80 };
-  if (need[target] && (s.impact || 0) < need[target]) {
-    return ladder[curIdx];
-  }
+  if (need[target] && (s.impact || 0) < need[target]) return LADDER[curIdx];
   return target;
 };
+
+// True iff hopTargetLevel is a real level-UP vs the player's current standing. The job-hop
+// join choices use this to stamp last_promo_age / fire a promo celebration ONLY on an actual
+// promotion — a lateral hire (laid-off senior re-hired at grade, an impact-short hop, or an
+// already-L8 hop) must not trigger a "PROMOTION UNLOCKED" screen or its stat rewards.
+// (A true new grad joining their first job — rung '' → L3/L4 — still counts, as before.)
+export const hopIsPromotion = (s: GameState): boolean =>
+  LADDER.indexOf(hopTargetLevel(s)) > LADDER.indexOf(currentLadderRung(s));
 
 // impact 只对标准大厂/研究/量化阶梯有意义(founder/trader/unemployed 无此概念)。
 export const isImpactCareer = (s: GameState): boolean =>

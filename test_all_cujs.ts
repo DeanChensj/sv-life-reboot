@@ -1,4 +1,4 @@
-import { events, generateInitialState, midYearEventRouter } from './src/data/events';
+import { events, generateInitialState, midYearEventRouter, hopTargetLevel, hopIsPromotion } from './src/data/events';
 import { GameState, Choice } from './src/types';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown } from './src/utils/gameStateSelectors';
@@ -926,8 +926,65 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 17 Passed\n');
 }
 
+// CUJ 18: Promotion integrity — impact gates on ALL L6+ paths + no false lateral-hop celebration
+{
+  console.log('--- [CUJ 18] Promotion integrity (impact gates + lateral-hop celebration) ---');
+  const findChoice = (evId: string, text: string) =>
+    events[evId].choices.find((c) => c.text.includes(text));
+  // High-stat L5 who has NOT earned impact — must NOT reach L6 via any promo path.
+  const l5NoImpact = (over: Partial<GameState> = {}): GameState => ({
+    ...generateInitialState(), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)',
+    leetcode: 90, charm: 25, network: 60, health: 100, tc: 80, impact: 0,
+    age: 40, last_promo_age: 34, job_start_age: 24, laid_off: false, status: 'playing', ...over,
+  } as GameState);
+
+  // 1. 内卷 grind: impact 0 => never promotes to L6 (deterministic: impact<20 short-circuits the &&)
+  const grind = findChoice('sv_daily_life', '疯狂内卷')!;
+  for (let i = 0; i < 20; i++) {
+    const r = grind.effect(l5NoImpact());
+    assert(r.level !== 'L6 (Staff)', '内卷 grind cannot reach L6 with impact 0');
+  }
+  // 2. Wartime sprint: impact 0 => never promotes to L6
+  const sprint = findChoice('sv_daily_life', '战时冲刺')!;
+  for (let i = 0; i < 20; i++) {
+    const r = sprint.effect(l5NoImpact());
+    assert(r.level !== 'L6 (Staff)', 'wartime sprint cannot reach L6 with impact 0');
+  }
+  // 3. meta_tlm: cannot skip from L3/L4 to L6, and L5 with impact 0 never wins
+  const tlm = findChoice('meta_tlm', '继续卷升职')!;
+  for (let i = 0; i < 20; i++) {
+    assert(tlm.effect(l5NoImpact({ level: 'L3' })).level !== 'L6 (Staff)', 'meta_tlm: L3 cannot skip to L6');
+    assert(tlm.effect(l5NoImpact()).level !== 'L6 (Staff)', 'meta_tlm: L5 impact 0 cannot reach L6');
+  }
+  assert(hopTargetLevel(l5NoImpact({ impact: 25, laid_off: false, job_type: 'big_tech' })) === 'L6 (Staff)', 'in-job L5 with impact>=20 CAN target L6 on hop');
+
+  // 4. No false promo-celebration on a lateral hire: laid-off L6 re-hired stays L6 and is NOT stamped
+  const laidOffL6: GameState = { ...generateInitialState(), level: 'L6 (Staff)', job_type: 'unemployed', laid_off: true, job_start_age: 24, age: 40, last_promo_age: 34, impact: 10, hop_offers: ['google'], status: 'playing' } as GameState;
+  assert(hopTargetLevel(laidOffL6) === 'L6 (Staff)', 'laid-off L6 re-hire preserves L6 (lateral, not demoted)');
+  assert(hopIsPromotion(laidOffL6) === false, 'laid-off same-level re-hire is NOT a promotion');
+  const googleJoin = findChoice('job_hop_market', '入职 Google')!;
+  const joinEff = googleJoin.effect(laidOffL6);
+  assert(joinEff.level === 'L6 (Staff)', 'lateral re-hire lands at L6');
+  assert(joinEff.last_promo_age !== 40, 'lateral re-hire does NOT stamp last_promo_age (no false celebration)');
+  // In-job real level-up IS a promotion
+  assert(hopIsPromotion({ ...l5NoImpact({ impact: 30 }) }) === true, 'in-job L5->L6 with impact IS a promotion');
+
+  // 5. dave_retaliation_showdown choice-1: an L6 player (no level change) does not falsely celebrate
+  const daveWin = findChoice('dave_retaliation_showdown', '雷霆出击')!;
+  const l6Dave: GameState = { ...generateInitialState(), level: 'L6 (Staff)', age: 41, last_promo_age: 36, job_start_age: 24, story_flags: { has_dave_evidence: true }, status: 'playing' } as GameState;
+  const daveEff = daveWin.effect(l6Dave);
+  assert(daveEff.last_promo_age !== 41, 'dave showdown: L6 win does not stamp last_promo_age');
+  const daveNext = typeof daveWin.nextEventId === 'function' ? daveWin.nextEventId({ ...l6Dave, ...daveEff } as GameState) : daveWin.nextEventId;
+  assert(daveNext !== 'promo_celebration', 'dave showdown: L6 (unchanged) does not route to promo_celebration');
+  // An L4 dave-showdown player DOES promote to L5 and celebrates
+  const l4Dave: GameState = { ...l6Dave, level: 'L4' };
+  const dave4 = daveWin.effect(l4Dave);
+  assert(dave4.level === 'L5 (Senior)' && dave4.last_promo_age === 41, 'dave showdown: L4 promotes to L5 and stamps');
+
+  console.log('✅ CUJ 18 Passed\n');
+}
+
 // CUJ 19: Economy & housing edge-case fixes (PR B: #3 dead choice/orphan, #7 forced-bankruptcy, #9 h1b loop)
-// (CUJ 18 lives in the promotion-integrity PR.)
 {
   console.log('--- [CUJ 19] Economy & housing edge-case fixes ---');
   const choiceOf = (evId: string, text: string) => events[evId].choices.find((c) => c.text.includes(text));

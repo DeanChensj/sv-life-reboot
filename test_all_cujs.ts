@@ -404,7 +404,25 @@ console.log('--- [CUJ 5] Domestic Undergrad to Overseas Tech Journey ---');
   const visaInfo = getVisaDisplayInfo(state);
   assert(visaInfo.visaLabel === '暂无 (未赴美)', 'Displays 暂无 (未赴美)');
 
-  // 2. Graduate into domestic big tech
+  // 2. Actually WALK the undergrad chain instead of teleporting to cn_undergrad_grad.
+  // Real route: cn_college_grad (百团大战) -> 随机校园事件 -> cn_college_year3 (大三抉择) -> cn_undergrad_grad.
+  // This exercises the real connectivity; a break anywhere in the chain now fails CUJ 5.
+  setGameSeed(12345);
+  const cnCampusEvents = ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'];
+  res = stepChoice(state, 'cn_college_grad', 0); // 【ACM 算法集训】
+  state = res.nextState;
+  assert(cnCampusEvents.includes(res.nextEventId), `cn_college_grad routes into a campus event (got ${res.nextEventId})`);
+
+  const campusEventId = res.nextEventId; // follow whichever campus event we actually landed on
+  res = stepChoice(state, campusEventId, 0);
+  state = res.nextState;
+  assert(res.nextEventId === 'cn_college_year3', `campus event ${campusEventId} advances to cn_college_year3 (got ${res.nextEventId})`);
+
+  res = stepChoice(state, 'cn_college_year3', 1); // 【提前批次秋招】
+  state = res.nextState;
+  assert(res.nextEventId === 'cn_undergrad_grad', `cn_college_year3 advances to cn_undergrad_grad (got ${res.nextEventId})`);
+
+  // 3. Graduate into domestic big tech
   res = stepChoice(state, 'cn_undergrad_grad', 3);
   state = res.nextState;
   assert(res.nextEventId === 'cn_work', 'Routed to cn_work');
@@ -418,14 +436,14 @@ console.log('--- [CUJ 5] Domestic Undergrad to Overseas Tech Journey ---');
   const visaInfo2 = getVisaDisplayInfo(state);
   assert(visaInfo2.visaLabel === '暂无 (国内在职)', 'Displays 暂无 (国内在职)');
 
-  // 3. Early career 996 work (anti-loop check: advances to cn_work_mid)
+  // 4. Early career 996 work (anti-loop check: advances to cn_work_mid)
   let midRes = stepChoice(state, 'cn_work', 0);
   assert(midRes.nextEventId === 'cn_work_mid', 'Early domestic work advances to cn_work_mid (no self loop)');
   assert(midRes.nextState.age === state.age + 1, 'Age advances 1 year');
   assert(midRes.nextState.year === state.year + 1, 'Year advances 1 year');
   assert(midRes.nextState.cash > state.cash, 'Saved net salary');
 
-  // 4. Mid stage N+3 layoff package -> US Master
+  // 5. Mid stage N+3 layoff package -> US Master
   let masterRes = stepChoice(midRes.nextState, 'cn_work_mid', 1);
   assert(masterRes.nextEventId === 'us_master_year1', 'N+3 layoff package routes to us_master_year1');
   assert(masterRes.nextState.visa === 'F1 (学生)', 'F1 visa acquired');

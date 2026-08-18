@@ -42,6 +42,7 @@ export const levelEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           leetcode: Math.min(100, s.leetcode + 3),
           health: Math.max(0, s.health - 5),
+          impact: addImpact(s, 6),
           story_flags: seen(s, 'level_entry_grunt_work'),
           message: '你鼓起勇气在 1:1 上表达了想承担更大责任的意愿。老板欣赏你的主动，划给你一块虽小但可见的模块，你的成长曲线陡然上扬。',
         }),
@@ -101,6 +102,7 @@ export const levelEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 8),
           health: Math.max(0, s.health - 6),
+          impact: addImpact(s, 6),
           story_flags: seen(s, 'level_staff_glue_work'),
           message: '你选择成为团队的定海神针，默默扛下所有跨组协调与救火。虽然这些功劳很难量化、晋升也慢了，但你赢得了整个组织发自内心的信赖。',
         }),

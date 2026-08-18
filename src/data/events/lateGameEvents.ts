@@ -1,5 +1,5 @@
 import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router } from './helpers';
+import { h1ToH2Router, addImpact } from './helpers';
 
 // 中后期 engagement 事件 — Late-game texture events (T2, NON-destructive first pass).
 // Purpose: kill the 32+「自动驾驶挂机」mid-game fatigue by giving the 33-55 window (and
@@ -25,6 +25,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
           leetcode: Math.min(100, s.leetcode + 8),
           network: Math.min(100, (s.network || 10) + 4),
           health: Math.max(0, s.health - 6),
+          impact: addImpact(s, 10),
           story_flags: seen(s, 'late_ic_vs_management'),
           message: '你选择做一辈子写代码的手艺人。你把架构能力磨到炉火纯青，成了组里那个「谁都绕不开」的技术定海神针。',
         }),
@@ -37,6 +38,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           leetcode: Math.max(0, s.leetcode - 3),
           health: Math.max(0, s.health - 6),
+          impact: addImpact(s, 6),
           story_flags: seen(s, 'late_ic_vs_management'),
           message: '你转身做了 Engineering Manager，从「自己写」变成「让一群人写好」。手感生疏了些，但你学会了用组织杠杆撬动更大的事。',
         }),
@@ -95,6 +97,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
           network: Math.min(100, (s.network || 10) + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           health: Math.max(0, s.health - 4),
+          impact: addImpact(s, 10),
           story_flags: seen(s, 'late_mentor_legacy'),
           message: '你开始系统地带新人、维护自己的开源项目、在博客与书里沉淀方法论。你的名字成了一块招牌，行业影响力悄然复利。',
         }),

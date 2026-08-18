@@ -981,6 +981,28 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const dave4 = daveWin.effect(l4Dave);
   assert(dave4.level === 'L5 (Senior)' && dave4.last_promo_age === 41, 'dave showdown: L4 promotes to L5 and stamps');
 
+  // 6. Impact accumulation & annual settlement decay mechanics
+  const l5Active = l5NoImpact();
+  const sprintRes = sprint.effect(l5Active);
+  assert((sprintRes.impact || 0) >= 2, 'Wartime sprint produces impact (>=2 even on struggle, >=8 on Top Perf)');
+
+  const grindRes = grind.effect(l5Active);
+  assert((grindRes.impact || 0) >= 5, 'Crazy grind produces impact (>=5 on promo/merit)');
+
+  // High-impact L5 CAN promote to L6 Staff on wartime sprint
+  const l5WithHighImpact = l5NoImpact({ impact: 30, last_promo_age: 34, age: 40 });
+  setGameSeed(42);
+  let sprintPromoted = false;
+  for (let i = 0; i < 100; i++) {
+    const res = sprint.effect(l5WithHighImpact);
+    if (res.level === 'L6 (Staff)') {
+      sprintPromoted = true;
+      assert((res.impact || 0) >= 40, 'L6 promo further awards +10 impact');
+      break;
+    }
+  }
+  assert(sprintPromoted, 'High-impact L5 is capable of promoting to L6 Staff via wartime sprint');
+
   console.log('✅ CUJ 18 Passed\n');
 }
 

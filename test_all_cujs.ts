@@ -1040,6 +1040,40 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 19 Passed\n');
 }
 
+// CUJ 20: Impact PROGRESSION REACHABILITY — guards the "gate-on-unearnable-resource" class.
+// #50 gated senior promos on impact (L6>=20); if impact income is ever cut off (as it was
+// before #53), that gate silently becomes an impossible wall. This asserts an engaged
+// big-tech grinder can actually accumulate impact past the L6 gate through normal play.
+{
+  console.log('--- [CUJ 20] Impact progression reachability (anti dead-gate) ---');
+  const sprint = events['sv_daily_life'].choices.find((c) => c.text.includes('战时冲刺'))!;
+  const settle = events['sv_year_end_settlement'].choices[0];
+  const TRIALS = 100;
+  let reached = 0;
+  for (let t = 0; t < TRIALS; t++) {
+    // Pass the seed INTO generateInitialState (calling it with no arg re-seeds from Date.now,
+    // which would make this non-deterministic).
+    let s: GameState = {
+      ...generateInitialState(4000 + t), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)',
+      leetcode: 75, charm: 20, network: 40, health: 100, tc: 70, impact: 0,
+      age: 30, last_promo_age: 28, job_start_age: 24, status: 'playing',
+    } as GameState;
+    for (let yr = 0; yr < 15 && s.status === 'playing'; yr++) {
+      s = applyStateTransition(s, sprint.effect(s), { eventId: 'sv_daily_life' }).nextState;
+      if ((s.impact || 0) >= 20) { reached++; break; }
+      s = applyStateTransition(s, settle.effect(s), { eventId: 'sv_year_end_settlement' }).nextState;
+      if ((s.impact || 0) >= 20) { reached++; break; }
+    }
+  }
+  const pct = (reached / TRIALS) * 100;
+  console.log(`   ${pct.toFixed(0)}% of engaged big-tech grinders cleared the L6 impact gate (>=20) within 15y`);
+  // Threshold is a robust regression catcher: if impact income is cut off this collapses to
+  // ~0% (the pre-#53 state). Real rate ~76% (senior promo is meant to be hard); 60% leaves margin.
+  assert(pct >= 60, `Engaged grinder must be able to clear the impact>=20 L6 gate through play in >=60% of careers (got ${pct.toFixed(0)}%) — impact income must not be cut off (regression of #53)`);
+
+  console.log('✅ CUJ 20 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

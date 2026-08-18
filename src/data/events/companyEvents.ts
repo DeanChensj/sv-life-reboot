@@ -205,4 +205,42 @@ export const companyEvents: Record<string, GameEvent> = {
       },
     ],
   },
+
+  // ---------------- 通用「影响力机遇」随机事件 (impact opportunities) ----------------
+  // 给大厂/研究路径额外的 impact 来源(除年度硬卷外),让积累影响力不必只靠爆肝。
+  // 一生一次(story_flags.<id>_seen),由 midYearEventRouter 以 ~25% 概率注入。
+  'open_source_breakout': {
+    id: 'open_source_breakout',
+    title: '【开源出圈】你的业余开源项目一夜爆红',
+    description: '你利用业余时间维护的开源库突然冲上 GitHub Trending 与 Hacker News 头条，一晚暴涨上万 star，业界大佬纷纷转发，连你老板都在全员频道 @ 你！',
+    choices: [
+      {
+        text: '【全力运营】投入精力打磨社区与文档，把开源热度变现为职业影响力',
+        effect: (s) => ({ health: Math.max(0, s.health - 8), impact: addImpact(s, 12), network: Math.min(100, (s.network || 10) + 6), leetcode: Math.min(100, s.leetcode + 3), story_flags: seen(s, 'open_source_breakout'), message: '你顺势把开源热度运营成个人技术品牌，行业影响力 (Impact) 大涨，还结识了一批核心圈内人！' }),
+        nextEventId: (s) => h1ToH2Router(s),
+      },
+      {
+        text: '【随缘维护】热度随它去，主要精力还是放回本职工作',
+        effect: (s) => ({ impact: addImpact(s, 5), story_flags: seen(s, 'open_source_breakout'), message: '你没太上心，热度过后项目渐渐沉寂，但这段经历仍为你攒下了一些行业影响力。' }),
+        nextEventId: (s) => h1ToH2Router(s),
+      },
+    ],
+  },
+  'internal_tech_talk_viral': {
+    id: 'internal_tech_talk_viral',
+    title: '【技术分享出圈】你的 Tech Talk 火遍全公司',
+    description: '你在公司技术大会上的架构分享意外出圈，录播在内网被疯狂转发，好几个组主动来取经，连 VP 都私信约你喝咖啡……',
+    choices: [
+      {
+        text: '【趁热打铁】牵头成立跨组技术委员会，扩大技术话语权',
+        effect: (s) => ({ health: Math.max(0, s.health - 7), impact: addImpact(s, 10), network: Math.min(100, (s.network || 10) + 8), story_flags: seen(s, 'internal_tech_talk_viral'), message: '你借势牵头跨组技术委员会，成了公司级技术意见领袖，影响力 (Impact) 与人脉双丰收！' }),
+        nextEventId: (s) => h1ToH2Router(s),
+      },
+      {
+        text: '【低调收尾】收下好评，继续专注手头项目',
+        effect: (s) => ({ impact: addImpact(s, 4), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), story_flags: seen(s, 'internal_tech_talk_viral'), message: '你谦逊地收下同事们的称赞，低调回归本职，小小刷了一波存在感。' }),
+        nextEventId: (s) => h1ToH2Router(s),
+      },
+    ],
+  },
 };

@@ -58,6 +58,7 @@ export interface GameState {
   health: number; // 0-100
   leetcode: number; // 0-100
   impact?: number; // 影响力/项目产出 — L5+ 高级晋升的硬通货；主导项目/发 paper 累积，躺平衰减
+  impact_ytd_base?: number; // 上一次结算后的 impact 基线；用于「本年是否有交付」判定条件衰减(交付年不扣 -4)
   visa: VisaStatus;
   tc: number; // 万美元
   max_tc?: number; // 历史最高年薪总包 (峰值 TC, 不受裁员归零影响)

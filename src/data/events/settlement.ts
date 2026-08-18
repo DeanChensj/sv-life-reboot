@@ -374,10 +374,17 @@ export const settlementEvents: Record<string, GameEvent> = {
               cash: finalCash,
               stocks: currentStocks,
               tc: updatedTC,
-              // 影响力随时间自然衰减：不持续交付项目就会「过气」。躺平一年 impact -4，
-              // 而主导项目/发 paper 等每次 +8~15，engaged 玩家净增、躺平玩家逐年归零而卡级。
-              // (非大厂路径 impact 恒为 0，Math.max 下此项为 no-op。)
-              impact: Math.max(0, (s.impact || 0) - 4),
+              // 影响力「条件衰减」：只有【本年没有交付/没涨 impact】才 -4(真躺平才过气);
+              // 本年有交付(impact 高于上次结算基线)则不衰减,保留全部产出。这样「卷一年→歇一年
+              // 保命」的可持续打法也能净攒 impact 冲 L6+,而纯躺平者仍逐年归零卡级。
+              // 通过和上次结算基线 impact_ytd_base 比较来判定,无需在每个产 impact 的事件里打标记。
+              // (非大厂路径 impact 恒为 0,此项为 no-op。)
+              impact: ((s.impact || 0) > (s.impact_ytd_base ?? 0) + 0.001)
+                ? (s.impact || 0)
+                : Math.max(0, (s.impact || 0) - 4),
+              impact_ytd_base: ((s.impact || 0) > (s.impact_ytd_base ?? 0) + 0.001)
+                ? (s.impact || 0)
+                : Math.max(0, (s.impact || 0) - 4),
               health: newHealth,
               macro_economy: newEconomy,
               story_flags: newStoryFlags,

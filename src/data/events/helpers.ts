@@ -392,10 +392,19 @@ export const midYearEventRouter = (s: GameState): string => {
        workEvents.push('agent_hallucination_prod_disaster');
      }
      
-     // Meta 专属 Tech Lead Manager 卷王挑战
-     if (s.company === 'meta') {
-       workEvents.push('meta_tlm');
-     }
+      // 通用「影响力机遇」随机事件(一生一次):给大厂/研究路径额外的 impact 来源,
+      // 让积累影响力不必只靠年度硬卷。
+      if (isCorporate && !s.story_flags?.open_source_breakout_seen && gameRandom() < 0.22) {
+        workEvents.push('open_source_breakout');
+      }
+      if (isCorporate && !s.story_flags?.internal_tech_talk_viral_seen && gameRandom() < 0.22) {
+        workEvents.push('internal_tech_talk_viral');
+      }
+
+      // Meta 专属 Tech Lead Manager 卷王挑战
+      if (s.company === 'meta') {
+        workEvents.push('meta_tlm');
+      }
 
      // Apple 专属 Vision Pro / 空间计算应用开发
      if (s.company === 'apple') {

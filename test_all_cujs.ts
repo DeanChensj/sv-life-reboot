@@ -915,11 +915,27 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
     status: 'playing',
   };
 
-  // 1. sv_daily_life choice routes to founder_exit_event
-  const dailyExit = events['sv_daily_life'].choices.find((c) => c.text.includes('终局退场') && (!c.condition || c.condition(founderState)))!;
-  assert(!!dailyExit, 'sv_daily_life has founder exit choice');
-  const exitNext = typeof dailyExit.nextEventId === 'function' ? dailyExit.nextEventId(founderState) : dailyExit.nextEventId;
-  assert(exitNext === 'founder_exit_event', 'sv_daily_life founder exit routes to founder_exit_event');
+  // 1. P0 role-hub routing: year-end settlement routes a FOUNDER straight to their own
+  //    strategy hub (or a founder crisis), NEVER to the generic sv_daily_life panel — and
+  //    sv_daily_life no longer carries any founder-specific option (de-duped into the hub).
+  const settleRoute = events['sv_year_end_settlement'].choices[0];
+  setGameSeed(7);
+  const founderRoutes = new Set<string>();
+  for (let i = 0; i < 80; i++) {
+    founderRoutes.add(
+      (typeof settleRoute.nextEventId === 'function' ? settleRoute.nextEventId(founderState) : settleRoute.nextEventId) as string
+    );
+  }
+  assert(!founderRoutes.has('sv_daily_life'), 'Founder year-end NEVER routes to the generic sv_daily_life panel');
+  assert(founderRoutes.has('founder_annual_strategy'), 'Founder year-end reaches the founder_annual_strategy hub');
+  // The founder/trader ANNUAL-management duplicates are gone (de-duped into the hubs). NOTE:
+  // the "become a founder/trader" ENTRY options (gated on job_type !== that role) legitimately
+  // remain — employees still quit into founding/trading from here; those are not duplicates.
+  assert(
+    !events['sv_daily_life'].choices.some((c) =>
+      c.text.includes('终局退场') || c.text.includes('产品冲刺') || c.text.includes('量化套利') || c.text.includes('金盆洗手')),
+    'sv_daily_life no longer carries the founder/trader annual-management duplicates (de-duped into the hubs)'
+  );
 
   // 2. founder_annual_strategy choice routes to founder_exit_event
   const stratExit = events['founder_annual_strategy'].choices.find((c) => c.text.includes('终局退场 Exit') && (!c.condition || c.condition(founderState)))!;

@@ -124,20 +124,46 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   state = res.nextState;
   assert(state.visa === 'OPT (实习)', 'Graduation activated OPT');
 
-  // 6. Job Hunt -> Google L3
-  res = stepChoice(state, 'job_hunt', 0, { company: 'google', job_type: 'big_tech', tc: 18, level: 'L3' });
-  state = res.nextState;
+  // 6a. 海投大厂 (job_hunt idx0) really RUNS the offer generator — it does NOT directly hire.
+  // (Was faked with a stepChoice override injecting {company,tc,level} that job_hunt never
+  // actually produces; the real effect yields hop_offers and routes to the offer market.)
+  setGameSeed(7);
+  const jobHunt0 = events['job_hunt'].choices[0];
+  const huntEff = jobHunt0.effect(state);
+  assert((huntEff.hop_offers || []).length > 0, 'King-of-roll 海投 wins at least one Offer (real effect)');
+  const huntRoute = typeof jobHunt0.nextEventId === 'function' ? jobHunt0.nextEventId({ ...state, ...huntEff } as GameState) : jobHunt0.nextEventId;
+  assert(huntRoute === 'job_hop_market', 'Winning offers routes to job_hop_market (real routing, not a fabricated direct hire)');
+  state = applyStateTransition(state, huntEff, { eventId: 'job_hunt' }).nextState;
+
+  // 6b. Sign with Google at the offer market — exercise the REAL hire effect.
+  state.hop_offers = ['google'];
+  const googleSign = events['job_hop_market'].choices.find((c) => c.text.includes('入职 Google'))!;
+  assert(googleSign.condition!(state) === true, 'Google offer is signable when it was won');
+  const signEff = googleSign.effect(state);
+  assert(signEff.company === 'google', 'Real hire effect sets company=google');
+  assert(signEff.job_type === 'big_tech', 'Real hire effect sets job_type=big_tech');
+  assert(signEff.level === 'L3', 'Fresh-grad hire lands at L3 (no prior ladder rung)');
+  state = applyStateTransition(state, signEff, { eventId: 'job_hop_market' }).nextState;
   assert(state.company === 'google', 'Hired at Google');
-  assert(state.tc === 18, 'TC set to $18w');
+  assert(state.tc > 0, 'TC set to a real compensation band (not a fabricated $18w)');
 
   // 7. Choose Housing: Cupertino 合租
   res = stepChoice(state, 'choose_housing', 1);
   state = res.nextState;
 
-  // 8. H1B First Year Lottery win
-  res = stepChoice(state, 'big_tech_work', 0, { visa: 'H1B (工签)' });
-  state = res.nextState;
-  assert(state.visa === 'H1B (工签)', 'H1B Lottery won');
+  // 8. H1B First-Year Lottery — drive the REAL lottery effect (was faked with a visa override).
+  //    winRate is ~25-40%, so seed + loop the pure effect until a win, then assert the real output.
+  setGameSeed(3);
+  const h1bLottery = events['big_tech_work'].choices[0];
+  let h1bWon: Partial<GameState> | null = null;
+  for (let i = 0; i < 200; i++) {
+    const r = h1bLottery.effect(state);
+    if (r.visa === 'H1B (工签)') { h1bWon = r; break; }
+  }
+  assert(!!h1bWon, 'H1B lottery is winnable via the real effect');
+  assert(h1bWon!.h1b_attempts === 1, 'Real H1B win records the first-year attempt');
+  state = applyStateTransition(state, h1bWon!, { eventId: 'big_tech_work' }).nextState;
+  assert(state.visa === 'H1B (工签)', 'H1B Lottery won (real effect)');
 
   // 9. Year End Settlement with PERM progress
   state.cash += 15;
@@ -176,7 +202,10 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   assert(tcBreakdown.postTaxBase === 14.96, 'Post-tax cash is $14.96w (32% band)');
   assert(tcBreakdown.postTaxRSU === 12.24, 'Post-tax RSU is $12.24w (32% band)');
 
-  // 12. Progression ladder (L3 -> L4 -> L5 Senior -> L6 Staff)
+  // 12. Progression ladder: L5 -> L6 Staff via the REAL perf_review effect. The old test
+  //     never called the choice's effect — it hand-applied a {level:'L6'} object, so the
+  //     impact gate, the win RNG, AND the routing were all untested. perf_review's L6
+  //     choice gates on impact>=20 (plus leetcode/charm/network/health/tc thresholds).
   state.last_promo_age = state.age - 2;
   state.leetcode = 70;
   state.network = 30;
@@ -184,19 +213,28 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   state.health = 80;
   state.tc = 40;
   state.level = 'L5 (Senior)';
+  state.impact = 25; // clears the L6 Staff impact gate
 
-  // Test L5 -> L6 Staff promotion choice
-  const l6Choice = events['perf_review'].choices.find((c) => c.text.includes('L6 Staff') || c.text.includes('战时冲刺'))!;
-  assert(!!l6Choice, 'L6 promotion option is available');
-  const l6Res = applyStateTransition(state, {
-    level: 'L6 (Staff)',
-    tc: state.tc + 12.0,
-    last_promo_age: state.age,
-  }, { eventId: 'perf_review' });
+  const l6Choice = events['perf_review'].choices.find((c) => c.text.includes('L6 Staff'))!;
+  assert(!!l6Choice, 'L6 promotion option exists');
+  // Real condition gating: strong stats + impact>=20 unlocks it; impact<20 shuts it.
+  assert(l6Choice.condition!(state) === true, 'L6 promo unlocked with strong stats + impact>=20');
+  assert(l6Choice.condition!({ ...state, impact: 0 }) === false, 'L6 promo gated shut when impact<20 (anti dead-gate)');
+
+  // Drive the REAL effect until it wins (capped ~24%/try), then assert the actual output.
+  setGameSeed(11);
+  let l6Win: Partial<GameState> | null = null;
+  for (let i = 0; i < 400; i++) {
+    const r = l6Choice.effect(state);
+    if (r.level === 'L6 (Staff)') { l6Win = r; break; }
+  }
+  assert(!!l6Win, 'L5 with full stats + impact can actually win the L6 Staff promotion (real effect)');
+  assert(l6Win!.tc === state.tc + 12, 'Real L6 promotion raises TC by +$12w (to $52w)');
+  assert(l6Win!.last_promo_age === state.age, 'Real L6 promotion stamps last_promo_age this turn');
+  const l6Res = applyStateTransition(state, l6Win!, { eventId: 'perf_review' });
   assert(l6Res.nextState.level === 'L6 (Staff)', 'Promoted to L6 Staff');
-  assert(l6Res.nextState.tc === 52, 'TC increased to $52w');
   const nextTarget = typeof l6Choice.nextEventId === 'function' ? l6Choice.nextEventId(l6Res.nextState) : l6Choice.nextEventId;
-  assert(nextTarget === 'l6_staff_celebration', 'Promoting to L6 routes to l6_staff_celebration');
+  assert(nextTarget === 'l6_staff_celebration', 'Real L6 promotion routes to l6_staff_celebration');
 
   // 13. Purchase Sunnyvale home & verify asset flow
   state = l6Res.nextState;
@@ -259,12 +297,34 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   state.cash = 35;
   state.leetcode = 80;
 
-  // 1. Setup Undergrad Grad -> PhD
+  // Drive a RANDOM choice's REAL effect (seed + loop) until it produces the branch we want,
+  // then return the real effect, the post-transition state, and the real routing. Replaces
+  // fabricating outcomes via stepChoice overrides — this exercises the actual effect logic.
+  const forceChoice = (
+    st: GameState, evId: string, idx: number,
+    want: (r: Partial<GameState>) => boolean, seed: number, tries = 500
+  ): { effect: Partial<GameState>; nextState: GameState; nextEventId: string } | null => {
+    setGameSeed(seed);
+    const ch = events[evId].choices[idx];
+    for (let i = 0; i < tries; i++) {
+      const eff = ch.effect(st);
+      if (want(eff)) {
+        const ns = applyStateTransition(st, eff, { eventId: evId }).nextState;
+        const nextId = typeof ch.nextEventId === 'function' ? ch.nextEventId(ns) : ch.nextEventId;
+        return { effect: eff, nextState: ns, nextEventId: nextId };
+      }
+    }
+    return null;
+  };
+
+  // 1. Undergrad Grad -> PhD admission — drive the REAL admission RNG (was an is_phd override).
+  //    On success the real effect also sets housing_name '美国 博士实验室'.
   state.school = 'cmu';
-  let res = stepChoice(state, 'us_undergrad_grad', 0, { is_phd: true, housing_name: '美国 博士实验室' });
-  state = res.nextState;
+  const admit = forceChoice(state, 'us_undergrad_grad', 0, (r) => r.is_phd === true, 101);
+  assert(!!admit, 'CMU + leetcode>=80 can win a PhD admission (real effect)');
+  state = admit!.nextState;
   assert(state.is_phd === true, 'PhD status confirmed');
-  assert(res.nextEventId === 'phd_life', 'Routed to phd_life');
+  assert(admit!.nextEventId === 'phd_life', 'PhD admission routes to phd_life');
 
   const jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.levelLabel === '全奖博士', 'Level displays 全奖博士 before job');
@@ -282,30 +342,38 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   assert(midStageMasterOutRes.nextState.is_phd === false, 'PhD status revoked on master out');
   assert(midStageMasterOutRes.nextState.is_master === true, 'Player receives master degree on master out');
 
-  // 4. PhD Mid Stage Choice 1 (DeepMind / FAIR Research Intern) grants cash and graduation
-  let internRes = stepChoice(vacationRes.nextState, 'phd_mid_stage', 1, { is_phd: true, cash: vacationRes.nextState.cash + 6 });
-  assert(internRes.nextEventId === 'phd_job_hunt', 'AI research internship successfully completes PhD defense');
-  assert(internRes.nextState.is_phd === true, 'PhD degree maintained after research internship');
-  assert(internRes.nextState.cash > vacationRes.nextState.cash, 'Earned stipend from research internship');
+  // 4. PhD Mid Stage Choice 1 (DeepMind / FAIR Research Intern) — drive the REAL success RNG
+  //    (was an is_phd + cash override). On success the real effect grants +$6w and the PhD.
+  const intern = forceChoice(vacationRes.nextState, 'phd_mid_stage', 1, (r) => r.is_phd === true, 202);
+  assert(!!intern, 'AI research internship can succeed and complete the PhD defense (real effect)');
+  assert(intern!.nextEventId === 'phd_job_hunt', 'Successful research internship routes to phd_job_hunt');
+  assert(intern!.nextState.is_phd === true, 'PhD degree maintained after research internship');
+  assert(intern!.effect.cash === vacationRes.nextState.cash + 6, 'Real internship pays a +$6w stipend');
+  assert(intern!.nextState.cash > vacationRes.nextState.cash, 'Earned stipend from research internship');
 
-  // 5. PhD Direct Paper Success -> phd_conference -> phd_job_hunt -> OpenAI MTS Offer
-  // Force the SUCCESS branch deterministically: phd_life choice 0 routes on
-  // story_flags.hawaii_conf, which the effect only sets on a gameRandom() pass. This
-  // CUJ runs without reseeding, so its roll depends on the global PRNG state left by
-  // the prior test scripts — inject the flag so the "Successful paper" path is stable
-  // regardless of upstream gameRandom call counts.
-  res = stepChoice(state, 'phd_life', 0, { is_phd: true, story_flags: { ...state.story_flags, hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会接收，老板决定带你去夏威夷参加顶级学术会议！' });
-  assert(res.nextEventId === 'phd_conference', 'Successful paper routes to phd_conference');
-  state = res.nextState;
+  // 5. PhD Direct Paper Success -> phd_conference -> phd_job_hunt -> OpenAI MTS Offer.
+  //    Drive the REAL paper RNG (was a story_flags.hawaii_conf override): on a top-conf
+  //    acceptance phd_life idx0 sets hawaii_conf and routes to phd_conference.
+  const paper = forceChoice(state, 'phd_life', 0, (r) => r.story_flags?.hawaii_conf === true, 303);
+  assert(!!paper, 'PhD paper can be accepted to a top conference (real effect)');
+  assert(paper!.nextEventId === 'phd_conference', 'Accepted paper routes to phd_conference');
+  assert(paper!.nextState.is_phd === true, 'PhD retained on paper success');
+  state = paper!.nextState;
 
-  res = stepChoice(state, 'phd_conference', 0);
-  assert(res.nextEventId === 'phd_job_hunt', 'Conference networking routes to phd_job_hunt');
-  state = res.nextState;
+  const confRes = stepChoice(state, 'phd_conference', 0);
+  assert(confRes.nextEventId === 'phd_job_hunt', 'Conference networking routes to phd_job_hunt');
+  state = confRes.nextState;
   assert(state.is_phd === true, 'PhD degree awarded after conference defense');
 
-  // Apply to OpenAI MTS
-  res = stepChoice(state, 'phd_job_hunt', 0, { company: 'openai', job_type: 'ai_research', tc: 45, level: 'MTS', visa: 'O1 (杰出人才)' });
-  state = res.nextState;
+  // 6. Apply to OpenAI MTS — drive the REAL offer RNG (was a fabricated override whose tc:45
+  //    even contradicted the real win branch, which pays tc:80 L6-band comp).
+  const openai = forceChoice(state, 'phd_job_hunt', 0, (r) => r.company === 'openai', 404);
+  assert(!!openai, 'PhD can win the OpenAI MTS offer (real effect)');
+  assert(openai!.effect.tc === 80, 'Real OpenAI MTS win pays $80w TC (L6-band comp)');
+  assert(openai!.effect.job_type === 'ai_research', 'Real OpenAI win sets job_type=ai_research');
+  assert(openai!.effect.level === 'MTS', 'Real OpenAI win sets level=MTS');
+  assert(openai!.effect.visa === 'O1 (杰出人才)', 'Real OpenAI win grants O1 visa');
+  state = openai!.nextState;
   assert(state.job_type === 'ai_research', 'Job type is ai_research');
   assert(state.visa === 'O1 (杰出人才)', 'Visa is O1');
 
@@ -328,21 +396,34 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
   state.level = 'L4';
   state.tc = 28;
 
-  // 1. Layoff Event
-  let res = stepChoice(state, 'layoff_rumor', 0, { laid_off: true, job_type: 'unemployed', tc: 0 });
+  // 1. Layoff Event — use the DETERMINISTIC layoff branch (idx1: 立刻刷题准备后路) and assert its
+  //    REAL effect. (Was faked with a {laid_off,unemployed,tc:0} override on the RANDOM idx0.)
+  const prevLeet = state.leetcode;
+  let res = stepChoice(state, 'layoff_rumor', 1);
   state = res.nextState;
-  assert(state.laid_off === true, 'Laid off is true');
-  assert(state.tc === 0, 'TC is 0');
+  assert(res.nextEventId === 'layoff_hit', 'Deterministic layoff routes to layoff_hit');
+  assert(state.laid_off === true, 'Real layoff effect sets laid_off=true');
+  assert(state.job_type === 'unemployed', 'Real layoff effect sets job_type=unemployed');
+  assert(state.tc === 0, 'Unemployed TC is 0 (real effect + invariant middleware)');
+  assert(state.leetcode === prevLeet + 20, 'Studied algorithms (leetcode +20) while getting laid off');
 
   const jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.companyLabel === '待业求职中', 'Company badge is 待业求职中');
   assert(jobInfo.levelLabel === '待业', 'Level badge is 待业 (not L4)');
 
-  // 2. Emergency Day 1 CPT Registration
+  // 2. Emergency Day-1-CPT re-enrollment — the REAL Day-1-CPT choice is idx 4 (再读一个水硕维持
+  //    身份). The old test used idx 3 ('放弃求职/离开硅谷', whose real effect returns
+  //    status:'game_over') and pasted a {visa:'Day 1 CPT'} override on top, masking that it was
+  //    testing the WRONG choice entirely. idx 4 is deterministic — assert its real output.
   state.cash = 10;
-  res = stepChoice(state, 'job_hunt_fail', 3, { visa: 'Day 1 CPT' });
+  const prevCash = state.cash;
+  const prevLeet2 = state.leetcode;
+  res = stepChoice(state, 'job_hunt_fail', 4);
   state = res.nextState;
-  assert(state.visa === 'Day 1 CPT', 'Visa successfully transferred to Day 1 CPT');
+  assert(res.nextEventId === 'job_hunt', 'Day-1-CPT re-enrollment routes back to job_hunt');
+  assert(state.visa === 'Day 1 CPT', 'Real effect transfers visa to Day 1 CPT');
+  assert(state.cash === prevCash - 5, 'Day-1-CPT masters program costs $5w (real effect)');
+  assert(state.leetcode === Math.min(100, prevLeet2 + 25), 'Grinded 250 Hard problems (leetcode +25)');
 
   // 3. Marriage green card availability assertions (Single vs In a Relationship)
   const singlePoorState: GameState = { ...state, relationship_status: 'single', cash: 2, charm: 10 };

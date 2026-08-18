@@ -58,6 +58,32 @@ function validateStateInvariants(prevState: GameState, newState: GameState, even
     console.error(`❌ [属性越界断言失败] 事件 '${eventId}' 执行后健康度 (${newState.health}) 超出 [0, 100] 范围！`);
     ok = false;
   }
+  // Stocks must stay a finite, non-negative number (auto-liquidation floors at 0).
+  const stocks = newState.stocks || 0;
+  if (isNaN(stocks) || !isFinite(stocks) || stocks < -0.001) {
+    console.error(`❌ [状态断言失败] 事件 '${eventId}' 执行后股票持仓 (${stocks}) 非法 (NaN/负数)！`);
+    ok = false;
+  }
+  // Impact must stay a finite, non-negative number.
+  const impact = newState.impact || 0;
+  if (isNaN(impact) || !isFinite(impact) || impact < -0.001) {
+    console.error(`❌ [状态断言失败] 事件 '${eventId}' 执行后 impact (${impact}) 非法 (NaN/负数)！`);
+    ok = false;
+  }
+  // (Note: charm is NOT asserted against a 25 cap — the codebase doesn't consistently clamp
+  //  charm to max_charm, so many events legitimately push it to ~29; enforcing it here would
+  //  be noise, not a real invariant.)
+
+  // 6. Ladder Monotonicity — a single turn must NEVER skip a rung (e.g. L3→L6). Only checked
+  //    when BOTH prev and new are STANDARD ladder levels, so non-standard→ladder remaps
+  //    (MTS→L6) and founder-exit conversions are exempt. Catches level-skip promo bugs.
+  const LADDER = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L8 (Principal)'];
+  const prevRung = LADDER.indexOf(prevState.level || '');
+  const newRung = LADDER.indexOf(newState.level || '');
+  if (prevRung >= 0 && newRung >= 0 && newRung - prevRung > 1) {
+    console.error(`❌ [职级跳级断言失败] 事件 '${eventId}' 一回合内从 ${prevState.level} 跳到 ${newState.level} (跨越 ${newRung - prevRung} 级)！`);
+    ok = false;
+  }
 
   return ok;
 }

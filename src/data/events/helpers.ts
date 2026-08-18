@@ -163,7 +163,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
   } else {
     seed = customSeed !== undefined
       ? setGameSeed(customSeed)
-      : setGameSeed((Date.now() ^ (Math.floor(Math.random() * 2147483647))) >>> 0);
+      : setGameSeed((Date.now() ^ (Math.floor(Math.random() * 2147483647))) >>> 0); // lint:allow-math-random (bootstrapping the PRNG seed itself)
 
     // 8% random roll for SSR Native US Citizen trait on fresh new game initialization
     is_ssr_unlocked = gameRandom() < 0.08;

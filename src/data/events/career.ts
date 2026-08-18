@@ -2581,7 +2581,11 @@ export const careerEvents: Record<string, GameEvent> = {
               stocks: (s.stocks || 0) + 15,
               job_type: 'big_tech',
               company: 'google',
-              level: s.level === 'L6 (Staff)' ? 'L6 (Staff)' : 'L5 (Senior)',
+              // Acqui-hire placement must not SKIP a rung (was flat→L5, so an L3 founding
+              // engineer jumped L3→L5). Bump one level (L3→L4, L4→L5), keep L5+ as-is.
+              level: s.level === 'L3' ? 'L4'
+                : (s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)') ? s.level
+                : 'L5 (Senior)',
               tc: Math.max(s.tc, 34),
               health: Math.min(100, s.health + 5),
               story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },

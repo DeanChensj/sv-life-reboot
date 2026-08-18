@@ -21,6 +21,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
+    "lint_events.ts",
     "audit.ts",
     "audit_all_flows.ts",
     "fuzz_test.ts",

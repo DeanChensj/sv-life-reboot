@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
+import { getLevelScaledTC, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing, liquidateStocksToCover } from '../../constants/gameConstants';
 
@@ -406,7 +406,16 @@ export const settlementEvents: Record<string, GameEvent> = {
             return 'h1b_final_crisis';
           }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') return 'post_green_card';
-          
+
+          // Role-specific annual hub: founders/traders don't share the generic sv_daily_life
+          // focus panel — their proper "pick your year" panel is their own strategy hub. Route
+          // them straight there (literal, so audit_all_flows can statically see reachability),
+          // killing the redundant sv_daily_life → hub double-hop. Deliberately a plain hub
+          // return (NOT midYearEventRouter) so we do NOT change founder difficulty here — going
+          // via the router would inject the ~40% annual founder-crisis and tank the FIRE rate.
+          if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
+          if (s.job_type === 'trader') return 'trader_annual_strategy';
+
           return 'sv_daily_life';
         },
       }

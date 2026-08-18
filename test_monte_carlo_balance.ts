@@ -56,6 +56,26 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
         const investChoice = validChoices.find(c => c.text.includes('投资理财') || c.text.includes('拓展副业'));
         chosen = (Math.random() < 0.40 && hopChoice) ? hopChoice : (investChoice || validChoices[Math.floor(Math.random() * validChoices.length)]);
       }
+    } else if (currentEventId === 'founder_annual_strategy') {
+      // Founders now make their PRIMARY annual decision here (year-end settlement routes them
+      // straight to their hub instead of the generic sv_daily_life panel, which the bot alone
+      // played with a smart policy). Model a competent founder: raise to advance the round
+      // (the main valuation engine), cash out the unicorn once late-stage, otherwise push
+      // product growth — and only pull the defensive 苟活 lever when health is critical.
+      const fund = validChoices.find(c => c.text.includes('沙丘路'));
+      const exit = validChoices.find(c => c.text.includes('终局退场'));
+      const pmf = validChoices.find(c => c.text.includes('死磕产品'));
+      const survive = validChoices.find(c => c.text.includes('苟活'));
+      if (state.health < 40 && survive) chosen = survive;
+      else if ((state.founder_stage === 'series_b' || state.founder_stage === 'exit') && exit) chosen = exit;
+      else chosen = fund || pmf || validChoices[Math.floor(Math.random() * validChoices.length)];
+    } else if (currentEventId === 'trader_annual_strategy') {
+      // Competent trader: compound via the moderate-risk growth play, hedge when health is
+      // critical. (Was played fully at random once routed off sv_daily_life.)
+      const hedge = validChoices.find(c => c.text.includes('对冲股息'));
+      const growth = validChoices.find(c => c.text.includes('重仓科技龙头'));
+      if (state.health < 40 && hedge) chosen = hedge;
+      else chosen = growth || validChoices[Math.floor(Math.random() * validChoices.length)];
     } else {
       chosen = validChoices[Math.floor(Math.random() * validChoices.length)];
     }

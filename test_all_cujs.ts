@@ -1547,6 +1547,41 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 27 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 28: All Hands corporate BS event integrity & choice sanity
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 28] All Hands corporate BS event choices & invariants ---');
+  const allHands = events['all_hands_corporate_bs'];
+  assert(!!allHands, 'all_hands_corporate_bs event is defined');
+  assert(allHands.choices.length === 4, 'all_hands_corporate_bs has 4 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', health: 70, leetcode: 50,
+  } as GameState;
+
+  // Choice 0: Slido upvote -> health bonus
+  const c0 = allHands.choices[0].effect(base) as Partial<GameState>;
+  assert((c0.health as number) > base.health, 'Choice 0 boosts health from catharsis');
+
+  // Choice 1: LeetCode grinding under laptop -> leetcode & health
+  const c1 = allHands.choices[1].effect(base) as Partial<GameState>;
+  assert((c1.leetcode as number) > base.leetcode, 'Choice 1 boosts leetcode');
+
+  // Choice 2: Slack Memes -> charm & network
+  const c2 = allHands.choices[2].effect(base) as Partial<GameState>;
+  assert((c2.charm as number) > (base.charm || 10), 'Choice 2 boosts charm');
+  assert((c2.network as number) > (base.network || 10), 'Choice 2 boosts network');
+
+  // Choice 3: Buzzwords into OKR -> impact boost, health cost within <= 15 limit
+  const c3 = allHands.choices[3].effect(base) as Partial<GameState>;
+  assert((c3.impact as number) > (base.impact || 0), 'Choice 3 boosts impact');
+  assert(base.health - (c3.health as number) <= 15, 'Choice 3 health drain <= 15');
+
+  console.log('✅ CUJ 28 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

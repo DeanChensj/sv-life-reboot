@@ -342,6 +342,15 @@ export const midYearEventRouter = (s: GameState): string => {
         if (s.year >= 2024 && !sig.org_ai_wipeout_seen && gameRandom() < 0.15) return 'org_ai_wipeout';
         if (s.age >= 38 && !sig.midlife_ageism_squeeze_seen && gameRandom() < 0.22) return 'midlife_ageism_squeeze';
 
+        // Impact 下行挫折 (midGameCrisisEvents.ts)：仅对已攒下值得一失的影响力 (impact>=15) 的
+        // impact 职业玩家注入,一局各一次。给冲 L6/L7 的路上制造真实挫折,让高阶晋升要求"持续"
+        // 而非单纯累积的影响力。字面量 return 便于 audit_all_flows 源码扫描确定性识别可达性。
+        if (isImpactCareer(s) && (s.impact || 0) >= 15) {
+          if (!sig.impact_project_cancelled_seen && gameRandom() < 0.14) return 'impact_project_cancelled';
+          if (!sig.impact_launch_incident_seen && gameRandom() < 0.13) return 'impact_launch_incident';
+          if (!sig.impact_legacy_maintenance_seen && gameRandom() < 0.12) return 'impact_legacy_maintenance';
+        }
+
         if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
        if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';
        if (s.company === 'nvidia' && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';

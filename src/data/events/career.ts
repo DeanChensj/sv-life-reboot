@@ -2,6 +2,7 @@ import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa } from '../../constants/gameConstants';
+import { isTopTierCSSchool } from '../schoolProfiles';
 
 export const careerEvents: Record<string, GameEvent> = {
   'job_hunt': {
@@ -144,7 +145,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【校友黑手党/教授内推】凭借名校校友网络与导师背书直通大厂',
-        condition: (s) => s.school === 'cmu' || s.school === 'ucb' || s.is_phd,
+        condition: (s) => isTopTierCSSchool(s.school) || s.is_phd,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
           const mafiaTargets = [

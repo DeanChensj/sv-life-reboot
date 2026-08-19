@@ -221,7 +221,7 @@ routerTestStates.forEach(st => {
 // 2-line re-export proxy, so reading it made this whole scan a no-op. Concatenate every module
 // (helpers.ts holds the routers + workEvents/lifeEvents arrays) so the source scan works again.
 const eventsDir = './src/data/events';
-const extraDataFiles = ['./src/data/companyProfiles.ts'];
+const extraDataFiles = ['./src/data/companyProfiles.ts', './src/data/schoolProfiles.ts'];
 const eventsSource = [
   ...fs.readdirSync(eventsDir).filter((f) => f.endsWith('.ts')).map((f) => fs.readFileSync(`${eventsDir}/${f}`, 'utf8')),
   ...extraDataFiles.filter((f) => fs.existsSync(f)).map((f) => fs.readFileSync(f, 'utf8'))

@@ -420,6 +420,7 @@ export const midYearEventRouter = (s: GameState): string => {
        'friday_p0_outage_crisis',
        'empty_promotion_promise',
        'multi_timezone_calendar_hell',
+       'all_hands_corporate_bs',
        'snack_perks_downgrade'
      ];
      

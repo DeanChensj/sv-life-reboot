@@ -201,7 +201,38 @@ export const companyEvents: Record<string, GameEvent> = {
             ? { charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), health: Math.max(0, s.health - 4), story_flags: seen(s, 'apple_secrecy_crackdown'), message: '你有理有据地申辩，合规团队认定情节轻微不予追究，你还因不卑不亢赢得了同事敬重。' }
             : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), story_flags: seen(s, 'apple_secrecy_crackdown'), message: '你的强硬触怒了合规团队，泄密条款零容忍，你被以违反保密协议为由直接解雇。' };
         },
-        nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
+         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
+      },
+    ],
+  },
+
+  // ---------------- Robinhood: 散户 meme 股狂潮 / SEC 问询 ----------------
+  'robinhood_meme_stock_frenzy': {
+    id: 'robinhood_meme_stock_frenzy',
+    title: 'Robinhood: meme 股狂潮与 SEC 问询',
+    description: '散户在论坛上抱团逼空,某 meme 股单周暴涨十倍,你们的下单与撮合系统被交易洪峰冲到宕机边缘。App 商店涌入百万新用户,但 SEC 已就"限制买入"与订单流返佣 (PFOF) 向公司发来问询函……',
+    choices: [
+      {
+        text: '连夜扩容撮合引擎顶住洪峰,赌自己成为这场散户狂欢的英雄 (成败看造化)',
+        condition: employed,
+        effect: (s) => {
+          const win = gameRandom() < Math.min(0.6, 0.4 + (s.leetcode / 100) * 0.25);
+          return win
+            ? { impact: addImpact(s, 8), stocks: (s.stocks || 0) + 6, health: Math.max(0, s.health - 12), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '你带队通宵扩容,系统在交易洪峰中稳如泰山!新增用户暴涨、HOOD 股价起飞,你吃到丰厚 RSU 刷新与全公司认可 (Impact 大涨)!' }
+            : { health: Math.max(0, s.health - 14), impact: addImpact(s, -3), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '撮合系统还是在最高峰宕机数小时,散户集体声讨、监管盯上你们组,你背了故障锅、身心俱疲,这半年的产出付诸东流。' };
+        },
+        nextEventId: (s) => h1ToH2Router(s),
+      },
+      {
+        text: '配合合规团队应对 SEC 问询与 PFOF 审查,稳妥收尾不冒险',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 5),
+          network: Math.min(100, (s.network || 10) + 5),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          story_flags: seen(s, 'robinhood_meme_stock_frenzy'),
+          message: '你协助法务与合规连夜准备应询材料,滴水不漏地扛过了监管风波。虽没吃到风口红利,却赢得了跨部门的信任与人脉。',
+        }),
+        nextEventId: (s) => h1ToH2Router(s),
       },
     ],
   },

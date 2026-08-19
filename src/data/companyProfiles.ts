@@ -126,6 +126,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     pipTier: 'medium',
     compSplit: { base: 0.60, rsu: 0.40 },
     yearEndHealth: { drain: 5, msg: ' Robinhood 的牛熊生死时速与产品高压节奏消耗了体力 (健康 -5)。' },
+    signatureEvent: 'robinhood_meme_stock_frenzy',
   },
 };
 

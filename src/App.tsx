@@ -10,6 +10,7 @@ import { migrateSaveData, CURRENT_SAVE_VERSION } from './utils/saveMigration';
 import { determineEnding } from './utils/endings';
 import { getJobDisplayInfo } from './utils/gameStateSelectors';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { DopamineFeedback, type DopaminePill, type ScreenEffectType } from './components/DopamineFeedback';
 
 // Lazy loaded heavy modals for optimized code splitting
 const YearEndStatementModal = lazy(() => import('./components/YearEndStatementModal').then(m => ({ default: m.YearEndStatementModal })));
@@ -84,7 +85,29 @@ export default function App() {
   const [hasUnlockedShopToast, setHasUnlockedShopToast] = useState<boolean>(initialGameData.hasUnlockedShopToast);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
   const [isCoolingDown, setIsCoolingDown] = useState<boolean>(false);
+  const [dopaminePills, setDopaminePills] = useState<DopaminePill[]>([]);
+  const [screenEffect, setScreenEffect] = useState<ScreenEffectType>('none');
+  const screenEffectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pillsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerDopamineFeedback = (newPills: DopaminePill[], effect: ScreenEffectType = 'none') => {
+    if (newPills.length > 0) {
+      setDopaminePills(newPills);
+      if (pillsTimerRef.current) clearTimeout(pillsTimerRef.current);
+      pillsTimerRef.current = setTimeout(() => {
+        setDopaminePills([]);
+      }, 2600);
+    }
+
+    if (effect !== 'none') {
+      setScreenEffect(effect);
+      if (screenEffectTimerRef.current) clearTimeout(screenEffectTimerRef.current);
+      screenEffectTimerRef.current = setTimeout(() => {
+        setScreenEffect('none');
+      }, effect === 'red_threat' ? 1200 : 2500);
+    }
+  };
 
   // Auto-Save progress whenever gameState or currentEventId updates.
   // Debounced (coalesces input bursts into one write) and array-capped (bounds
@@ -307,14 +330,185 @@ export default function App() {
 
     const newState = transition.nextState;
 
+    // --- Dopamine Feedback Delta Computation ---
+    const newPills: DopaminePill[] = [];
+    let currentScreenEffect: ScreenEffectType = 'none';
+
+    // 1. Promotion Detection
+    const isPromo = Boolean(newState.last_promo_age === newState.age && gameState.level !== newState.level && newState.level);
+    if (isPromo) {
+      newPills.push({
+        id: `promo-${Date.now()}`,
+        text: `🎉 晋升至 ${newState.level}`,
+        subtext: newState.tc > gameState.tc ? `年薪总包调升至 $${newState.tc.toFixed(1)}w` : '突破职级天花板',
+        type: 'promo',
+        icon: '🎖️',
+        color: 'text-amber-300',
+        bgColor: 'bg-amber-950/95',
+        borderColor: 'border-amber-500/50 shadow-amber-500/20'
+      });
+      currentScreenEffect = 'blue_promotion';
+    }
+
+    // 2. Net Worth Delta (Cash + Stocks)
+    const prevNet = (gameState.cash || 0) + (gameState.stocks || 0);
+    const newNet = (newState.cash || 0) + (newState.stocks || 0);
+    const netDelta = newNet - prevNet;
+
+    if (netDelta >= 1.0) {
+      newPills.push({
+        id: `cash-up-${Date.now()}`,
+        text: `+ $${netDelta.toFixed(1)}w 资产`,
+        subtext: (newState.stocks || 0) > (gameState.stocks || 0) ? '含股票/期权增值' : '现金入账',
+        type: 'cash_up',
+        icon: '💰',
+        color: 'text-emerald-300',
+        bgColor: 'bg-emerald-950/95',
+        borderColor: 'border-emerald-500/50 shadow-emerald-500/20'
+      });
+      if (netDelta >= 25.0 || newState.status === 'win' || transition.targetEventId === 'fire_milestone_choice') {
+        currentScreenEffect = 'gold_celebration';
+      }
+    } else if (netDelta <= -1.0) {
+      newPills.push({
+        id: `cash-down-${Date.now()}`,
+        text: `- $${Math.abs(netDelta).toFixed(1)}w 支出`,
+        subtext: '大额开支/税费/首付',
+        type: 'cash_down',
+        icon: '💸',
+        color: 'text-rose-300',
+        bgColor: 'bg-rose-950/95',
+        borderColor: 'border-rose-500/40 shadow-rose-500/10'
+      });
+    }
+
+    // 3. TC Base Delta (if not already covered by promo)
+    const tcDelta = (newState.tc || 0) - (gameState.tc || 0);
+    if (!isPromo && tcDelta >= 1.0) {
+      newPills.push({
+        id: `tc-up-${Date.now()}`,
+        text: `+ $${tcDelta.toFixed(1)}w TC 调薪`,
+        subtext: `新总包: $${newState.tc.toFixed(1)}w/年`,
+        type: 'tc_up',
+        icon: '📈',
+        color: 'text-amber-200',
+        bgColor: 'bg-amber-950/95',
+        borderColor: 'border-amber-500/40 shadow-amber-500/10'
+      });
+    }
+
+    // 4. Health Delta
+    const healthDelta = newState.health - gameState.health;
+    if (healthDelta >= 6) {
+      newPills.push({
+        id: `heal-${Date.now()}`,
+        text: `+ ${healthDelta} 健康回血`,
+        subtext: '身心状态大幅恢复',
+        type: 'heal',
+        icon: '💖',
+        color: 'text-teal-300',
+        bgColor: 'bg-teal-950/95',
+        borderColor: 'border-teal-500/40 shadow-teal-500/10'
+      });
+    } else if (healthDelta <= -10) {
+      newPills.push({
+        id: `dmg-${Date.now()}`,
+        text: `${healthDelta} 身体受损`,
+        subtext: '高压内卷 / 熬夜透支',
+        type: 'damage',
+        icon: '⚡',
+        color: 'text-red-300',
+        bgColor: 'bg-red-950/95',
+        borderColor: 'border-red-500/50 shadow-red-500/20'
+      });
+      if (healthDelta <= -15 || newState.health < 25) {
+        currentScreenEffect = 'red_threat';
+      }
+    }
+
+    // 5. Layoff / Threat / PIP
+    const isLayoff = Boolean(!gameState.laid_off && newState.laid_off);
+    if (isLayoff) {
+      newPills.push({
+        id: `layoff-${Date.now()}`,
+        text: `⚠️ 遭遇裁员风暴`,
+        subtext: '失业中，需抓紧自救求职',
+        type: 'layoff',
+        icon: '🚨',
+        color: 'text-red-400',
+        bgColor: 'bg-red-950/95',
+        borderColor: 'border-red-500/60 shadow-red-500/30'
+      });
+      currentScreenEffect = 'red_threat';
+    }
+
+    // 6. Offer Wins
+    const isOfferWin = Boolean(newState.hop_offers && newState.hop_offers.length > 0 && (!gameState.hop_offers || gameState.hop_offers.length === 0));
+    if (isOfferWin) {
+      newPills.push({
+        id: `offers-${Date.now()}`,
+        text: `🎯 斩获 ${newState.hop_offers?.length} 份录取 Offer`,
+        subtext: '社招大捷，请签约去向',
+        type: 'offer_win',
+        icon: '✨',
+        color: 'text-emerald-300',
+        bgColor: 'bg-emerald-950/95',
+        borderColor: 'border-emerald-500/50 shadow-emerald-500/20'
+      });
+      currentScreenEffect = 'gold_celebration';
+    }
+
+    // 7. LeetCode Delta
+    const leetDelta = (newState.leetcode || 0) - (gameState.leetcode || 0);
+    if (leetDelta >= 8) {
+      newPills.push({
+        id: `leet-${Date.now()}`,
+        text: `+ ${leetDelta} LeetCode 算法`,
+        subtext: `题量累计: ${newState.leetcode} 题`,
+        type: 'leetcode',
+        icon: '🧠',
+        color: 'text-indigo-300',
+        bgColor: 'bg-indigo-950/90',
+        borderColor: 'border-indigo-500/40 shadow-indigo-500/10'
+      });
+    }
+
+    // 8. Impact Delta
+    const impactDelta = (newState.impact || 0) - (gameState.impact || 0);
+    if (impactDelta >= 6) {
+      newPills.push({
+        id: `impact-${Date.now()}`,
+        text: `+ ${Math.round(impactDelta)} 核心影响力`,
+        subtext: '主导关键业务架构',
+        type: 'impact',
+        icon: '🚀',
+        color: 'text-sky-300',
+        bgColor: 'bg-sky-950/95',
+        borderColor: 'border-sky-500/40 shadow-sky-500/10'
+      });
+    }
+
+    // Dispatch visual feedback
+    triggerDopamineFeedback(newPills, currentScreenEffect);
+
     // Sound FX logic
-    if (newState.status === 'win' || newState.status === 'retired') {
+    if (newState.status === 'win' || transition.targetEventId === 'fire_milestone_choice') {
       sound.play('win');
     } else if (newState.status === 'game_over') {
       sound.play('gameover');
-    } else if ((effectResult.cash && effectResult.cash > gameState.cash) || (effectResult.tc && effectResult.tc > gameState.tc)) {
+    } else if (isLayoff) {
+      sound.play('layoff');
+    } else if (isPromo) {
+      sound.play('promo');
+    } else if (netDelta >= 20.0) {
+      sound.play('cash_burst');
+    } else if (netDelta > 0 || tcDelta > 0) {
       sound.play('coin');
-    } else if (newState.laid_off || newState.health < 30 || (newState.message && (newState.message.includes('没抽中') || newState.message.includes('裁员') || newState.message.includes('警报')))) {
+    } else if (healthDelta <= -12) {
+      sound.play('damage');
+    } else if (healthDelta >= 8) {
+      sound.play('heal');
+    } else if (newState.health < 30) {
       sound.play('alert');
     } else {
       sound.play('click');
@@ -383,7 +577,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+    <div className={`min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 ${screenEffect === 'red_threat' ? 'animate-screen-shake' : ''}`}>
+      {/* Dopamine Visual Feedback Layer (Floating Pills, Confetti & Screen Effects) */}
+      <DopamineFeedback pills={dopaminePills} screenEffect={screenEffect} />
+
       {/* Modals with Lazy Suspense protected by ErrorBoundary */}
       <ErrorBoundary fallbackTitle="弹窗模块加载异常">
         <Suspense fallback={null}>
@@ -663,7 +860,55 @@ export default function App() {
                     source: 'shop',
                     customMessage: msg,
                   });
-                  setGameState(transition.nextState);
+                  const nextState = transition.nextState;
+                  
+                  const prevNet = (gameState.cash || 0) + (gameState.stocks || 0);
+                  const newNet = (nextState.cash || 0) + (nextState.stocks || 0);
+                  const netDelta = newNet - prevNet;
+                  const pills: DopaminePill[] = [];
+
+                  if (netDelta <= -1.0) {
+                    pills.push({
+                      id: `shop-cost-${Date.now()}`,
+                      text: `- $${Math.abs(netDelta).toFixed(1)}w 资产支出`,
+                      subtext: msg.length > 22 ? msg.slice(0, 22) + '...' : msg,
+                      type: 'cash_down',
+                      icon: '🛍️',
+                      color: 'text-amber-300',
+                      bgColor: 'bg-amber-950/95',
+                      borderColor: 'border-amber-500/50 shadow-amber-500/20'
+                    });
+                  }
+                  if ((nextState.rental_income || 0) > (gameState.rental_income || 0)) {
+                    const rentDelta = (nextState.rental_income || 0) - (gameState.rental_income || 0);
+                    pills.push({
+                      id: `shop-rent-${Date.now()}`,
+                      text: `+ $${rentDelta.toFixed(1)}w/年 被动租金现金流`,
+                      subtext: '不动产配置收益',
+                      type: 'special',
+                      icon: '🏡',
+                      color: 'text-emerald-300',
+                      bgColor: 'bg-emerald-950/95',
+                      borderColor: 'border-emerald-500/50 shadow-emerald-500/20'
+                    });
+                  }
+                  if (nextState.car && nextState.car !== gameState.car && nextState.car !== 'none') {
+                    pills.push({
+                      id: `shop-car-${Date.now()}`,
+                      text: `喜提 ${nextState.car === 'porsche' ? '保时捷 911' : nextState.car === 'cybertruck' ? '赛博皮卡' : '特斯拉'}`,
+                      subtext: '名车座驾配置成功',
+                      type: 'special',
+                      icon: '🏎️',
+                      color: 'text-purple-300',
+                      bgColor: 'bg-purple-950/95',
+                      borderColor: 'border-purple-500/50 shadow-purple-500/20'
+                    });
+                  }
+
+                  const isHousePurchase = Boolean(nextState.housing_name && nextState.housing_name !== gameState.housing_name && nextState.housing_name.includes('独立屋') || nextState.housing_name?.includes('豪宅'));
+                  triggerDopamineFeedback(pills, isHousePurchase ? 'gold_celebration' : 'none');
+
+                  setGameState(nextState);
                   if (transition.targetEventId) {
                     setCurrentEventId(transition.targetEventId);
                   }

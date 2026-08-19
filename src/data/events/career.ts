@@ -3145,52 +3145,44 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'raj_director_promotion_board': {
     id: 'raj_director_promotion_board',
-    title: '【多年之后】Raj 晋升 Director 后的架构委员会提拔',
-    description: '几年过去，Raj 凭借卓越的向上管理顺利升任部门 Director 并进入了职级评审委员会 (Promotion Board)！现在你的 Staff / Senior Staff 晋升材料正摆在委员会桌上：',
+    title: '【多年之后】Raj 升 Director 后的 L7 评审提拔',
+    description: '几年过去，Raj 凭借卓越的向上管理顺利升任部门 Director 并进入了职级评审委员会 (Promotion Board)！现在你冲击 L7 Senior Staff 的晋升材料正摆在委员会桌上——这是硅谷职级中一次关键的大跳：',
     choices: [
       {
-        text: '【盟友全力托举】(此前与 Raj 结为盟友，Raj 在闭门评审中力推你的 Case)',
-        condition: (s) => Boolean(s.story_flags?.raj_ally),
+        // 盟友托举 = 大幅提升过会概率(常规 L6→L7 约 20%),但仍需硬实力 (impact>=45),非白送;
+        // 且只作用于 L6→L7 (由 helpers 路由限定 level==='L6 (Staff)')。
+        text: '【盟友全力托举】(此前与 Raj 结为盟友，Raj 在闭门评审中力推你的 Case · 需 Impact >= 45)',
+        condition: (s) => Boolean(s.story_flags?.raj_ally) && (s.impact || 0) >= 45,
+        reqBadge: '需 盟友 & Impact >= 45',
         hideIfUnavailable: true,
         effect: (s) => {
-          const lvl = s.level || 'L4';
-          const nextLvl = (lvl === 'L3') ? 'L4' : (lvl === 'L4' || !s.level) ? 'L5 (Senior)' : lvl.startsWith('L5') ? 'L6 (Staff)' : lvl.startsWith('L6') ? 'L7 (Senior Staff)' : 'L8 (Principal)';
-          return {
-            level: nextLvl,
-            tc: s.tc + 12,
-            last_promo_age: s.age,
-            impact: (s.impact || 0) + 5,
-            story_flags: { ...(s.story_flags || {}), raj_board_done: true },
-            message: `【晋升通过！】Raj 在闭门会议上拍桌子为你强力背书：“This engineer is the cornerstone of our org!” 你的 Case 毫无悬念极速过会，晋升至 ${nextLvl} (TC +$12w)！`
-          };
+          const win = gameRandom() < 0.40;
+          return win
+            ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 12), impact: addImpact(s, 8), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【晋升通过！】Raj 在闭门会议上拍桌力挺：“This engineer is the cornerstone of our org!” 结合你扎实的影响力，你顺利晋升为 L7 Senior Staff (TC +$20w)！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 8), impact: addImpact(s, 5), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【惜败一票】即便有 Raj 力挺，委员会仍认为你的跨组影响力再沉淀一年会更稳，本轮 L7 评审惜败延期。' };
         },
-        nextEventId: 'promo_celebration'
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【硬核技术折服】(凭借绝对过硬的 Impact 与代码能力征服评审会)',
-        condition: (s) => (s.impact || 0) >= 20 || s.leetcode >= 80,
-        reqBadge: '需 Impact >= 20 或 LeetCode >= 80',
+        condition: (s) => (s.impact || 0) >= 45 || s.leetcode >= 80,
+        reqBadge: '需 Impact >= 45 或 LeetCode >= 80',
         effect: (s) => {
-          const lvl = s.level || 'L4';
-          const nextLvl = (lvl === 'L3') ? 'L4' : (lvl === 'L4' || !s.level) ? 'L5 (Senior)' : lvl.startsWith('L5') ? 'L6 (Staff)' : lvl.startsWith('L6') ? 'L7 (Senior Staff)' : 'L8 (Principal)';
-          return {
-            level: nextLvl,
-            tc: s.tc + 10,
-            last_promo_age: s.age,
-            story_flags: { ...(s.story_flags || {}), raj_board_done: true },
-            message: `【实力过会！】委员会翻阅了你主导的核心底层系统指标，数据无懈可击。连竞争对手都挑不出任何毛病，一致全票通过晋升至 ${nextLvl}！`
-          };
+          const win = gameRandom() < 0.25;
+          return win
+            ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), impact: addImpact(s, 10), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【实力过会！】委员会翻阅了你主导的核心底层系统指标，数据无懈可击，一致通过晋升至 L7 Senior Staff！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 10), impact: addImpact(s, 6), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【名额有限】你的材料很硬，但今年 L7 名额被更资深的候选人占了，委员会建议明年再战。' };
         },
-        nextEventId: 'promo_celebration'
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【继续积累】本次暂缓，多沉淀一年跨组影响力',
         condition: (s) => true,
         effect: (s) => ({
-          impact: (s.impact || 0) + 6,
+          impact: addImpact(s, 6),
           health: Math.min(100, s.health + 5),
           story_flags: { ...(s.story_flags || {}), raj_board_done: true },
-          message: '你选择稳扎稳打再沉淀一年跨部门大项目，为下一次冲击打下更扎实的基础。'
+          message: '你选择稳扎稳打再沉淀一年跨部门大项目，为下一次冲击 L7 打下更扎实的基础。'
         }),
         nextEventId: 'sv_year_end_settlement'
       }

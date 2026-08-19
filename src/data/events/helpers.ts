@@ -271,8 +271,10 @@ export const midYearEventRouter = (s: GameState): string => {
   if (isWorking && isBigTech && !s.story_flags?.raj_alignment_seen && s.age >= 24 && s.age <= 34 && gameRandom() < 0.28) {
     return 'raj_scrum_alignment_dilemma';
   }
-  // 6b) 多年后 Raj 晋升 Director 后的架构委员会提拔
-  if ((s.story_flags?.raj_ally || s.story_flags?.raj_rival || s.story_flags?.raj_solid) && !s.story_flags?.raj_board_done && isWorking && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)') && s.year >= (Number(s.story_flags.raj_meet_year || 0) + 2)) {
+  // 6b) 多年后 Raj 晋升 Director 后的架构委员会提拔 —— 仅对冲击 L7 (Senior Staff) 的 L6 (Staff)
+  // 玩家生效:Raj 的高层背书只在「L6→L7 这种关键大跳」上帮忙,不插手常见的 L5→L6,也不
+  // 白送传奇级 L7→L8。
+  if ((s.story_flags?.raj_ally || s.story_flags?.raj_rival || s.story_flags?.raj_solid) && !s.story_flags?.raj_board_done && isWorking && s.level === 'L6 (Staff)' && s.year >= (Number(s.story_flags.raj_meet_year || 0) + 2)) {
     return 'raj_director_promotion_board';
   }
 

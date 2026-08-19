@@ -103,7 +103,7 @@ export const DopamineFeedback: React.FC<DopamineFeedbackProps> = ({ pills, scree
       {/* 5. Floating Stat Delta Badges (Right Top / Center Floating Dock) */}
       <div 
         aria-live="polite" 
-        className="fixed top-20 sm:top-24 right-4 sm:right-8 flex flex-col items-end gap-2.5 max-w-xs sm:max-w-sm pointer-events-none z-50"
+        className="fixed top-[84px] sm:top-24 right-3 sm:right-8 flex flex-col items-end gap-2 sm:gap-2.5 max-w-[calc(100vw-1.5rem)] sm:max-w-sm pointer-events-none z-50"
       >
         {pills.map((pill, idx) => (
           <div

@@ -174,8 +174,20 @@ export default function App() {
   };
 
   const handleOpenShop = () => {
+    setIsMobileStatsOpen(false);
     setIsShopOpen(true);
     setHasOpenedShop(true);
+  };
+
+  const handleOpenCodex = () => {
+    setIsMobileStatsOpen(false);
+    setShowAchievementCodex(true);
+  };
+
+  const handleOpenTimeline = (tab: 'timeline' | 'chart' | 'summary' = 'chart') => {
+    setIsMobileStatsOpen(false);
+    setTimelineInitialTab(tab);
+    setShowCareerTimeline(true);
   };
 
   useEffect(() => {
@@ -577,7 +589,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200 ${screenEffect === 'red_threat' ? 'animate-screen-shake' : ''}`}>
+    <div className="min-h-screen min-h-[100dvh] bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* Dopamine Visual Feedback Layer (Floating Pills, Confetti & Screen Effects) */}
       <DopamineFeedback pills={dopaminePills} screenEffect={screenEffect} />
 
@@ -614,6 +626,90 @@ export default function App() {
           {showAchievementCodex && (
             <AchievementCodexModal
               onClose={() => setShowAchievementCodex(false)}
+            />
+          )}
+
+          {/* Career Timeline & Net Worth Chart Modal */}
+          {showCareerTimeline && (
+            <CareerTimelineModal 
+              gameState={gameState}
+              initialTab={timelineInitialTab}
+              onClose={() => setShowCareerTimeline(false)}
+            />
+          )}
+
+          {/* Shop Modal */}
+          {isShopOpen && (
+            <ShopModal 
+              gameState={gameState}
+              onClose={() => setIsShopOpen(false)}
+              onTriggerEvent={(eventId) => {
+                setCurrentEventId(eventId);
+              }}
+              onBuy={(effect, msg) => {
+                // Compute the transition OUTSIDE the state updater so the updater
+                // stays pure (React can invoke updaters twice under StrictMode /
+                // concurrent rendering). Commit state and event id together, the
+                // same way handleChoice does.
+                const transition = applyStateTransition(gameState, effect, {
+                  source: 'shop',
+                  customMessage: msg,
+                });
+                const nextState = transition.nextState;
+                
+                const prevNet = (gameState.cash || 0) + (gameState.stocks || 0);
+                const newNet = (nextState.cash || 0) + (nextState.stocks || 0);
+                const netDelta = newNet - prevNet;
+                const pills: DopaminePill[] = [];
+
+                if (netDelta <= -1.0) {
+                  pills.push({
+                    id: `shop-cost-${Date.now()}`,
+                    text: `- $${Math.abs(netDelta).toFixed(1)}w 资产支出`,
+                    subtext: msg.length > 22 ? msg.slice(0, 22) + '...' : msg,
+                    type: 'cash_down',
+                    icon: '🛍️',
+                    color: 'text-amber-300',
+                    bgColor: 'bg-amber-950/95',
+                    borderColor: 'border-amber-500/50 shadow-amber-500/20'
+                  });
+                }
+                if ((nextState.rental_income || 0) > (gameState.rental_income || 0)) {
+                  const rentDelta = (nextState.rental_income || 0) - (gameState.rental_income || 0);
+                  pills.push({
+                    id: `shop-rent-${Date.now()}`,
+                    text: `+ $${rentDelta.toFixed(1)}w/年 被动租金现金流`,
+                    subtext: '不动产配置收益',
+                    type: 'special',
+                    icon: '🏡',
+                    color: 'text-emerald-300',
+                    bgColor: 'bg-emerald-950/95',
+                    borderColor: 'border-emerald-500/50 shadow-emerald-500/20'
+                  });
+                }
+                if (nextState.car && nextState.car !== gameState.car && nextState.car !== 'none') {
+                  pills.push({
+                    id: `shop-car-${Date.now()}`,
+                    text: `喜提 ${nextState.car === 'porsche' ? '保时捷 911' : nextState.car === 'cybertruck' ? '赛博皮卡' : '特斯拉'}`,
+                    subtext: '名车座驾配置成功',
+                    type: 'special',
+                    icon: '🏎️',
+                    color: 'text-purple-300',
+                    bgColor: 'bg-purple-950/95',
+                    borderColor: 'border-purple-500/50 shadow-purple-500/20'
+                  });
+                }
+
+                const isHousePurchase = Boolean(nextState.housing_name && nextState.housing_name !== gameState.housing_name && nextState.housing_name.includes('独立屋') || nextState.housing_name?.includes('豪宅'));
+                triggerDopamineFeedback(pills, isHousePurchase ? 'gold_celebration' : 'none');
+
+                setGameState(nextState);
+                if (transition.targetEventId) {
+                  setCurrentEventId(transition.targetEventId);
+                }
+                sound.play('coin');
+                setIsShopOpen(false);
+              }}
             />
           )}
         </Suspense>
@@ -765,7 +861,7 @@ export default function App() {
 
             {/* Achievement Codex Mobile Button */}
             <button
-              onClick={() => setShowAchievementCodex(true)}
+              onClick={handleOpenCodex}
               className="px-2 py-1 rounded-md bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
             >
               <svg className="w-3 h-3 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
@@ -774,7 +870,7 @@ export default function App() {
 
             {/* Timeline Mobile Button */}
             <button
-              onClick={() => setShowCareerTimeline(true)}
+              onClick={() => handleOpenTimeline('timeline')}
               className="px-2 py-1 rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
             >
               <svg className="w-3 h-3 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -802,12 +898,9 @@ export default function App() {
           <BentoStatsPanel 
             gameState={gameState} 
             currentEventId={currentEventId} 
-            onOpenCodex={() => setShowAchievementCodex(true)} 
+            onOpenCodex={handleOpenCodex} 
             onOpenShop={handleOpenShop}
-            onOpenTimeline={(tab) => {
-              setTimelineInitialTab(tab || 'chart');
-              setShowCareerTimeline(true);
-            }}
+            onOpenTimeline={handleOpenTimeline}
             onToggleSound={handleToggleSound} 
             isMuted={isMuted} 
             hasOpenedShop={hasOpenedShop}
@@ -815,7 +908,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-12">
+      <div className={`max-w-[1400px] mx-auto p-4 md:p-8 lg:p-12 ${screenEffect === 'red_threat' ? 'animate-screen-shake' : ''}`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
           
           {/* Left Sticky Bento Panel (Desktop Only, Mobile uses sliding drawer) */}
@@ -823,101 +916,14 @@ export default function App() {
             <BentoStatsPanel 
               gameState={gameState} 
               currentEventId={currentEventId} 
-              onOpenCodex={() => setShowAchievementCodex(true)} 
+              onOpenCodex={handleOpenCodex} 
               onOpenShop={handleOpenShop}
-              onOpenTimeline={(tab) => {
-                setTimelineInitialTab(tab || 'chart');
-                setShowCareerTimeline(true);
-              }}
+              onOpenTimeline={handleOpenTimeline}
               onToggleSound={handleToggleSound} 
               isMuted={isMuted} 
               hasOpenedShop={hasOpenedShop}
             />
           </div>
-
-          {/* Modals */}
-          <Suspense fallback={null}>
-            {showCareerTimeline && (
-              <CareerTimelineModal 
-                gameState={gameState}
-                initialTab={timelineInitialTab}
-                onClose={() => setShowCareerTimeline(false)}
-              />
-            )}
-            {isShopOpen && (
-              <ShopModal 
-                gameState={gameState}
-                onClose={() => setIsShopOpen(false)}
-                onTriggerEvent={(eventId) => {
-                  setCurrentEventId(eventId);
-                }}
-                onBuy={(effect, msg) => {
-                  // Compute the transition OUTSIDE the state updater so the updater
-                  // stays pure (React can invoke updaters twice under StrictMode /
-                  // concurrent rendering). Commit state and event id together, the
-                  // same way handleChoice does.
-                  const transition = applyStateTransition(gameState, effect, {
-                    source: 'shop',
-                    customMessage: msg,
-                  });
-                  const nextState = transition.nextState;
-                  
-                  const prevNet = (gameState.cash || 0) + (gameState.stocks || 0);
-                  const newNet = (nextState.cash || 0) + (nextState.stocks || 0);
-                  const netDelta = newNet - prevNet;
-                  const pills: DopaminePill[] = [];
-
-                  if (netDelta <= -1.0) {
-                    pills.push({
-                      id: `shop-cost-${Date.now()}`,
-                      text: `- $${Math.abs(netDelta).toFixed(1)}w 资产支出`,
-                      subtext: msg.length > 22 ? msg.slice(0, 22) + '...' : msg,
-                      type: 'cash_down',
-                      icon: '🛍️',
-                      color: 'text-amber-300',
-                      bgColor: 'bg-amber-950/95',
-                      borderColor: 'border-amber-500/50 shadow-amber-500/20'
-                    });
-                  }
-                  if ((nextState.rental_income || 0) > (gameState.rental_income || 0)) {
-                    const rentDelta = (nextState.rental_income || 0) - (gameState.rental_income || 0);
-                    pills.push({
-                      id: `shop-rent-${Date.now()}`,
-                      text: `+ $${rentDelta.toFixed(1)}w/年 被动租金现金流`,
-                      subtext: '不动产配置收益',
-                      type: 'special',
-                      icon: '🏡',
-                      color: 'text-emerald-300',
-                      bgColor: 'bg-emerald-950/95',
-                      borderColor: 'border-emerald-500/50 shadow-emerald-500/20'
-                    });
-                  }
-                  if (nextState.car && nextState.car !== gameState.car && nextState.car !== 'none') {
-                    pills.push({
-                      id: `shop-car-${Date.now()}`,
-                      text: `喜提 ${nextState.car === 'porsche' ? '保时捷 911' : nextState.car === 'cybertruck' ? '赛博皮卡' : '特斯拉'}`,
-                      subtext: '名车座驾配置成功',
-                      type: 'special',
-                      icon: '🏎️',
-                      color: 'text-purple-300',
-                      bgColor: 'bg-purple-950/95',
-                      borderColor: 'border-purple-500/50 shadow-purple-500/20'
-                    });
-                  }
-
-                  const isHousePurchase = Boolean(nextState.housing_name && nextState.housing_name !== gameState.housing_name && nextState.housing_name.includes('独立屋') || nextState.housing_name?.includes('豪宅'));
-                  triggerDopamineFeedback(pills, isHousePurchase ? 'gold_celebration' : 'none');
-
-                  setGameState(nextState);
-                  if (transition.targetEventId) {
-                    setCurrentEventId(transition.targetEventId);
-                  }
-                  sound.play('coin');
-                  setIsShopOpen(false);
-                }}
-              />
-            )}
-          </Suspense>
 
           {/* Right Column: Event Narrative & Decisions */}
           <div className="col-span-1 lg:col-span-7 flex flex-col justify-center min-h-[65vh] lg:min-h-[80vh] lg:pl-8 xl:pl-16">

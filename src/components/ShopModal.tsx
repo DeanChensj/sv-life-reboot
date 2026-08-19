@@ -18,16 +18,16 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
   const totalAssets = gameState.cash + (gameState.stocks || 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center bg-zinc-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="shop-modal-title" tabIndex={-1} className="bg-zinc-900 border border-zinc-700/50 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center bg-zinc-950/80 backdrop-blur-sm p-2.5 sm:p-4 animate-in fade-in duration-200">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="shop-modal-title" tabIndex={-1} className="bg-zinc-900 border border-zinc-700/50 rounded-3xl w-full max-w-2xl max-h-[88vh] max-h-[88dvh] overflow-hidden shadow-2xl flex flex-col slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-900/50 sticky top-0 backdrop-blur-xl z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-900/50 sticky top-0 backdrop-blur-xl z-10">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
             </div>
             <div>
-              <h3 id="shop-modal-title" className="font-black text-lg text-zinc-100">硅谷资产与消费商城</h3>
+              <h3 id="shop-modal-title" className="font-black text-base sm:text-lg text-zinc-100">硅谷资产与消费商城</h3>
               <p className="text-xs text-amber-400 font-mono tracking-wider font-semibold">
                 可用总资产: ${totalAssets.toFixed(1)}w
                 {(gameState.stocks !== undefined && gameState.stocks > 0) && (
@@ -40,7 +40,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            className="p-1.5 sm:p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
             title="关闭商城"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -51,7 +51,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
+        <div className="p-3.5 sm:p-6 overflow-y-auto space-y-5 sm:space-y-6">
           
           {/* Section: Housing */}
           <section>

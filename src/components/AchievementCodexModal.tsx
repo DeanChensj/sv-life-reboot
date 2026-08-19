@@ -56,21 +56,21 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-xl animate-in fade-in duration-200 overflow-y-auto">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="codex-modal-title" tabIndex={-1} className="relative w-full max-w-3xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-zinc-950/80 backdrop-blur-xl animate-in fade-in duration-200 overflow-y-auto">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="codex-modal-title" tabIndex={-1} className="relative w-full max-w-3xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] max-h-[92dvh] sm:max-h-[90vh] sm:max-h-[90dvh] flex flex-col font-sans">
         
         {/* Modal Header */}
-        <div className="p-6 md:p-8 border-b border-zinc-800 bg-zinc-950/50 flex flex-col gap-4">
+        <div className="p-4 sm:p-6 md:p-8 border-b border-zinc-800 bg-zinc-950/50 flex flex-col gap-3.5 sm:gap-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="p-2 sm:p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
               </div>
               <div>
-                <h2 id="codex-modal-title" className="text-xl md:text-2xl font-black text-zinc-100 tracking-tight">
+                <h2 id="codex-modal-title" className="text-lg sm:text-xl md:text-2xl font-black text-zinc-100 tracking-tight">
                   硅谷成就与隐藏结局图鉴
                 </h2>
-                <p className="text-xs text-zinc-400 font-mono mt-0.5">
+                <p className="text-[11px] sm:text-xs text-zinc-400 font-mono mt-0.5">
                   解锁更多隐藏人生支线与终极成就 · 收集率 {progressPercent}%
                 </p>
               </div>
@@ -145,28 +145,28 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto max-h-[60vh] grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-3.5 sm:p-6 overflow-y-auto max-h-[60vh] max-h-[60dvh] grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {filtered.map((item) => {
             const isUnlocked = unlockedIds.includes(item.id);
 
             return (
               <div
                 key={item.id}
-                className={`relative p-5 rounded-2xl border transition-all duration-300 flex items-start gap-4 ${
+                className={`relative p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex items-start gap-3 sm:gap-4 ${
                   isUnlocked
                     ? 'bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/40 border-emerald-500/40 shadow-xl shadow-emerald-500/5'
                     : 'bg-zinc-950/60 border-zinc-800/60 opacity-60'
                 }`}
               >
-                <div className={`p-3 rounded-2xl shrink-0 ${isUnlocked ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-zinc-900 border border-zinc-800 text-zinc-600'}`}>
+                <div className={`p-2.5 sm:p-3 rounded-2xl shrink-0 ${isUnlocked ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-zinc-900 border border-zinc-800 text-zinc-600'}`}>
                   {isUnlocked ? renderIcon(item.icon) : (
-                    <svg className="w-6 h-6 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className={`font-black text-base truncate ${isUnlocked ? 'text-zinc-100' : 'text-zinc-500'}`}>
+                    <h3 className={`font-black text-sm sm:text-base truncate ${isUnlocked ? 'text-zinc-100' : 'text-zinc-500'}`}>
                       {isUnlocked ? item.title : '未解锁结局/成就'}
                     </h3>
 
@@ -195,11 +195,11 @@ export const AchievementCodexModal: React.FC<AchievementCodexModalProps> = ({ on
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-zinc-800 bg-zinc-950/80 flex items-center justify-between text-xs font-mono text-zinc-400">
+        <div className="p-3.5 sm:p-4 border-t border-zinc-800 bg-zinc-950/80 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-xs font-mono text-zinc-400 text-center sm:text-left">
           <span>提示：更换不同天赋角色与支线可解锁全新隐藏结局！</span>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black tracking-wide transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
+            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black tracking-wide transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
           >
             关闭图鉴
           </button>

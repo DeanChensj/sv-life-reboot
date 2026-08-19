@@ -1547,6 +1547,49 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 27 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 28: Marriage Strain, Crisis Resolution & California 50/50 Divorce
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 28] Marriage strain, crisis resolution & California 50/50 divorce ---');
+  const ev = events['marriage_divorce_crisis'];
+  assert(!!ev, 'marriage_divorce_crisis event is defined');
+  assert(ev.choices.length === 3, 'marriage_divorce_crisis has 3 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    is_married: true,
+    relationship_status: 'married',
+    cash: 50,
+    stocks: 100,
+    health: 70,
+    story_flags: { partner_strain: 3 },
+  } as GameState;
+
+  // Choice 0: Marriage counseling -> cash -0.5, health +5, strain cleared
+  const c0 = ev.choices[0].effect(base) as Partial<GameState>;
+  assert((c0.cash as number) === 49.5, 'Choice 0 deducts $0.5w counseling fee');
+  assert((c0.health as number) === 75, 'Choice 0 moderately restores health (+5)');
+  assert(c0.story_flags?.partner_strain === 0, 'Choice 0 clears partner strain');
+
+  // Choice 1: Maui vacation -> cash/stocks -2, health +8, charm +2, strain cleared
+  const c1 = ev.choices[1].effect(base) as Partial<GameState>;
+  assert((c1.cash as number) === 48, 'Choice 1 deducts $2w vacation cost');
+  assert((c1.health as number) === 78, 'Choice 1 restores health (+8)');
+  assert(c1.story_flags?.partner_strain === 0, 'Choice 1 clears partner strain');
+
+  // Choice 2: California 50/50 Divorce -> is_married: false, single, assets halved, health -8 (<=15)
+  const c2 = ev.choices[2].effect(base) as Partial<GameState>;
+  assert(c2.is_married === false, 'Choice 2 sets is_married to false');
+  assert(c2.relationship_status === 'single', 'Choice 2 sets relationship_status to single');
+  assert((c2.cash as number) === 25, 'Choice 2 halves cash (50 -> 25)');
+  assert((c2.stocks as number) === 50, 'Choice 2 halves stocks (100 -> 50)');
+  assert((c2.health as number) === 62, 'Choice 2 drains 8 health from emotional toll');
+  assert(base.health - (c2.health as number) <= 15, 'Divorce health drain stays <= 15 cap');
+
+  console.log('✅ CUJ 28 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

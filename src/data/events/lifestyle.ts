@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, gameRandom } from './helpers';
+import { getLevelScaledTC, gameRandom, deductAssets, addImpact } from './helpers';
 import { HOUSING_NAMES } from '../../constants/gameConstants';
 
 export const lifestyleEvents: Record<string, GameEvent> = {
@@ -1554,15 +1554,15 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你和伴侣双双处于晋升答辩冲刺期，连续一个月每天加班到深夜，回家只能靠冷掉的外卖果腹，身心俱疲。',
     choices: [
       {
-        text: '【飞夏威夷度假】两人请 2 周 PTO 年假去 Maui 岛冲浪躺平',
+        text: '【飞夏威夷度假】两人请 2 周 PTO 年假去 Maui 岛冲浪躺平 (花费 $0.8w)',
         costBadge: '花费 $0.8w',
         reqBadge: '需总资产 >= $0.8w',
         condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 0.8,
         effect: (s) => ({
           cash: s.cash - 0.8,
-          health: Math.min(100, s.health + 20),
+          health: Math.min(100, s.health + 8),
           story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
-          message: '在夏威夷的阳光沙滩与海浪中，两人的疲惫一扫而空，健康大幅回血，找回了生活的意义！'
+          message: '在夏威夷的阳光沙滩与海浪中，两人的疲惫一扫而空，健康大幅回血，找回了生活的意义 (健康 +8)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -1570,9 +1570,67 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【生活做减法】两人达成共识：放弃无休止的无效内卷，每天准时下班做饭',
         condition: (s) => s.is_married || s.relationship_status === 'married',
         effect: (s) => ({
-          health: Math.min(100, s.health + 12),
+          health: Math.min(100, s.health + 6),
           tc: Math.max(0, s.tc - 2),
-          message: '你们决定不再参与办公室政治与无效抢活，每天 5:30 准时关掉电脑下班做饭，虽然 TC 涨幅放缓，但身心状态健康自如。'
+          story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
+          message: '你们决定不再参与办公室政治与无效抢活，每天 5:30 准时关掉电脑下班做饭，虽然 TC 涨幅放缓，但家庭幸福安稳 (健康 +6)。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【谁也不退让：继续死磕答辩】双方通宵写晋升文档与架构方案 (Impact +6, 健康 -8 · 累积家庭矛盾)',
+        condition: (s) => s.is_married || s.relationship_status === 'married',
+        effect: (s) => ({
+          impact: addImpact(s, 6),
+          health: Math.max(0, s.health - 8),
+          story_flags: { ...(s.story_flags || {}), partner_strain: (Number(s.story_flags?.partner_strain || 0) + 1) },
+          message: '【晋升答辩双冲刺】你们在书房各自死磕代码与 PPT 到凌晨 4 点。虽然各自在组内赢得了战时晋升筹码，但冷战的气氛在家里蔓延，感情产生了深深的裂痕 (Impact +6, 健康 -8)。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'marriage_divorce_crisis': {
+    id: 'marriage_divorce_crisis',
+    title: '【深夜家庭风暴】婚姻红线与离婚危机',
+    description: '连续数月深夜加班回家后，你发现客厅灯亮着，桌上放着一纸《婚姻解除协议》与湾区顶级家庭法律师的名片。伴侣眼眶泛红、神情冰冷地看着你：“你眼里只有你的 OKR、你的晋升和你的股票，这个家对你来说只是个免费旅馆。按照加州法律，我们平分所有婚后资产吧。”',
+    choices: [
+      {
+        text: '【痛定思痛：预约家庭婚姻咨询，重新划定生活边界】(花费 $0.5w · 解除危机)',
+        condition: (s) => s.cash >= 0.5,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.5),
+          health: Math.min(100, s.health + 5),
+          story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
+          message: '【坦诚长谈与修复关系】双方在专业咨询师引导下坦诚长谈，彼此卸下防备，你承诺划定生活边界不再无节制加班，危机顺利化解 (花费 $0.5w, 健康 +5)。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【放下工作：请年假带伴侣去夏威夷海岛重温蜜月】(花费 $2w · 可用股票抵扣)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 2,
+        effect: (s) => ({
+          ...deductAssets(s, 2),
+          health: Math.min(100, s.health + 8),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
+          message: '【海岛度假蜜月修复】彻底关掉 Slack 消息通知，在海风与日光下重拾当年的心动，伴侣眼中的坚冰融化，感情重归于好 (花费 $2w, 健康 +8)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【心力交瘁，协议离婚】加州 50/50 分割婚后财产，好聚好散恢复单身',
+        condition: (_s) => true,
+        effect: (s) => ({
+          is_married: false,
+          relationship_status: 'single',
+          partner: undefined,
+          cash: Math.floor(s.cash * 0.5 * 10) / 10,
+          stocks: Math.floor((s.stocks || 0) * 0.5 * 10) / 10,
+          health: Math.max(0, s.health - 8),
+          story_flags: { ...(s.story_flags || {}), partner_strain: 0, had_divorce: true },
+          message: '【加州五五割席与单身自由】签完字走出法庭，你的现金与股票被切走了一半，身心也极度内耗疲惫。但长痛不如短痛，你重新恢复了单身自由 (资产减半, 健康 -8)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }

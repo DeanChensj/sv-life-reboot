@@ -1309,20 +1309,10 @@ export const careerEvents: Record<string, GameEvent> = {
         },
       },
       {
-        text: '【年度重心：拓展副业】经营小红书与独立开发',
-        condition: (s) => true,
-        effect: (s) => {
-          if (s.leetcode >= 40 && gameRandom() < (0.05 + (s.luck || 20) / 500)) {
-            return { mid_year: true, season_stage: 'h1', cash: s.cash + 35, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 15), message: '你做出的套壳 AI 产品在 Product Hunt 上登顶了！有资本用 35 万美元收购了你的项目！' };
-          }
-          let winRate = (s.charm || 10) >= 12 ? 0.9 : ((s.charm || 10) >= 7 ? 0.6 : 0.2);
-          if (gameRandom() < winRate) {
-            if ((s.charm || 10) >= 20 && gameRandom() < 0.05) return { mid_year: true, season_stage: 'h1', cash: s.cash + 48, charm: Math.min(25, (s.charm || 10) + 5), health: Math.max(0, s.health - 10), message: '极小概率的奇迹！你的小红书粉丝突破 100 万！获得了大牌广告代言费！' };
-            return { mid_year: true, season_stage: 'h1', cash: s.cash + 8, charm: Math.min(25, (s.charm || 10) + 2), health: Math.max(0, s.health - 15), message: '接到了几笔软广赞助，涨了不少粉，但非常疲惫。' };
-          }
-          return { mid_year: true, season_stage: 'h1', cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 15), message: '独立开发没人用，小红书没人看，倒贴钱还心累。' };
-        },
-        nextEventId: midYearEventRouter,
+        text: '【年度重心：拓展副业】探索第二曲线 (微型SaaS/专家顾问/自媒体/实体合伙)',
+        condition: (s) => !s.laid_off && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        effect: () => ({ message: '你梳理了自己的核心技能与业余时间，准备在硅谷拓展属于自己的第二曲线副业！' }),
+        nextEventId: 'side_hustle_hub',
       },
       // NOTE: Founder & Trader annual decisions live in founder_annual_strategy /
       // trader_annual_strategy (year-end settlement routes those roles straight there); this
@@ -1470,6 +1460,158 @@ export const careerEvents: Record<string, GameEvent> = {
         }),
         nextEventId: 'job_hunt',
       }
+    ]
+  },
+
+  'side_hustle_hub': {
+    id: 'side_hustle_hub',
+    title: '【硅谷副业宇宙】多元被动收入与第二曲线',
+    description: '湾区打工人深谙“鸡蛋不能放在同一个篮子里”。结合你当前的算法、颜值、职级与资金实力，选择你今年的副业赛道：',
+    choices: [
+      {
+        text: '【极客出海 · 独立开发 Micro-SaaS 与 AI 工具】(依赖算法实力 · 产出 Impact 与被动现金流)',
+        reqBadge: '需 算法>=30',
+        condition: (s) => s.leetcode >= 30,
+        effect: (s) => {
+          const winRate = 0.20 + (s.leetcode / 250) + ((s.luck || 20) / 400);
+          const roll = gameRandom();
+          if (roll < 0.12 + (s.leetcode / 400)) {
+            // 大爆发：在 Acquire.com 被收购或 Product Hunt 登顶
+            const buyout = parseFloat((25 + (s.leetcode / 5)).toFixed(1));
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash + buyout).toFixed(1)),
+              leetcode: s.leetcode + 4,
+              impact: addImpact(s, 8),
+              health: Math.max(0, s.health - 12),
+              message: `【独立开发大爆发】你开发的 AI 工作流小工具在 Product Hunt 斩获当月第一名！被一家海外私募机构以 $${buyout}w 美元现金全资收购！项目产出与算法实力声名远扬！`
+            };
+          }
+          if (roll < winRate) {
+            // 稳健订阅：MRR 持续增长
+            const mrrIncome = parseFloat((6.0 + ((s.leetcode - 30) / 15)).toFixed(1));
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash + mrrIncome).toFixed(1)),
+              leetcode: s.leetcode + 3,
+              impact: addImpact(s, 5),
+              health: Math.max(0, s.health - 10),
+              message: `【稳定的 MRR 现金流】你的微型 SaaS 工具积累了 500+ 付费订阅开发者，本年度获得 +$${mrrIncome}w 净被动收益！手艺打磨与技术影响力稳步提升！`
+            };
+          }
+          return {
+            mid_year: true, season_stage: 'h1',
+            cash: Math.max(0, parseFloat((s.cash - 0.5).toFixed(1))),
+            leetcode: s.leetcode + 5,
+            health: Math.max(0, s.health - 8),
+            message: '【技术实战沉淀】独立开发的项目暂未跑通 PMF，扣除了云服务器账单 -$0.5w，但在全栈独立迭代中算法与架构能力明显精进！'
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【高阶咨询 · 初创 Part-time Advisor & 求职私教】(需 L5+资深架构 或 广泛行业人脉)',
+        reqBadge: '需 L5+/资深人脉',
+        condition: (s) => Boolean(s.level?.includes('L5') || s.level?.includes('Senior') || s.level?.includes('L6') || s.level?.includes('Staff') || s.level?.includes('L7') || s.level?.includes('L8') || s.level?.includes('MTS') || (s.network || 10) >= 25),
+        effect: (s) => {
+          const successChance = 0.35 + ((s.network || 10) / 200) + ((s.charm || 10) / 200);
+          const isTopAdvisor = gameRandom() < Math.min(0.80, successChance);
+          if (isTopAdvisor) {
+            const advisorFee = parseFloat((8.0 + ((s.network || 10) / 20)).toFixed(1));
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash + advisorFee).toFixed(1)),
+              network: Math.min(100, (s.network || 10) + 6),
+              impact: addImpact(s, 6),
+              health: Math.max(0, s.health - 8),
+              message: `【明星顾问津贴】你凭借大厂资深架构背书，受聘为两家种子轮 AI 初创的技术顾问并带教上岸学员，斩获 +$${advisorFee}w 顾问咨询费与宝贵行业人脉！`
+            };
+          }
+          return {
+            mid_year: true, season_stage: 'h1',
+            cash: parseFloat((s.cash + 4.5).toFixed(1)),
+            network: Math.min(100, (s.network || 10) + 3),
+            health: Math.max(0, s.health - 6),
+            message: '【求职辅导稳健创收】周末利用业余时间辅导了数名转码留学生，扎实的 1v1 Mock 面试为你带来了 +$4.5w 丰厚课时费！'
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【流量自媒体 · 小红书/YouTube 硅谷大厂日常博主】(依赖形象魅力 Charm · 广告代言变现)',
+        condition: () => true,
+        effect: (s) => {
+          const charmVal = s.charm || 10;
+          const viralChance = 0.15 + (charmVal / 60) + ((s.luck || 20) / 400);
+          const roll = gameRandom();
+          if (charmVal >= 16 && roll < 0.15) {
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash + 18.0).toFixed(1)),
+              charm: Math.min(s.max_charm ?? 25, charmVal + 3),
+              health: Math.max(0, s.health - 8),
+              message: '【全网爆火出圈】你在小红书和 B站 分享的“硅谷大厂硬核生存与薪资大揭秘”单条播放量破 500 万！斩获大批科技品牌年框代言，狂赚 +$18.0w！'
+            };
+          }
+          if (roll < viralChance) {
+            const adIncome = parseFloat((4.0 + (charmVal * 0.3)).toFixed(1));
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash + adIncome).toFixed(1)),
+              charm: Math.min(s.max_charm ?? 25, charmVal + 1),
+              health: Math.max(0, s.health - 8),
+              message: `【稳定接单变现】自媒体账号稳步涨粉，接了数单猎头招聘与数码产品商单，轻轻松松净赚 +$${adIncome}w 广告费！`
+            };
+          }
+          return {
+            mid_year: true, season_stage: 'h1',
+            health: Math.max(0, s.health - 10),
+            charm: Math.min(s.max_charm ?? 25, charmVal + 1),
+            message: '【遭遇限流吐槽】辛辛苦苦拍摄剪辑的视频遭遇平台算法限流，还在评论区遇到了键盘侠杠精，身心俱疲但积累了镜头感。'
+          };
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【实体投资 · Fremont/Cupertino 华人奶茶烘焙店合伙】(需 现金>=5w · 博取被动分红)',
+        reqBadge: '需现金>=5w',
+        condition: (s) => s.cash >= 5,
+        effect: (s) => {
+          const isBull = s.macro_economy === 'bull';
+          const isBear = s.macro_economy === 'bear';
+          const winRate = isBull ? 0.65 : (isBear ? 0.30 : 0.48);
+          const win = gameRandom() < winRate;
+          if (win) {
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash - 5 + 8.5).toFixed(1)),
+              rental_income: (s.rental_income || 0) + 1.2,
+              health: Math.max(0, s.health - 4),
+              message: '【奶茶店大排长龙】你参股的南湾鲜果茶店开业爆火！首年收回投资并分红 $8.5w (净赚 $3.5w)，并确立了每年 +$1.2w 的稳健商业被动分红！'
+            };
+          } else if (!isBear && gameRandom() < 0.6) {
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash - 5 + 5.5).toFixed(1)),
+              health: Math.max(0, s.health - 4),
+              message: '【保本微利平稳经营】奶茶店面对同街区竞争微利运转，首年拿回分红 $5.5w (小赚 $0.5w)。'
+            };
+          } else {
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash - 5).toFixed(1)),
+              health: Math.max(0, s.health - 6),
+              message: '【同质化内卷闭店】湾区奶茶市场高度饱和，商圈价格战惨烈，门店入不敷出宣告清盘，前期出资 -$5.0w 遗憾打水漂。'
+            };
+          }
+        },
+        nextEventId: midYearEventRouter,
+      },
+      {
+        text: '【暂不发展副业】返回年度主面板重新选择精力重心',
+        effect: () => ({ message: '你决定先将精力集中在主线规划上。' }),
+        nextEventId: 'sv_daily_life',
+      },
     ]
   },
 

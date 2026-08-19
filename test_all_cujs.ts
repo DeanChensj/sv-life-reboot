@@ -1547,6 +1547,68 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 27 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 28: Snack Perks Downgrade event choices & invariants
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 28] Snack perks downgrade event choices & invariants ---');
+  const ev = events['snack_perks_downgrade'];
+  assert(!!ev, 'snack_perks_downgrade event is defined');
+  assert(ev.choices.length === 3, 'snack_perks_downgrade has 3 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', health: 70, cash: 10,
+  } as GameState;
+
+  // Choice 0: Grab avocado & yogurt -> cash + health
+  const c0 = ev.choices[0].effect(base) as Partial<GameState>;
+  assert((c0.cash as number) > base.cash, 'Choice 0 boosts cash from free food savings');
+  assert((c0.health as number) > base.health, 'Choice 0 boosts health');
+
+  // Choice 1: Petition -> charm & network
+  const c1 = ev.choices[1].effect(base) as Partial<GameState>;
+  assert((c1.charm as number) > (base.charm || 10), 'Choice 1 boosts charm');
+  assert((c1.network as number) > (base.network || 10), 'Choice 1 boosts network');
+
+  // Choice 2: Meal Prep -> health +10
+  const c2 = ev.choices[2].effect(base) as Partial<GameState>;
+  assert((c2.health as number) >= base.health + 10, 'Choice 2 boosts health with clean meal prep');
+
+  console.log('✅ CUJ 28 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 29: Wildfire Smoke & PG&E Blackout event choices & invariants
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 29] Wildfire Smoke & PG&E Blackout event choices & invariants ---');
+  const ev = events['wildfire_smoke_pge_blackout'];
+  assert(!!ev, 'wildfire_smoke_pge_blackout event is defined');
+  assert(ev.choices.length === 3, 'wildfire_smoke_pge_blackout has 3 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'apple', health: 70, cash: 10, leetcode: 50,
+  } as GameState;
+
+  // Choice 0: Dyson air purifier at home -> safe cost, health drain <= 15
+  const c0 = ev.choices[0].effect(base) as Partial<GameState>;
+  assert((c0.cash as number) < base.cash, 'Choice 0 deducts Dyson electricity cost');
+  assert(base.health - (c0.health as number) <= 15, 'Choice 0 health drop stays within <= 15');
+
+  // Choice 1: Workation to Hawaii -> cash cost, health boost
+  const c1 = ev.choices[1].effect(base) as Partial<GameState>;
+  assert((c1.cash as number) < base.cash, 'Choice 1 deducts flight/hotel cost');
+  assert((c1.health as number) > base.health, 'Choice 1 boosts health');
+
+  // Choice 2: Sleep in office with diesel generator -> leetcode boost
+  const c2 = ev.choices[2].effect(base) as Partial<GameState>;
+  assert((c2.leetcode as number) > base.leetcode, 'Choice 2 boosts leetcode grinding');
+
+  console.log('✅ CUJ 29 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

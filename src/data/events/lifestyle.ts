@@ -1577,5 +1577,44 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+
+  'wildfire_smoke_pge_blackout': {
+    id: 'wildfire_smoke_pge_blackout',
+    title: '【加州橙色末日】山火季空气爆表与 PG&E 预防性断电',
+    description: '秋季干燥季降临，北加州山火导致湾区天空被染成末日般的深橙色，空气质量 AQI 瞬间爆表飙升至 300+！雪上加霜的是，电力公司 PG&E 为了“防止电线引燃山火”，宣布对整个湾区实行长达数天的「预防性轮流大停电 (Public Safety Power Shutoff)」。家里的冰箱停摆，空气里充斥着呛人的焦木味……',
+    choices: [
+      {
+        text: '【闭门不出，开满 4 台 Dyson 空气净化器并吃泡面】硬抗加州风味空气 (花费 $0.3w)',
+        condition: (s) => s.cash >= 0.3,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.3),
+          health: Math.max(0, s.health - 6),
+          message: '【重度宅家防烟】你紧闭门窗、拉死窗帘，在昏暗的蜡烛光下吃着自热火锅，听着净化器呼呼狂转。虽吸了几天二手烟灰，好在平稳度过了断电期 (花费 $0.3w, 健康 -6)。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【立刻订机票飞往夏威夷/西雅图 Workation】海滩边听海浪边远程办公 (花费 $1.5w)',
+        condition: (s) => s.cash >= 1.5,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 1.5),
+          health: Math.min(100, s.health + 10),
+          charm: Math.min(25, (s.charm || 10) + 2),
+          message: '【远程办公逃离】你果断收拾行李飞往夏威夷茂宜岛！白天在蔚蓝海滩边的遮阳伞下提交 PR，傍晚在落日余晖中冲浪，身心得到了极致放松 (花费 $1.5w, 健康 +10)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【逃往有备用柴油发电机的公司办公室过夜】白嫖公司电力与新风系统',
+        condition: (_s) => true,
+        effect: (s) => ({
+          leetcode: s.leetcode + 4,
+          health: Math.min(100, s.health + 2),
+          message: '【公司就是我家】大厂园区配备工业级发电机与顶级新风过滤系统。你带着睡袋直接住进了办公室休息舱，一边享受温暖供电一边通宵刷题 (LeetCode +4, 健康 +2)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
   }
 };

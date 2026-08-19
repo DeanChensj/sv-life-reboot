@@ -419,7 +419,8 @@ export const midYearEventRouter = (s: GameState): string => {
        'meta_reorg_manager_left',
        'friday_p0_outage_crisis',
        'empty_promotion_promise',
-       'multi_timezone_calendar_hell'
+       'multi_timezone_calendar_hell',
+       'snack_perks_downgrade'
      ];
      
      // RTO 考勤打卡大战（一局至多 1 次）
@@ -535,7 +536,8 @@ export const midYearEventRouter = (s: GameState): string => {
     'burning_man_invite', 'rock_climbing_event', 'tennis_networking', 'bay_area_hiking', 'hawaii_vacation', 'bay_area_pop_concert',
     'credit_card_churning', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
     'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy',
-    'brentwood_cherry_picking', 'cancun_all_inclusive', 'patagonia_vest_hoodie_uniform', 'costco_weekend_pilgrimage'
+    'brentwood_cherry_picking', 'cancun_all_inclusive', 'patagonia_vest_hoodie_uniform', 'costco_weekend_pilgrimage',
+    'wildfire_smoke_pge_blackout'
   ];
 
   // 双职工家庭专属生活事件池

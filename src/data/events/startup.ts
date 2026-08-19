@@ -480,5 +480,77 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       }
     ]
+  },
+
+  // === 创始人专属动态奇遇 (由 settlement 的 founderAnnualEntry 低频派发, 与既有危机同池) ===
+  'founder_yc_batch': {
+    id: 'founder_yc_batch',
+    title: '【YC 孵化营 Offer】Garry Tan 亲自发来 Batch 面试邀请',
+    description: 'Y Combinator 合伙人看到了你的增长曲线，邀请你参加下一期 Batch。标准 Deal：出让 7% 股权，换取种子资金、全明星校友网络与 Demo Day 全球曝光。',
+    choices: [
+      {
+        text: '接受 YC Deal：出让 7% 股权，加入 Batch 冲刺 Demo Day',
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          cash: parseFloat((s.cash + 6).toFixed(1)),
+          network: Math.min(100, (s.network || 0) + 10),
+          charm: Math.min(25, (s.charm || 10) + 3),
+          company_valuation: (s.company_valuation || 180) + 400,
+          health: Math.max(0, s.health - 6),
+          message: '【YC 加持】你在 Demo Day 面对上千投资人路演，估值信誉暴涨！虽然稀释了 7% 股权，但拿到了顶级校友网络与后续融资的敲门砖！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '婉拒：不愿被稀释 7%，坚持独立自筹发展',
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          company_valuation: (s.company_valuation || 180) + 60,
+          health: Math.max(0, s.health - 2),
+          message: '【自力更生】你婉拒了 YC 的股权稀释，选择靠自有营收与团队硬实力独立成长，稳扎稳打推进产品。'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
+  'founder_enterprise_whale': {
+    id: 'founder_enterprise_whale',
+    title: '【Fortune 500 超大单】巨头意向 $200w 年度采购，限 3 个月交付企业版',
+    description: '一家世界 500 强巨头释放了 $200w 年度采购意向，但要求你的团队在 3 个月内交付满足企业级合规与 SLA 的私有化部署版本。这是一次决定公司命运的豪赌。',
+    choices: [
+      {
+        text: '全力接单：集中全员通宵赶工，3 个月啃下企业级版本 (高压高回报)',
+        effect: (s) => {
+          const win = gameRandom() < (0.55 + (s.leetcode >= 60 ? 0.15 : 0));
+          return win
+            ? {
+                mid_year: true, season_stage: 'h1',
+                cash: parseFloat((s.cash + 12).toFixed(1)),
+                company_valuation: (s.company_valuation || 180) + 600,
+                health: Math.max(0, s.health - 16),
+                message: '【拿下灯塔客户】你们如期交付了企业级私有化版本！$200w 大单落地成为标杆案例，ARR 与估值双双起飞！'
+              }
+            : {
+                mid_year: true, season_stage: 'h1',
+                company_valuation: (s.company_valuation || 180) + 80,
+                health: Math.max(0, s.health - 16),
+                message: '【交付延期】企业级合规与 SLA 远比预想复杂，团队累垮仍未如期交付，巨头改签了竞品，只留下宝贵的踩坑经验。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '稳健评估：分阶段签署里程碑交付，不透支团队健康',
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          cash: parseFloat((s.cash + 4).toFixed(1)),
+          company_valuation: (s.company_valuation || 180) + 220,
+          health: Math.max(0, s.health - 6),
+          message: '【稳健推进】你与巨头谈成分阶段里程碑付款，先交付核心模块。回款稳健，团队也没被拖垮。'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
   }
 };

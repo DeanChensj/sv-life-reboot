@@ -3522,6 +3522,43 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       }
     ]
+  },
+
+  'snack_perks_downgrade': {
+    id: 'snack_perks_downgrade',
+    title: '【福利降级之痛】大厂 Micro-Kitchen 寒冬与打包盒消失',
+    description: '公司最新出台“降本增效 (Cost Optimization)”新政：免费晚餐取消外带打包盒以防“羊毛党”，Micro-Kitchen 里的奢华冷萃与高级酸奶被全面降级为 Costco 杂牌苏打水，连周五免费按摩福利都被无情砍掉。全司内网论坛与 Slack `#rant` 频道瞬间被破防的工程师们攻陷……',
+    choices: [
+      {
+        text: '【下午 4 点突击扫荡茶水间】疯狂搜刮牛油果、希腊酸奶与高蛋白能量棒带回家',
+        condition: (_s) => true,
+        effect: (s) => ({
+          cash: s.cash + 0.5,
+          health: Math.min(100, s.health + 4),
+          message: '【零食羊毛自救】你每天下午准时背着双肩包扫荡各楼层茶水间，靠着积攒的坚果酸奶不仅省下了饭钱，还补充了优质蛋白质 (现金 +$0.5w, 健康 +4)！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【在内网发起联名请愿书】组织上千名工程师向 CEO 上书要求恢复零食等级',
+        condition: (_s) => true,
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 3),
+          network: Math.min(100, (s.network || 10) + 6),
+          message: '【打工人嘴替】你的请愿书一夜之间收获 2,000+ 个 Upvote，高管迫于舆论恢复了部分气泡水供应，你成了大家口中敢于发声的英雄！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【心如止水，自带自制 Meal Prep 便当】彻底戒掉食堂高油高盐，专注养生减脂',
+        condition: (_s) => true,
+        effect: (s) => ({
+          health: Math.min(100, s.health + 10),
+          message: '【养生生活自律】你买了全套玻璃保鲜盒，周末提前备好一周的糙米鸡胸肉与西蓝花。告别了食堂后，肠胃更加轻盈，精力充沛 (健康 +10)！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
   }
 };
 

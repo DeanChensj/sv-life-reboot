@@ -618,9 +618,64 @@ export const ANNUAL_OPPORTUNITY_KEYS = [
   'opp_laguna_seca',
 ] as const;
 
+// Checks if a one-in-a-lifetime opportunity has been permanently completed
+export function isOpportunityCompleted(s: GameState, oppKey: string): boolean {
+  if (oppKey === 'opp_pilot_license') return Boolean(s.story_flags?.has_pilot_license);
+  if (oppKey === 'opp_cursor_hunt') return Boolean(s.story_flags?.cursor_hunt_joined || (s.company === 'openai' && s.level === 'MTS'));
+  if (oppKey === 'opp_foreclosure_deal') return Boolean(s.story_flags?.bought_foreclosure_house || s.investment_properties?.includes('东湾法拍翻新独立屋'));
+  return false;
+}
+
+// Checks if a recurring opportunity is currently in cooldown (within 2 years)
+export function isOpportunityInCooldown(s: GameState, oppKey: string): boolean {
+  const flags = s.story_flags || {};
+  const curYear = s.year || 2026;
+  if (oppKey === 'opp_treehacks' && typeof flags.last_treehacks_year === 'number') {
+    return curYear - flags.last_treehacks_year < 2;
+  }
+  if (oppKey === 'opp_burning_man' && typeof flags.last_burning_man_year === 'number') {
+    return curYear - flags.last_burning_man_year < 2;
+  }
+  if (oppKey === 'opp_sand_hill_salon' && typeof flags.last_sand_hill_year === 'number') {
+    return curYear - flags.last_sand_hill_year < 2;
+  }
+  if (oppKey === 'opp_gtc_nvidia' && typeof flags.last_gtc_year === 'number') {
+    return curYear - flags.last_gtc_year < 2;
+  }
+  if (oppKey === 'opp_yosemite_heal' && typeof flags.last_yosemite_year === 'number') {
+    return curYear - flags.last_yosemite_year < 2;
+  }
+  if (oppKey === 'opp_angel_invest' && typeof flags.last_angel_invest_year === 'number') {
+    return curYear - flags.last_angel_invest_year < 2;
+  }
+  if (oppKey === 'opp_laguna_seca' && typeof flags.last_laguna_year === 'number') {
+    return curYear - flags.last_laguna_year < 2;
+  }
+  return false;
+}
+
 export function isOpportunityActiveThisYear(s: GameState, oppKey: string): boolean {
-  const primaryIdx = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2) % ANNUAL_OPPORTUNITY_KEYS.length);
-  const secondaryIdx = (primaryIdx + 5) % ANNUAL_OPPORTUNITY_KEYS.length;
+  // If permanently completed or in active cooldown, never activate
+  if (isOpportunityCompleted(s, oppKey) || isOpportunityInCooldown(s, oppKey)) return false;
+
+  const total = ANNUAL_OPPORTUNITY_KEYS.length;
+  const baseSeed = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2));
+
+  // Find primary opportunity (smart-skips completed/in-cooldown)
+  let primaryIdx = baseSeed % total;
+  let attempts = 0;
+  while ((isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[primaryIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[primaryIdx])) && attempts < total) {
+    primaryIdx = (primaryIdx + 1) % total;
+    attempts++;
+  }
+
+  // Find secondary opportunity (distinct from primary, smart-skips completed/in-cooldown)
+  let secondaryIdx = (primaryIdx + 5) % total;
+  attempts = 0;
+  while ((secondaryIdx === primaryIdx || isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[secondaryIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[secondaryIdx])) && attempts < total) {
+    secondaryIdx = (secondaryIdx + 1) % total;
+    attempts++;
+  }
 
   return oppKey === ANNUAL_OPPORTUNITY_KEYS[primaryIdx] ||
          oppKey === ANNUAL_OPPORTUNITY_KEYS[secondaryIdx];

@@ -1,4 +1,4 @@
-import { events, generateInitialState, midYearEventRouter, hopTargetLevel, hopIsPromotion } from './src/data/events';
+import { events, generateInitialState, midYearEventRouter, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown } from './src/data/events';
 import { GameState, Choice } from './src/types';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown } from './src/utils/gameStateSelectors';
@@ -1193,6 +1193,45 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(pct >= 60, `Health-managed big-tech engineer must clear the impact>=20 L6 gate through SUSTAINABLE play in >=60% of careers (got ${pct.toFixed(0)}%) — conditional impact decay must hold`);
 
   console.log('✅ CUJ 20 Passed\n');
+}
+
+// CUJ 21: Limited Opportunities Lifecycle, Once-Per-Life Invariants & Cooldown Rotation
+{
+  console.log('--- [CUJ 21] Limited Opportunities Lifecycle & Cooldowns ---');
+  const pilotChoice = events['sv_daily_life'].choices.find((c) => c.text.includes('飞行员执照'))!;
+  assert(!!pilotChoice, 'PPL pilot license opportunity exists');
+
+  // 1. Once-per-life invariant: taking the pilot license grants has_pilot_license flag
+  const basePilot: GameState = {
+    ...generateInitialState(),
+    cash: 50, stocks: 0, health: 100, charm: 10, luck: 20, age: 28, year: 2026, status: 'playing'
+  } as GameState;
+  const pilotEff = pilotChoice.effect(basePilot);
+  assert(pilotEff.story_flags?.has_pilot_license === true, 'Pilot license grants has_pilot_license flag');
+
+  const afterPilot: GameState = { ...basePilot, ...pilotEff };
+  // isOpportunityActiveThisYear must never activate pilot license once completed
+  assert(isOpportunityActiveThisYear(afterPilot, 'opp_pilot_license') === false, 'Completed PPL is never active again');
+  assert(isOpportunityCompleted(afterPilot, 'opp_pilot_license') === true, 'isOpportunityCompleted accurately identifies PPL status');
+
+  // 2. Cooldown check: GTC cannot trigger in consecutive years
+  const gtcChoice = events['sv_daily_life'].choices.find((c) => c.text.includes('GTC'))!;
+  assert(!!gtcChoice, 'GTC opportunity exists');
+  const gtcEff = gtcChoice.effect({ ...basePilot, year: 2026 });
+  const afterGtc: GameState = { ...basePilot, ...gtcEff, year: 2027 }; // next year
+  assert(isOpportunityInCooldown(afterGtc, 'opp_gtc_nvidia') === true, 'GTC is in cooldown the following year');
+  assert(isOpportunityActiveThisYear(afterGtc, 'opp_gtc_nvidia') === false, 'GTC not active during cooldown year');
+
+  const afterGtc2Years: GameState = { ...afterGtc, year: 2028 }; // 2 years later
+  assert(isOpportunityInCooldown(afterGtc2Years, 'opp_gtc_nvidia') === false, 'GTC cooldown expires after 2 years');
+
+  // 3. TreeHacks age limit: unavailable after age 36
+  const treehacksChoice = events['sv_daily_life'].choices.find((c) => c.text.includes('TreeHacks'))!;
+  assert(!!treehacksChoice, 'TreeHacks opportunity exists');
+  assert(treehacksChoice.condition!({ ...basePilot, age: 25, year: 2026 } as GameState) === isOpportunityActiveThisYear({ ...basePilot, age: 25, year: 2026 } as GameState, 'opp_treehacks'), 'TreeHacks available at age 25 if active');
+  assert(treehacksChoice.condition!({ ...basePilot, age: 40, year: 2026 } as GameState) === false, 'TreeHacks strictly unavailable at age 40');
+
+  console.log('✅ CUJ 21 Passed\n');
 }
 
 console.log(`\n======================================================`);

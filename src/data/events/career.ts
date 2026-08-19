@@ -661,7 +661,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       // 1. 【每年专属动态轮替机遇池】 (每年动态激活 1~2 个专属限时奇遇)
       {
-        text: '【限时机遇：独角兽挖角】收到前沿 AI 独角兽 VP 亲自发来的免初筛直通终面邀请',
+        text: '【限时机遇：独角兽挖角】收到前沿 AI 独角兽 VP 亲自发来的免初筛直通终面邀请 (终身仅 1 次)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_cursor_hunt') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
@@ -677,7 +677,11 @@ export const careerEvents: Record<string, GameEvent> = {
               is_new_job: true,
               company: 'openai',
               level: 'MTS',
-              message: '【斩获独角兽核心 Offer】你在终面架构评审中征服了创始人！职级定级为 MTS，总包大涨 +$12.0w TC 并配发 $15.0w 早期流动性期权！'
+              story_flags: {
+                ...(s.story_flags || {}),
+                cursor_hunt_joined: true
+              },
+              message: '【斩获独角兽核心 Offer】你在终面架构评审中征服了创始人！职级定级为 MTS，总包大涨 +$12.0w TC 并配发 $15.0w 早期流动性期权！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
             };
           }
           return {
@@ -685,7 +689,7 @@ export const careerEvents: Record<string, GameEvent> = {
             last_limited_opp_year: s.year,
             health: Math.max(0, s.health - 10),
             leetcode: s.leetcode + 4,
-            message: '【独角兽面试折戟】独角兽终面对于底层系统优化要求极高，虽然遗憾未能拿下 Offer，但硬核技术视野收获颇丰。'
+            message: '【独角兽面试折戟】独角兽终面对于底层系统优化要求极高，虽然遗憾未能拿下 Offer，但硬核技术视野收获颇丰。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
           };
         },
         // A unicorn VP final-round IS your career move for the year (a real job change on
@@ -695,18 +699,33 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【限时机遇：黑客松夺冠】组队参加斯坦福 TreeHacks 极客马拉松 ($0.5w)',
-        condition: (s) => isOpportunityActiveThisYear(s, 'opp_treehacks') && s.cash >= 0.5 && s.last_limited_opp_year !== s.year,
+        condition: (s) => s.age <= 36 && isOpportunityActiveThisYear(s, 'opp_treehacks') && s.cash >= 0.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
           const win = gameRandom() < (0.15 + s.leetcode / 600);
           return win
-            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 10, charm: Math.min(25, (s.charm || 10) + 3), impact: addImpact(s, 8), message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！' }
-            : { last_limited_opp_year: s.year, cash: s.cash - 0.5, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 8, message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩溃没拿奖，但你结识了一群技术极客。' };
+            ? {
+                last_limited_opp_year: s.year,
+                cash: s.cash + 8,
+                leetcode: s.leetcode + 10,
+                charm: Math.min(25, (s.charm || 10) + 3),
+                impact: addImpact(s, 8),
+                story_flags: { ...(s.story_flags || {}), last_treehacks_year: s.year },
+                message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
+              }
+            : {
+                last_limited_opp_year: s.year,
+                cash: s.cash - 0.5,
+                health: Math.max(0, s.health - 15),
+                leetcode: s.leetcode + 8,
+                story_flags: { ...(s.story_flags || {}), last_treehacks_year: s.year },
+                message: '【Hackathon 陪跑】连续通宵两天喝了 8 罐红牛，虽然Demo演示时服务器崩溃没拿奖，但你结识了一群技术极客。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
+              };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：硬核破圈】考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
+        text: '【限时机遇：硬核破圈】考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w · 终身仅 1 次)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_pilot_license') && s.cash >= 2.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -714,7 +733,11 @@ export const careerEvents: Record<string, GameEvent> = {
           cash: s.cash - 2.5,
           charm: Math.min(25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 6),
-          message: '【考取飞行执照】你成功通过 FAA 单飞考核拿到了私人飞行员执照！周末开着塞斯纳俯瞰金门大桥，在湾区社交圈名声大噪！'
+          story_flags: {
+            ...(s.story_flags || {}),
+            has_pilot_license: true
+          },
+          message: '【考取飞行执照】你成功通过 FAA 单飞考核拿到了私人飞行员执照！周末开着塞斯纳俯瞰金门大桥，在湾区社交圈名声大噪！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -728,7 +751,11 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 10),
           charm: Math.min(25, (s.charm || 10) + 4),
           luck: Math.min(99, (s.luck || 20) + 8),
-          message: '【火人节洗礼】你在黑石城沙漠参加了 Burning Man，虽然风沙与昼夜狂欢有些耗费体力，但灵性觉醒彻底清空了精神内耗，并结识了一批硅谷前沿极客！'
+          story_flags: {
+            ...(s.story_flags || {}),
+            last_burning_man_year: s.year
+          },
+          message: '【火人节洗礼】你在黑石城沙漠参加了 Burning Man，虽然风沙与昼夜狂欢有些耗费体力，但灵性觉醒彻底清空了精神内耗，并结识了一批硅谷前沿极客！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -742,7 +769,11 @@ export const careerEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
           network: Math.min(100, (s.network || 10) + 6), // "拓展顶层人脉/结识VC" now actually grants network
           luck: Math.min(99, (s.luck || 20) + 3),
-          message: '【拓展顶层人脉】在沙丘路红木私宅里结识了数位顶级 VC 合伙人与独角兽创始人，手握核心行业内幕与优质天使跟投名额！'
+          story_flags: {
+            ...(s.story_flags || {}),
+            last_sand_hill_year: s.year
+          },
+          message: '【拓展顶层人脉】在沙丘路红木私宅里结识了数位顶级 VC 合伙人与独角兽创始人，手握核心行业内幕与优质天使跟投名额！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -755,7 +786,11 @@ export const careerEvents: Record<string, GameEvent> = {
           cash: s.cash - 1.5,
           charm: Math.min(25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 12),
-          message: '【参加 GTC】你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！接下来的投资和求职将获得强运加持！'
+          story_flags: {
+            ...(s.story_flags || {}),
+            last_gtc_year: s.year
+          },
+          message: '【参加 GTC】你在 GTC 大会前排拿到了黄仁勋签名的黑色皮衣同款折扇！接下来的投资和求职将获得强运加持！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -766,8 +801,8 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const success = gameRandom() < 0.35;
           return success
-            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 5, impact: addImpact(s, 6), message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！' }
-            : { last_limited_opp_year: s.year, health: Math.max(0, s.health - 8), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。' };
+            ? { last_limited_opp_year: s.year, cash: s.cash + 8, leetcode: s.leetcode + 5, impact: addImpact(s, 6), message: '【提交漏洞】安全部门确认了你提交的高危提权漏洞！向你的账户汇入了 $8w 漏洞赏金！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：' }
+            : { last_limited_opp_year: s.year, health: Math.max(0, s.health - 8), message: '【提交漏洞】安全团队回应称这是“预期设计 (Works as Intended)”，白白研究了三天。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：' };
         },
         nextEventId: 'sv_daily_life',
       },
@@ -785,20 +820,20 @@ export const careerEvents: Record<string, GameEvent> = {
                 health: Math.max(0, s.health - 5),
                 charm: Math.min(25, (s.charm || 10) + 4),
                 impact: addImpact(s, 4),
-                message: '【测评爆火】你连续肝夜剪出的 AI Agent 深度评测视频在 YouTube 和小红书大爆！收割了 $4.3w 广告赞助 (净赚 $3.5w)！'
+                message: '【测评爆火】你连续肝夜剪出的 AI Agent 深度评测视频在 YouTube 和小红书大爆！收割了 $4.3w 广告赞助 (净赚 $3.5w)！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
               }
             : {
                 last_limited_opp_year: s.year,
                 cash: s.cash - 0.8,
                 health: Math.max(0, s.health - 5),
                 charm: Math.min(25, (s.charm || 10) + 2),
-                message: '【流量平平】视频遭遇了平台算法限流，虽然熬夜没能回本，但积累了宝贵的自媒体剪辑与运营经验。'
+                message: '【流量平平】视频遭遇了平台算法限流，虽然熬夜没能回本，但积累了宝贵的自媒体剪辑与运营经验。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
               };
         },
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：捡漏投资房】参与东湾法拍独栋房捡漏拍卖 (首付 $20w · 获稳健被动租金)',
+        text: '【限时机遇：捡漏投资房】参与东湾法拍独栋房捡漏拍卖 (首付 $20w · 获稳健被动租金 · 终身仅 1 次)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_foreclosure_deal') && (s.cash + (s.stocks || 0)) >= 20 && (s.rental_income || 0) < 10 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -806,7 +841,11 @@ export const careerEvents: Record<string, GameEvent> = {
           cash: s.cash - 20,
           rental_income: (s.rental_income || 0) + 2.5,
           investment_properties: [...(s.investment_properties || []), '东湾法拍翻新独立屋'],
-          message: '【成功拍下法拍房】你在 Courthouse 拍卖中以超低折扣拿下东湾翻新独立屋！快速完成招租，每年产生 +$2.5w 净被动租金现金流！'
+          story_flags: {
+            ...(s.story_flags || {}),
+            bought_foreclosure_house: true
+          },
+          message: '【成功拍下法拍房】你在 Courthouse 拍卖中以超低折扣拿下东湾翻新独立屋！快速完成招租，每年产生 +$2.5w 净被动租金现金流！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -818,7 +857,11 @@ export const careerEvents: Record<string, GameEvent> = {
           last_limited_opp_year: s.year,
           health: Math.min(100, s.health + 16),
           charm: Math.min(25, (s.charm || 10) + 2),
-          message: '【优胜美地洗肺】登顶半穹顶 (Half Dome)！清脆的瀑布声与高山森林让你洗尽了硅谷职场的心灵内耗，身体机能全面回血！'
+          story_flags: {
+            ...(s.story_flags || {}),
+            last_yosemite_year: s.year
+          },
+          message: '【优胜美地洗肺】登顶半穹顶 (Half Dome)！清脆的瀑布声与高山森林让你洗尽了硅谷职场的心灵内耗，身体机能全面回血！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
         nextEventId: 'sv_daily_life',
       },
@@ -833,12 +876,20 @@ export const careerEvents: Record<string, GameEvent> = {
                 last_limited_opp_year: s.year,
                 cash: s.cash - 10,
                 stocks: (s.stocks || 0) + 40,
-                message: '【天使投资神话】该 AI 团队仅用 6 个月便斩获红杉 A 轮领投！公司估值暴涨 5 倍，你的天使股份价值跃升至 $40w！'
+                story_flags: {
+                  ...(s.story_flags || {}),
+                  last_angel_invest_year: s.year
+                },
+                message: '【天使投资神话】该 AI 团队仅用 6 个月便斩获红杉 A 轮领投！公司估值暴涨 5 倍，你的天使股份价值跃升至 $40w！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
               }
             : {
                 last_limited_opp_year: s.year,
                 cash: s.cash - 10,
-                message: '【天使投资沉淀】初创项目在激烈内卷中遭遇巨头降维打击，资金正在艰难摸索 PMF 转型，暂未实现估值爆发。'
+                story_flags: {
+                  ...(s.story_flags || {}),
+                  last_angel_invest_year: s.year
+                },
+                message: '【天使投资沉淀】初创项目在激烈内卷中遭遇巨头降维打击，资金正在艰难摸索 PMF 转型，暂未实现估值爆发。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
               };
         },
         nextEventId: 'sv_daily_life',
@@ -853,7 +904,11 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 10),
           charm: Math.min(25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 8),
-          message: '【极限竞速狂飙】在 Laguna Seca 标志性的螺旋弯道留下胎印！极速推背感清空了所有压力，更在 VIP Paddock 结识了一圈超跑车友！'
+          story_flags: {
+            ...(s.story_flags || {}),
+            last_laguna_year: s.year
+          },
+          message: '【极限竞速狂飙】在 Laguna Seca 标志性的螺旋弯道留下胎印！极速推背感清空了所有压力，更在 VIP Paddock 结识了一圈超跑车友！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
         nextEventId: 'sv_daily_life',
       },

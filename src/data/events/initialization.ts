@@ -100,7 +100,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         costBadge: `花费 $${SCHOOL_PROFILES.ucb.tuition}w`,
         reqBadge: `需现金 >= $${SCHOOL_PROFILES.ucb.tuition}w`,
         condition: (s) => s.cash >= SCHOOL_PROFILES.ucb.tuition,
-        effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.ucb.tuition), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + SCHOOL_PROFILES.ucb.leetcodeBonus, housing_name: SCHOOL_PROFILES.ucb.defaultHousing, message: SCHOOL_PROFILES.ucb.enrollMessage }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.ucb.tuition), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + SCHOOL_PROFILES.ucb.leetcodeBonus, network: Math.min(100, (s.network || 10) + (SCHOOL_PROFILES.ucb.networkBonus || 0)), housing_name: SCHOOL_PROFILES.ucb.defaultHousing, message: SCHOOL_PROFILES.ucb.enrollMessage }),
         nextEventId: 'us_undergrad_year1',
       },
       {
@@ -110,14 +110,14 @@ export const initializationEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? (SCHOOL_PROFILES.state.inStateTuition || 4) : SCHOOL_PROFILES.state.tuition),
         effect: (s) => {
           const cost = (s.visa === '公民' || s.visa === '绿卡') ? (SCHOOL_PROFILES.state.inStateTuition || 4) : SCHOOL_PROFILES.state.tuition;
-          return { cash: Math.max(0, s.cash - cost), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + (SCHOOL_PROFILES.state.charmBonus || 0), housing_name: SCHOOL_PROFILES.state.defaultHousing, message: SCHOOL_PROFILES.state.enrollMessage };
+          return { cash: Math.max(0, s.cash - cost), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + (SCHOOL_PROFILES.state.charmBonus || 0), network: Math.min(100, (s.network || 10) + (SCHOOL_PROFILES.state.networkBonus || 0)), health: Math.min(100, s.health + (SCHOOL_PROFILES.state.healthDelta || 0)), housing_name: SCHOOL_PROFILES.state.defaultHousing, message: SCHOOL_PROFILES.state.enrollMessage };
         },
         nextEventId: 'us_undergrad_year1',
       },
       {
         text: SCHOOL_PROFILES.cn.choiceText,
         costBadge: `花费 $${SCHOOL_PROFILES.cn.tuition}w`,
-        effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.cn.tuition), school: 'cn', housing_name: SCHOOL_PROFILES.cn.defaultHousing }),
+        effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.cn.tuition), school: 'cn', leetcode: s.leetcode + SCHOOL_PROFILES.cn.leetcodeBonus, health: Math.min(100, s.health + (SCHOOL_PROFILES.cn.healthDelta || 0)), housing_name: SCHOOL_PROFILES.cn.defaultHousing }),
         nextEventId: 'cn_college_grad',
       }
     ]

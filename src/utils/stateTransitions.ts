@@ -330,6 +330,11 @@ export function applyStateTransition(
   // 7. Game State Termination & Target Event Resolution
   let targetEventId: string | undefined;
 
+  const isBroke = newState.cash < -0.001;
+  if (newState.cash < 0) {
+    newState.cash = 0;
+  }
+
   // Death & bankruptcy override a natural retirement set THIS turn (settlement can set
   // status:'retired' at the age cap in the same effect that also drops health/cash),
   // so a player who dies or goes broke in their final settlement gets the correct
@@ -338,7 +343,7 @@ export function applyStateTransition(
     newState.status = 'game_over';
     newState.message = '你因为过度劳累而猝死 (Burnout)，游戏结束！';
     targetEventId = 'end';
-  } else if (newState.cash < -0.001 && (newState.status === 'playing' || newState.status === 'retired')) {
+  } else if (isBroke && (newState.status === 'playing' || newState.status === 'retired')) {
     newState.status = 'game_over';
     newState.message = '你破产了，无法支付账单，游戏结束！';
     targetEventId = 'end';

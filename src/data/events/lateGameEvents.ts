@@ -63,8 +63,10 @@ export const lateGameEvents: Record<string, GameEvent> = {
     description: '一次体检报告让你惊出一身冷汗——常年久坐、熬夜、外卖的账，身体开始跟你算了。是时候认真对待健康这件人生头等大事了。',
     choices: [
       {
-        text: '砸钱系统抗衰：私教 + 全套体检 + 营养管理 (需现金>=5w)',
-        condition: (s) => s.cash >= 5,
+        text: '砸钱系统抗衰：私教 + 全套体检 + 营养管理 (花费 $5w)',
+        costBadge: '花费 $5w',
+        reqBadge: '需现金+股票 >= $5w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 5,
         effect: (s) => ({
           cash: parseFloat((s.cash - 5).toFixed(1)),
           health: Math.min(100, s.health + 15),

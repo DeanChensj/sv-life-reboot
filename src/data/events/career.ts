@@ -3300,22 +3300,34 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【放权探索 · 摇出神仙极客】给出宏观架构设计让实习生自由发挥，意外遇到天才少年',
+        text: '【放权探索 · 豪赌天才少年】给出宏观架构设计让实习生自由发挥，成败全看这届 Intern 的成色',
         condition: (s) => !s.laid_off,
         effect: (s) => {
-          const hitGeek = gameRandom() < 0.65;
-          return hitGeek ? {
-            impact: addImpact(s, 8),
-            tc: s.tc + 2,
-            health: Math.min(100, s.health + 5),
-            network: Math.min(100, (s.network || 10) + 8),
+          const roll = gameRandom();
+          if (roll < 0.45) {
+            return {
+              impact: addImpact(s, 8),
+              tc: s.tc + 2,
+              health: Math.min(100, s.health + 5),
+              network: Math.min(100, (s.network || 10) + 8),
+              story_flags: { ...(s.story_flags || {}), intern_mentored: true },
+              message: '【神仙实习生带飞！】实习生是个天才极客，不仅 3 周做完了整套项目，还顺手重构了组里陈年的分布式锁 Bug！全组夸你“带出了年度最佳 Intern”，你白捡海量 Impact 与加薪！'
+            };
+          }
+          if (roll < 0.72) {
+            return {
+              impact: addImpact(s, 3),
+              leetcode: s.leetcode + 3,
+              story_flags: { ...(s.story_flags || {}), intern_mentored: true },
+              message: '【稳妥结项】实习生按部就班完成了功能上线，顺利拿到 Return Offer，为你积累了宝贵的带人经验。'
+            };
+          }
+          return {
+            impact: addImpact(s, -4),
+            health: Math.max(0, s.health - 12),
+            network: Math.max(0, (s.network || 10) - 3),
             story_flags: { ...(s.story_flags || {}), intern_mentored: true },
-            message: '【神仙实习生带飞！】实习生是个天才极客，不仅 3 周做完了整套项目，还顺手重构了组里陈年的分布式锁 Bug！全组夸你“带出了年度最佳 Intern”，你白捡海量 Impact 与加薪！'
-          } : {
-            impact: addImpact(s, 3),
-            leetcode: s.leetcode + 3,
-            story_flags: { ...(s.story_flags || {}), intern_mentored: true },
-            message: '【稳妥结项】实习生按部就班完成了功能上线，顺利拿到 Return Offer，为你积累了宝贵的带人经验。'
+            message: '【放养翻车！】你疏于跟进，实习生在无人指导下把核心模块写成了一坨技术债，上线即回滚，Return Offer 被拒。Manager 在 Calibration 上质疑你“只会甩手、带人不力”，这次带教反成了晋升路上的污点 (Impact 受损, 健康与口碑双跌)！'
           };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -3342,16 +3354,24 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '作为 Staff / Senior Staff 资深架构师，你正式挂帅统领由 4 个跨时区小组、20+ 名工程师组成的战略攻坚团队 (Tiger Team)，主导全公司下一代核心跨业务基础设施建设！',
     choices: [
       {
-        text: '【战略对齐 · 统领全局交付】制定跨组技术 RFC，打通数据孤岛并凝聚全军士气',
+        text: '【战略对齐 · 豪赌跨组变革】制定跨组技术 RFC 强推数据孤岛整合，成败系于跨团队政治博弈',
         reqBadge: '需深厚人脉或高领导力',
         condition: (s) => (s.network || 0) >= 15 || (s.charm || 0) >= 12,
-        effect: (s) => ({
-          impact: addImpact(s, 10),
-          network: Math.min(100, (s.network || 10) + 8),
-          tc: s.tc + 5,
-          health: Math.max(0, s.health - 10),
-          message: '【全线战役大捷！】你统帅的 20+ 人团队攻克了核心协同瓶颈，全业务延迟骤降 70%！VP 在 All-Hands 上公开通报嘉奖，你的技术领导力全公司传颂 (Impact +10, TC +$5w)！'
-        }),
+        effect: (s) => {
+          const win = gameRandom() < 0.62;
+          return win ? {
+            impact: addImpact(s, 10),
+            network: Math.min(100, (s.network || 10) + 8),
+            tc: s.tc + 5,
+            health: Math.max(0, s.health - 10),
+            message: '【全线战役大捷！】你统帅的 20+ 人团队攻克了核心协同瓶颈，全业务延迟骤降 70%！VP 在 All-Hands 上公开通报嘉奖，你的技术领导力全公司传颂 (Impact +10, TC +$5w)！'
+          } : {
+            impact: addImpact(s, -3),
+            network: Math.max(0, (s.network || 10) - 6),
+            health: Math.max(0, s.health - 12),
+            message: '【跨组战役折戟！】兄弟团队为保住自己的地盘明里附和、暗里抵制，你的 RFC 在无尽的对齐会里被拖成一纸空文，还得罪了两位平级 Staff。VP 认为你“搞不定跨组协同”，这次挂帅反而烧掉了你宝贵的政治资本 (Impact 受损, 人脉与健康俱伤)！'
+          };
+        },
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -3387,16 +3407,24 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '作为公司屈指可数的顶尖技术领袖，你受邀担任技术战略委员会主席，主导全公司未来 5 年的 AI 基础设施统一架构选型与千万级计算资源调配！',
     choices: [
       {
-        text: '【重塑全公司技术标准】强力推行统一技术栈与 Agent 架构，重构研发效能 (Impact 暴涨)',
+        text: '【重塑全公司技术标准 · 铁腕豪赌】强推统一技术栈与 Agent 架构，一将功成万骨枯',
         reqBadge: '需架构影响力 >= 35',
         condition: (s) => (s.impact || 0) >= 35,
-        effect: (s) => ({
-          impact: addImpact(s, 12),
-          tc: s.tc + 8,
-          network: Math.min(100, (s.network || 10) + 8),
-          health: Math.max(0, s.health - 8),
-          message: '【一代宗师！】全公司万名工程师全面接入你的新一代架构标准，研发效能翻倍，你在董事会与全行业声望达到顶峰 (Impact +12, TC +$8w)！'
-        }),
+        effect: (s) => {
+          const win = gameRandom() < 0.60;
+          return win ? {
+            impact: addImpact(s, 12),
+            tc: s.tc + 8,
+            network: Math.min(100, (s.network || 10) + 8),
+            health: Math.max(0, s.health - 8),
+            message: '【一代宗师！】全公司万名工程师全面接入你的新一代架构标准，研发效能翻倍，你在董事会与全行业声望达到顶峰 (Impact +12, TC +$8w)！'
+          } : {
+            impact: addImpact(s, -5),
+            network: Math.max(0, (s.network || 10) - 6),
+            health: Math.max(0, s.health - 12),
+            message: '【技术强推反噬！】各大业务线集体抵制“一刀切”迁移，半年投入付诸东流，两个核心团队因内耗爆发离职潮。董事会质疑你“脱离一线、独断专行”，你多年积累的架构威望遭遇重大反噬 (Impact 重挫, 人脉与健康俱损)！'
+          };
+        },
         nextEventId: 'sv_year_end_settlement'
       },
       {

@@ -1470,6 +1470,53 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 25 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 26: Leadership high-stakes gambles — real downside branches reachable & bounded
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 26] Leadership gambles: real downside reachable & invariant-safe ---');
+  // Base state satisfies every gamble choice's condition (network>=15, impact>=35, !laid_off).
+  const base: GameState = {
+    ...generateInitialState(),
+    level: 'L7 (Senior Staff)', laid_off: false, health: 90,
+    impact: 40, network: 20, charm: 15, leetcode: 70, tc: 60,
+  } as GameState;
+
+  // The single gamble choice per event that we converted to risk/reward.
+  const gambles: Array<{ ev: string; idx: number }> = [
+    { ev: 'career_summer_intern_mentor', idx: 1 },   // 放权探索
+    { ev: 'career_org_tech_lead_campaign', idx: 0 }, // 战略对齐
+    { ev: 'career_executive_tech_steering', idx: 0 },// 重塑全公司技术标准
+  ];
+
+  for (const { ev, idx } of gambles) {
+    const choice = events[ev].choices[idx];
+    assert(!!choice, `${ev}[${idx}] exists`);
+    assert(!choice.condition || choice.condition(base) === true, `${ev}[${idx}] condition satisfied by base state`);
+    const baseImpact = base.impact ?? 0;
+    let sawUpside = false;
+    let sawDownside = false;
+    let impactNeg = false, networkNeg = false, healthOverDraw = false;
+    for (let i = 0; i < 1000; i++) {
+      const out = choice.effect(base) as Partial<GameState>;
+      if (out.impact !== undefined && (out.impact as number) < 0) impactNeg = true;
+      if (out.network !== undefined && (out.network as number) < 0) networkNeg = true;
+      if (out.health !== undefined && base.health - (out.health as number) > 15) healthOverDraw = true;
+      if (out.impact !== undefined && (out.impact as number) > baseImpact) sawUpside = true;
+      if (out.impact !== undefined && (out.impact as number) < baseImpact) sawDownside = true;
+    }
+    // Invariants across 1000 samples (design rules): impact clamps >= 0, hidden network >= 0,
+    // and no single option drains more than 15 health.
+    assert(!impactNeg, `${ev}[${idx}] impact never goes negative across samples`);
+    assert(!networkNeg, `${ev}[${idx}] network never goes below 0 across samples`);
+    assert(!healthOverDraw, `${ev}[${idx}] single-option health drop never exceeds 15`);
+    // Both a real upside AND a real downside outcome must be reachable (it's a genuine gamble).
+    assert(sawUpside, `${ev}[${idx}] upside outcome is reachable`);
+    assert(sawDownside, `${ev}[${idx}] real downside outcome is reachable`);
+  }
+  console.log('✅ CUJ 26 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

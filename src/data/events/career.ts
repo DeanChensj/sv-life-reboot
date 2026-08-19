@@ -3287,5 +3287,138 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+
+  'career_summer_intern_mentor': {
+    id: 'career_summer_intern_mentor',
+    title: '【职场进阶】首次受命担任暑期实习生 Mentor (Intern Host)',
+    description: 'Manager 在 1-on-1 上交给你一项重要晋升考核任务：“今年组里来了一位顶尖名校的暑期实习生，由你担任 Host & Mentor，负责 12 周的项目设计、日常 1-on-1 与转正评估 (Return Offer Evaluation)！”',
+    choices: [
+      {
+        text: '【手把手带教 · 打造标杆项目】全力拆解模块与指导 Code Review，冲击组内标杆',
+        condition: (s) => !s.laid_off,
+        effect: (s) => ({
+          leetcode: s.leetcode + 4,
+          impact: (s.impact || 0) + 8,
+          network: Math.min(100, (s.network || 10) + 5),
+          health: Math.max(0, s.health - 8),
+          story_flags: { ...(s.story_flags || {}), intern_mentored: true },
+          message: '【带教大捷！】在你的悉心辅导下，实习生在全组 Demo Day 上大放异彩，提前锁定了顶格 Return Offer！Manager 极度认可你的 Leadership 带人能力 (Impact +8, 人脉网络大幅拓展)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【放权探索 · 摇出神仙极客】给出宏观架构设计让实习生自由发挥，意外遇到天才少年',
+        condition: (s) => !s.laid_off,
+        effect: (s) => {
+          const hitGeek = gameRandom() < 0.65;
+          return hitGeek ? {
+            impact: (s.impact || 0) + 12,
+            tc: s.tc + 2,
+            health: Math.min(100, s.health + 5),
+            network: Math.min(100, (s.network || 10) + 8),
+            story_flags: { ...(s.story_flags || {}), intern_mentored: true },
+            message: '【神仙实习生带飞！】实习生是个天才极客，不仅 3 周做完了整套项目，还顺手重构了组里陈年的分布式锁 Bug！全组夸你“带出了年度最佳 Intern”，你白捡海量 Impact 与加薪！'
+          } : {
+            impact: (s.impact || 0) + 6,
+            leetcode: s.leetcode + 3,
+            story_flags: { ...(s.story_flags || {}), intern_mentored: true },
+            message: '【稳妥结项】实习生按部就班完成了功能上线，顺利拿到 Return Offer，为你积累了宝贵的带人经验。'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【救场化险 · 紧急回滚止血】实习生周五推代码险些酿成 P0 Outage，你硬核排障化险为夷',
+        reqBadge: '需硬核算法或影响力',
+        condition: (s) => s.leetcode >= 35 || (s.impact || 0) >= 6,
+        effect: (s) => ({
+          leetcode: s.leetcode + 6,
+          impact: (s.impact || 0) + 6,
+          health: Math.max(0, s.health - 6),
+          story_flags: { ...(s.story_flags || {}), intern_mentored: true },
+          message: '【硬核救场！】你在 15 分钟内快速定位 Root Cause 并完成防御性回滚，接着手把手教会了实习生防御性编程。这次 Crisis Response 展现了你极强的工程抗压底蕴！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'career_org_tech_lead_campaign': {
+    id: 'career_org_tech_lead_campaign',
+    title: '【Tech Lead 领航】挂帅跨部门重点战役与技术组织领导力',
+    description: '作为 Staff / Senior Staff 资深架构师，你正式挂帅统领由 4 个跨时区小组、20+ 名工程师组成的战略攻坚团队 (Tiger Team)，主导全公司下一代核心跨业务基础设施建设！',
+    choices: [
+      {
+        text: '【战略对齐 · 统领全局交付】制定跨组技术 RFC，打通数据孤岛并凝聚全军士气',
+        reqBadge: '需深厚人脉或高领导力',
+        condition: (s) => (s.network || 0) >= 15 || (s.charm || 0) >= 12,
+        effect: (s) => ({
+          impact: (s.impact || 0) + 18,
+          network: Math.min(100, (s.network || 10) + 8),
+          tc: s.tc + 5,
+          health: Math.max(0, s.health - 10),
+          message: '【全线战役大捷！】你统帅的 20+ 人团队攻克了核心协同瓶颈，全业务延迟骤降 70%！VP 在 All-Hands 上公开通报嘉奖，你的技术领导力全公司传颂 (Impact +18, TC +$5w)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【技术攻坚 · 亲自手撕内核】以身作则带领骨干手撕最难的高并发调度引擎 (IC 领袖)',
+        reqBadge: '需 LeetCode >= 65',
+        condition: (s) => s.leetcode >= 65,
+        effect: (s) => ({
+          impact: (s.impact || 0) + 16,
+          leetcode: s.leetcode + 6,
+          tc: s.tc + 4,
+          health: Math.max(0, s.health - 12),
+          message: '【硬核技术领袖！】你以身作则手撕了核心调度器，代码优雅高效，让年轻工程师奉为圭臬！团队提前一个月超额交付战略里程碑 (Impact +16, TC +$4w)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【梯队建设 · 提拔骨干打造铁军】重点培养 2 名 Senior 骨干分别主导子系统，自己把控技术风向',
+        condition: (s) => true,
+        effect: (s) => ({
+          impact: (s.impact || 0) + 12,
+          network: Math.min(100, (s.network || 10) + 8),
+          health: Math.min(100, s.health + 4),
+          message: '【团队梯队成熟！】你成功提拔了两位得力干将，团队自治高效运转，你无需熬夜也能稳稳收获全组交付的丰硕成果 (Impact +12, 人脉网络大幅拓展)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'career_executive_tech_steering': {
+    id: 'career_executive_tech_steering',
+    title: '【架构委员会主席】主导全公司技术战略指导委员会 (Steering Committee)',
+    description: '作为公司屈指可数的顶尖技术领袖，你受邀担任技术战略委员会主席，主导全公司未来 5 年的 AI 基础设施统一架构选型与千万级计算资源调配！',
+    choices: [
+      {
+        text: '【重塑全公司技术标准】强力推行统一技术栈与 Agent 架构，重构研发效能 (Impact 暴涨)',
+        reqBadge: '需架构影响力 >= 35',
+        condition: (s) => (s.impact || 0) >= 35,
+        effect: (s) => ({
+          impact: (s.impact || 0) + 24,
+          tc: s.tc + 8,
+          network: Math.min(100, (s.network || 10) + 8),
+          health: Math.max(0, s.health - 8),
+          message: '【一代宗师！】全公司万名工程师全面接入你的新一代架构标准，研发效能翻倍，你在董事会与全行业声望达到顶峰 (Impact +24, TC +$8w)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【稳健共识治理】建立委员会准入机制与轮值主席制，兼顾个人健康与全司发展',
+        condition: (s) => true,
+        effect: (s) => ({
+          impact: (s.impact || 0) + 15,
+          health: Math.min(100, s.health + 8),
+          tc: s.tc + 4,
+          message: '【德高望重！】你建立的开源自治委员会机制广受赞誉，既维持了公司技术领先，又享受着充沛的生活平衡 (Impact +15, TC +$4w, 健康 +8)！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
   }
 };
+

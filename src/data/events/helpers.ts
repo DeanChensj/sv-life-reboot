@@ -286,6 +286,11 @@ export const midYearEventRouter = (s: GameState): string => {
     return 'linda_angel_co_investment';
   }
 
+  // 8) 首次担任暑期实习生 Mentor (L4 / L5 专属，有且仅有 1 次)
+  if (isWorking && isBigTech && !s.story_flags?.intern_mentored && (s.level === 'L4' || s.level === 'L5 (Senior)' || s.level === 'L5') && gameRandom() < 0.35) {
+    return 'career_summer_intern_mentor';
+  }
+
   // Economy News Broadcasts
   const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
   if (gameRandom() < shiftChance && !s.season_stage) {
@@ -473,6 +478,14 @@ export const midYearEventRouter = (s: GameState): string => {
      }
      if (isCorporate && !s.story_flags?.macro_rto_seen && s.age >= 28 && gameRandom() < 0.22) {
        workEvents.push('macro_rto_office_wars');
+     }
+
+     // L6+ 资深架构师：Tech Lead 领航带团队重点战役 / 委员会治理 (大幅提升 Impact)
+     if (isCorporate && (s.level === 'L6 (Staff)' || s.level === 'Staff' || s.level === 'L7 (Senior Staff)' || s.level === 'Senior Staff' || s.level === 'L8 (Principal)' || s.level === 'MTS') && gameRandom() < 0.35) {
+       workEvents.push('career_org_tech_lead_campaign');
+     }
+     if (isCorporate && (s.level === 'L7 (Senior Staff)' || s.level === 'Senior Staff' || s.level === 'L8 (Principal)') && (s.impact || 0) >= 30 && gameRandom() < 0.35) {
+       workEvents.push('career_executive_tech_steering');
      }
 
      return gamePick(workEvents);

@@ -62,6 +62,7 @@ export interface StoryFlags {
   macro_ai_revolution_seen?: boolean;
   macro_efficiency_seen?: boolean;
   macro_rto_seen?: boolean;
+  intern_mentored?: boolean;
   [key: string]: unknown;
 }
 

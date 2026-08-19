@@ -8,6 +8,7 @@ import { safeStorage } from './utils/safeStorage';
 import { applyStateTransition } from './utils/stateTransitions';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './utils/saveMigration';
 import { determineEnding } from './utils/endings';
+import { getJobDisplayInfo } from './utils/gameStateSelectors';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy loaded heavy modals for optimized code splitting
@@ -188,6 +189,7 @@ export default function App() {
   }, [currentEventId]);
 
   const currentEvent = events[currentEventId];
+  const { levelHeaderLabel, levelLabel } = getJobDisplayInfo(gameState);
   // Classified ending archetype (only meaningful on the end screen, cheap + pure).
   const ending = determineEnding(gameState);
   const endingToneClass = ending.tone === 'triumph'
@@ -519,7 +521,7 @@ export default function App() {
 
             {/* Level Tag */}
             <span className="flex items-center gap-1 font-bold text-[11px] text-purple-300 shrink-0 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
-              <span className="text-purple-400 font-extrabold">职级</span> {(gameState.job_type === 'unemployed' || gameState.laid_off || !gameState.job_type) ? '待业' : (gameState.level || (gameState.job_type === 'quant' ? 'Quant' : gameState.job_type === 'ai_research' ? 'MTS' : gameState.job_type === 'trader' ? '全职 Trader' : gameState.job_type === 'startup_founder' ? 'CEO & Founder' : gameState.is_phd ? 'L4' : 'L3'))}
+              <span className="text-purple-400 font-extrabold">{levelHeaderLabel || '职级'}</span> {levelLabel}
             </span>
 
             {/* Visa Tag */}

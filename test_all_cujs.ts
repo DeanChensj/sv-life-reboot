@@ -1249,6 +1249,91 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 21 Passed\n');
 }
 
+// =========================================================================
+// CUJ 22: US Undergrad to US Master to Big Tech Journey (Anti-Loop & Student HUD)
+// =========================================================================
+console.log('--- [CUJ 22] US Undergrad to US Master to Big Tech Journey ---');
+{
+  let state = generateInitialState();
+  state.cash = 35; // sufficient for UCB undergrad + Master
+
+  // 1. Choose Trait -> Choose Year -> Choose School: UCB
+  let res = stepChoice(state, 'choose_trait', 1);
+  state = res.nextState;
+  res = stepChoice(state, 'choose_year', 1);
+  state = res.nextState;
+  res = stepChoice(state, 'choose_school', 1); // UCB ($18w)
+  state = res.nextState;
+  assert(res.nextEventId === 'us_undergrad_year1', 'choose_school -> us_undergrad_year1');
+  assert(state.school === 'ucb', 'School set to UCB');
+
+  // Verify Student HUD derivation
+  let jobInfo = getJobDisplayInfo(state);
+  assert(jobInfo.companyHeaderLabel === '就读院校', 'HUD shows 就读院校');
+  assert(jobInfo.companyLabel === 'UCB (加州伯克利)', 'HUD displays UCB (加州伯克利)');
+  assert(jobInfo.levelHeaderLabel === '在读学位', 'HUD shows 在读学位');
+  assert(jobInfo.levelLabel === '本科在读', 'HUD displays 本科在读');
+
+  // 2. Undergrad Year 1 -> Junior Year 3
+  res = stepChoice(state, 'us_undergrad_year1', 0);
+  state = res.nextState;
+  const stage1Next = res.nextEventId;
+  if (stage1Next !== 'us_undergrad_year3') {
+    // Landed on a random college event — walk it to junior year
+    res = stepChoice(state, stage1Next, 0);
+    state = res.nextState;
+    assert(res.nextEventId === 'us_undergrad_year3', 'Random college event advanced to us_undergrad_year3');
+  }
+
+  // 3. Junior Year 3 -> Undergrad Graduation
+  res = stepChoice(state, 'us_undergrad_year3', 0);
+  state = res.nextState;
+  const stage2Next = res.nextEventId;
+  if (stage2Next !== 'us_undergrad_grad') {
+    // Landed on a random college event — walk it to undergrad graduation
+    res = stepChoice(state, stage2Next, 0);
+    state = res.nextState;
+    assert(res.nextEventId === 'us_undergrad_grad', 'Random college event advanced to us_undergrad_grad');
+  }
+
+  // 4. Undergrad Graduation: Choose Master's Degree
+  res = stepChoice(state, 'us_undergrad_grad', 2); // 申请大U硕士
+  state = res.nextState;
+  assert(res.nextEventId === 'us_master_year1', 'us_undergrad_grad -> us_master_year1');
+  assert(state.is_master === true, 'is_master is true');
+
+  // Verify Master Student HUD derivation
+  jobInfo = getJobDisplayInfo(state);
+  assert(jobInfo.levelLabel === '硕士在读', 'HUD displays 硕士在读');
+  assert(jobInfo.companyLabel === 'UCB CS 硕士', 'HUD displays UCB CS 硕士');
+
+  // 5. Master Year 1: Complete Master's Studies
+  res = stepChoice(state, 'us_master_year1', 0); // 加急刷题
+  state = res.nextState;
+  const masterNext = res.nextEventId;
+  if (masterNext !== 'us_master_grad') {
+    // Landed on a random college event — walk it to master graduation
+    res = stepChoice(state, masterNext, 0);
+    state = res.nextState;
+    assert(res.nextEventId === 'us_master_grad', 'Random college event advanced to us_master_grad (anti-undergrad-loop test)');
+  } else {
+    assert(res.nextEventId === 'us_master_grad', 'us_master_year1 advanced directly to us_master_grad');
+  }
+
+  // 6. Master Graduation: Verify PhD option & Enter Job Hunt
+  const masterGradEvent = events['us_master_grad'];
+  const phdChoice = masterGradEvent.choices.find((c) => c.text.includes('申请北美顶尖 PhD'))!;
+  assert(!!phdChoice, 'PhD application option exists in us_master_grad');
+  assert(phdChoice.condition!({ ...state, leetcode: 55 } as GameState) === true, 'PhD option accessible with LeetCode >= 50');
+
+  res = stepChoice(state, 'us_master_grad', 0); // 硅谷大厂秋招
+  state = res.nextState;
+  assert(res.nextEventId === 'job_hunt', 'us_master_grad -> job_hunt');
+  assert(state.visa === 'OPT (实习)', 'Master graduation activated OPT');
+
+  console.log('✅ CUJ 22 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

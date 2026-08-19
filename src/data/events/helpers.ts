@@ -99,6 +99,7 @@ export const stampSeen = (s: GameState, id: string, strainDelta = 0): StoryFlags
 // final year (-> graduation), across undergrad / master / domestic.
 export const collegeNextStage = (s: GameState): string => {
   const next = s.story_flags?.college_next;
+  if (next === 'us_master_grad') return 'us_master_grad';
   if (next === 'us_undergrad_grad') return 'us_undergrad_grad';
   if (next === 'cn_undergrad_grad') return 'cn_undergrad_grad';
   // Master students settle to master graduation; undergrad mid-college -> junior year.

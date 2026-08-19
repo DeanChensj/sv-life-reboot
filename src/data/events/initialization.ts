@@ -87,19 +87,25 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校 Choice 的选择：',
     choices: [
       {
-        text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总开销 30 万美元)',
+        text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总花费 $30w)',
+        costBadge: '花费 $30w',
+        reqBadge: '需现金 >= $30w',
         condition: (s) => s.cash >= 30,
         effect: (s) => ({ cash: Math.max(0, s.cash - 30), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 5), housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '理工强校大U (如 UIUC/UW/UMich) (四年总开销 18 万美元)',
+        text: '理工强校大U (如 UIUC/UW/UMich) (四年总花费 $18w)',
+        costBadge: '花费 $18w',
+        reqBadge: '需现金 >= $18w',
         condition: (s) => s.cash >= 18,
         effect: (s) => ({ cash: Math.max(0, s.cash - 18), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '美国普通公立大学 (四年总开销 10 万美元, 美籍/绿卡含州内补贴只需 4 万)',
+        text: '美国普通公立大学 (四年总花费 $10w, 美籍/绿卡含州内补贴只需 $4w)',
+        costBadge: '花费 $10w (美籍/绿卡 $4w)',
+        reqBadge: '需现金 >= $10w (美籍/绿卡 $4w)',
         condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? 4 : 10),
         effect: (s) => {
           const cost = (s.visa === '公民' || s.visa === '绿卡') ? 4 : 10;
@@ -108,8 +114,9 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '在国内读本科 / 中外合办大学 (四年总开销 2 万美元)',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 2), housing_name: '国内大学宿舍' }),
+        text: '在国内读本科 / 中外合办大学 (四年总花费 $2w)',
+        costBadge: '花费 $2w',
+        effect: (s) => ({ cash: Math.max(0, s.cash - 2), school: 'cn', housing_name: '国内大学宿舍' }),
         nextEventId: 'cn_college_grad',
       }
     ]
@@ -297,6 +304,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '申请北美顶尖 PhD (录取率低, 需 LeetCode >= 50)',
+        reqBadge: '全奖直博 / 需 LeetCode >= 50',
         condition: (s) => s.leetcode >= 50,
         effect: (s) => {
           const pass = s.is_phd || (gameRandom() < (0.20 + (s.school === 'cmu' ? 0.20 : 0) + (s.leetcode >= 80 ? 0.15 : 0) + (s.story_flags?.phd_ready ? 0.15 : 0)));
@@ -309,6 +317,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
       {
         text: '直接找工作 (开启大厂校招与社招海投)',
+        reqBadge: '激活 OPT 实习期',
         // (Removed a dead `year === 2020` pandemic branch: year is frozen during
         // school so it could never fire. Graduation now cleanly activates OPT.)
         effect: (s) => ({
@@ -320,8 +329,18 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '申请大U硕士 (刷题进厂预备役 / 避避风头)',
+        costBadge: '学费 $10w',
+        reqBadge: '需现金 >= $10w',
         condition: (s) => s.cash >= 10,
-        effect: (s) => ({ cash: s.cash - 10, age: s.age, message: '你决定去读个硕士提升一下学历。' }),
+        effect: (s) => ({
+          cash: s.cash - 10,
+          is_master: true,
+          has_us_degree: true,
+          housing_name: '美硕 校外公寓',
+          age: s.age,
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
+          message: '你决定去读个硕士提升一下学历，顺利开启美硕生涯！'
+        }),
         nextEventId: 'us_master_year1',
       }
     ]
@@ -334,6 +353,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '全奖直博美国 (录取率地狱级, 需 LeetCode >= 50)',
+        reqBadge: '全奖直博 / 需 LeetCode >= 50',
         condition: (s) => s.leetcode >= 50,
         effect: (s) => {
           const pass = gameRandom() < (0.18 + (s.leetcode >= 80 ? 0.20 : 0));
@@ -346,12 +366,24 @@ export const initializationEvents: Record<string, GameEvent> = {
 
       {
         text: '申请美国 CS 硕士 (自筹资金 / 积蓄 $5w 即可申请)',
+        costBadge: '自筹 $5w',
+        reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
-        effect: (s) => ({ cash: s.cash - 5, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', school: 'state', has_us_degree: true, age: s.age, is_master: true, housing_name: '美硕 校外公寓' }),
+        effect: (s) => ({
+          cash: s.cash - 5,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          school: 'state',
+          has_us_degree: true,
+          age: s.age,
+          is_master: true,
+          housing_name: '美硕 校外公寓',
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
+        }),
         nextEventId: 'us_master_year1',
       },
       {
         text: '申请美国 CS 硕士 (无抵押留学贷款 + 校内 TA 助教，需评估算法/背景)',
+        costBadge: '首期 $2w',
         reqBadge: '需算法/GPA评估',
         effect: (s) => {
           const loanPass = (s.leetcode >= 18) || (gameRandom() < 0.40 + (s.luck / 200));
@@ -364,6 +396,7 @@ export const initializationEvents: Record<string, GameEvent> = {
               age: s.age, 
               is_master: true,
               housing_name: '美硕 校外公寓', 
+              story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
               message: ' 申请成功！凭借扎实的本科算法基础与良好的背景，你成功获得了无抵押留学贷款与校内 TA 助教资格！' 
             };
           } else {
@@ -377,6 +410,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '在国内大厂打工攒钱 (积累工作经验)',
+        reqBadge: '起薪 $8w',
         effect: (s) => ({
           cash: s.cash + 2.5,
           health: Math.max(30, s.health - 12),
@@ -728,23 +762,56 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【加急刷题进厂】选择 1.5 年加急项目，翘课刷题 (23岁毕业)',
-        effect: (s) => ({ leetcode: s.leetcode + 15, health: s.health - 12, age: s.age + 1, message: 'GPA 擦边过，但你闭着眼睛都能手撕红黑树与动态规划，1.5年顺利美硕毕业！' }),
+        effect: (s) => ({
+          leetcode: s.leetcode + 15,
+          health: s.health - 12,
+          age: s.age + 1,
+          is_master: true,
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
+          message: 'GPA 擦边过，但你闭着眼睛都能手撕红黑树与动态规划，1.5年顺利美硕毕业！'
+        }),
         nextEventId: pickCollegeEvent,
       },
       {
         text: '【华尔街量化方向】选择 2 年标准项目，准备 Quant/风控与投资面试 (24岁毕业)',
-        effect: (s) => ({ cash: s.cash + 2.5, leetcode: s.leetcode + 8, charm: Math.min(25, s.charm + 4), age: s.age + 2, message: '在 Quant 笔试与数学思维面试中顺利过关，2年学制美硕顺利毕业！' }),
+        effect: (s) => ({
+          cash: s.cash + 2.5,
+          leetcode: s.leetcode + 8,
+          charm: Math.min(25, s.charm + 4),
+          age: s.age + 2,
+          is_master: true,
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
+          message: '在 Quant 笔试与数学思维面试中顺利过关，2年学制美硕顺利毕业！'
+        }),
         nextEventId: pickCollegeEvent,
       },
       {
         text: '【完美学术绩点】选择 1.5 年加急项目，疯狂赶 Due 保 4.0 GPA (23岁毕业)',
-        effect: (s) => ({ leetcode: s.leetcode + 6, health: s.health - 8, charm: Math.min(25, s.charm + 3), age: s.age + 1, message: '你拿到了 4.0 的完美绩点！展现了极其严谨的学业能力，1.5年美硕顺利毕业！' }),
+        effect: (s) => ({
+          leetcode: s.leetcode + 6,
+          health: s.health - 8,
+          charm: Math.min(25, s.charm + 3),
+          age: s.age + 1,
+          is_master: true,
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
+          message: '你拿到了 4.0 的完美绩点！展现了极其严谨的学业能力，1.5年美硕顺利毕业！'
+        }),
         nextEventId: pickCollegeEvent,
       },
       {
         text: '【校友人脉内推】选择 2 年标准项目，去硅谷大厂活动混脸熟要内推 (24岁毕业)',
+        costBadge: '花费 $1w',
+        reqBadge: '需现金 >= $1w',
         condition: (s) => s.cash >= 1,
-        effect: (s) => ({ cash: s.cash - 1, network: Math.min(100, (s.network || 10) + 12), charm: Math.min(s.max_charm ?? 25, s.charm + 3), age: s.age + 2, message: '你加了 50 个大厂学长学姐的 LinkedIn，攒下了一大批内推人脉与直通面试机会，2年美硕顺利毕业！' }),
+        effect: (s) => ({
+          cash: s.cash - 1,
+          network: Math.min(100, (s.network || 10) + 12),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
+          age: s.age + 2,
+          is_master: true,
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
+          message: '你加了 50 个大厂学长学姐的 LinkedIn，攒下了一大批内推人脉与直通面试机会，2年美硕顺利毕业！'
+        }),
         nextEventId: pickCollegeEvent,
       }
     ]
@@ -756,9 +823,9 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '你拿到了硕士学位，OPT 已经激活。现在必须在三个月内找到工作，否则就要被送中了。',
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
-
       {
         text: '【硅谷大厂秋招】海投简历，疯狂刷题备战 Onsite',
+        reqBadge: '激活 OPT 实习期',
         effect: (s) => ({
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
           health: s.health - 8,
@@ -768,7 +835,21 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'job_hunt',
       },
       {
-        text: '找ICC挂靠 (保底策略)',
+        text: '【学术深造】申请北美顶尖 PhD (攻读人工智能与分布式系统博士)',
+        reqBadge: '全奖直博 / 需 LeetCode >= 50',
+        condition: (s) => s.leetcode >= 50,
+        effect: (s) => {
+          const pass = s.is_phd || (gameRandom() < (0.25 + (s.school === 'cmu' ? 0.20 : 0) + (s.leetcode >= 80 ? 0.15 : 0) + (s.story_flags?.phd_ready ? 0.15 : 0)));
+          return pass 
+            ? { cash: s.cash + 2, age: s.age + 1, year: s.year + 1, is_phd: true, housing_name: '美国 博士实验室', message: '大喜讯！凭借出色的硕士学业与算法沉淀，你战胜了数千名申请者，斩获北美顶级 CS 全奖 PhD Offer！' }
+            : { health: Math.max(0, s.health - 12), age: s.age + 1, year: s.year + 1, is_phd: false, message: '今年顶校 PhD 竞争白热化，你的申请未能入选。你收起行囊，投身硅谷大厂秋招求职。' };
+        },
+        nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'job_hunt',
+      },
+      {
+        text: '找 ICC 挂靠 (保底策略)',
+        costBadge: '花费 $1w',
+        reqBadge: '需现金 >= $1w',
         condition: (s) => s.cash >= 1,
         effect: (s) => ({
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
@@ -786,6 +867,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '加入一家刚成立的 AI 初创公司 (高风险高回报)',
+        reqBadge: '高风险高回报',
         // Available to any master's grad (was gated on year>=2023, which is unreachable
         // because `year` is frozen during school — the option could never appear).
         condition: (s) => s.is_master === true || s.has_us_degree === true,

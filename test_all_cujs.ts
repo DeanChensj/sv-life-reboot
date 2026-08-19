@@ -1355,7 +1355,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Student HUD derivation
   let jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.companyHeaderLabel === '就读院校', 'HUD shows 就读院校');
-  assert(jobInfo.companyLabel === 'UCB (加州伯克利)', 'HUD displays UCB (加州伯克利)');
+  assert(jobInfo.companyLabel === '大U (理工强校)', 'HUD displays 大U (理工强校)');
   assert(jobInfo.levelHeaderLabel === '在读学位', 'HUD shows 在读学位');
   assert(jobInfo.levelLabel === '本科在读', 'HUD displays 本科在读');
 
@@ -1390,7 +1390,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Master Student HUD derivation
   jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.levelLabel === '硕士在读', 'HUD displays 硕士在读');
-  assert(jobInfo.companyLabel === 'UCB CS 硕士', 'HUD displays UCB CS 硕士');
+  assert(jobInfo.companyLabel === '大U CS 硕士', 'HUD displays 大U CS 硕士');
 
   // 5. Master Year 1: Complete Master's Studies
   res = stepChoice(state, 'us_master_year1', 0); // 加急刷题

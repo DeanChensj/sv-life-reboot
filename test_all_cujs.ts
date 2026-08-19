@@ -1446,7 +1446,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(propTaxChoice.condition!(stockRichState) === true, 'Player with $0.5w cash + $80w stocks can afford property tax payment');
   const propRes = applyStateTransition(stockRichState, propTaxChoice.effect(stockRichState));
   assert(propRes.nextState.cash >= 0, 'Stock auto-liquidation cleanly covers tax payment with non-negative cash');
-  assert(propRes.nextState.stocks < 80, 'Stocks decreased to cover shortfall');
+  assert((propRes.nextState.stocks ?? 0) < 80, 'Stocks decreased to cover shortfall');
 
   const irsChoice = events['irs_tax_audit_crisis'].choices[0];
   assert(irsChoice.condition!(stockRichState) === true, 'Player with $0.5w cash + $80w stocks can afford IRS CPA audit payment');

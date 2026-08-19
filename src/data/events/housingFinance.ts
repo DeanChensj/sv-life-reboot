@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, gameRandom } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, gameRandom, deductAssets } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 import { isOwnedHousing, HOUSING_NAMES } from '../../constants/gameConstants';
 
@@ -81,7 +81,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         costBadge: '首付 $45w',
         reqBadge: '需现金+股票 >= $45w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 45,
-        effect: (s) => ({ cash: s.cash - 45, rent: 1.5, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health + 10, last_housing_action_year: s.year, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
+        effect: (s) => ({ ...deductAssets(s, 45), rent: 1.5, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health + 10, last_housing_action_year: s.year, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
         nextEventId: returnToAnnualPanel,
       },
       {
@@ -89,7 +89,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         costBadge: '首付 $40w',
         reqBadge: '需现金+股票 >= $40w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 40,
-        effect: (s) => ({ cash: s.cash - 40, rent: 2.5, has_housing: true, housing_name: HOUSING_NAMES.NORTH_SAN_JOSE, charm: Math.min(25, s.charm + 5), last_housing_action_year: s.year, message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
+        effect: (s) => ({ ...deductAssets(s, 40), rent: 2.5, has_housing: true, housing_name: HOUSING_NAMES.NORTH_SAN_JOSE, charm: Math.min(25, s.charm + 5), last_housing_action_year: s.year, message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
         nextEventId: returnToAnnualPanel,
       },
       {
@@ -97,7 +97,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         costBadge: '首付 $65w',
         reqBadge: '需现金+股票 >= $65w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 65,
-        effect: (s) => ({ cash: s.cash - 65, rent: 4.5, has_housing: true, housing_name: HOUSING_NAMES.FREMONT, charm: Math.min(25, s.charm + 4), luck: s.luck + 10, last_housing_action_year: s.year, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
+        effect: (s) => ({ ...deductAssets(s, 65), rent: 4.5, has_housing: true, housing_name: HOUSING_NAMES.FREMONT, charm: Math.min(25, s.charm + 4), luck: s.luck + 10, last_housing_action_year: s.year, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
         nextEventId: returnToAnnualPanel,
       },
       {
@@ -187,7 +187,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         costBadge: '首付 $25w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 25 && !(s.investment_properties || []).includes('Austin 远程独栋屋'),
         effect: (s) => ({
-          cash: s.cash - 25,
+          ...deductAssets(s, 25),
           rental_income: (s.rental_income || 0) + 1.2,
           investment_properties: [...(s.investment_properties || []), 'Austin 远程独栋屋'],
           message: '【外州资产配置】借助全美远程物业托管，你在德州 Austin 核心科技园区拿下了一套独栋屋，租给 Tesla/Apple 工程师，每年被动落袋 +$1.2w 纯现金流！'
@@ -199,7 +199,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         costBadge: '首付 $45w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 45 && !(s.investment_properties || []).includes('Hayward 独立投资房'),
         effect: (s) => ({
-          cash: s.cash - 45,
+          ...deductAssets(s, 45),
           rental_income: (s.rental_income || 0) + 2.2,
           investment_properties: [...(s.investment_properties || []), 'Hayward 独立投资房'],
           message: '【湾区核心资产】拿下东湾优质通勤独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$2.2w 租金现金流！'
@@ -211,7 +211,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         costBadge: '首付 $120w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 120 && !(s.investment_properties || []).includes(HOUSING_NAMES.SUNNYVALE_4PLEX),
         effect: (s) => ({
-          cash: s.cash - 120,
+          ...deductAssets(s, 120),
           rental_income: (s.rental_income || 0) + 6.0,
           investment_properties: [...(s.investment_properties || []), HOUSING_NAMES.SUNNYVALE_4PLEX],
           charm: Math.min(25, (s.charm || 10) + 5),

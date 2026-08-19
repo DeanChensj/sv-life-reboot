@@ -216,7 +216,7 @@ export const careerEvents: Record<string, GameEvent> = {
             : { health: s.health - 12, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你的简历或面经遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
-          if (s.tc < 40) return 'job_hunt';
+          if (s.job_type !== 'quant') return 'job_hunt';
           return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
         },
       },

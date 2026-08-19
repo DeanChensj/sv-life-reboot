@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { h1ToH2Router, gameRandom, o1PassProb } from './helpers';
+import { h1ToH2Router, gameRandom, o1PassProb, deductAssets } from './helpers';
 import { HOUSING_NAMES, VISA_STATUS } from '../../constants/gameConstants';
 
 export const immigrationEvents: Record<string, GameEvent> = {
@@ -303,7 +303,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
-        effect: (s) => ({ visa: s.visa === VISA_STATUS.CITIZEN ? VISA_STATUS.CITIZEN : VISA_STATUS.GREEN_CARD, gc_progress: 5, gc_stage: 'approved', cash: s.cash - 300, rent: 0, has_housing: true, housing_name: HOUSING_NAMES.ATHERTON, charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
+        effect: (s) => ({ ...deductAssets(s, 300), visa: s.visa === VISA_STATUS.CITIZEN ? VISA_STATUS.CITIZEN : VISA_STATUS.GREEN_CARD, gc_progress: 5, gc_stage: 'approved', rent: 0, has_housing: true, housing_name: HOUSING_NAMES.ATHERTON, charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {

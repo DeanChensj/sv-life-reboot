@@ -1176,6 +1176,22 @@ export const careerEvents: Record<string, GameEvent> = {
         }),
         nextEventId: 'end',
       },
+      // 【研究路径的高效 impact 行动】ai_research/MTS 缺一个高效可重复的年度 impact 来源
+      // (内卷 -14 健康太贵、openai crunch 一生一次),否则冲 L7/L8 只能靠随机事件+硬卷。
+      // 本行动以适中健康代价稳定产出 impact,与大厂【战时冲刺】对齐,让研究路径也能自力更生地
+      // 积累影响力。晋升仍走 perf_review / 内卷(本行动只负责高效攒 impact)。
+      {
+        text: '【前沿研究 · 主导顶会 Paper / 开源影响力】主导大模型核心研究，冲刺顶会 Oral 与开源生态',
+        condition: (s) => s.job_type === 'ai_research' && !s.laid_off,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const win = gameRandom() < Math.min(0.85, 0.6 + (s.leetcode / 300) + ((s.luck || 20) / 400));
+          return win
+            ? { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 3), tc: s.tc + 1.0, impact: addImpact(s, 10), message: '【顶会 Oral / 开源爆款】你主导的研究被顶会 Oral 收录、开源项目冲上 GitHub Trending，行业影响力 (Impact) 大增！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 5), impact: addImpact(s, 5), message: '【拒稿但沉淀】论文惨遭 Reviewer 2 拒稿，但你摸清了前沿方向、积累了扎实的研究影响力,稳步提升。' };
+        },
+        nextEventId: (s) => midYearEventRouter(s),
+      },
       // 3. 【常规年度重心】 (点击后进入年中/年底结算)
       {
         text: '【年度重心：疯狂内卷】拼命加班冲 Perf，争取加薪与升职',

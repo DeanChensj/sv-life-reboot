@@ -1193,6 +1193,33 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   // conditional decay must let a sustainable grinder actually clear the gate.
   assert(pct >= 60, `Health-managed big-tech engineer must clear the impact>=20 L6 gate through SUSTAINABLE play in >=60% of careers (got ${pct.toFixed(0)}%) — conditional impact decay must hold`);
 
+  // ai_research / MTS path: its efficient yearly impact action (前沿研究 · 主导顶会 Paper) must
+  // let a health-balanced researcher accumulate impact past the L6 gate too — research used to
+  // have ONLY the health-prohibitive 内卷, so this guards that the dedicated research action exists
+  // and is sustainable.
+  const research = events['sv_daily_life'].choices.find((c) => c.text.includes('主导顶会 Paper'));
+  assert(!!research, 'ai_research has a dedicated efficient impact action (主导顶会 Paper)');
+  const rest = events['sv_daily_life'].choices.find((c) => c.text.includes('佛系躺平'))!;
+  let rReached = 0;
+  for (let t = 0; t < TRIALS; t++) {
+    let s: GameState = {
+      ...generateInitialState(6000 + t), is_phd: true, job_type: 'ai_research', company: 'openai', level: 'MTS',
+      leetcode: 80, charm: 18, network: 35, health: 100, tc: 55, impact: 0,
+      age: 30, last_promo_age: 28, job_start_age: 26, status: 'playing',
+    } as GameState;
+    for (let yr = 0; yr < 15 && s.status === 'playing'; yr++) {
+      const act = (s.health >= 45 && (!research!.condition || research!.condition(s))) ? research! : rest;
+      s = applyStateTransition(s, act.effect(s), { eventId: 'sv_daily_life' }).nextState;
+      if ((s.impact || 0) >= 20) { rReached++; break; }
+      if (s.status !== 'playing') break;
+      s = applyStateTransition(s, settle.effect(s), { eventId: 'sv_year_end_settlement' }).nextState;
+      if ((s.impact || 0) >= 20) { rReached++; break; }
+    }
+  }
+  const rPct = (rReached / TRIALS) * 100;
+  console.log(`   ${rPct.toFixed(0)}% of health-balanced ai_research/MTS players cleared the L6 impact gate (>=20) within 15y`);
+  assert(rPct >= 60, `Health-balanced researcher must be able to clear impact>=20 via the dedicated research action in >=60% of careers (got ${rPct.toFixed(0)}%)`);
+
   console.log('✅ CUJ 20 Passed\n');
 }
 

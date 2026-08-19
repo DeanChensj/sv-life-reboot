@@ -1,5 +1,6 @@
 import type { GameState, TimelineRecord } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover } from '../constants/gameConstants';
+import { getCompanyProfile } from '../data/companyProfiles';
 
 export interface TransitionContext {
   eventId?: string;
@@ -205,13 +206,15 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.is_new_job || (normalizedEffect.job_type && normalizedEffect.job_type !== 'unemployed' && (normalizedEffect.job_type !== prevState.job_type || normalizedEffect.company !== prevState.company))) {
-    const compMap: Record<string, string> = {
-      google: 'Google (谷歌)', meta: 'Meta (卷王)', nvidia: 'NVIDIA (英伟达)', tiktok: 'TikTok (字节)',
-      apple: 'Apple (苹果)', amazon: 'Amazon (亚麻)', openai: 'OpenAI', citadel: 'Citadel (城堡)',
-      uber: 'Uber (优步)', microsoft: 'Microsoft (微软)', cisco: 'Cisco (思科)', adobe: 'Adobe (奥多比)',
+    // Big-tech employer hire names come from the company table (timelineName);
+    // non-big-tech / job_type-primary employers keep their own names here.
+    const legacyCompNames: Record<string, string> = {
+      openai: 'OpenAI', citadel: 'Citadel (城堡)',
       cn_big_tech: '国内一线互联网大厂', icc: 'ICC 外包公司',
     };
-    const compName = normalizedEffect.company ? (compMap[normalizedEffect.company] || normalizedEffect.company.toUpperCase()) : (normalizedEffect.job_type === 'cn_tech' ? '国内一线互联网大厂' : normalizedEffect.job_type === 'startup_founder' ? 'AI 独角兽' : '硅谷科技企业');
+    const compName = normalizedEffect.company
+      ? (getCompanyProfile(normalizedEffect.company)?.timelineName || legacyCompNames[normalizedEffect.company] || normalizedEffect.company.toUpperCase())
+      : (normalizedEffect.job_type === 'cn_tech' ? '国内一线互联网大厂' : normalizedEffect.job_type === 'startup_founder' ? 'AI 独角兽' : '硅谷科技企业');
     const lvl = normalizedEffect.level || (normalizedEffect.job_type === 'cn_tech' ? '国内研发' : normalizedEffect.job_type === 'startup_founder' ? 'Founder' : 'SDE');
     updatedTimeline.push({
       age: recAge, year: recYear,

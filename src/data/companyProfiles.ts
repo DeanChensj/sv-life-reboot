@@ -1,0 +1,142 @@
+// -----------------------------------------------------------------------------
+// COMPANY_PROFILES — single source of truth for big-tech employer economics.
+//
+// Background: `company` on GameState is a plain `string` (it also carries a few
+// narrative free-text values like 'OmniAgent AI'), so it cannot be a strict
+// union. But every *standard big-tech employer* (job_type:'big_tech' + a
+// company slug) used to have its display label / RSU split / year-end health /
+// PIP tier / signature event scattered across 5 files as ad-hoc `company === X`
+// branches. A new employer that forgot any one of them silently fell into the
+// wrong fallback (e.g. Oracle rendered as the generic '硅谷科技大厂').
+//
+// This table collapses all of that into one entry per company. `BigTechCompany`
+// is a closed union and COMPANY_PROFILES is a `Record<BigTechCompany, ...>`, so
+// tsc forces every member to have a complete profile — adding an employer is a
+// single table entry (plus wiring it into offer generation in career.ts, which
+// is intentional new content, never a silent fallback).
+// -----------------------------------------------------------------------------
+
+/** Standard big-tech employers stored as company + job_type:'big_tech'. */
+export type BigTechCompany =
+  | 'google'
+  | 'meta'
+  | 'apple'
+  | 'amazon'
+  | 'nvidia'
+  | 'tiktok'
+  | 'microsoft'
+  | 'cisco'
+  | 'adobe'
+  | 'oracle'
+  | 'uber';
+
+export interface CompanyProfile {
+  /** HUD company-chip label (gameStateSelectors). */
+  label: string;
+  /** HUD company-chip Tailwind className (gameStateSelectors). */
+  className: string;
+  /** Timeline "成功入职" hire-message name (stateTransitions). */
+  timelineName: string;
+  /** Friday-PIP frequency tier in the work-event pool (helpers). */
+  pipTier: 'high' | 'low' | 'medium';
+  /** Cash/RSU split override for getTCBreakdown; omit = standard 55/45. */
+  compSplit?: { base: number; rsu: number };
+  /** Year-end health delta (+drain = health loss) + message; omit = 养老大厂 default (+10 WLB). */
+  yearEndHealth?: { drain: number; msg: string };
+  /** Once-per-game signature work event id (helpers dispatch); omit = none. */
+  signatureEvent?: string;
+}
+
+export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
+  google: {
+    label: 'Google (谷歌)',
+    className: 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold',
+    timelineName: 'Google (谷歌)',
+    pipTier: 'low',
+    signatureEvent: 'google_reorg_limbo',
+  },
+  meta: {
+    label: 'Meta (卷王)',
+    className: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 font-bold',
+    timelineName: 'Meta (卷王)',
+    pipTier: 'high',
+    compSplit: { base: 0.40, rsu: 0.60 },
+    yearEndHealth: { drain: 4, msg: ' Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。' },
+    signatureEvent: 'meta_metaverse_pivot',
+  },
+  apple: {
+    label: 'Apple (苹果)',
+    className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
+    timelineName: 'Apple (苹果)',
+    pipTier: 'low',
+    signatureEvent: 'apple_secrecy_crackdown',
+  },
+  amazon: {
+    label: 'Amazon (亚麻)',
+    className: 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold',
+    timelineName: 'Amazon (亚麻)',
+    pipTier: 'high',
+    yearEndHealth: { drain: 3, msg: ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。' },
+  },
+  nvidia: {
+    label: 'NVIDIA (英伟达)',
+    className: 'text-lime-400 bg-lime-500/10 border-lime-500/20 font-bold',
+    timelineName: 'NVIDIA (英伟达)',
+    pipTier: 'low',
+    compSplit: { base: 0.40, rsu: 0.60 },
+    yearEndHealth: { drain: 4, msg: ' 英伟达 AI 芯片军备竞赛节奏紧张，让你不敢松懈 (健康 -4)。' },
+    signatureEvent: 'nvidia_rsu_moonshot',
+  },
+  tiktok: {
+    label: 'TikTok (字节)',
+    className: 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold',
+    timelineName: 'TikTok (字节)',
+    pipTier: 'medium',
+    compSplit: { base: 0.70, rsu: 0.30 },
+    yearEndHealth: { drain: 8, msg: ' 字节的高强度对齐让你略感疲惫 (健康 -8)。' },
+    signatureEvent: 'tiktok_us_ban_hearing',
+  },
+  microsoft: {
+    label: 'Microsoft (微软)',
+    className: 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold',
+    timelineName: 'Microsoft (微软)',
+    pipTier: 'medium',
+  },
+  cisco: {
+    label: 'Cisco (养老厂)',
+    className: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20 font-bold',
+    timelineName: 'Cisco (思科)',
+    pipTier: 'medium',
+  },
+  adobe: {
+    label: 'Adobe (奥多比)',
+    className: 'text-red-400 bg-red-500/10 border-red-500/20 font-bold',
+    timelineName: 'Adobe (奥多比)',
+    pipTier: 'medium',
+  },
+  oracle: {
+    // Previously had NO label/timeline branch — rendered as generic '硅谷科技大厂'
+    // in the HUD and 'ORACLE' in the timeline. As a 养老厂 its +10 WLB health and
+    // 55/45 comp were already correct defaults; only the display was broken.
+    label: 'Oracle (甲骨文)',
+    className: 'text-red-300 bg-red-950/40 border-red-600/30 font-bold',
+    timelineName: 'Oracle (甲骨文)',
+    pipTier: 'medium',
+  },
+  uber: {
+    label: 'Uber (优步)',
+    className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
+    timelineName: 'Uber (优步)',
+    pipTier: 'medium',
+  },
+};
+
+/**
+ * Look up a company's profile. Returns undefined for non-big-tech / narrative
+ * company strings (openai, citadel, cn_big_tech, icc, 'OmniAgent AI', …), which
+ * are handled by their own job_type-primary branches.
+ */
+export const getCompanyProfile = (company?: string): CompanyProfile | undefined => {
+  if (!company) return undefined;
+  return (COMPANY_PROFILES as Record<string, CompanyProfile>)[company];
+};

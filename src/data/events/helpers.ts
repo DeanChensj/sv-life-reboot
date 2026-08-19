@@ -343,6 +343,15 @@ export const midYearEventRouter = (s: GameState): string => {
         if (s.year >= 2024 && !sig.org_ai_wipeout_seen && gameRandom() < 0.15) return 'org_ai_wipeout';
         if (s.age >= 38 && !sig.midlife_ageism_squeeze_seen && gameRandom() < 0.22) return 'midlife_ageism_squeeze';
 
+        // Impact 下行挫折 (midGameCrisisEvents.ts)：仅对已攒下值得一失的影响力 (impact>=15) 的
+        // impact 职业玩家注入,一局各一次。给冲 L6/L7 的路上制造真实挫折,让高阶晋升要求"持续"
+        // 而非单纯累积的影响力。字面量 return 便于 audit_all_flows 源码扫描确定性识别可达性。
+        if (isImpactCareer(s) && (s.impact || 0) >= 15) {
+          if (!sig.impact_project_cancelled_seen && gameRandom() < 0.14) return 'impact_project_cancelled';
+          if (!sig.impact_launch_incident_seen && gameRandom() < 0.13) return 'impact_launch_incident';
+          if (!sig.impact_legacy_maintenance_seen && gameRandom() < 0.12) return 'impact_legacy_maintenance';
+        }
+
         if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
        if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';
        if (s.company === 'nvidia' && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';
@@ -441,6 +450,7 @@ export const midYearEventRouter = (s: GameState): string => {
   // Stage H2 (Autumn/Winter: Life, Social, Travel & Lifestyle Events)
   const isCorporate = isWorking && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
   const isTrader = s.job_type === 'trader';
+  const isFounder = s.job_type === 'startup_founder';
 
   // 因果离婚 (T1)：长期以事业压倒家庭累积的 partner_strain 越线，感情危机由「随机」升级为「高概率必来」。
   // breakup_crisis 的挽留成功分支会把 partner_strain 清零，避免同一裂痕反复触发。
@@ -499,8 +509,23 @@ export const midYearEventRouter = (s: GameState): string => {
       }
   }
 
-  // 注：founder 四个专属危机事件已移到 H1 阶段按 ~40% 概率注入（见上方 startup_founder 分支），
-  // 不再埋在 H2 通用生活池里被稀释到 ~0.5%。founder 的 H2 沿用通用生活事件即可。
+  // Founder 专属动态奇遇池 (H2 阶段注入,与 trader 同一模式)。年终结算已把 founder 直接送入
+  // founder_annual_strategy 策略枢纽 (P0),绕过了旧的 H1 ~40% 危机注入,导致这些事件几乎不可达;
+  // 改为在 H2 生活池注入 —— founder 既保留了当年的策略主行动,又能碰到危机与机遇 (co-founder
+  // 撕逼 / VC 跳票 / 断粮 / 黑客松 / YC 孵化 / 巨头超大单),不产生「用危机换掉策略回合」的平衡代价。
+  // 仅 ~40% 的 founder 年份注入专属奇遇池,其余年份沿用通用生活事件。既保留创业线的
+  // 危机/机遇变化,又控制注入频率——避免与 #61(限时机遇生命周期收紧)/#64(副业枢纽重构)
+  // 叠加后把 founder 的 FIRE 胜率拖到门禁下限附近(蒙特卡洛 bot 对新事件随机选择会放大下行)。
+  if (isFounder && gameRandom() < 0.4) {
+      lifeEvents.push(
+        'founder_co_founder_drama',
+        'founder_vc_term_sheet_ghost',
+        'founder_runway_cash_crunch',
+        'founder_hacker_house_hackathon',
+        'founder_yc_batch',
+        'founder_enterprise_whale'
+      );
+  }
 
   if (isTrader) {
       lifeEvents.push(
@@ -606,9 +631,64 @@ export const ANNUAL_OPPORTUNITY_KEYS = [
   'opp_laguna_seca',
 ] as const;
 
+// Checks if a one-in-a-lifetime opportunity has been permanently completed
+export function isOpportunityCompleted(s: GameState, oppKey: string): boolean {
+  if (oppKey === 'opp_pilot_license') return Boolean(s.story_flags?.has_pilot_license);
+  if (oppKey === 'opp_cursor_hunt') return Boolean(s.story_flags?.cursor_hunt_joined || (s.company === 'openai' && s.level === 'MTS'));
+  if (oppKey === 'opp_foreclosure_deal') return Boolean(s.story_flags?.bought_foreclosure_house || s.investment_properties?.includes('东湾法拍翻新独立屋'));
+  return false;
+}
+
+// Checks if a recurring opportunity is currently in cooldown (within 2 years)
+export function isOpportunityInCooldown(s: GameState, oppKey: string): boolean {
+  const flags = s.story_flags || {};
+  const curYear = s.year || 2026;
+  if (oppKey === 'opp_treehacks' && typeof flags.last_treehacks_year === 'number') {
+    return curYear - flags.last_treehacks_year < 2;
+  }
+  if (oppKey === 'opp_burning_man' && typeof flags.last_burning_man_year === 'number') {
+    return curYear - flags.last_burning_man_year < 2;
+  }
+  if (oppKey === 'opp_sand_hill_salon' && typeof flags.last_sand_hill_year === 'number') {
+    return curYear - flags.last_sand_hill_year < 2;
+  }
+  if (oppKey === 'opp_gtc_nvidia' && typeof flags.last_gtc_year === 'number') {
+    return curYear - flags.last_gtc_year < 2;
+  }
+  if (oppKey === 'opp_yosemite_heal' && typeof flags.last_yosemite_year === 'number') {
+    return curYear - flags.last_yosemite_year < 2;
+  }
+  if (oppKey === 'opp_angel_invest' && typeof flags.last_angel_invest_year === 'number') {
+    return curYear - flags.last_angel_invest_year < 2;
+  }
+  if (oppKey === 'opp_laguna_seca' && typeof flags.last_laguna_year === 'number') {
+    return curYear - flags.last_laguna_year < 2;
+  }
+  return false;
+}
+
 export function isOpportunityActiveThisYear(s: GameState, oppKey: string): boolean {
-  const primaryIdx = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2) % ANNUAL_OPPORTUNITY_KEYS.length);
-  const secondaryIdx = (primaryIdx + 5) % ANNUAL_OPPORTUNITY_KEYS.length;
+  // If permanently completed or in active cooldown, never activate
+  if (isOpportunityCompleted(s, oppKey) || isOpportunityInCooldown(s, oppKey)) return false;
+
+  const total = ANNUAL_OPPORTUNITY_KEYS.length;
+  const baseSeed = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2));
+
+  // Find primary opportunity (smart-skips completed/in-cooldown)
+  let primaryIdx = baseSeed % total;
+  let attempts = 0;
+  while ((isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[primaryIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[primaryIdx])) && attempts < total) {
+    primaryIdx = (primaryIdx + 1) % total;
+    attempts++;
+  }
+
+  // Find secondary opportunity (distinct from primary, smart-skips completed/in-cooldown)
+  let secondaryIdx = (primaryIdx + 5) % total;
+  attempts = 0;
+  while ((secondaryIdx === primaryIdx || isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[secondaryIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[secondaryIdx])) && attempts < total) {
+    secondaryIdx = (secondaryIdx + 1) % total;
+    attempts++;
+  }
 
   return oppKey === ANNUAL_OPPORTUNITY_KEYS[primaryIdx] ||
          oppKey === ANNUAL_OPPORTUNITY_KEYS[secondaryIdx];

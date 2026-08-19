@@ -2817,6 +2817,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【实力跳槽降维打击】手握扎实代码，连夜接下 Meta/Nvidia 的 L5 Senior Offer',
+        reqBadge: '需 LeetCode >= 45',
         condition: (s) => s.leetcode >= 45,
         effect: (s) => {
           const cur = s.level || 'L4';
@@ -2824,11 +2825,13 @@ export const careerEvents: Record<string, GameEvent> = {
           const targetLvl = (cur === 'L3') ? 'L4' : (cur === 'L4' || !s.level) ? 'L5 (Senior)' : (cur === 'L5 (Senior)') ? ((s.impact || 0) >= 20 ? 'L6 (Staff)' : 'L5 (Senior)') : cur;
           const baseBand = targetLvl === 'L8 (Principal)' ? 135 : targetLvl === 'L7 (Senior Staff)' ? 92 : targetLvl === 'L6 (Staff)' ? 65 : targetLvl === 'L5 (Senior)' ? 46 : 34;
           const newTC = Math.max(s.tc + 6, baseBand);
+          const promoted = targetLvl !== cur;
           return {
             company: 'meta',
             job_type: 'big_tech',
             level: targetLvl,
             tc: newTC,
+            last_promo_age: promoted ? s.age : s.last_promo_age,
             health: Math.min(100, s.health + 5),
             npcs: {
               ...(s.npcs || {}),

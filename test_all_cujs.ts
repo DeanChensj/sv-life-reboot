@@ -1,5 +1,6 @@
 import { events, generateInitialState, midYearEventRouter, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown } from './src/data/events';
 import { GameState, Choice } from './src/types';
+import { HOUSING_NAMES } from './src/constants/gameConstants';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown } from './src/utils/gameStateSelectors';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
@@ -1416,6 +1417,57 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(state.visa === 'OPT (实习)', 'Master graduation activated OPT');
 
   console.log('✅ CUJ 24 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 25: Simultaneous Burnout/Broke Non-Negative Cash & Crisis Stock Liquidity Affordability
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 25] Invariant Protections: Negative Cash Clamping & Crisis Stock Liquidity ---');
+  let state = generateInitialState();
+
+  // 1. Simultaneous Burnout + Negative Cash: verify cash is non-negative on game_over
+  const brokeAndBurnoutEffect = { health: 0, cash: -8.5 };
+  const transRes = applyStateTransition(state, brokeAndBurnoutEffect);
+  assert(transRes.nextState.status === 'game_over', 'Simultaneous burnout + broke triggers game_over');
+  assert(transRes.nextState.cash >= 0, 'Cash is strictly clamped to non-negative (>= 0)');
+  assert(transRes.targetEventId === 'end', 'targetEventId is end');
+
+  // 2. Crisis Event Affordability: Player with low cash but ample stocks can afford property tax & IRS audits
+  const stockRichState: GameState = {
+    ...state,
+    cash: 0.5,
+    stocks: 80,
+    has_housing: true,
+    housing_name: HOUSING_NAMES.SUNNYVALE,
+  } as GameState;
+
+  const propTaxChoice = events['property_supplemental_tax_hike'].choices[0];
+  assert(propTaxChoice.condition!(stockRichState) === true, 'Player with $0.5w cash + $80w stocks can afford property tax payment');
+  const propRes = applyStateTransition(stockRichState, propTaxChoice.effect(stockRichState));
+  assert(propRes.nextState.cash >= 0, 'Stock auto-liquidation cleanly covers tax payment with non-negative cash');
+  assert(propRes.nextState.stocks < 80, 'Stocks decreased to cover shortfall');
+
+  const irsChoice = events['irs_tax_audit_crisis'].choices[0];
+  assert(irsChoice.condition!(stockRichState) === true, 'Player with $0.5w cash + $80w stocks can afford IRS CPA audit payment');
+  const irsRes = applyStateTransition(stockRichState, irsChoice.effect(stockRichState));
+  assert(irsRes.nextState.cash >= 0, 'Stock auto-liquidation cleanly covers IRS audit payment with non-negative cash');
+
+  // 3. Dave Retaliation Hop Promotion Marking
+  const daveState: GameState = {
+    ...state,
+    level: 'L4',
+    leetcode: 50,
+    age: 27,
+    story_flags: { has_dave_evidence: true },
+  } as GameState;
+
+  const hopChoice = events['dave_retaliation_showdown'].choices[1];
+  const hopRes = applyStateTransition(daveState, hopChoice.effect(daveState));
+  assert(hopRes.nextState.level === 'L5 (Senior)', 'Hop to Meta promoted L4 to L5');
+  assert(hopRes.nextState.last_promo_age === 27, 'last_promo_age stamped when hopping with a promotion');
+
+  console.log('✅ CUJ 25 Passed\n');
 }
 
 console.log(`\n======================================================`);

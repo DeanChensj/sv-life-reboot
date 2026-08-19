@@ -10,6 +10,8 @@ export const tradingEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【买入股票】把闲置现金投资大盘 (买入 $10w)',
+        costBadge: '转出 $10w 现金',
+        reqBadge: '需现金 >= $10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => ({
           cash: s.cash - 10,
@@ -20,6 +22,8 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【大举加仓】将大部分闲置现金转入股市 (买入 $50w)',
+        costBadge: '转出 $50w 现金',
+        reqBadge: '需现金 >= $50w',
         condition: (s) => s.cash >= 50,
         effect: (s) => ({
           cash: s.cash - 50,
@@ -30,6 +34,8 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【卖出套现】从股市中套现部分资金 (卖出 $10w)',
+        costBadge: '卖出 $10w 股票',
+        reqBadge: '需持股 >= $10w',
         condition: (s) => (s.stocks || 0) >= 10,
         effect: (s) => ({
           cash: s.cash + 10,
@@ -40,6 +46,8 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【清仓股票】一键清仓所有股票，转回现金 (全部卖出)',
+        costBadge: '一键清仓',
+        reqBadge: '需持有股票 > 0',
         condition: (s) => (s.stocks || 0) > 0,
         effect: (s) => ({
           cash: s.cash + (s.stocks || 0),
@@ -50,6 +58,8 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【梭哈期权】拼了！用小额现金炒 0DTE 末日期权 (投入 $5w)',
+        costBadge: '投入 $5w',
+        reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
           const hit = gameRandom() < (0.08 + Math.min(45, s.luck) / 1000); // 8%-12.5%: stays a losing lottery even at high luck

@@ -37,9 +37,10 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'sv_year_end_settlement',
       },
       {
-        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
-        reqBadge: '现金>=8w (高风险)',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需总资产 >= $8w, 极高风险)',
+        costBadge: '花费 $8w',
+        reqBadge: '需总资产>=8w (高风险)',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.cash + (s.stocks || 0)) >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const roll = gameRandom();
           if (roll < 0.35) {
@@ -70,8 +71,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
+        costBadge: '花费 $5w',
         reqBadge: '需PhD或硬核算法背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && (s.cash + (s.stocks || 0)) >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const win = gameRandom() < o1PassProb(s); // shared, consistent O1 odds across all events
           return win
@@ -82,6 +84,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w 总资产)',
+        costBadge: '花费 $80w',
         reqBadge: '总资产>=80w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         // Liquidate stocks to cover the cost when cash is short (was cash-80 only,
@@ -94,6 +97,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国, 搬迁成本)',
+        costBadge: '花费 $3w',
         // Kept universally available (it is the crisis's guaranteed fallback so the
         // screen always has an actionable choice), but no longer FREE — a relocation
         // year now costs cash + health.
@@ -103,7 +107,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
-        condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
+        costBadge: '花费 $1.5w',
+        reqBadge: '需总资产 >= $1.5w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
         nextEventId: 'sv_year_end_settlement',
       },

@@ -20,8 +20,9 @@ export const startupEvents: Record<string, GameEvent> = {
       },
       {
         text: '【带资领投】自己掏 $10w 领投公司 Seed 轮自救',
-        reqBadge: '现金>=10w',
-        condition: (s) => s.cash >= 10,
+        costBadge: '出资 $10w',
+        reqBadge: '需总资产>=10w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 10,
         effect: (s) => {
           const win = gameRandom() < 0.25;
           return win

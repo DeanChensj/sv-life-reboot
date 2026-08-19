@@ -16,11 +16,11 @@ const check = (name: string, got: unknown, want: unknown) => {
 const mkStudent = (over: Partial<GameState>): GameState =>
   ({ ...generateInitialState(), job_type: undefined, ...over } as unknown as GameState);
 
-// 1. Undergrad label checks
-check('undergrad label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu' })).companyLabel, 'CMU (CS 四大)');
-check('undergrad label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb' })).companyLabel, '大U (理工强校)');
-check('undergrad label state', getJobDisplayInfo(mkStudent({ school: 'state' })).companyLabel, 'SJSU (加州州立)');
-check('undergrad label cn', getJobDisplayInfo(mkStudent({ school: 'cn' })).companyLabel, '国内重点高校');
+// 1. Undergrad label checks (CS ranking ladder: Top4 / Top30 / Top100 / 国内)
+check('undergrad label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu' })).companyLabel, 'CMU (CS Top4)');
+check('undergrad label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb' })).companyLabel, '大U (CS Top30)');
+check('undergrad label state', getJobDisplayInfo(mkStudent({ school: 'state' })).companyLabel, 'SJSU (CS Top100)');
+check('undergrad label cn', getJobDisplayInfo(mkStudent({ school: 'cn' })).companyLabel, '国内 985/211');
 
 // 2. Master label checks
 check('master label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_master: true })).companyLabel, 'CMU CS 硕士');
@@ -36,6 +36,7 @@ check('cmu leetcodeBonus', SCHOOL_PROFILES.cmu.leetcodeBonus, 7);
 check('cmu healthDelta', SCHOOL_PROFILES.cmu.healthDelta, -8);
 check('ucb networkBonus', SCHOOL_PROFILES.ucb.networkBonus, 3);
 check('state networkBonus', SCHOOL_PROFILES.state.networkBonus, 4);
+check('state leetcodeBonus', SCHOOL_PROFILES.state.leetcodeBonus, 2);
 check('cn leetcodeBonus', SCHOOL_PROFILES.cn.leetcodeBonus, 3);
 
 // 4. Top-Tier CS classification checks

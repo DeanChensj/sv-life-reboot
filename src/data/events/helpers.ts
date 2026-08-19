@@ -2,6 +2,7 @@ import type { GameState, StoryFlags } from '../../types';
 import { safeStorage } from '../../utils/safeStorage';
 import { STORAGE_KEYS, isOwnedHousing, VISA_STATUS, isPermanentVisa } from '../../constants/gameConstants';
 import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '../../utils/random';
+import { getCompanyProfile } from '../companyProfiles';
 
 export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 
@@ -379,11 +380,11 @@ export const midYearEventRouter = (s: GameState): string => {
           if (!sig.impact_legacy_maintenance_seen && gameRandom() < 0.12) return 'impact_legacy_maintenance';
         }
 
-        if (s.company === 'google' && !sig.google_reorg_limbo_seen && gameRandom() < 0.3) return 'google_reorg_limbo';
-       if (s.company === 'meta' && !sig.meta_metaverse_pivot_seen && gameRandom() < 0.3) return 'meta_metaverse_pivot';
-       if (s.company === 'nvidia' && !sig.nvidia_rsu_moonshot_seen && gameRandom() < 0.3) return 'nvidia_rsu_moonshot';
-        if (s.company === 'tiktok' && !sig.tiktok_us_ban_hearing_seen && gameRandom() < 0.3) return 'tiktok_us_ban_hearing';
-        if (s.company === 'apple' && !sig.apple_secrecy_crackdown_seen && gameRandom() < 0.3) return 'apple_secrecy_crackdown';
+        // Company signature work event (once per game, ~30%/yr) — driven by the
+        // company table. Only one company matches s.company, so this single roll
+        // is equivalent to the former per-company if-ladder (same RNG draw).
+        const sigEvent = getCompanyProfile(s.company)?.signatureEvent;
+        if (sigEvent && !sig[`${sigEvent}_seen`] && gameRandom() < 0.3) return sigEvent;
 
          // 人设专属职场「标志事件」(personaEvents.ts)：同样一局至多一次、命中前 ~30%/年。
          if (s.trait_title === '卷王之王' && !sig.persona_grind_king_crunch_seen && gameRandom() < 0.3) return 'persona_grind_king_crunch';
@@ -448,13 +449,12 @@ export const midYearEventRouter = (s: GameState): string => {
        workEvents.push('apple_vision_pro_demo');
      }
      
-     // 公司专属 PIP 概率区分：亚麻与 Meta 具有高强度末位淘汰 / PIP 指标，皮衣黄 Nvidia 及 Google / Apple 的 PIP 概率极低
-     const isHighPipCompany = s.company === 'amazon' || s.company === 'meta';
-     const isLowPipCompany = s.company === 'nvidia' || s.company === 'google' || s.company === 'apple';
-
-     if (isHighPipCompany) {
+     // 公司专属 PIP 概率区分（来自 company 表）：亚麻/Meta 高强度末位淘汰 (high)，
+     // 皮衣黄 Nvidia 及 Google/Apple 概率极低 (low)，其余大厂中等 (medium 兜底)。
+     const pipTier = getCompanyProfile(s.company)?.pipTier ?? 'medium';
+     if (pipTier === 'high') {
        workEvents.push('friday_pip', 'friday_pip', 'friday_pip', 'layoff_rumor');
-     } else if (isLowPipCompany) {
+     } else if (pipTier === 'low') {
        if (gameRandom() < 0.15) workEvents.push('friday_pip');
      } else {
        workEvents.push('friday_pip');

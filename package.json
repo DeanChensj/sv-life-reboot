@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "npx tsx lint_events.ts && npx tsx audit.ts && npx tsx audit_all_flows.ts && npx tsx test_routing_guards.ts && npx tsx test_pool_diversity.ts && npx tsx test_all_cujs.ts && npx tsx fuzz_test.ts && npx tsx test_monte_carlo_balance.ts",
+    "test": "npx tsx lint_events.ts && npx tsx audit.ts && npx tsx audit_all_flows.ts && npx tsx test_routing_guards.ts && npx tsx test_pool_diversity.ts && npx tsx test_company_profiles.ts && npx tsx test_all_cujs.ts && npx tsx fuzz_test.ts && npx tsx test_monte_carlo_balance.ts",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },

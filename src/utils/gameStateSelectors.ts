@@ -1,5 +1,6 @@
 import type { GameState } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
+import { getCompanyProfile } from '../data/companyProfiles';
 
 export interface JobDisplayInfo {
   companyHeaderLabel: string;
@@ -150,36 +151,11 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   } else if (state.job_type === 'ai_research' || state.company === 'openai' || state.company === 'anthropic') {
     companyLabel = state.company === 'anthropic' ? 'Anthropic (Claude)' : 'OpenAI / MTS';
     companyClassName = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold';
-  } else if (state.company === 'google') {
-    companyLabel = 'Google (谷歌)';
-    companyClassName = 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold';
-  } else if (state.company === 'meta') {
-    companyLabel = 'Meta (卷王)';
-    companyClassName = 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 font-bold';
-  } else if (state.company === 'nvidia') {
-    companyLabel = 'NVIDIA (英伟达)';
-    companyClassName = 'text-lime-400 bg-lime-500/10 border-lime-500/20 font-bold';
-  } else if (state.company === 'tiktok') {
-    companyLabel = 'TikTok (字节)';
-    companyClassName = 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold';
-  } else if (state.company === 'apple') {
-    companyLabel = 'Apple (苹果)';
-    companyClassName = 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold';
-  } else if (state.company === 'amazon') {
-    companyLabel = 'Amazon (亚麻)';
-    companyClassName = 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold';
-  } else if (state.company === 'uber') {
-    companyLabel = 'Uber (优步)';
-    companyClassName = 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold';
-  } else if (state.company === 'microsoft') {
-    companyLabel = 'Microsoft (微软)';
-    companyClassName = 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold';
-  } else if (state.company === 'cisco') {
-    companyLabel = 'Cisco (养老厂)';
-    companyClassName = 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20 font-bold';
-  } else if (state.company === 'adobe') {
-    companyLabel = 'Adobe (奥多比)';
-    companyClassName = 'text-red-400 bg-red-500/10 border-red-500/20 font-bold';
+  } else if (getCompanyProfile(state.company)) {
+    // Standard big-tech employers (google/meta/…/oracle/uber) — single lookup.
+    const profile = getCompanyProfile(state.company)!;
+    companyLabel = profile.label;
+    companyClassName = profile.className;
   } else if (state.job_type === 'startup') {
     companyLabel = 'AI 独角兽 (SaaS)';
     companyClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold';
@@ -344,15 +320,16 @@ export function getTCBreakdown(state: GameState): TCBreakdown {
     baseRatio = 1.0;
     rsuRatio = 0.0;
   }
-  // 2. High Equity Tech: Meta, Nvidia, AI Research
-  else if (state.company === 'meta' || state.company === 'nvidia' || state.job_type === 'ai_research') {
+  // 2. Employer-specific split from the company table (Meta/Nvidia 40/60, TikTok 70/30, …)
+  else if (getCompanyProfile(state.company)?.compSplit) {
+    const split = getCompanyProfile(state.company)!.compSplit!;
+    baseRatio = split.base;
+    rsuRatio = split.rsu;
+  }
+  // 3. High Equity Tech: AI Research labs (same 40/60 as Meta/Nvidia)
+  else if (state.job_type === 'ai_research') {
     baseRatio = 0.40;
     rsuRatio = 0.60;
-  }
-  // 3. High Cash Big Tech: TikTok
-  else if (state.company === 'tiktok') {
-    baseRatio = 0.70;
-    rsuRatio = 0.30;
   }
   // 4. Early Stage Startup & Founders
   else if (state.job_type === 'startup') {

@@ -46,8 +46,6 @@ export interface SchoolProfile {
   enrollMessage: string;
   /** Whether the school counts as CS Top 4 / Top-Tier for Quant/Mafia network */
   isTopTierCS?: boolean;
-  /** PhD admission rate bonus */
-  phdAdmissionBonus?: number;
 }
 
 export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
@@ -67,7 +65,6 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     choiceText: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总花费 $30w)',
     enrollMessage: '你步入了世界计算机最高学府。',
     isTopTierCS: true,
-    phdAdmissionBonus: 0.20,
   },
   ucb: {
     slug: 'ucb',
@@ -84,7 +81,6 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     choiceText: '理工强校大U (如 UIUC/UW/UMich) (四年总花费 $18w)',
     enrollMessage: '你来到了全美顶尖理工强校，准备体验硬核课业。',
     isTopTierCS: true,
-    phdAdmissionBonus: 0.10,
   },
   state: {
     slug: 'state',
@@ -103,7 +99,6 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     choiceText: '美国普通公立大学 (四年总花费 $10w, 美籍/绿卡含州内补贴只需 $4w)',
     enrollMessage: '你飞往美国，准备开启无忧无虑的本科生活。',
     isTopTierCS: false,
-    phdAdmissionBonus: 0,
   },
   cn: {
     slug: 'cn',
@@ -120,7 +115,6 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     choiceText: '在国内读本科 / 中外合办大学 (四年总花费 $2w)',
     enrollMessage: '你进入了国内重点高校，打下了扎实的数理基础与算法底子。',
     isTopTierCS: false,
-    phdAdmissionBonus: 0,
   },
 };
 

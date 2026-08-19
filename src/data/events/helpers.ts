@@ -419,7 +419,8 @@ export const midYearEventRouter = (s: GameState): string => {
        'meta_reorg_manager_left',
        'friday_p0_outage_crisis',
        'empty_promotion_promise',
-       'multi_timezone_calendar_hell'
+       'multi_timezone_calendar_hell',
+       'all_hands_corporate_bs'
      ];
      
      // RTO 考勤打卡大战（一局至多 1 次）

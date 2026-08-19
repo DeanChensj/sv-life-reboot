@@ -34,8 +34,6 @@ export const settlementEvents: Record<string, GameEvent> = {
            // 不影响 FIRE 目标与 TC 档,只作用于每年生活开销。
            const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (s.year || 2018) - 2018)));
            const totalExpense = parseFloat(((housingExpense + carExpense + livingExpense + petExpense) * inflationFactor).toFixed(2));
-           const inflationPct = Math.round((inflationFactor - 1) * 100);
-           const inflationMsg = inflationPct >= 3 ? ` 【湾区通胀】相比初入职场，物价已累计上涨 ${inflationPct}%，生活成本水涨船高。` : '';
 
            let newEconomy = s.macro_economy || 'neutral';
            let economyMsg = '';
@@ -50,34 +48,26 @@ export const settlementEvents: Record<string, GameEvent> = {
 
            // Stock market fluctuation
            let currentStocks = s.stocks || 0;
-           let stockFluctuation = 0;
            if (currentStocks > 0) {
              const stockMultiplier = newEconomy === 'bull' ? 1.25 : newEconomy === 'bear' ? 0.75 : 1.05;
-             const newStocksVal = currentStocks * stockMultiplier;
-             stockFluctuation = newStocksVal - currentStocks;
-             currentStocks = newStocksVal;
+             currentStocks = currentStocks * stockMultiplier;
            }
            
            // Standardized compensation split (Cash & RSU)
            const tcInfo = getTCBreakdown(s);
-           const preTaxBase = tcInfo.preTaxBase;
-           const preTaxRSU = tcInfo.preTaxRSU;
            const postTaxBase = tcInfo.postTaxBase;
            const postTaxRSU = tcInfo.postTaxRSU;
-            const rsuMsg = preTaxRSU > 0 ? ` 【RSU 股票归属】本年度归属股票税后 +${postTaxRSU.toFixed(1)}w！` : '';
            
            currentStocks += postTaxRSU; // Vested RSUs go to stock account
            
-            const rentalIncome = s.rental_income || 0;
-             const rentalMsg = rentalIncome > 0 ? ` 【房产被动现金流】名下出租房产/ADU 带来净租金收益 +$${rentalIncome.toFixed(1)}w！` : '';
-             // Dual-income household: a married player's spouse contributes annual
-             // post-tax income, tiered by partner_type (mirrors the one-shot marriage
-             // bonus at dating_market). Previously married players got $0 extra cash flow.
-             const spouseIncome = s.is_married
-               ? (s.partner_type === 'vc' ? 15 : s.partner_type === 'founder' ? 12 : s.partner_type === 'engineer' ? 10 : s.partner_type === 'artist' ? 3 : 6)
-               : 0;
-             const spouseMsg = spouseIncome > 0 ? ` 【双职工家庭】配偶本年度税后收入贡献 +$${spouseIncome.toFixed(1)}w！` : '';
-             const netIncome = postTaxBase + rentalIncome + spouseIncome - totalExpense;
+           const rentalIncome = s.rental_income || 0;
+           // Dual-income household: a married player's spouse contributes annual
+           // post-tax income, tiered by partner_type (mirrors the one-shot marriage
+           // bonus at dating_market). Previously married players got $0 extra cash flow.
+           const spouseIncome = s.is_married
+             ? (s.partner_type === 'vc' ? 15 : s.partner_type === 'founder' ? 12 : s.partner_type === 'engineer' ? 10 : s.partner_type === 'artist' ? 3 : 6)
+             : 0;
+           const netIncome = postTaxBase + rentalIncome + spouseIncome - totalExpense;
            const liq = liquidateStocksToCover(s.cash + netIncome, currentStocks);
            const finalCash = liq.cash;
            currentStocks = liq.stocks;
@@ -117,7 +107,7 @@ export const settlementEvents: Record<string, GameEvent> = {
            let petMsg = '';
            if (s.has_pet) {
              petHealthBoost = 2;
-             petMsg = ` 【宠物陪伴】家里的${s.pet_name || '宠物'}每天治愈着你的心神 (健康 +2，宠物抚养支出 -$0.3w)。`;
+             petMsg = ` 【宠物陪伴】家里的${s.pet_name || '宠物'}每天治愈着你的心神 (健康 +2)。`;
            }
 
            let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost));
@@ -126,7 +116,7 @@ export const settlementEvents: Record<string, GameEvent> = {
            if (s.visa === '绿卡' || s.visa === '公民' || s.gc_progress >= 5) {
              nextGc = 5;
              nextStage = 'approved';
-             gcMsg = s.visa === '公民' ? ' 【公民身份】你已是美国公民，工作生活不受任何排期与抽签约束。' : ' 【绿卡身份】你已持有美国绿卡，工作生活不受约束。';
+             gcMsg = '';
            } else if (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)' || s.visa === 'L1 (外派)' || s.visa === 'Day 1 CPT') {
               const isO1 = s.visa === 'O1 (杰出人才)';
               const isPhd = s.is_phd;
@@ -390,7 +380,15 @@ export const settlementEvents: Record<string, GameEvent> = {
               story_flags: newStoryFlags,
               timeline: newTimeline,
               history_net_worth: newHistory,
-              message: `扣除所得税、房租/房贷、生活与宠物账单支出 ${totalExpense.toFixed(1)} 万后，本年现金流 ${netIncome >= 0 ? '+' + netIncome.toFixed(1) : netIncome.toFixed(1)} 万美元。${rentalMsg}${spouseMsg}${stockFluctuation !== 0 ? `你的股票账户受大盘影响，本年度浮动为 ${stockFluctuation >= 0 ? '+' : ''}${stockFluctuation.toFixed(1)}w 美元。` : ''}${rsuMsg}${economyMsg}${gcMsg}${companyMsg}${petMsg}${h1bMsg}${meritMsg}${inflationMsg}${autoStockSellMsg}`,
+              message: [
+                autoStockSellMsg,
+                companyMsg,
+                h1bMsg,
+                gcMsg,
+                meritMsg,
+                petMsg,
+                economyMsg,
+              ].map(m => (m ? m.trim() : '')).filter(Boolean).join(' '),
               // Natural-life ending: at the lifespan cap the game resolves even if the
               // player never hit FIRE and never died — enabling the "content" endings
               // (中产退休/海归/上岸/佛系). The `message`/`status` spread overrides above.

@@ -3291,11 +3291,11 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => !s.laid_off,
         effect: (s) => ({
           leetcode: s.leetcode + 4,
-          impact: (s.impact || 0) + 8,
+          impact: addImpact(s, 5),
           network: Math.min(100, (s.network || 10) + 5),
           health: Math.max(0, s.health - 8),
           story_flags: { ...(s.story_flags || {}), intern_mentored: true },
-          message: '【带教大捷！】在你的悉心辅导下，实习生在全组 Demo Day 上大放异彩，提前锁定了顶格 Return Offer！Manager 极度认可你的 Leadership 带人能力 (Impact +8, 人脉网络大幅拓展)！'
+          message: '【带教大捷！】在你的悉心辅导下，实习生在全组 Demo Day 上大放异彩，提前锁定了顶格 Return Offer！Manager 极度认可你的 Leadership 带人能力 (Impact +5, 人脉网络大幅拓展)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -3305,14 +3305,14 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const hitGeek = gameRandom() < 0.65;
           return hitGeek ? {
-            impact: (s.impact || 0) + 12,
+            impact: addImpact(s, 8),
             tc: s.tc + 2,
             health: Math.min(100, s.health + 5),
             network: Math.min(100, (s.network || 10) + 8),
             story_flags: { ...(s.story_flags || {}), intern_mentored: true },
             message: '【神仙实习生带飞！】实习生是个天才极客，不仅 3 周做完了整套项目，还顺手重构了组里陈年的分布式锁 Bug！全组夸你“带出了年度最佳 Intern”，你白捡海量 Impact 与加薪！'
           } : {
-            impact: (s.impact || 0) + 6,
+            impact: addImpact(s, 3),
             leetcode: s.leetcode + 3,
             story_flags: { ...(s.story_flags || {}), intern_mentored: true },
             message: '【稳妥结项】实习生按部就班完成了功能上线，顺利拿到 Return Offer，为你积累了宝贵的带人经验。'
@@ -3326,7 +3326,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.leetcode >= 35 || (s.impact || 0) >= 6,
         effect: (s) => ({
           leetcode: s.leetcode + 6,
-          impact: (s.impact || 0) + 6,
+          impact: addImpact(s, 4),
           health: Math.max(0, s.health - 6),
           story_flags: { ...(s.story_flags || {}), intern_mentored: true },
           message: '【硬核救场！】你在 15 分钟内快速定位 Root Cause 并完成防御性回滚，接着手把手教会了实习生防御性编程。这次 Crisis Response 展现了你极强的工程抗压底蕴！'
@@ -3346,11 +3346,11 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需深厚人脉或高领导力',
         condition: (s) => (s.network || 0) >= 15 || (s.charm || 0) >= 12,
         effect: (s) => ({
-          impact: (s.impact || 0) + 18,
+          impact: addImpact(s, 10),
           network: Math.min(100, (s.network || 10) + 8),
           tc: s.tc + 5,
           health: Math.max(0, s.health - 10),
-          message: '【全线战役大捷！】你统帅的 20+ 人团队攻克了核心协同瓶颈，全业务延迟骤降 70%！VP 在 All-Hands 上公开通报嘉奖，你的技术领导力全公司传颂 (Impact +18, TC +$5w)！'
+          message: '【全线战役大捷！】你统帅的 20+ 人团队攻克了核心协同瓶颈，全业务延迟骤降 70%！VP 在 All-Hands 上公开通报嘉奖，你的技术领导力全公司传颂 (Impact +10, TC +$5w)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -3359,11 +3359,11 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需 LeetCode >= 65',
         condition: (s) => s.leetcode >= 65,
         effect: (s) => ({
-          impact: (s.impact || 0) + 16,
+          impact: addImpact(s, 9),
           leetcode: s.leetcode + 6,
           tc: s.tc + 4,
           health: Math.max(0, s.health - 12),
-          message: '【硬核技术领袖！】你以身作则手撕了核心调度器，代码优雅高效，让年轻工程师奉为圭臬！团队提前一个月超额交付战略里程碑 (Impact +16, TC +$4w)！'
+          message: '【硬核技术领袖！】你以身作则手撕了核心调度器，代码优雅高效，让年轻工程师奉为圭臬！团队提前一个月超额交付战略里程碑 (Impact +9, TC +$4w)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -3371,10 +3371,10 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【梯队建设 · 提拔骨干打造铁军】重点培养 2 名 Senior 骨干分别主导子系统，自己把控技术风向',
         condition: (s) => true,
         effect: (s) => ({
-          impact: (s.impact || 0) + 12,
+          impact: addImpact(s, 6),
           network: Math.min(100, (s.network || 10) + 8),
           health: Math.min(100, s.health + 4),
-          message: '【团队梯队成熟！】你成功提拔了两位得力干将，团队自治高效运转，你无需熬夜也能稳稳收获全组交付的丰硕成果 (Impact +12, 人脉网络大幅拓展)！'
+          message: '【团队梯队成熟！】你成功提拔了两位得力干将，团队自治高效运转，你无需熬夜也能稳稳收获全组交付的丰硕成果 (Impact +6, 人脉网络大幅拓展)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -3391,11 +3391,11 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需架构影响力 >= 35',
         condition: (s) => (s.impact || 0) >= 35,
         effect: (s) => ({
-          impact: (s.impact || 0) + 24,
+          impact: addImpact(s, 12),
           tc: s.tc + 8,
           network: Math.min(100, (s.network || 10) + 8),
           health: Math.max(0, s.health - 8),
-          message: '【一代宗师！】全公司万名工程师全面接入你的新一代架构标准，研发效能翻倍，你在董事会与全行业声望达到顶峰 (Impact +24, TC +$8w)！'
+          message: '【一代宗师！】全公司万名工程师全面接入你的新一代架构标准，研发效能翻倍，你在董事会与全行业声望达到顶峰 (Impact +12, TC +$8w)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -3403,10 +3403,10 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【稳健共识治理】建立委员会准入机制与轮值主席制，兼顾个人健康与全司发展',
         condition: (s) => true,
         effect: (s) => ({
-          impact: (s.impact || 0) + 15,
+          impact: addImpact(s, 8),
           health: Math.min(100, s.health + 8),
           tc: s.tc + 4,
-          message: '【德高望重！】你建立的开源自治委员会机制广受赞誉，既维持了公司技术领先，又享受着充沛的生活平衡 (Impact +15, TC +$4w, 健康 +8)！'
+          message: '【德高望重！】你建立的开源自治委员会机制广受赞誉，既维持了公司技术领先，又享受着充沛的生活平衡 (Impact +8, TC +$4w, 健康 +8)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }

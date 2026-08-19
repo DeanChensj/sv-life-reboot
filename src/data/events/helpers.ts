@@ -503,7 +503,10 @@ export const midYearEventRouter = (s: GameState): string => {
   // founder_annual_strategy 策略枢纽 (P0),绕过了旧的 H1 ~40% 危机注入,导致这些事件几乎不可达;
   // 改为在 H2 生活池注入 —— founder 既保留了当年的策略主行动,又能碰到危机与机遇 (co-founder
   // 撕逼 / VC 跳票 / 断粮 / 黑客松 / YC 孵化 / 巨头超大单),不产生「用危机换掉策略回合」的平衡代价。
-  if (isFounder) {
+  // 仅 ~40% 的 founder 年份注入专属奇遇池,其余年份沿用通用生活事件。既保留创业线的
+  // 危机/机遇变化,又控制注入频率——避免与 #61(限时机遇生命周期收紧)/#64(副业枢纽重构)
+  // 叠加后把 founder 的 FIRE 胜率拖到门禁下限附近(蒙特卡洛 bot 对新事件随机选择会放大下行)。
+  if (isFounder && gameRandom() < 0.4) {
       lifeEvents.push(
         'founder_co_founder_drama',
         'founder_vc_term_sheet_ghost',

@@ -266,6 +266,28 @@ export const midYearEventRouter = (s: GameState): string => {
     return 'sam_garage_zero_day';
   }
 
+  // 6) Raj 职场向上管理与架构评审剧情链：
+  // 6a) 首次相遇与季度对齐
+  if (isWorking && isBigTech && !s.story_flags?.raj_alignment_seen && s.age >= 24 && s.age <= 34 && gameRandom() < 0.28) {
+    return 'raj_scrum_alignment_dilemma';
+  }
+  // 6b) 多年后 Raj 晋升 Director 后的架构委员会提拔 —— 仅对冲击 L7 (Senior Staff) 的 L6 (Staff)
+  // 玩家生效:Raj 的高层背书只在「L6→L7 这种关键大跳」上帮忙,不插手常见的 L5→L6,也不
+  // 白送传奇级 L7→L8。
+  if ((s.story_flags?.raj_ally || s.story_flags?.raj_rival || s.story_flags?.raj_solid) && !s.story_flags?.raj_board_done && isWorking && s.level === 'L6 (Staff)' && s.year >= (Number(s.story_flags.raj_meet_year || 0) + 2)) {
+    return 'raj_director_promotion_board';
+  }
+
+  // 7) Linda 沙丘路华人投资人剧情链：
+  // 7a) 沙丘路闭门沙龙结识
+  if (!s.story_flags?.met_linda && isWorking && s.age >= 25 && ((s.network || 0) >= 12 || (s.charm || 0) >= 12 || s.leetcode >= 60) && gameRandom() < 0.25) {
+    return 'linda_sand_hill_encounter';
+  }
+  // 7b) Pre-IPO 独角兽老股额度与领投资源
+  if (s.story_flags?.met_linda && !s.story_flags?.linda_deal_done && s.year >= (Number(s.story_flags.linda_meet_year || 0) + 2) && gameRandom() < 0.4) {
+    return 'linda_angel_co_investment';
+  }
+
   // Economy News Broadcasts
   const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
   if (gameRandom() < shiftChance && !s.season_stage) {
@@ -444,6 +466,17 @@ export const midYearEventRouter = (s: GameState): string => {
      if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && gameRandom() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
      if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
 
+     // 宏观时代大事件（不带固定年份，按状态阶段触发）
+     if (isCorporate && !s.story_flags?.macro_ai_revolution_seen && s.age >= 26 && gameRandom() < 0.22) {
+       workEvents.push('macro_ai_agent_revolution');
+     }
+     if (isCorporate && !s.story_flags?.macro_efficiency_seen && s.macro_economy === 'bear' && gameRandom() < 0.25) {
+       workEvents.push('macro_liquidity_rate_cycle');
+     }
+     if (isCorporate && !s.story_flags?.macro_rto_seen && s.age >= 28 && gameRandom() < 0.22) {
+       workEvents.push('macro_rto_office_wars');
+     }
+
      return gamePick(workEvents);
   }
 
@@ -482,6 +515,11 @@ export const midYearEventRouter = (s: GameState): string => {
     'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy',
     'brentwood_cherry_picking', 'cancun_all_inclusive', 'patagonia_vest_hoodie_uniform', 'costco_weekend_pilgrimage'
   ];
+
+  // 双职工家庭专属生活事件池
+  if (s.is_married || s.relationship_status === 'married') {
+    lifeEvents.push('dual_income_tech_layoff_storm', 'dual_income_startup_gamble', 'dual_income_wlb_burnout');
+  }
 
   if (s.charm && s.charm >= 15 && s.job_type !== 'unemployed') {
     lifeEvents.push('rednote_influencer_side_hustle');

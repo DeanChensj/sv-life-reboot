@@ -3093,5 +3093,191 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       }
     ]
+  },
+
+  'raj_scrum_alignment_dilemma': {
+    id: 'raj_scrum_alignment_dilemma',
+    title: '【向上管理大师】同组 Tech Lead Raj 的季度对齐会',
+    description: '季度 Planning 会上，同组印度裔 Lead Raj 挂着极其热情的微笑：“Hey my friend, this legacy refactoring is super critical for the org!”\n他巧妙地把最难啃、最容易背锅的底层旧系统重构分给了你，而把最吸睛、最容易向 VP 汇报的 GenAI 战略 Demo 分给了他自己。',
+    choices: [
+      {
+        text: '【扎实筑基】默默把底层系统重构做到 99.99% 可用性 (深挖技术护城河)',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 5),
+          impact: (s.impact || 0) + 8,
+          health: Math.max(0, s.health - 6),
+          story_flags: { ...(s.story_flags || {}), raj_alignment_seen: true, raj_solid: true, raj_meet_year: s.year },
+          npcs: { ...(s.npcs || {}), raj: { name: 'Raj', role: 'mentor', status: 'active', note: '同组 Tech Lead，精通汇报艺术' } },
+          message: '你把没人愿意碰的陈年屎山重构成高可用基石！虽然当下汇报不显眼，但你成了全组唯一掌握底层核心技术的大佬，为未来冲刺 Staff 打下了坚不可摧的基础！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【敏捷结盟】私下请 Raj 喝 Chai 咖啡，主动学习他的向上汇报与对齐艺术',
+        costBadge: '花费 $0.2w',
+        reqBadge: '需现金 >= $0.2w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.2,
+        effect: (s) => ({
+          cash: s.cash - 0.2,
+          network: Math.min(100, (s.network || 0) + 10),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          story_flags: { ...(s.story_flags || {}), raj_alignment_seen: true, raj_ally: true, raj_meet_year: s.year },
+          npcs: { ...(s.npcs || {}), raj: { name: 'Raj', role: 'mentor', status: 'ally', note: '同组 Tech Lead，你的职场汇报导师与政治同盟' } },
+          message: '几杯 Chai 咖啡下肚，Raj 跟你推心置腹地分享了硅谷向上管理、跨组邀功与 PPT 对齐的核心要义！你情商大涨，与 Raj 结为坚实盟友！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【锋芒毕露】在部门 All-Hands 上展示你自研的 Agent 加速方案，抢回聚光灯',
+        reqBadge: '需 LeetCode >= 50 或 Impact >= 10',
+        condition: (s) => s.leetcode >= 50 || (s.impact || 0) >= 10,
+        effect: (s) => ({
+          impact: (s.impact || 0) + 10,
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          story_flags: { ...(s.story_flags || {}), raj_alignment_seen: true, raj_rival: true, raj_meet_year: s.year },
+          npcs: { ...(s.npcs || {}), raj: { name: 'Raj', role: 'mentor', status: 'active', note: '同组 Tech Lead，与你存在微妙的竞争关系' } },
+          message: '你在百人 All-Hands 上流畅演示了自研 Agent 方案，赢得了 Skip-Level VP 的当场点名赞赏！但也与 Raj 产生了微妙的竞争关系。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'raj_director_promotion_board': {
+    id: 'raj_director_promotion_board',
+    title: '【多年之后】Raj 升 Director 后的 L7 评审提拔',
+    description: '几年过去，Raj 凭借卓越的向上管理顺利升任部门 Director 并进入了职级评审委员会 (Promotion Board)！现在你冲击 L7 Senior Staff 的晋升材料正摆在委员会桌上——这是硅谷职级中一次关键的大跳：',
+    choices: [
+      {
+        // 盟友托举 = 大幅提升过会概率(常规 L6→L7 约 20%),但仍需硬实力 (impact>=45),非白送;
+        // 且只作用于 L6→L7 (由 helpers 路由限定 level==='L6 (Staff)')。
+        text: '【盟友全力托举】(此前与 Raj 结为盟友，Raj 在闭门评审中力推你的 Case · 需 Impact >= 45)',
+        condition: (s) => Boolean(s.story_flags?.raj_ally) && (s.impact || 0) >= 45,
+        reqBadge: '需 盟友 & Impact >= 45',
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const win = gameRandom() < 0.40;
+          return win
+            ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 12), impact: addImpact(s, 8), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【晋升通过！】Raj 在闭门会议上拍桌力挺：“This engineer is the cornerstone of our org!” 结合你扎实的影响力，你顺利晋升为 L7 Senior Staff (TC +$20w)！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 8), impact: addImpact(s, 5), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【惜败一票】即便有 Raj 力挺，委员会仍认为你的跨组影响力再沉淀一年会更稳，本轮 L7 评审惜败延期。' };
+        },
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+      },
+      {
+        text: '【硬核技术折服】(凭借绝对过硬的 Impact 与代码能力征服评审会)',
+        condition: (s) => (s.impact || 0) >= 45 || s.leetcode >= 80,
+        reqBadge: '需 Impact >= 45 或 LeetCode >= 80',
+        effect: (s) => {
+          const win = gameRandom() < 0.25;
+          return win
+            ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), impact: addImpact(s, 10), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【实力过会！】委员会翻阅了你主导的核心底层系统指标，数据无懈可击，一致通过晋升至 L7 Senior Staff！' }
+            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 10), impact: addImpact(s, 6), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【名额有限】你的材料很硬，但今年 L7 名额被更资深的候选人占了，委员会建议明年再战。' };
+        },
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+      },
+      {
+        text: '【继续积累】本次暂缓，多沉淀一年跨组影响力',
+        condition: (s) => true,
+        effect: (s) => ({
+          impact: addImpact(s, 6),
+          health: Math.min(100, s.health + 5),
+          story_flags: { ...(s.story_flags || {}), raj_board_done: true },
+          message: '你选择稳扎稳打再沉淀一年跨部门大项目，为下一次冲击 L7 打下更扎实的基础。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'linda_sand_hill_encounter': {
+    id: 'linda_sand_hill_encounter',
+    title: '【沙丘路人脉】华人天使投资人 Linda 的闭门茶会',
+    description: '在斯坦福华人创投沙龙上，沙丘路知名基金合伙人 Linda 听了你对未来 AI 架构的技术见解后，主动递过来名片：“你在技术洞察上非常有前瞻性，有空常聊聊。”',
+    choices: [
+      {
+        text: '【兼任技术顾问】为 Linda 的基金担任兼职技术尽调顾问 (Venture Partner)',
+        effect: (s) => ({
+          tc: s.tc + 3,
+          network: Math.min(100, (s.network || 0) + 12),
+          npcs: { ...(s.npcs || {}), linda: { name: 'Linda', role: 'friend', status: 'active', note: '沙丘路知名华人 VC 合伙人' } },
+          story_flags: { ...(s.story_flags || {}), met_linda: true, linda_advisor: true, linda_meet_year: s.year },
+          message: '你正式受邀担任基金兼职技术顾问！每年额外获得顾问津贴 (+$3w/年)，并深度打入硅谷顶级华人创投圈！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【获取初创高管通道】请 Linda 为你保留沙丘路领投独角兽的核心通道',
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 0) + 15),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          npcs: { ...(s.npcs || {}), linda: { name: 'Linda', role: 'friend', status: 'active', note: '沙丘路知名华人 VC 合伙人' } },
+          story_flags: { ...(s.story_flags || {}), met_linda: true, linda_fast_track: true, linda_meet_year: s.year },
+          message: 'Linda 欣然答应将你列入顶级人才库，承诺在你需要跳槽或创业时提供沙丘路的一线直通资源！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【专注当下】感谢 Linda 的好意，保持一般朋友联络',
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 0) + 5),
+          npcs: { ...(s.npcs || {}), linda: { name: 'Linda', role: 'friend', status: 'active', note: '沙丘路华人 VC 朋友' } },
+          story_flags: { ...(s.story_flags || {}), met_linda: true, linda_meet_year: s.year },
+          message: '你加了 Linda 的微信，双方保持良好的技术交流。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'linda_angel_co_investment': {
+    id: 'linda_angel_co_investment',
+    title: '【资本破局】Linda 带来的 Pre-IPO 独角兽额度与领投资源',
+    description: 'Linda 再次发来私信：“我们领投了一家估值 20 亿美元的 AI 独角兽，内部给核心顾问留了一批稀缺的员工级 Pre-IPO 老股额度，或者如果你准备出来创业，我的基金可以直接开出 $150w 种子轮 Term Sheet。”',
+    choices: [
+      {
+        text: '【认购 Pre-IPO 独角兽额度】出资 $15w 认购明星独角兽老股',
+        costBadge: '出资 $15w',
+        reqBadge: '需总资产 >= $15w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 15,
+        effect: (s) => {
+          const hit = gameRandom() < 0.60;
+          const gain = hit ? 90 : 20;
+          return {
+            cash: s.cash - 15,
+            stocks: (s.stocks || 0) + gain,
+            story_flags: { ...(s.story_flags || {}), linda_deal_done: true },
+            message: hit
+              ? '【独角兽暴赚！】该公司迅速敲定下一轮融资，你的老股持仓估值暴涨至 $90w！'
+              : '该独角兽稳步推进，你的股权资产增值至 $20w。'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【接下 Term Sheet 全职创业】拿 Linda 的 $150w 支票正式开启创业 (CEO 身份)',
+        reqBadge: '需绿卡/公民身份',
+        condition: (s) => isPermanentVisa(s.visa),
+        effect: (s) => ({
+          job_type: 'startup_founder',
+          company: 'stealth_startup',
+          founder_stage: 'seed',
+          company_valuation: 800,
+          tc: 12,
+          cash: s.cash + 10,
+          story_flags: { ...(s.story_flags || {}), linda_deal_done: true },
+          message: '【拿到 Sand Hill 支票！】Linda 基金领投 $150w 种子轮！你正式登出大厂，作为初创公司 CEO 开启硅谷创业之路！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【保持现状】暂时不参与股权投资，专注于当前工作',
+        condition: (s) => true,
+        effect: () => ({
+          story_flags: { linda_deal_done: true },
+          message: '你向 Linda 表达了感谢，决定继续保持现有的资产节奏。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
   }
 };

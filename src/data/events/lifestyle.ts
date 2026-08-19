@@ -1466,5 +1466,116 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+
+  'dual_income_tech_layoff_storm': {
+    id: 'dual_income_tech_layoff_storm',
+    title: '【家庭风暴】伴侣所在大厂遭遇大裁员',
+    description: '伴侣所在的大厂突然宣布裁员 10%，伴侣收到了 HR 的离职谈话。家庭现金流瞬间减少，湾区的房贷与生活账单全落到了你肩上。',
+    choices: [
+      {
+        text: '【家庭顶梁柱】安抚伴侣，支持 TA 居家休整半年 (支出少量积蓄，家庭温情)',
+        costBadge: '支出 $1w 应急金',
+        reqBadge: '需总资产 >= $1w',
+        condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 1,
+        effect: (s) => ({
+          cash: s.cash - 1,
+          health: Math.min(100, s.health + 8),
+          story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
+          message: '你坚定地对伴侣说“没事，有我撑着”。伴侣感到无比踏实，夫妻感情更加深厚，家庭凝聚力拉满！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【人脉内推】动用你的技术人脉与关系网，为伴侣内推大厂',
+        reqBadge: '需丰富人脉或硬核算法',
+        condition: (s) => (s.is_married || s.relationship_status === 'married') && ((s.network || 0) >= 15 || s.leetcode >= 45),
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 0) + 5),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          message: '你亲自帮伴侣 Mock Interview 并动用同行内推，伴侣两个月内闪电拿到 Meta/Google Offer！双职工现金流光速恢复！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【领离职大礼包】伴侣拿了 6 个月 Severance 离职补偿金，转入理财账户',
+        costBadge: '入账 +$8w 补偿金',
+        condition: (s) => s.is_married || s.relationship_status === 'married',
+        effect: (s) => ({
+          cash: s.cash + 8,
+          health: Math.max(0, s.health - 5),
+          message: '伴侣拿着 N+3 离职大礼包一次性到账 $8w！虽然短期内失去了一份薪水，但手头现金大幅充裕。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'dual_income_startup_gamble': {
+    id: 'dual_income_startup_gamble',
+    title: '【家庭抉择】伴侣收到 AI 独角兽核心团队 Offer',
+    description: '伴侣收到了一家沙丘路顶级 VC 领投的 Pre-IPO 明星初创公司发来的核心工程师 Offer。Base 薪资略有缩减，但期权池极其丰厚。伴侣跟你商量是否要去冒这个险：',
+    choices: [
+      {
+        text: '【全力支持 All-in】你单挑大厂房贷底盘，鼓励伴侣去初创博取财富自由',
+        reqBadge: '需现金流稳健 (总资产>=30w)',
+        condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 30,
+        effect: (s) => {
+          const hit = gameRandom() < 0.35;
+          return hit
+            ? {
+                cash: s.cash + 80,
+                stocks: (s.stocks || 0) + 120,
+                health: Math.min(100, s.health + 5),
+                message: '【初创奇迹爆发！】伴侣所在的 AI 独角兽顺利完成大额新一轮融资与部分老股变现！家庭资产直接暴增 $200w！'
+              }
+            : {
+                health: Math.max(0, s.health - 6),
+                message: '伴侣在初创每天加班到深夜，虽然业务还在推进，但期权暂时还只是纸面富贵。你默默在大厂稳住大后方。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【稳健为王】建议伴侣留在养老大厂吃免费三餐和 RSU，家庭稳稳躺平',
+        condition: (s) => s.is_married || s.relationship_status === 'married',
+        effect: () => ({
+          health: 10,
+          message: '伴侣接受了你的建议，留在养老大厂继续享受免费三餐与年假。周末两人一起去 Cupertino 喝奶茶，生活节奏舒适从容。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
+  },
+
+  'dual_income_wlb_burnout': {
+    id: 'dual_income_wlb_burnout',
+    title: '【双卷王危机】两人的日历全被会议填满',
+    description: '你和伴侣双双处于晋升答辩冲刺期，连续一个月每天加班到深夜，回家只能靠冷掉的外卖果腹，身心俱疲。',
+    choices: [
+      {
+        text: '【飞夏威夷度假】两人请 2 周 PTO 年假去 Maui 岛冲浪躺平',
+        costBadge: '花费 $0.8w',
+        reqBadge: '需总资产 >= $0.8w',
+        condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 0.8,
+        effect: (s) => ({
+          cash: s.cash - 0.8,
+          health: Math.min(100, s.health + 20),
+          story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
+          message: '在夏威夷的阳光沙滩与海浪中，两人的疲惫一扫而空，健康大幅回血，找回了生活的意义！'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【生活做减法】两人达成共识：放弃无休止的无效内卷，每天准时下班做饭',
+        condition: (s) => s.is_married || s.relationship_status === 'married',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 12),
+          tc: Math.max(0, s.tc - 2),
+          message: '你们决定不再参与办公室政治与无效抢活，每天 5:30 准时关掉电脑下班做饭，虽然 TC 涨幅放缓，但身心状态健康自如。'
+        }),
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
   }
 };

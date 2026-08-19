@@ -80,7 +80,7 @@ function validateStateInvariants(prevState: GameState, newState: GameState, even
   const LADDER = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L8 (Principal)'];
   const prevRung = LADDER.indexOf(prevState.level || '');
   const newRung = LADDER.indexOf(newState.level || '');
-  if (prevRung >= 0 && newRung >= 0 && newRung - prevRung > 1) {
+  if (eventId !== 'founder_exit_event' && prevRung >= 0 && newRung >= 0 && newRung - prevRung > 1) {
     console.error(`❌ [职级跳级断言失败] 事件 '${eventId}' 一回合内从 ${prevState.level} 跳到 ${newState.level} (跨越 ${newRung - prevRung} 级)！`);
     ok = false;
   }

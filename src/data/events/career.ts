@@ -1264,14 +1264,103 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         nextEventId: midYearEventRouter,
       },
-      // NOTE: Founder & Trader annual decisions used to live here as redundant duplicates of
-      // founder_annual_strategy / trader_annual_strategy. Year-end settlement now routes those
-      // roles straight to their own strategy hubs (via midYearEventRouter's H1 block), so a
-      // founder/trader never lands on this generic panel. The hubs are supersets of what was
-      // here (founder hub adds 招人/精简苟活; trader hub adds 对冲/龙头 strategies), so nothing
-      // is lost. Kept sv_daily_life focused on employees + gap-year/unemployed exploration.
+      // NOTE: Founder & Trader annual decisions live in founder_annual_strategy /
+      // trader_annual_strategy (year-end settlement routes those roles straight there); this
+      // generic panel is for employees + gap-year/unemployed exploration. Choices below are
+      // grouped for readability only (pure array order, no mechanic change):
+      // 年度主线重心 → 生活与资产 → 职业转型 → 待业/Gap Year.
 
-      // --- 3. 【慢生活 Gap Year / 待业探索 专属年度决策】 ---
+      // --- 年度主线重心 (续)：投资 / 社交 / 躺平 (与上方 内卷 / 刷题 / 副业 同属年度精力分配) ---
+      {
+        text: '【年度重心：投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
+        condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          health: Math.max(0, s.health - 15),
+          message: '今年你花了大把时间盯盘、听财报电话会，试图在股市中加速财务自由！'
+        }),
+        nextEventId: 'stock_market_annual_gamble',
+      },
+      {
+        text: '【年度重心：活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
+        condition: (s) => true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          health: Math.max(0, s.health - 10),
+          charm: Math.min(25, (s.charm || 10) + 3),
+          message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
+        }),
+        nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
+      },
+      {
+        text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
+        condition: (_s) => true,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          health: Math.min(100, s.health + 18),
+          leetcode: Math.max(0, s.leetcode - 8),
+          message: '这一年你彻底躺平摸鱼，除了完成最低限度工作外就是打黑神话悟空。身体逐渐恢复了生机，但由于长期不写硬核代码，你的算法手感与面试反应明显下滑！'
+        }),
+        nextEventId: midYearEventRouter,
+      },
+
+      // --- 生活与资产：置业 / 租房调整 ---
+      {
+        text: '【置业安家】进军湾区加价抢房大乱斗 (Sunnyvale老破小/San Jose联排/Fremont学区房)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 40 && !s.has_housing,
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你准备好了首付款支票，踏入了火热的湾区 Open House 抢房战场！' }),
+        nextEventId: 'buy_house',
+      },
+      {
+        text: '【改善居住】重新选择湾区租房标准或退租挂壁睡车顶',
+        condition: (s) => !s.has_housing || s.rent > 0,
+        hideIfUnavailable: true,
+        effect: () => ({ message: '你打开了 Zillow 与租房中介微信群，准备调整住房开销。' }),
+        nextEventId: 'change_rental',
+      },
+
+      // --- 职业转型：离职去全职操盘 / 创业 (需身份/资金门槛) ---
+      {
+        text: '【离职全职 Day Trader】凭 $50w 本金与美籍/绿卡自由身全职操盘 (需美籍/绿卡 + 现金>=50w)',
+        reqBadge: '需美籍/绿卡+现金>=50w',
+        condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50 && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        effect: (_s) => ({
+          job_type: 'trader',
+          company: '全职 Day Trader',
+          level: '全职 Trader',
+          tc: 0,
+          laid_off: false,
+          message: '你正式递交了离职辞呈！凭 $50w 初始本金与美籍/绿卡自由身，开启了全职 Day Trader 操盘人生！'
+        }),
+        nextEventId: 'trader_annual_strategy',
+      },
+      {
+        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=45w办理O1创业工签)',
+        reqBadge: '需美籍/绿卡/O1或现金>=45w',
+        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        effect: (s) => {
+          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
+          return {
+            job_type: 'startup_founder',
+            company: 'AI/科技 Startup',
+            level: 'CEO & Founder',
+            tc: 6,
+            founder_stage: 'pre_seed',
+            company_valuation: 180,
+            laid_off: false,
+            impact: addImpact(s, 10),
+            cash: needsO1 ? s.cash - 5 : s.cash,
+            visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
+            message: needsO1
+              ? '你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
+              : '你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
+          };
+        },
+        nextEventId: 'founder_annual_strategy',
+      },
+
+      // --- 待业 / Gap Year 探索 (仅失业或待业时可见) ---
       {
         text: '【慢生活深度休养：红木森林徒步、瑜伽与环球旅行】彻底远离内卷与焦虑 (花费 $0.5w)',
         condition: (s) => Boolean(s.laid_off || s.job_type === 'unemployed' || !s.job_type),
@@ -1319,92 +1408,6 @@ export const careerEvents: Record<string, GameEvent> = {
           message: '身心满血恢复！你重新打开了 LinkedIn 与简历，准备以最佳精神面貌进军湾区职场！'
         }),
         nextEventId: 'job_hunt',
-      },
-
-      // --- 6. 【通用职业转换与置业决策】 ---
-      {
-        text: '【年度重心：投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
-        condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          health: Math.max(0, s.health - 15),
-          message: '今年你花了大把时间盯盘、听财报电话会，试图在股市中加速财务自由！'
-        }),
-        nextEventId: 'stock_market_annual_gamble',
-      },
-      {
-        text: '【年度重心：活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
-        condition: (s) => true,
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          health: Math.max(0, s.health - 10),
-          charm: Math.min(25, (s.charm || 10) + 3),
-          message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
-        }),
-        nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
-      },
-      {
-        text: '【离职全职 Day Trader】凭 $50w 本金与美籍/绿卡自由身全职操盘 (需美籍/绿卡 + 现金>=50w)',
-        reqBadge: '需美籍/绿卡+现金>=50w',
-        condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50 && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
-        effect: (_s) => ({
-          job_type: 'trader',
-          company: '全职 Day Trader',
-          level: '全职 Trader',
-          tc: 0,
-          laid_off: false,
-          message: '你正式递交了离职辞呈！凭 $50w 初始本金与美籍/绿卡自由身，开启了全职 Day Trader 操盘人生！'
-        }),
-        nextEventId: 'trader_annual_strategy',
-      },
-      {
-        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=45w办理O1创业工签)',
-        reqBadge: '需美籍/绿卡/O1或现金>=45w',
-        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
-        effect: (s) => {
-          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
-          return {
-            job_type: 'startup_founder',
-            company: 'AI/科技 Startup',
-            level: 'CEO & Founder',
-            tc: 6,
-            founder_stage: 'pre_seed',
-            company_valuation: 180,
-            laid_off: false,
-            impact: addImpact(s, 10),
-            cash: needsO1 ? s.cash - 5 : s.cash,
-            visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
-            message: needsO1
-              ? '你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
-              : '你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
-          };
-        },
-        nextEventId: 'founder_annual_strategy',
-      },
-      {
-        text: '【置业安家】进军湾区加价抢房大乱斗 (Sunnyvale老破小/San Jose联排/Fremont学区房)',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 40 && !s.has_housing,
-        hideIfUnavailable: true,
-        effect: () => ({ message: '你准备好了首付款支票，踏入了火热的湾区 Open House 抢房战场！' }),
-        nextEventId: 'buy_house',
-      },
-      {
-        text: '【改善居住】重新选择湾区租房标准或退租挂壁睡车顶',
-        condition: (s) => !s.has_housing || s.rent > 0,
-        hideIfUnavailable: true,
-        effect: () => ({ message: '你打开了 Zillow 与租房中介微信群，准备调整住房开销。' }),
-        nextEventId: 'change_rental',
-      },
-      {
-        text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
-        condition: (_s) => true,
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          health: Math.min(100, s.health + 18),
-          leetcode: Math.max(0, s.leetcode - 8),
-          message: '这一年你彻底躺平摸鱼，除了完成最低限度工作外就是打黑神话悟空。身体逐渐恢复了生机，但由于长期不写硬核代码，你的算法手感与面试反应明显下滑！'
-        }),
-        nextEventId: midYearEventRouter,
       }
     ]
   },

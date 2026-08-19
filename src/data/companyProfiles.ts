@@ -26,9 +26,8 @@ export type BigTechCompany =
   | 'tiktok'
   | 'microsoft'
   | 'cisco'
-  | 'adobe'
   | 'oracle'
-  | 'uber';
+  | 'robinhood';
 
 export interface CompanyProfile {
   /** HUD company-chip label (gameStateSelectors). */
@@ -108,12 +107,6 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     timelineName: 'Cisco (思科)',
     pipTier: 'medium',
   },
-  adobe: {
-    label: 'Adobe (奥多比)',
-    className: 'text-red-400 bg-red-500/10 border-red-500/20 font-bold',
-    timelineName: 'Adobe (奥多比)',
-    pipTier: 'medium',
-  },
   oracle: {
     // Previously had NO label/timeline branch — rendered as generic '硅谷科技大厂'
     // in the HUD and 'ORACLE' in the timeline. As a 养老厂 its +10 WLB health and
@@ -123,11 +116,16 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     timelineName: 'Oracle (甲骨文)',
     pipTier: 'medium',
   },
-  uber: {
-    label: 'Uber (优步)',
-    className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
-    timelineName: 'Uber (优步)',
+  robinhood: {
+    // Fintech / retail-brokerage — the boom-bust archetype. Its total comp is
+    // violently macro-bound (see the job_hop_market choice: fat in a bull, gutted
+    // in a bear); a bonus-heavy split and mid-high year-end stress reinforce that.
+    label: 'Robinhood (散户券商)',
+    className: 'text-green-400 bg-green-500/10 border-green-500/20 font-bold',
+    timelineName: 'Robinhood (散户券商)',
     pipTier: 'medium',
+    compSplit: { base: 0.60, rsu: 0.40 },
+    yearEndHealth: { drain: 5, msg: ' Robinhood 的牛熊生死时速与产品高压节奏消耗了体力 (健康 -5)。' },
   },
 };
 

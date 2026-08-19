@@ -1517,6 +1517,36 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 26 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 27: Robinhood fintech hop — comp is macro-bound (bull > normal > bear)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 27] Robinhood fintech: macro-bound comp (bull > normal > bear) ---');
+  const rh = events['job_hop_market'].choices.find((c) => c.text.includes('Robinhood'))!;
+  assert(!!rh, 'job_hop_market has a named Robinhood choice');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', impact: 40,
+    tc: 30, cash: 20, health: 80, laid_off: false, hop_offers: ['robinhood'],
+  } as GameState;
+
+  assert(rh.condition!(base) === true, 'Robinhood choice available when offer in hop_offers');
+
+  const bull = rh.effect({ ...base, macro_economy: 'bull' }) as Partial<GameState>;
+  const normal = rh.effect({ ...base, macro_economy: 'neutral' }) as Partial<GameState>;
+  const bear = rh.effect({ ...base, macro_economy: 'bear' }) as Partial<GameState>;
+
+  assert(bull.company === 'robinhood' && bull.job_type === 'big_tech', 'Robinhood hop sets company + big_tech');
+  // The fintech soul mechanic: total comp swings hard with the macro cycle.
+  assert((bull.tc as number) > (normal.tc as number), 'Bull-market Robinhood TC > normal');
+  assert((normal.tc as number) > (bear.tc as number), 'Normal Robinhood TC > bear-market');
+  // Bear entry is higher-stress than a bull entry, but still within the ≤15 single-option cap.
+  assert((base.health - (bear.health as number)) > (base.health - (bull.health as number)), 'Bear-market entry drains more health than bull');
+  assert((base.health - (bear.health as number)) <= 15, 'Robinhood single-option health drop stays <= 15');
+  console.log('✅ CUJ 27 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

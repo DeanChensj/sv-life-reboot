@@ -21,8 +21,8 @@ const mk = (over: Partial<GameState>): GameState =>
 // Expected labels (from pre-refactor gameStateSelectors ladder) + Oracle FIX.
 const labels: Record<string, string> = {
   google: 'Google (谷歌)', meta: 'Meta (卷王)', nvidia: 'NVIDIA (英伟达)', tiktok: 'TikTok (字节)',
-  apple: 'Apple (苹果)', amazon: 'Amazon (亚麻)', uber: 'Uber (优步)', microsoft: 'Microsoft (微软)',
-  cisco: 'Cisco (养老厂)', adobe: 'Adobe (奥多比)', oracle: 'Oracle (甲骨文)',
+  apple: 'Apple (苹果)', amazon: 'Amazon (亚麻)', microsoft: 'Microsoft (微软)',
+  cisco: 'Cisco (养老厂)', oracle: 'Oracle (甲骨文)', robinhood: 'Robinhood (散户券商)',
 };
 for (const [co, want] of Object.entries(labels)) {
   check(`label ${co}`, getJobDisplayInfo(mk({ company: co })).companyLabel, want);
@@ -43,10 +43,9 @@ const splitPct = (s: GameState) => {
 const splits: Record<string, { base: number; rsu: number }> = {
   google: { base: 0.55, rsu: 0.45 }, apple: { base: 0.55, rsu: 0.45 },
   microsoft: { base: 0.55, rsu: 0.45 }, amazon: { base: 0.55, rsu: 0.45 },
-  cisco: { base: 0.55, rsu: 0.45 }, adobe: { base: 0.55, rsu: 0.45 },
-  oracle: { base: 0.55, rsu: 0.45 }, uber: { base: 0.55, rsu: 0.45 },
+  cisco: { base: 0.55, rsu: 0.45 }, oracle: { base: 0.55, rsu: 0.45 },
   meta: { base: 0.40, rsu: 0.60 }, nvidia: { base: 0.40, rsu: 0.60 },
-  tiktok: { base: 0.70, rsu: 0.30 },
+  tiktok: { base: 0.70, rsu: 0.30 }, robinhood: { base: 0.60, rsu: 0.40 },
 };
 for (const [co, want] of Object.entries(splits)) {
   check(`tc-split ${co}`, splitPct(mk({ company: co })), want);

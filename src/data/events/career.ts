@@ -668,6 +668,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const pass = s.leetcode >= 45 && gameRandom() < 0.65;
           if (pass) {
             return {
+              mid_year: true, season_stage: 'h1',
               last_limited_opp_year: s.year,
               tc: s.tc + 12.0,
               stocks: (s.stocks || 0) + 15.0,
@@ -680,13 +681,17 @@ export const careerEvents: Record<string, GameEvent> = {
             };
           }
           return {
+            mid_year: true, season_stage: 'h1',
             last_limited_opp_year: s.year,
             health: Math.max(0, s.health - 10),
             leetcode: s.leetcode + 4,
             message: '【独角兽面试折戟】独角兽终面对于底层系统优化要求极高，虽然遗憾未能拿下 Offer，但硬核技术视野收获颇丰。'
           };
         },
-        nextEventId: 'sv_daily_life',
+        // A unicorn VP final-round IS your career move for the year (a real job change on
+        // success), not a free bonus — consume the year via h1ToH2Router so the player can't
+        // return to sv_daily_life and immediately fire a SECOND job hop (刷题跳槽) the same year.
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【限时机遇：黑客松夺冠】组队参加斯坦福 TreeHacks 极客马拉松 ($0.5w)',
@@ -1307,14 +1312,15 @@ export const careerEvents: Record<string, GameEvent> = {
       // --- 生活与资产：置业 / 租房调整 ---
       {
         text: '【置业安家】进军湾区加价抢房大乱斗 (Sunnyvale老破小/San Jose联排/Fremont学区房)',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 40 && !s.has_housing,
+        // 置业是资产配置,不占用当年职场主行动(买完回到本面板继续选工作重心);每年至多进入一次。
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 40 && !s.has_housing && s.last_housing_action_year !== s.year,
         hideIfUnavailable: true,
         effect: () => ({ message: '你准备好了首付款支票，踏入了火热的湾区 Open House 抢房战场！' }),
         nextEventId: 'buy_house',
       },
       {
         text: '【改善居住】重新选择湾区租房标准或退租挂壁睡车顶',
-        condition: (s) => !s.has_housing || s.rent > 0,
+        condition: (s) => (!s.has_housing || s.rent > 0) && s.last_housing_action_year !== s.year,
         hideIfUnavailable: true,
         effect: () => ({ message: '你打开了 Zillow 与租房中介微信群，准备调整住房开销。' }),
         nextEventId: 'change_rental',

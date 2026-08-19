@@ -1288,6 +1288,51 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 21 Passed\n');
 }
 
+// CUJ 23: Impact 下行挫折事件 (存在 + 净扣 impact + 有能动性/不死胡同 + 可经 midYearEventRouter 注入)
+{
+  console.log('--- [CUJ 23] Impact setback events (project cancelled / launch incident / legacy) ---');
+  const setbackIds = ['impact_project_cancelled', 'impact_launch_incident', 'impact_legacy_maintenance'];
+  const base: GameState = {
+    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L6 (Staff)',
+    leetcode: 75, charm: 18, network: 40, health: 90, tc: 50, impact: 40, age: 34, status: 'playing',
+  } as GameState;
+  for (const id of setbackIds) {
+    const ev = events[id];
+    assert(!!ev, `${id} event exists`);
+    setGameSeed(7);
+    // 至少一个选项净扣 impact (从 impact=40 出发结果 < 40)
+    const anyDeducts = ev.choices.some((c) => {
+      const r = c.effect(base);
+      return typeof r.impact === 'number' && (r.impact as number) < 40;
+    });
+    assert(anyDeducts, `${id} has a choice that deducts impact`);
+    // 每个选项都路由到合法后续 (无死胡同)
+    ev.choices.forEach((c, i) => {
+      const eff = c.effect(base);
+      const nid = typeof c.nextEventId === 'function' ? c.nextEventId({ ...base, ...eff } as GameState) : c.nextEventId;
+      assert(!!events[nid] || nid === 'end', `${id} choice ${i} routes to a valid event (got ${nid})`);
+    });
+  }
+  // 可达性:impact 职业 + impact>=15 的在职攀爬者,midYearEventRouter H1 会注入这些挫折事件
+  const climber: GameState = {
+    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
+    leetcode: 70, charm: 16, network: 35, health: 90, tc: 45, impact: 30, age: 33, year: 2026,
+    season_stage: undefined, status: 'playing', story_flags: {},
+  } as GameState;
+  setGameSeed(123);
+  const routed = new Set<string>();
+  for (let i = 0; i < 500; i++) routed.add(midYearEventRouter(climber));
+  assert(setbackIds.some((id) => routed.has(id)), 'Impact-setback events are injectable via midYearEventRouter for an impact-career climber');
+  // 反例:impact<15 的玩家不会被注入这些挫折 (没有值得一失的影响力)
+  const lowImpact: GameState = { ...climber, impact: 5 } as GameState;
+  setGameSeed(123);
+  const routedLow = new Set<string>();
+  for (let i = 0; i < 500; i++) routedLow.add(midYearEventRouter(lowImpact));
+  assert(!setbackIds.some((id) => routedLow.has(id)), 'Impact-setback events are NOT injected for a low-impact (<15) player');
+
+  console.log('✅ CUJ 23 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

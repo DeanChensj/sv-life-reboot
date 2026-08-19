@@ -122,6 +122,7 @@ export interface GameState {
   macro_economy?: 'bull' | 'bear' | 'neutral'; // 宏观经济周期
   transferred_to_ai?: boolean; // 是否已内部转岗至前沿大模型组
   last_limited_opp_year?: number; // 记录上一次参与湾区限时机会的年份 (防同一年度重复点击)
+  last_housing_action_year?: number; // 记录上一次置业/换租的年份 (买房是资产配置, 不占用年度职场主行动; 防同年重复进入)
   npcs?: Record<string, NPCState>; // 具名长线 NPC 关系网
   hop_applied_count?: number; // 当年投递面试的目标公司总数 (蒙特卡洛平衡门禁读取,用于跳槽面试通过率)
   hop_offers?: string[]; // 当年斩获的社招 Offer 列表 (['google', 'meta', etc.])

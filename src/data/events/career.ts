@@ -27,6 +27,8 @@ export const careerEvents: Record<string, GameEvent> = {
             // Amazon: high-volume hirer (high weight), moderate bar, but brutal PIP culture (health drain in settlement).
             { id: 'amazon', name: 'Amazon', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 44), weight: 1.0 },
             { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
+            // Robinhood: fintech mid-cap. Moderate bar; hires aggressively in a bull, freezes in a bear.
+            { id: 'robinhood', name: 'Robinhood', minLeet: s.macro_economy === 'bear' ? 54 : (s.macro_economy === 'bull' ? 38 : 46), weight: s.macro_economy === 'bear' ? 0.7 : 0.9 },
           ];
 
           // OpenAI/前沿 AI 实验室是高级岗，除算法/PhD 外还看项目影响力 (impact≥30)；躺平者跳不动。
@@ -83,7 +85,8 @@ export const careerEvents: Record<string, GameEvent> = {
             apple: 'Apple',
             amazon: 'Amazon',
             openai: 'OpenAI',
-            startup: 'AI Startup'
+            startup: 'AI Startup',
+            robinhood: 'Robinhood'
           };
           const offerNames = wonOffers.map(id => nameMap[id] || id).join('、');
 
@@ -148,7 +151,7 @@ export const careerEvents: Record<string, GameEvent> = {
             { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: '名校校友直接将你内推进山景城 Googleplex 基础设施组！享受顶尖 WLB 与美味食堂。' },
             { company: 'meta', name: 'Meta (AI 算法与分布式系统)', tcBoost: 35, healthDrain: 16, desc: '校友总监将你拉入 Menlo Park Meta 核心组，拿到顶格包裹但面临高压节奏！' },
             { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: '校友学长内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态！' },
-            { company: 'uber', name: 'Uber (核心调度与分布式架构)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌，校友学姐直接将你带入旧金山 Uber 核心团队！' }
+            { company: 'robinhood', name: 'Robinhood (核心交易撮合引擎)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌，校友学姐直接将你带入 Robinhood 核心交易团队，赶上牛市红利期！' }
           ];
           const chosen = mafiaTargets[Math.floor(gameRandom() * mafiaTargets.length)];
           return { 
@@ -173,7 +176,6 @@ export const careerEvents: Record<string, GameEvent> = {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
           const stateCompanies = [
             { company: 'cisco', name: 'Cisco 思科网络研发部', baseTc: 20 },
-            { company: 'adobe', name: 'Adobe 圣何塞总部', baseTc: 22 },
             { company: 'oracle', name: 'Oracle 甲骨文云架构组', baseTc: 21 },
             { company: 'icc', name: '硅谷大型 Tech IT 咨询外包', baseTc: 14 }
           ];
@@ -518,6 +520,36 @@ export const careerEvents: Record<string, GameEvent> = {
             laid_off: false,
             is_new_job: true,
             message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
+          };
+        },
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+      },
+      {
+        text: '【签约入职 Robinhood / 券商】赌上牛熊周期：牛市 Bonus 翻倍，熊市直面裁员风暴',
+        condition: (s) => (s.hop_offers ? s.hop_offers.includes('robinhood') : s.company !== 'robinhood'),
+        effect: (s) => {
+          const nextLvl = hopTargetLevel(s); // 阶梯 +1，但升到 L6+ 需足够 impact，否则平跳
+          const baseBand = nextLvl === 'L8 (Principal)' ? 125 : nextLvl === 'L7 (Senior Staff)' ? 88 : nextLvl === 'L6 (Staff)' ? 60 : nextLvl === 'L5 (Senior)' ? 44 : nextLvl === 'L4' ? 32 : 24;
+          // Fintech comp is violently macro-bound: fat in a bull (RSU + bonus moon), gutted in a bear.
+          const econMultiplier = s.macro_economy === 'bull' ? 1.30 : s.macro_economy === 'bear' ? 0.78 : 1.0;
+          const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
+          const isBull = s.macro_economy === 'bull';
+          const isBear = s.macro_economy === 'bear';
+
+          return {
+            company: 'robinhood',
+            job_type: 'big_tech',
+            level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
+            tc: newTC,
+            cash: s.cash + (isBull ? 10 : isBear ? 1 : 4),
+            health: Math.max(0, s.health - (isBull ? 8 : isBear ? 14 : 10)),
+            laid_off: false,
+            is_new_job: true,
+            message: isBull
+              ? `【牛市红利大爆发！】你踩着散户狂热的牛市浪尖入职 Robinhood！交易量暴涨带动 Bonus 与期权翻倍，职级定级 ${nextLvl}，总包冲上 ${newTC}w，还白拿一笔签字费！`
+              : isBear
+              ? `【熊市逆行入局】你在加密寒冬与交易量枯竭中加入 Robinhood，定级 ${nextLvl}、总包仅 ${newTC}w，且笼罩在下一轮裁员风暴的阴影下，节奏高压 (健康 -14)。`
+              : `【入职 Robinhood】你加入散户券商核心交易团队，定级 ${nextLvl}、锁定总包 ${newTC}w。fintech 的牛熊节奏让你既兴奋又紧绷。`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
@@ -1222,6 +1254,8 @@ export const careerEvents: Record<string, GameEvent> = {
             // Amazon: high-volume hirer (high weight), moderate bar, but brutal PIP culture (health drain in settlement).
             { id: 'amazon', name: 'Amazon', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 44), weight: 1.0 },
             { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
+            // Robinhood: fintech mid-cap. Moderate bar; hires aggressively in a bull, freezes in a bear.
+            { id: 'robinhood', name: 'Robinhood', minLeet: s.macro_economy === 'bear' ? 54 : (s.macro_economy === 'bull' ? 38 : 46), weight: s.macro_economy === 'bear' ? 0.7 : 0.9 },
           ];
 
           // OpenAI/前沿 AI 实验室是高级岗，除算法/PhD 外还看项目影响力 (impact≥30)；躺平者跳不动。
@@ -1286,7 +1320,8 @@ export const careerEvents: Record<string, GameEvent> = {
             apple: 'Apple',
             amazon: 'Amazon',
             openai: 'OpenAI',
-            startup: 'AI Startup'
+            startup: 'AI Startup',
+            robinhood: 'Robinhood'
           };
           const offerNames = wonOffers.map(id => nameMap[id] || id).join('、');
 

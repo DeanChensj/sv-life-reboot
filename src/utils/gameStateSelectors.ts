@@ -152,7 +152,7 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     companyLabel = state.company === 'anthropic' ? 'Anthropic (Claude)' : 'OpenAI / MTS';
     companyClassName = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold';
   } else if (getCompanyProfile(state.company)) {
-    // Standard big-tech employers (google/meta/…/oracle/uber) — single lookup.
+    // Standard big-tech employers (google/meta/…/oracle/robinhood) — single lookup.
     const profile = getCompanyProfile(state.company)!;
     companyLabel = profile.label;
     companyClassName = profile.className;

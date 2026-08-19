@@ -45,7 +45,7 @@ class SoundManager {
     return this.isMuted;
   }
 
-  public play(type: 'click' | 'coin' | 'achievement' | 'alert' | 'win' | 'gameover') {
+  public play(type: 'click' | 'coin' | 'achievement' | 'alert' | 'win' | 'gameover' | 'promo' | 'cash_burst' | 'damage' | 'heal' | 'layoff') {
     if (this.isMuted) return;
 
     try {
@@ -97,6 +97,115 @@ class SoundManager {
 
             osc.start(start);
             osc.stop(start + 0.25);
+          });
+          break;
+        }
+
+        case 'cash_burst': {
+          // Rapid sparkling cascading coins (C6 -> E6 -> G6 -> C7)
+          const notes = [1046.50, 1318.51, 1567.98, 2093.00];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const start = now + i * 0.06;
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, start);
+
+            gain.gain.setValueAtTime(0.22, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(start);
+            osc.stop(start + 0.3);
+          });
+          break;
+        }
+
+        case 'promo': {
+          // Grand heroic trumpet arpeggio fanfare (F4 -> A4 -> C5 -> F5 -> A5)
+          const notes = [349.23, 440.00, 523.25, 698.46, 880.00];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const start = now + i * 0.09;
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, start);
+
+            gain.gain.setValueAtTime(0.18, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(start);
+            osc.stop(start + 0.45);
+          });
+          break;
+        }
+
+        case 'heal': {
+          // Warm soothing ascending chime (D5 -> G5 -> B5)
+          const notes = [587.33, 783.99, 987.77];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const start = now + i * 0.08;
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, start);
+
+            gain.gain.setValueAtTime(0.2, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(start);
+            osc.stop(start + 0.4);
+          });
+          break;
+        }
+
+        case 'damage': {
+          // Heavy punch / bass impact
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(160, now);
+          osc.frequency.exponentialRampToValueAtTime(45, now + 0.25);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.25);
+          break;
+        }
+
+        case 'layoff': {
+          // Heavy dramatic buzzer (Low dissonant minor second)
+          [130.81, 138.59].forEach((freq) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now);
+            osc.frequency.linearRampToValueAtTime(freq * 0.8, now + 0.45);
+
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.45);
           });
           break;
         }

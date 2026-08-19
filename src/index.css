@@ -30,3 +30,81 @@ html {
   scroll-behavior: smooth;
   color-scheme: dark;
 }
+
+/* Dopamine Visual Feedback Animations */
+@keyframes floatUpPill {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scale(0.85);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
+  28% {
+    transform: translate3d(0, -6px, 0) scale(1.0);
+  }
+  75% {
+    opacity: 1;
+    transform: translate3d(0, -32px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -56px, 0) scale(0.88);
+  }
+}
+
+.animate-float-pill {
+  animation: floatUpPill 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  15% { transform: translate3d(-5px, 3px, 0); }
+  30% { transform: translate3d(5px, -3px, 0); }
+  45% { transform: translate3d(-3px, 2px, 0); }
+  60% { transform: translate3d(3px, -2px, 0); }
+  75% { transform: translate3d(-1px, 1px, 0); }
+}
+
+.animate-screen-shake {
+  animation: screenShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes goldenShimmer {
+  0% { opacity: 0; transform: scale(0.95); }
+  20% { opacity: 1; transform: scale(1.02); }
+  40% { transform: scale(1.0); }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
+.animate-golden-shimmer {
+  animation: goldenShimmer 2.5s ease-out forwards;
+}
+
+@keyframes redVignetteFlash {
+  0% { opacity: 0; }
+  25% { opacity: 0.45; }
+  60% { opacity: 0.25; }
+  100% { opacity: 0; }
+}
+
+.animate-red-vignette {
+  animation: redVignetteFlash 1.2s ease-out forwards;
+}
+
+@keyframes confettiParticle {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--tw-confetti-x, 40px), 100vh, 0) rotate(var(--tw-confetti-r, 720deg));
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confettiParticle 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}

@@ -1195,6 +1195,60 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 20 Passed\n');
 }
 
+// CUJ 21: Side Hustle Hub & Diverse Routes Exploration
+{
+  console.log('--- [CUJ 21] Side Hustle Hub & Diverse Routes Exploration ---');
+  const svLife = events['sv_daily_life'];
+  const sideHustleChoice = svLife.choices.find((c) => c.text.includes('拓展副业'))!;
+  assert(!!sideHustleChoice, 'Side hustle entry choice exists in sv_daily_life');
+  assert(sideHustleChoice.nextEventId === 'side_hustle_hub', 'Side hustle entry routes to side_hustle_hub');
+
+  const hub = events['side_hustle_hub'];
+  assert(!!hub, 'side_hustle_hub event is registered');
+  assert(hub.choices.length === 5, 'side_hustle_hub provides 5 distinct route options (SaaS, Advisor, Creator, Boba, Back)');
+
+  const baseState: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)',
+    cash: 50, stocks: 20, leetcode: 50, charm: 18, network: 30, health: 90, status: 'playing'
+  } as GameState;
+
+  // 1. Independent Micro-SaaS
+  const saasChoice = hub.choices.find((c) => c.text.includes('独立开发'))!;
+  assert(!!saasChoice, 'Micro-SaaS choice exists');
+  assert(saasChoice.condition!(baseState) === true, 'Micro-SaaS accessible with leetcode >= 30');
+  assert(saasChoice.condition!({ ...baseState, leetcode: 20 } as GameState) === false, 'Micro-SaaS blocked with leetcode < 30');
+  const saasRes = saasChoice.effect(baseState);
+  assert(typeof saasRes.cash === 'number' && saasRes.season_stage === 'h1', 'Micro-SaaS resolves properly in H1');
+
+  // 2. High-End Advisor
+  const advisorChoice = hub.choices.find((c) => c.text.includes('高阶咨询'))!;
+  assert(!!advisorChoice, 'Advisor choice exists');
+  assert(advisorChoice.condition!(baseState) === true, 'Advisor accessible for L5/Senior');
+  assert(advisorChoice.condition!({ ...baseState, level: 'L3', network: 10 } as GameState) === false, 'Advisor blocked for junior engineer with low network');
+  const advRes = advisorChoice.effect(baseState);
+  assert(typeof advRes.cash === 'number' && (advRes.network ?? 0) >= baseState.network, 'Advisor grants cash and network');
+
+  // 3. Creator
+  const creatorChoice = hub.choices.find((c) => c.text.includes('流量自媒体'))!;
+  assert(!!creatorChoice, 'Creator choice exists');
+  const creatorRes = creatorChoice.effect(baseState);
+  assert(typeof creatorRes.health === 'number', 'Creator resolves properly');
+
+  // 4. Boba shop investment
+  const bobaChoice = hub.choices.find((c) => c.text.includes('实体投资'))!;
+  assert(!!bobaChoice, 'Boba shop choice exists');
+  assert(bobaChoice.condition!(baseState) === true, 'Boba shop accessible with cash >= 5');
+  assert(bobaChoice.condition!({ ...baseState, cash: 2 } as GameState) === false, 'Boba shop blocked with cash < 5');
+
+  // 5. Back button
+  const backChoice = hub.choices.find((c) => c.text.includes('暂不发展副业'))!;
+  assert(!!backChoice, 'Back choice exists');
+  assert(backChoice.nextEventId === 'sv_daily_life', 'Back choice routes back to sv_daily_life');
+
+  console.log('✅ CUJ 21 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

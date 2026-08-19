@@ -1,6 +1,7 @@
 import type { GameState, TimelineRecord } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
+import { getSchoolProfile } from '../data/schoolProfiles';
 
 export interface TransitionContext {
   eventId?: string;
@@ -177,8 +178,8 @@ export function applyStateTransition(
   }
 
   if (context.eventId === 'choose_school') {
-    const schoolMap: Record<string, string> = { cmu: 'CMU (卡耐基梅隆)', ucb: 'UCB (加州伯克利)', state: 'SJSU (圣何塞州立)' };
-    const schoolName = normalizedEffect.school ? (schoolMap[normalizedEffect.school] || normalizedEffect.school) : '国内高校 / 中外合办大学';
+    const profile = getSchoolProfile(normalizedEffect.school);
+    const schoolName = profile ? profile.timelineName : '国内高校 / 中外合办大学';
     updatedTimeline.push({
       age: recAge, year: recYear,
       title: `踏上征途: 入读 ${schoolName}`,

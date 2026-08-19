@@ -1,6 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage, addImpact } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { SCHOOL_PROFILES } from '../schoolProfiles';
 
 export const initializationEvents: Record<string, GameEvent> = {
   'choose_trait': {
@@ -87,36 +88,36 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校 Choice 的选择：',
     choices: [
       {
-        text: '北美CS四大 (Stanford/MIT/CMU/UCB) (四年总花费 $30w)',
-        costBadge: '花费 $30w',
-        reqBadge: '需现金 >= $30w',
-        condition: (s) => s.cash >= 30,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 30), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + 5, health: Math.max(0, s.health - 5), housing_name: '四大 校内宿舍', message: '你步入了世界计算机最高学府。' }),
+        text: SCHOOL_PROFILES.cmu.choiceText,
+        costBadge: `花费 $${SCHOOL_PROFILES.cmu.tuition}w`,
+        reqBadge: `需现金 >= $${SCHOOL_PROFILES.cmu.tuition}w`,
+        condition: (s) => s.cash >= SCHOOL_PROFILES.cmu.tuition,
+        effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.cmu.tuition), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + SCHOOL_PROFILES.cmu.leetcodeBonus, health: Math.max(0, s.health + (SCHOOL_PROFILES.cmu.healthDelta || 0)), housing_name: SCHOOL_PROFILES.cmu.defaultHousing, message: SCHOOL_PROFILES.cmu.enrollMessage }),
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '理工强校大U (如 UIUC/UW/UMich) (四年总花费 $18w)',
-        costBadge: '花费 $18w',
-        reqBadge: '需现金 >= $18w',
-        condition: (s) => s.cash >= 18,
-        effect: (s) => ({ cash: Math.max(0, s.cash - 18), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + 5, housing_name: '大U 校内宿舍', message: '你来到了全美顶尖理工强校，准备体验硬核课业。' }),
+        text: SCHOOL_PROFILES.ucb.choiceText,
+        costBadge: `花费 $${SCHOOL_PROFILES.ucb.tuition}w`,
+        reqBadge: `需现金 >= $${SCHOOL_PROFILES.ucb.tuition}w`,
+        condition: (s) => s.cash >= SCHOOL_PROFILES.ucb.tuition,
+        effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.ucb.tuition), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + SCHOOL_PROFILES.ucb.leetcodeBonus, housing_name: SCHOOL_PROFILES.ucb.defaultHousing, message: SCHOOL_PROFILES.ucb.enrollMessage }),
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '美国普通公立大学 (四年总花费 $10w, 美籍/绿卡含州内补贴只需 $4w)',
-        costBadge: '花费 $10w (美籍/绿卡 $4w)',
-        reqBadge: '需现金 >= $10w (美籍/绿卡 $4w)',
-        condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? 4 : 10),
+        text: SCHOOL_PROFILES.state.choiceText,
+        costBadge: `花费 $${SCHOOL_PROFILES.state.tuition}w (美籍/绿卡 $${SCHOOL_PROFILES.state.inStateTuition}w)`,
+        reqBadge: `需现金 >= $${SCHOOL_PROFILES.state.tuition}w (美籍/绿卡 $${SCHOOL_PROFILES.state.inStateTuition}w)`,
+        condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? (SCHOOL_PROFILES.state.inStateTuition || 4) : SCHOOL_PROFILES.state.tuition),
         effect: (s) => {
-          const cost = (s.visa === '公民' || s.visa === '绿卡') ? 4 : 10;
-          return { cash: Math.max(0, s.cash - cost), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + 2, housing_name: '美大U 校内宿舍', message: '你飞往美国，准备开启无忧无虑的本科生活。' };
+          const cost = (s.visa === '公民' || s.visa === '绿卡') ? (SCHOOL_PROFILES.state.inStateTuition || 4) : SCHOOL_PROFILES.state.tuition;
+          return { cash: Math.max(0, s.cash - cost), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'state', age: s.age, charm: s.charm + (SCHOOL_PROFILES.state.charmBonus || 0), housing_name: SCHOOL_PROFILES.state.defaultHousing, message: SCHOOL_PROFILES.state.enrollMessage };
         },
         nextEventId: 'us_undergrad_year1',
       },
       {
-        text: '在国内读本科 / 中外合办大学 (四年总花费 $2w)',
-        costBadge: '花费 $2w',
-        effect: (s) => ({ cash: Math.max(0, s.cash - 2), school: 'cn', housing_name: '国内大学宿舍' }),
+        text: SCHOOL_PROFILES.cn.choiceText,
+        costBadge: `花费 $${SCHOOL_PROFILES.cn.tuition}w`,
+        effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.cn.tuition), school: 'cn', housing_name: SCHOOL_PROFILES.cn.defaultHousing }),
         nextEventId: 'cn_college_grad',
       }
     ]

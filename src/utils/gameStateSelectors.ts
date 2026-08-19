@@ -1,6 +1,7 @@
 import type { GameState } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
+import { getSchoolProfile } from '../data/schoolProfiles';
 
 export interface JobDisplayInfo {
   companyHeaderLabel: string;
@@ -163,14 +164,15 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     companyLabel = '硅谷科技大厂';
     companyClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold';
   } else if (!state.job_type) {
+    const profile = getSchoolProfile(state.school);
     if (state.is_phd) {
-      companyLabel = state.school === 'cmu' ? 'CMU 博士实验室' : '北美顶尖 AI 实验室';
+      companyLabel = profile?.phdLabLabel || '北美顶尖 AI 实验室';
     } else if (state.is_master) {
-      companyLabel = state.school === 'cmu' ? 'CMU CS 硕士' : state.school === 'ucb' ? 'UCB CS 硕士' : state.school === 'state' ? 'SJSU CS 硕士' : '北美 CS 硕士';
+      companyLabel = profile?.masterLabel || '北美 CS 硕士';
     } else {
-      companyLabel = state.school === 'cmu' ? 'CMU (CS 四大)' : state.school === 'ucb' ? 'UCB (加州伯克利)' : state.school === 'state' ? 'SJSU (加州州立)' : (state.school === 'cn' || !state.has_us_degree) ? '国内重点高校' : '北美本科高校';
+      companyLabel = profile?.undergradLabel || ((state.school === 'cn' || !state.has_us_degree) ? '国内重点高校' : '北美本科高校');
     }
-    companyClassName = 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-bold';
+    companyClassName = profile?.className || 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-bold';
   }
 
   return {

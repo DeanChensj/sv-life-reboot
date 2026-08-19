@@ -27,6 +27,11 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   const { companyHeaderLabel, companyLabel, companyClassName, levelHeaderLabel, levelLabel, levelClassName, tcHeaderLabel } = getJobDisplayInfo(gameState);
   const { visaLabel, visaClassName, gcStation } = getVisaDisplayInfo(gameState);
   const { housingLabel, carLabel, hasCar } = getHousingDisplayInfo(gameState);
+  // Impact is a VISIBLE ladder stat only for impact careers (or once earned). Charm & Network
+  // are HIDDEN soft-power metrics by design — never surfaced. So when Impact is irrelevant
+  // (founder/trader/unemployed/student, impact 0) we DON'T show 人脉/Network as a fallback;
+  // the cell is dropped and 算法/健康 expand to keep the row tidy.
+  const showImpact = isImpactCareer(gameState) || (gameState.impact || 0) > 0;
 
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
@@ -217,9 +222,9 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
         {/* 3. Core Visible Stats (LeetCode & Health) */}
         
-        {/* LeetCode — quarter width so it shares one row with Impact + Health. Single-word
-            English label (game terminology) fits 1/4 width on one line; tier under number. */}
-        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40">
+        {/* LeetCode — shares one row with Impact + Health. When the Impact cell is dropped
+            (impact 0), LeetCode widens to fill so the row leaves no hole. */}
+        <div className={`${showImpact ? 'col-span-1' : 'col-span-2'} md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40`}>
           <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
             <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             LEETCODE
@@ -234,9 +239,9 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
         {/* Impact (quarter width) — only meaningful for the standard big-tech/research/quant
             ladder. For careers where impact is irrelevant (founder/trader/unemployed/student),
-            swap this cell to 人脉/Network (a universally-relevant stat) so the row stays a tidy
-            [算法|X|健康] and we never show a misleading "IMPACT 0" — matching the mobile HUD gate. */}
-        {(isImpactCareer(gameState) || (gameState.impact || 0) > 0) ? (
+            the cell is dropped entirely (no 人脉/Network fallback — Charm & Network are hidden
+            soft-power metrics by design), and 算法/健康 widen to keep the row tidy. */}
+        {showImpact && (
           <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40">
             <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
               <svg className="w-3.5 h-3.5 text-violet-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -249,24 +254,11 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
               <div className="text-[10px] text-violet-400/80 font-bold mt-0.5">{impactTier(gameState.impact || 0)}</div>
             </div>
           </div>
-        ) : (
-          <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-sky-500/40">
-            <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
-              <svg className="w-3.5 h-3.5 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              人脉
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-sky-300">
-                {Math.round(gameState.network || 0)}
-              </div>
-              <div className="text-[10px] text-sky-400/80 font-bold mt-0.5">{(gameState.network || 0) >= 50 ? '八面玲珑' : (gameState.network || 0) >= 25 ? '小有人脉' : '初入江湖'}</div>
-            </div>
-          </div>
         )}
 
-        {/* Health 健康状态 — fills the rest of the LeetCode/Impact row (half width on desktop,
-            full width on mobile) so the four identity badges below still form one tidy row. */}
-        <div className="col-span-2 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl transition-all duration-300 hover:border-zinc-700/80">
+        {/* Health 健康状态 — fills the rest of the LeetCode/Impact row. Widens to col-span-3 on
+            desktop when the Impact cell is dropped, so the row stays a tidy full width. */}
+        <div className={`col-span-2 ${showImpact ? 'md:col-span-2' : 'md:col-span-3'} bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl transition-all duration-300 hover:border-zinc-700/80`}>
           <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>

@@ -211,7 +211,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
         aria-modal="true"
         aria-labelledby="timeline-modal-title"
         tabIndex={-1}
-        className="bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative"
+        className="bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl w-full max-w-4xl max-h-[92vh] max-h-[92dvh] sm:max-h-[90vh] sm:max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Background Glowing Ambient */}
@@ -219,8 +219,8 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
         <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Modal Header */}
-        <div className="px-4 sm:px-6 py-3.5 sm:py-5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-900/60 backdrop-blur-xl relative z-10">
-          <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="px-3.5 sm:px-6 py-3 sm:py-5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-900/60 backdrop-blur-xl relative z-10">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -228,13 +228,13 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
               </svg>
             </div>
             <div>
-              <h2 id="timeline-modal-title" className="text-lg sm:text-2xl font-black tracking-tight text-zinc-100 flex items-center gap-2">
+              <h2 id="timeline-modal-title" className="text-base sm:text-2xl font-black tracking-tight text-zinc-100 flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <span>生涯大事记 · 资产走势</span>
                 <span className="text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   {gameState.age} 岁 · {gameState.year} 年
                 </span>
               </h2>
-              <p className="text-[11px] sm:text-xs text-zinc-400 font-mono mt-0.5 line-clamp-1">
+              <p className="text-[10px] sm:text-xs text-zinc-400 font-mono mt-0.5 line-clamp-1">
                 记录你在硅谷的资产复合增长走势与命运转折节点
               </p>
             </div>
@@ -249,12 +249,12 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
         </div>
 
         {/* Navigation Tabs & KPI Metrics Bar */}
-        <div className="px-3.5 sm:px-6 py-2.5 sm:py-3 bg-zinc-900/40 border-b border-zinc-800/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 relative z-10">
+        <div className="px-3 sm:px-6 py-2 sm:py-3 bg-zinc-900/40 border-b border-zinc-800/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 relative z-10">
           {/* Tabs */}
           <div className="flex gap-1 p-1 rounded-xl bg-zinc-900/80 border border-zinc-800 overflow-x-auto no-scrollbar max-w-full">
             <button
               onClick={() => setActiveTab('chart')}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeTab === 'chart'
                   ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30 font-extrabold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -268,7 +268,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('timeline')}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeTab === 'timeline'
                   ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30 font-extrabold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -284,7 +284,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('summary')}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeTab === 'summary'
                   ? 'bg-purple-500 text-white shadow-md shadow-purple-500/30 font-extrabold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -299,7 +299,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
           </div>
 
           {/* Quick Metrics */}
-          <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs font-mono">
             <div className="flex items-center gap-1">
               <span className="text-zinc-500">峰值资产:</span>
               <span className="font-bold text-emerald-400">${peakNetWorth.toFixed(1)}w</span>
@@ -678,7 +678,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                   <span className="text-xs font-mono text-zinc-500">共 {chartHistory.length} 年记录</span>
                 </h4>
                 <div className="overflow-x-auto max-h-48 overflow-y-auto custom-scrollbar">
-                  <table className="w-full text-left text-xs font-mono">
+                  <table className="w-full min-w-[360px] text-left text-xs font-mono">
                     <thead className="text-zinc-500 border-b border-zinc-800 bg-zinc-950/40 sticky top-0">
                       <tr>
                         <th className="py-1.5 px-2">年份/年龄</th>

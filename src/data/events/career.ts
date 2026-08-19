@@ -3475,6 +3475,90 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+
+  'all_hands_corporate_bs': {
+    id: 'all_hands_corporate_bs',
+    title: '【季度 All Hands】全员大会与黑话风暴',
+    description: '季度全员大会 (All-Hands / TGIF) 如期召开。台上的高管们面带从容自信的微笑，幻灯片上跳跃着 "AI-Native Transformation"、"Synergistic Velocity" 与 "Year of Efficiency" 等宏大叙事。进入 Slido / Dory 匿名提问环节，置顶的前三高赞问题全是「今年还有没有 Merit 调薪与年终奖？」和「下个季度还会不会裁员？」。高管战术性喝了一口依云矿泉水，微笑着说："That\'s a fantastic question. Let me zoom out to our North Star..."',
+    choices: [
+      {
+        text: '【在 Slido / Dory 匿名给尖锐提问猛点 Upvote】看高管擦汗打太极，释放内卷焦虑',
+        condition: (_s) => true,
+        effect: (s) => ({
+          health: Math.min(100, s.health + 6),
+          message: '【精神按摩回血】你和数千名在线同事默契配合，把「高管什么时候带头降薪」一路顶到了投票榜首！看着台上的领导尴尬打圆场顾左右而言他，你感到无比解压 (健康 +6)！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【笔记本掩护下闭麦刷题】把高管黑话当白噪音催眠，在 IDE 里狂刷 LeetCode',
+        condition: (_s) => true,
+        effect: (s) => ({
+          leetcode: s.leetcode + 6,
+          health: Math.min(100, s.health + 3),
+          message: '【人在会场心在题库】你在屏幕左半边放着全员大会直播，右半边开了 LeetCode 刷动态规划 Hard 题。不仅两道题顺利 AC，还借着会议白噪音获得了片刻宁静 (LeetCode +6, 健康 +3)！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【在 Slack `#all-hands` 频道狂发 Meme 表情包】与同组战友用 Emoji 盖楼',
+        condition: (_s) => true,
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 3),
+          network: Math.min(100, (s.network || 10) + 5),
+          message: '【Meme 大师破防】每当高管口吐抽象新黑话，你便在内部群精准补刀 :popcorn: :clown: :this_is_fine: 表情包，引得同组同事和跨组好友疯狂点赞，摸鱼革命友谊迅速升温！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【全神贯注记笔记，把黑话全塞进下季度 OKR】深谙大厂生存之道，迎合战略叙事',
+        condition: (_s) => true,
+        effect: (s) => ({
+          impact: addImpact(s, 6),
+          health: Math.max(0, s.health - 6),
+          message: '【黑话对齐大师】你迅速将 "Synergy"、"Paradigm Shift" 和 "Agentic Workflow" 密密麻麻地织进自己的下季度 OKR 与晋升规划中。VP 看到汇报后大喜过望直夸你“大局观极强、紧跟全司战略” (架构影响力 +6, 健康 -6)！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'snack_perks_downgrade': {
+    id: 'snack_perks_downgrade',
+    title: '【福利降级之痛】大厂 Micro-Kitchen 寒冬与打包盒消失',
+    description: '公司最新出台“降本增效 (Cost Optimization)”新政：免费晚餐取消外带打包盒以防“羊毛党”，Micro-Kitchen 里的奢华冷萃与高级酸奶被全面降级为 Costco 杂牌苏打水，连周五免费按摩福利都被无情砍掉。全司内网论坛与 Slack `#rant` 频道瞬间被破防的工程师们攻陷……',
+    choices: [
+      {
+        text: '【下午 4 点突击扫荡茶水间】疯狂搜刮牛油果、希腊酸奶与高蛋白能量棒带回家',
+        condition: (_s) => true,
+        effect: (s) => ({
+          cash: s.cash + 0.5,
+          health: Math.min(100, s.health + 4),
+          message: '【零食羊毛自救】你每天下午准时背着双肩包扫荡各楼层茶水间，靠着积攒的坚果酸奶不仅省下了饭钱，还补充了优质蛋白质 (现金 +$0.5w, 健康 +4)！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【在内网发起联名请愿书】组织上千名工程师向 CEO 上书要求恢复零食等级',
+        condition: (_s) => true,
+        effect: (s) => ({
+          charm: Math.min(25, (s.charm || 10) + 3),
+          network: Math.min(100, (s.network || 10) + 6),
+          message: '【打工人嘴替】你的请愿书一夜之间收获 2,000+ 个 Upvote，高管迫于舆论恢复了部分气泡水供应，你成了大家口中敢于发声的英雄！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【心如止水，自带自制 Meal Prep 便当】彻底戒掉食堂高油高盐，专注养生减脂',
+        condition: (_s) => true,
+        effect: (s) => ({
+          health: Math.min(100, s.health + 10),
+          message: '【养生生活自律】你买了全套玻璃保鲜盒，周末提前备好一周的糙米鸡胸肉与西蓝花。告别了食堂后，肠胃更加轻盈，精力充沛 (健康 +10)！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
   }
 };
 

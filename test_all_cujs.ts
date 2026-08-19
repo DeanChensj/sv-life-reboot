@@ -1355,7 +1355,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Student HUD derivation
   let jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.companyHeaderLabel === '就读院校', 'HUD shows 就读院校');
-  assert(jobInfo.companyLabel === 'UCB (加州伯克利)', 'HUD displays UCB (加州伯克利)');
+  assert(jobInfo.companyLabel === '大U (CS Top30)', 'HUD displays 大U (CS Top30)');
   assert(jobInfo.levelHeaderLabel === '在读学位', 'HUD shows 在读学位');
   assert(jobInfo.levelLabel === '本科在读', 'HUD displays 本科在读');
 
@@ -1390,7 +1390,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Master Student HUD derivation
   jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.levelLabel === '硕士在读', 'HUD displays 硕士在读');
-  assert(jobInfo.companyLabel === 'UCB CS 硕士', 'HUD displays UCB CS 硕士');
+  assert(jobInfo.companyLabel === '大U CS 硕士', 'HUD displays 大U CS 硕士');
 
   // 5. Master Year 1: Complete Master's Studies
   res = stepChoice(state, 'us_master_year1', 0); // 加急刷题
@@ -1548,10 +1548,105 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 // -----------------------------------------------------------------------------
-// CUJ 28: Marriage Strain, Crisis Resolution & California 50/50 Divorce
+// CUJ 28: All Hands corporate BS event integrity & choice sanity
 // -----------------------------------------------------------------------------
 {
-  console.log('--- [CUJ 28] Marriage strain, crisis resolution & California 50/50 divorce ---');
+  console.log('--- [CUJ 28] All Hands corporate BS event choices & invariants ---');
+  const allHands = events['all_hands_corporate_bs'];
+  assert(!!allHands, 'all_hands_corporate_bs event is defined');
+  assert(allHands.choices.length === 4, 'all_hands_corporate_bs has 4 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', health: 70, leetcode: 50,
+  } as GameState;
+
+  // Choice 0: Slido upvote -> health bonus
+  const c0 = allHands.choices[0].effect(base) as Partial<GameState>;
+  assert((c0.health as number) > base.health, 'Choice 0 boosts health from catharsis');
+
+  // Choice 1: LeetCode grinding under laptop -> leetcode & health
+  const c1 = allHands.choices[1].effect(base) as Partial<GameState>;
+  assert((c1.leetcode as number) > base.leetcode, 'Choice 1 boosts leetcode');
+
+  // Choice 2: Slack Memes -> charm & network
+  const c2 = allHands.choices[2].effect(base) as Partial<GameState>;
+  assert((c2.charm as number) > (base.charm || 10), 'Choice 2 boosts charm');
+  assert((c2.network as number) > (base.network || 10), 'Choice 2 boosts network');
+
+  // Choice 3: Buzzwords into OKR -> impact boost, health cost within <= 15 limit
+  const c3 = allHands.choices[3].effect(base) as Partial<GameState>;
+  assert((c3.impact as number) > (base.impact || 0), 'Choice 3 boosts impact');
+  assert(base.health - (c3.health as number) <= 15, 'Choice 3 health drain <= 15');
+  console.log('✅ CUJ 28 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 29: Snack Perks Downgrade event choices & invariants
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 29] Snack perks downgrade event choices & invariants ---');
+  const ev = events['snack_perks_downgrade'];
+  assert(!!ev, 'snack_perks_downgrade event is defined');
+  assert(ev.choices.length === 3, 'snack_perks_downgrade has 3 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', health: 70, cash: 10,
+  } as GameState;
+
+  // Choice 0: Grab avocado & yogurt -> cash + health
+  const c0 = ev.choices[0].effect(base) as Partial<GameState>;
+  assert((c0.cash as number) > base.cash, 'Choice 0 boosts cash from free food savings');
+  assert((c0.health as number) > base.health, 'Choice 0 boosts health');
+
+  // Choice 1: Petition -> charm & network
+  const c1 = ev.choices[1].effect(base) as Partial<GameState>;
+  assert((c1.charm as number) > (base.charm || 10), 'Choice 1 boosts charm');
+  assert((c1.network as number) > (base.network || 10), 'Choice 1 boosts network');
+
+  // Choice 2: Meal Prep -> health +10
+  const c2 = ev.choices[2].effect(base) as Partial<GameState>;
+  assert((c2.health as number) >= base.health + 10, 'Choice 2 boosts health with clean meal prep');
+  console.log('✅ CUJ 29 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 30: Wildfire Smoke & PG&E Blackout event choices & invariants
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 30] Wildfire Smoke & PG&E Blackout event choices & invariants ---');
+  const ev = events['wildfire_smoke_pge_blackout'];
+  assert(!!ev, 'wildfire_smoke_pge_blackout event is defined');
+  assert(ev.choices.length === 3, 'wildfire_smoke_pge_blackout has 3 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'apple', health: 70, cash: 10, leetcode: 50,
+  } as GameState;
+
+  // Choice 0: Dyson air purifier at home -> safe cost, health drain <= 15
+  const c0 = ev.choices[0].effect(base) as Partial<GameState>;
+  assert((c0.cash as number) < base.cash, 'Choice 0 deducts Dyson electricity cost');
+  assert(base.health - (c0.health as number) <= 15, 'Choice 0 health drop stays within <= 15');
+
+  // Choice 1: Workation to Hawaii -> cash cost, health boost
+  const c1 = ev.choices[1].effect(base) as Partial<GameState>;
+  assert((c1.cash as number) < base.cash, 'Choice 1 deducts flight/hotel cost');
+  assert((c1.health as number) > base.health, 'Choice 1 boosts health');
+
+  // Choice 2: Sleep in office with diesel generator -> leetcode boost
+  const c2 = ev.choices[2].effect(base) as Partial<GameState>;
+  assert((c2.leetcode as number) > base.leetcode, 'Choice 2 boosts leetcode grinding');
+
+  console.log('✅ CUJ 30 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 31: Marriage Strain, Crisis Resolution & California 50/50 Divorce
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 31] Marriage strain, crisis resolution & California 50/50 divorce ---');
   const ev = events['marriage_divorce_crisis'];
   assert(!!ev, 'marriage_divorce_crisis event is defined');
   assert(ev.choices.length === 3, 'marriage_divorce_crisis has 3 choices');
@@ -1587,7 +1682,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert((c2.health as number) === 62, 'Choice 2 drains 8 health from emotional toll');
   assert(base.health - (c2.health as number) <= 15, 'Divorce health drain stays <= 15 cap');
 
-  console.log('✅ CUJ 28 Passed\n');
+  console.log('✅ CUJ 31 Passed\n');
 }
 
 console.log(`\n======================================================`);

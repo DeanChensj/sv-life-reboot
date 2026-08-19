@@ -114,12 +114,26 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '花 $10w 请湾区顶级离婚律师打官司 (仅限已婚, 高风险)',
-        condition: (s) => s.is_married === true && s.cash >= 15,
+        costBadge: '律师费 $10w',
+        reqBadge: '需总资产 >= $15w',
+        condition: (s) => s.is_married === true && (s.cash + (s.stocks || 0)) >= 15,
         effect: (s) => {
           const win = gameRandom() > 0.5;
-          return win
-            ? { cash: (s.cash - 10) * 0.9, stocks: (s.stocks || 0) * 0.9, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '律师非常给力！你成功保住了 90% 的婚内资产 (现金与股票同比例)，但漫长的官司让你心力交瘁，头发白了一半。' }
-            : { cash: (s.cash - 10) * 0.6, stocks: (s.stocks || 0) * 0.6, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产 (现金与股票同比例)，你痛心不已！' };
+          const ratio = win ? 0.9 : 0.6;
+          const netCash = Math.max(0, (s.cash - 10) * ratio);
+          const stockShortfall = s.cash < 10 ? (10 - s.cash) * ratio : 0;
+          const netStocks = Math.max(0, parseFloat((((s.stocks || 0) * ratio) - stockShortfall).toFixed(2)));
+          return {
+            cash: parseFloat(netCash.toFixed(2)),
+            stocks: netStocks,
+            is_married: false,
+            relationship_status: 'single',
+            partner_type: undefined,
+            health: Math.max(0, s.health - 15),
+            message: win
+              ? '律师非常给力！你成功保住了 90% 的婚内资产 (扣除律师费后同比例保留)，但漫长的官司让你心力交瘁，头发白了一半。'
+              : '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产 (扣除律师费后按判决执行)，你痛心不已！'
+          };
         },
         nextEventId: 'sv_year_end_settlement'
       },
@@ -158,7 +172,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const win = gameRandom() > 0.5;
           const isMarriedNow = s.is_married || s.relationship_status === 'married';
           return win
-            ? { charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3), health: Math.min(100, s.health + 10), relationship_status: isMarriedNow ? 'married' : 'dating', message: isMarriedNow ? '你全程温柔体贴，结识了几位同样在大厂的同行好友，社交氛围轻松！' : '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' }
+            ? { 
+                charm: Math.min(s.max_charm || 25, (s.charm || 10) + 3), 
+                health: Math.min(100, s.health + 10), 
+                relationship_status: isMarriedNow ? 'married' : 'dating',
+                partner_type: isMarriedNow ? s.partner_type : (s.partner_type || 'engineer'),
+                message: isMarriedNow ? '你全程温柔体贴，结识了几位同样在大厂的同行好友，社交氛围轻松！' : '你全程温柔体贴，虽然游戏输了，但成功撩到了一个同样来相亲的大厂同行！你们聊得火热，互加微信并确立了恋爱关系 (Dating)！' 
+              }
             : { charm: Math.min(s.max_charm || 25, (s.charm || 10) + 1), health: s.health + 5, cash: Math.max(0, s.cash - 0.2), message: '你跑前跑后伺候大家，当了一整天的“沸羊羊”，虽然交了几个普通朋友，但并没有人看上你。' };
         },
         nextEventId: 'sv_year_end_settlement'

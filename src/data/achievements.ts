@@ -166,7 +166,7 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
   const newlyUnlocked: string[] = [];
   const msg = state.message || '';
 
-  if (((state.job_type === 'ai_research' || state.job_type === 'startup_founder') && state.status === 'win') || (msg.includes('IPO 挂牌敲钟') || msg.includes('纳斯达克 IPO'))) {
+  if (((state.job_type === 'ai_research' || state.job_type === 'startup_founder' || state.story_flags?.alex_ipo_done || state.founder_stage === 'exit') && state.status === 'win')) {
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');
   }
 

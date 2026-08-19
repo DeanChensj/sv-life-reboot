@@ -325,8 +325,26 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 disabled={totalAssets < 5 || gameState.charm < 8}
                 onClick={() => {
                   const success = gameRandom() > 0.5; // seeded PRNG for reproducibility (was Math.random)
-                  if (success) onBuy({ cash: gameState.cash - 5, tc: gameState.tc + 5, charm: gameState.charm + 2 }, '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！');
-                  else onBuy({ cash: gameState.cash - 5, health: gameState.health - 10 }, '去游艇派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。');
+                  if (success) {
+                    if (gameState.laid_off || gameState.job_type === 'unemployed') {
+                      onBuy({ 
+                        cash: gameState.cash - 5, 
+                        job_type: 'startup', 
+                        company: 'star_startup', 
+                        laid_off: false, 
+                        tc: 20, 
+                        charm: Math.min(gameState.max_charm ?? 25, gameState.charm + 2) 
+                      }, '你在游艇派对上认识了顶级风投大佬，对方直接推荐你入职他们领投的明星独角兽 (TC $20w)！成功重返职场！');
+                    } else {
+                      onBuy({ 
+                        cash: gameState.cash - 5, 
+                        tc: gameState.tc + 5, 
+                        charm: Math.min(gameState.max_charm ?? 25, gameState.charm + 2) 
+                      }, '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！');
+                    }
+                  } else {
+                    onBuy({ cash: gameState.cash - 5, health: Math.max(0, gameState.health - 10) }, '去游艇派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。');
+                  }
                 }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-purple-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >

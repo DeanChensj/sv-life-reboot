@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import type { GameState, Choice } from './types';
-import { generateInitialState, events, midYearEventRouter, impactTier, isImpactCareer } from './data/events';
+import { generateInitialState, events, midYearEventRouter, impactTier } from './data/events';
 import { BentoStatsPanel } from './components/BentoStatsPanel';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
@@ -480,14 +480,12 @@ export default function App() {
               LC {gameState.leetcode}
             </span>
 
-            {/* Impact Tag — L5+ 高级晋升硬通货，仅在有意义时显示 */}
-            {(isImpactCareer(gameState) || (gameState.impact || 0) > 0) && (
-              <span className="flex items-center gap-1 font-bold text-[10.5px] text-violet-300 shrink-0 bg-violet-500/10 px-2 py-0.5 rounded-md border border-violet-500/20 tabular-nums">
-                <svg className="w-2.5 h-2.5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                {Math.round(gameState.impact || 0)}
-                <span className="text-violet-400/70 text-[9px]">{impactTier(gameState.impact || 0)}</span>
-              </span>
-            )}
+            {/* Impact Tag — 始终显示(即使为 0);魅力/人脉为隐藏属性,不展示 */}
+            <span className="flex items-center gap-1 font-bold text-[10.5px] text-violet-300 shrink-0 bg-violet-500/10 px-2 py-0.5 rounded-md border border-violet-500/20 tabular-nums">
+              <svg className="w-2.5 h-2.5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              {Math.round(gameState.impact || 0)}
+              <span className="text-violet-400/70 text-[9px]">{impactTier(gameState.impact || 0)}</span>
+            </span>
           </div>
 
           <button

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { GameState } from '../types';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo } from '../utils/gameStateSelectors';
-import { impactTier, isImpactCareer } from '../data/events/helpers';
+import { impactTier } from '../data/events/helpers';
 
 interface BentoStatsPanelProps {
   gameState: GameState;
@@ -27,11 +27,6 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   const { companyHeaderLabel, companyLabel, companyClassName, levelHeaderLabel, levelLabel, levelClassName, tcHeaderLabel } = getJobDisplayInfo(gameState);
   const { visaLabel, visaClassName, gcStation } = getVisaDisplayInfo(gameState);
   const { housingLabel, carLabel, hasCar } = getHousingDisplayInfo(gameState);
-  // Impact is a VISIBLE ladder stat only for impact careers (or once earned). Charm & Network
-  // are HIDDEN soft-power metrics by design — never surfaced. So when Impact is irrelevant
-  // (founder/trader/unemployed/student, impact 0) we DON'T show 人脉/Network as a fallback;
-  // the cell is dropped and 算法/健康 expand to keep the row tidy.
-  const showImpact = isImpactCareer(gameState) || (gameState.impact || 0) > 0;
 
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
@@ -222,9 +217,8 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
 
         {/* 3. Core Visible Stats (LeetCode & Health) */}
         
-        {/* LeetCode — shares one row with Impact + Health. When the Impact cell is dropped
-            (impact 0), LeetCode widens to fill so the row leaves no hole. */}
-        <div className={`${showImpact ? 'col-span-1' : 'col-span-2'} md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40`}>
+        {/* LeetCode — quarter width, shares one row with Impact + Health. */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-amber-500/40">
           <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
             <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             LEETCODE
@@ -237,28 +231,23 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           </div>
         </div>
 
-        {/* Impact (quarter width) — only meaningful for the standard big-tech/research/quant
-            ladder. For careers where impact is irrelevant (founder/trader/unemployed/student),
-            the cell is dropped entirely (no 人脉/Network fallback — Charm & Network are hidden
-            soft-power metrics by design), and 算法/健康 widen to keep the row tidy. */}
-        {showImpact && (
-          <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40">
-            <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
-              <svg className="w-3.5 h-3.5 text-violet-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              IMPACT
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-violet-300">
-                {Math.round(gameState.impact || 0)} <span className="text-xs font-normal text-violet-500/70">产出</span>
-              </div>
-              <div className="text-[10px] text-violet-400/80 font-bold mt-0.5">{impactTier(gameState.impact || 0)}</div>
-            </div>
+        {/* Impact (quarter width) — always shown, even at 0 (Charm & Network stay HIDDEN, so
+            we never swap this cell to 人脉/Network). */}
+        <div className="col-span-1 md:col-span-1 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-violet-500/40">
+          <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center gap-1.5 whitespace-nowrap">
+            <svg className="w-3.5 h-3.5 text-violet-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            IMPACT
           </div>
-        )}
+          <div>
+            <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums tracking-tight text-violet-300">
+              {Math.round(gameState.impact || 0)} <span className="text-xs font-normal text-violet-500/70">产出</span>
+            </div>
+            <div className="text-[10px] text-violet-400/80 font-bold mt-0.5">{impactTier(gameState.impact || 0)}</div>
+          </div>
+        </div>
 
-        {/* Health 健康状态 — fills the rest of the LeetCode/Impact row. Widens to col-span-3 on
-            desktop when the Impact cell is dropped, so the row stays a tidy full width. */}
-        <div className={`col-span-2 ${showImpact ? 'md:col-span-2' : 'md:col-span-3'} bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl transition-all duration-300 hover:border-zinc-700/80`}>
+        {/* Health 健康状态 — fills the rest of the LeetCode/Impact row (half width desktop). */}
+        <div className="col-span-2 md:col-span-2 bg-zinc-900/90 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl transition-all duration-300 hover:border-zinc-700/80">
           <div className="text-zinc-400 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.18em] mb-1 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>

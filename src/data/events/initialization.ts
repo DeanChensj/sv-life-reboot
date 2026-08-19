@@ -958,7 +958,7 @@ export const initializationEvents: Record<string, GameEvent> = {
             ? '凭美籍/绿卡身份优势，你免受签证束缚直接飞赴硅谷入职 Google (定级 L4 · 年薪 $30w)！'
             : '陆本硬核算法发威！你拿到了外派 Offer，以 L1 身份入职海外分公司并调动回湾区总部 (定级 L4 · 年薪 $30w)！'
         }),
-        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'),
       }
     ]
   },
@@ -1036,7 +1036,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           year: s.year + 1,
           message: '凭借扎实的系统工程经历，你成功通过跨国调动面试，以 L1 身份直接调往硅谷总部 (年薪 $35w L4)！'
         }),
-        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
       }
     ]
   },
@@ -1081,7 +1081,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           year: s.year + 1,
           message: '你以资深架构师身份完成了跨国技术转移，以 L5 Senior SDE 入驻湾区总部 (年薪 $45w)！'
         }),
-        nextEventId: (s) => (s.visa === '公民' || s.visa === '绿卡') ? 'job_hunt' : (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
       },
       {
         text: '【国内 AI 初创合伙人】担任国内知名 AI 独角兽 CTO / 联合创始人 (转为创业线)',

@@ -26,6 +26,15 @@ export const impactTier = (n: number): string => (IMPACT_TIERS.find((t) => (n ||
 // 加/减 impact 的安全封装(下限 0，无硬上限但天然被衰减压住)。
 export const addImpact = (s: GameState, delta: number): number => Math.max(0, (s.impact || 0) + delta);
 
+// 大额资产扣除安全封装：优先扣除现金，现金不足时平仓变现股票，彻底杜绝负现金
+export const deductAssets = (s: GameState, cost: number): { cash: number; stocks: number } => {
+  const fromStocks = Math.max(0, cost - s.cash);
+  return {
+    cash: Math.max(0, s.cash - Math.min(s.cash, cost)),
+    stocks: Math.max(0, (s.stocks || 0) - fromStocks),
+  };
+};
+
 // 跳槽与社招定级：
 // 1. 无职级萌新/应届生按学历定级 (本科/硕士 L3, PhD L4)；
 // 2. 非标准职级映射 (OpenAI MTS 对应 L6 Staff/L5 Senior, Quant 对应 L6/L5, Founder 对应 L7/L6/L5)；

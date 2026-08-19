@@ -221,11 +221,11 @@ routerTestStates.forEach(st => {
 // 2-line re-export proxy, so reading it made this whole scan a no-op. Concatenate every module
 // (helpers.ts holds the routers + workEvents/lifeEvents arrays) so the source scan works again.
 const eventsDir = './src/data/events';
-const eventsSource = fs
-  .readdirSync(eventsDir)
-  .filter((f) => f.endsWith('.ts'))
-  .map((f) => fs.readFileSync(`${eventsDir}/${f}`, 'utf8'))
-  .join('\n');
+const extraDataFiles = ['./src/data/companyProfiles.ts'];
+const eventsSource = [
+  ...fs.readdirSync(eventsDir).filter((f) => f.endsWith('.ts')).map((f) => fs.readFileSync(`${eventsDir}/${f}`, 'utf8')),
+  ...extraDataFiles.filter((f) => fs.existsSync(f)).map((f) => fs.readFileSync(f, 'utf8'))
+].join('\n');
 
 // Extract all event IDs in router workEvents and lifeEvents arrays
 const routerEventRegex = /(?:workEvents|lifeEvents)\.push\(([^)]+)\)|const\s+(?:workEvents|lifeEvents)\s*=\s*\[([^\]]+)\]/g;
@@ -243,6 +243,14 @@ while ((match = routerEventRegex.exec(eventsSource)) !== null) {
 
 const routerReturnedEventMatches = eventsSource.match(/return\s+['"`]([a-zA-Z0-9_]+)['"`]/g) || [];
 routerReturnedEventMatches.forEach(m => {
+  const match = m.match(/['"`]([a-zA-Z0-9_]+)['"`]/);
+  if (match && events[match[1]]) {
+    reachableEvents.add(match[1]);
+  }
+});
+
+const signatureMatches = eventsSource.match(/signatureEvent:\s*['"`]([a-zA-Z0-9_]+)['"`]/g) || [];
+signatureMatches.forEach(m => {
   const match = m.match(/['"`]([a-zA-Z0-9_]+)['"`]/);
   if (match && events[match[1]]) {
     reachableEvents.add(match[1]);

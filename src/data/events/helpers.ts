@@ -440,6 +440,7 @@ export const midYearEventRouter = (s: GameState): string => {
   // Stage H2 (Autumn/Winter: Life, Social, Travel & Lifestyle Events)
   const isCorporate = isWorking && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
   const isTrader = s.job_type === 'trader';
+  const isFounder = s.job_type === 'startup_founder';
 
   // 因果离婚 (T1)：长期以事业压倒家庭累积的 partner_strain 越线，感情危机由「随机」升级为「高概率必来」。
   // breakup_crisis 的挽留成功分支会把 partner_strain 清零，避免同一裂痕反复触发。
@@ -498,8 +499,20 @@ export const midYearEventRouter = (s: GameState): string => {
       }
   }
 
-  // 注：founder 四个专属危机事件已移到 H1 阶段按 ~40% 概率注入（见上方 startup_founder 分支），
-  // 不再埋在 H2 通用生活池里被稀释到 ~0.5%。founder 的 H2 沿用通用生活事件即可。
+  // Founder 专属动态奇遇池 (H2 阶段注入,与 trader 同一模式)。年终结算已把 founder 直接送入
+  // founder_annual_strategy 策略枢纽 (P0),绕过了旧的 H1 ~40% 危机注入,导致这些事件几乎不可达;
+  // 改为在 H2 生活池注入 —— founder 既保留了当年的策略主行动,又能碰到危机与机遇 (co-founder
+  // 撕逼 / VC 跳票 / 断粮 / 黑客松 / YC 孵化 / 巨头超大单),不产生「用危机换掉策略回合」的平衡代价。
+  if (isFounder) {
+      lifeEvents.push(
+        'founder_co_founder_drama',
+        'founder_vc_term_sheet_ghost',
+        'founder_runway_cash_crunch',
+        'founder_hacker_house_hackathon',
+        'founder_yc_batch',
+        'founder_enterprise_whale'
+      );
+  }
 
   if (isTrader) {
       lifeEvents.push(

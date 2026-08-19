@@ -102,6 +102,9 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
         chosen = pick(['接受 YC', '全力接单', '冠军', 'IPO', '咖啡馆', '仲裁', 'MVP', '备选应急', '协商妥协'])
           || validChoices[Math.floor(Math.random() * validChoices.length)];
       }
+    } else if (currentEventId === 'marriage_divorce_crisis') {
+      const reconcile = validChoices.find(c => c.text.includes('婚姻咨询') || c.text.includes('蜜月'));
+      chosen = reconcile || validChoices[0];
     } else {
       chosen = validChoices[Math.floor(Math.random() * validChoices.length)];
     }

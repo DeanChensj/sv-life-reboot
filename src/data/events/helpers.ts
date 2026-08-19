@@ -543,7 +543,13 @@ export const midYearEventRouter = (s: GameState): string => {
 
   // 双职工家庭专属生活事件池
   if (s.is_married || s.relationship_status === 'married') {
+    if ((s.story_flags?.partner_strain || 0) >= 3) {
+      return 'marriage_divorce_crisis';
+    }
     lifeEvents.push('dual_income_tech_layoff_storm', 'dual_income_startup_gamble', 'dual_income_wlb_burnout');
+    if ((s.story_flags?.partner_strain || 0) >= 2) {
+      lifeEvents.push('marriage_divorce_crisis');
+    }
   }
 
   if (s.charm && s.charm >= 15 && s.job_type !== 'unemployed') {

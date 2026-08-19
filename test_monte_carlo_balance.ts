@@ -76,6 +76,32 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       const growth = validChoices.find(c => c.text.includes('重仓科技龙头'));
       if (state.health < 40 && hedge) chosen = hedge;
       else chosen = growth || validChoices[Math.floor(Math.random() * validChoices.length)];
+    } else if (currentEventId === 'side_hustle_hub') {
+      // 副业子菜单:玩家仍是全职,来这里挑一条第二曲线。模型一个「有能力的」副业玩家——
+      // 按自身强项选最优赛道,而不是随机乱点(否则测出的胜率是「乱点」水平,系统性低估真实平衡)。
+      // 算法强→独立开发(收购上行+impact);资深/人脉→顾问(稳定现金+人脉);颜值高→自媒体;
+      // 否则有现金且非熊市→实体投资。绝不选「暂不发展」(competent 玩家既然进来了就会做一个)。
+      const saas = validChoices.find(c => c.text.includes('独立开发'));
+      const advisor = validChoices.find(c => c.text.includes('高阶咨询'));
+      const creator = validChoices.find(c => c.text.includes('流量自媒体'));
+      const boba = validChoices.find(c => c.text.includes('实体投资'));
+      if (state.leetcode >= 45 && saas) chosen = saas;
+      else if (advisor) chosen = advisor;
+      else if (saas) chosen = saas;
+      else if ((state.charm || 10) >= 16 && creator) chosen = creator;
+      else if (boba && state.macro_economy !== 'bear') chosen = boba;
+      else chosen = creator || boba || validChoices[Math.floor(Math.random() * validChoices.length)];
+    } else if (currentEventId.startsWith('founder_')) {
+      // 创始人专属 H2 动态事件(合伙人撕逼/VC 跳票/断粮/黑客松/YC/巨头大单/退场)。这些过去由
+      // bot 纯随机选择,系统性低估了「有能力创始人」的真实表现,人为压低 FIRE 并逼出 #65 的降频
+      // 创可贴。改为健康感知的能力型策略:健康告急时选防守/回血选项,否则选增长/上行选项。
+      const pick = (subs: string[]) => subs.map(t => validChoices.find(c => c.text.includes(t))).find(Boolean);
+      if (state.health < 45) {
+        chosen = pick(['佛系', '云厂商', '稳健', '协商妥协', '断臂', '婉拒']) || validChoices[0];
+      } else {
+        chosen = pick(['接受 YC', '全力接单', '冠军', 'IPO', '咖啡馆', '仲裁', 'MVP', '备选应急', '协商妥协'])
+          || validChoices[Math.floor(Math.random() * validChoices.length)];
+      }
     } else {
       chosen = validChoices[Math.floor(Math.random() * validChoices.length)];
     }

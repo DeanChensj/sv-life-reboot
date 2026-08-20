@@ -122,7 +122,8 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【非科班 · 半路转码】读的不是 CS(生化环材 / 文社科 / 金融…)，决心转码入行 (硬开局)',
-        effect: (s) => ({ leetcode: Math.max(0, s.leetcode - 2), charm: Math.min(s.max_charm ?? 25, s.charm + 2), story_flags: { ...(s.story_flags || {}), non_cs_background: true }, message: '你读的并不是计算机专业，但看着同学们纷纷转码进大厂拿高薪，你也咬牙决定投身这场逆袭。' }),
+        // +4 岁:先念完 4 年非 CS 本科(与正常本科 18→22 的年龄推进对齐;年份同本科约定不变动)。
+        effect: (s) => ({ age: s.age + 4, leetcode: Math.max(0, s.leetcode - 2), charm: Math.min(s.max_charm ?? 25, s.charm + 2), story_flags: { ...(s.story_flags || {}), non_cs_background: true }, message: '你花了四年念完一个非计算机专业，毕业在即，看着同学们纷纷转码进大厂拿高薪，你也咬牙决定投身这场逆袭。' }),
         nextEventId: 'zhuanma_background',
       }
     ]

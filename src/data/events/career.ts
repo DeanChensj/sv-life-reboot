@@ -3,6 +3,7 @@ import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActive
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa } from '../../constants/gameConstants';
 import { isTopTierCSSchool } from '../schoolProfiles';
+import { meetsOrganicPromo, normalizeLevel } from '../levelProfiles';
 
 export const careerEvents: Record<string, GameEvent> = {
   'job_hunt': {
@@ -995,7 +996,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 };
               }
             }
-            if ((curLevel === 'L5 (Senior)' || curLevel === 'L5') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 60 && (s.charm || 10) >= 15 && (s.network || 10) >= 20 && (s.impact || 0) >= 20) {
+            if (normalizeLevel(curLevel) === 'L5 (Senior)' && (yearsInGrade >= 1 || isKingOfRoll) && meetsOrganicPromo(s, 'L6 (Staff)', { sprint: true })) {
               // L6 Staff 非常难 (最高 18% 胜率;须 impact≥20,与其它晋升路径一致)
               const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
               if (gameRandom() < Math.min(0.18, promoChance)) {
@@ -1013,7 +1014,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 };
               }
             }
-            if ((curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 65 && (s.charm || 10) >= 16 && (s.network || 10) >= 30 && (s.impact || 0) >= 45) {
+            if (normalizeLevel(curLevel) === 'L6 (Staff)' && (yearsInGrade >= 1 || isKingOfRoll) && meetsOrganicPromo(s, 'L7 (Senior Staff)', { sprint: true })) {
               const promoChance = 0.16 + ((s.charm || 10) * 0.005) + ((s.network || 10) * 0.004) + (isKingOfRoll ? 0.08 : 0);
               if (gameRandom() < Math.min(0.33, promoChance)) {
                 return {
@@ -1030,7 +1031,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 };
               }
             }
-            if ((curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') && (yearsInGrade >= 1 || isKingOfRoll) && s.leetcode >= 75 && (s.charm || 10) >= 20 && (s.network || 10) >= 45 && (s.impact || 0) >= 80) {
+            if (normalizeLevel(curLevel) === 'L7 (Senior Staff)' && (yearsInGrade >= 1 || isKingOfRoll) && meetsOrganicPromo(s, 'L8 (Principal)', { sprint: true })) {
               const promoChance = 0.10 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
               if (gameRandom() < Math.min(0.20, promoChance)) {
                 return {
@@ -1225,15 +1226,15 @@ export const careerEvents: Record<string, GameEvent> = {
             const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
             // L5→L6 也要 impact≥20 (与 perf_review / hopTargetLevel 的门槛一致,否则纯靠内卷
             // 刷题就能零 impact 登顶,架空了 Impact 机制)。
-            if (s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30 && (s.impact || 0) >= 20 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.18, promoChance)) {
+            if (meetsOrganicPromo(s, 'L6 (Staff)') && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.18, promoChance)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 12.0, level: 'L6 (Staff)', impact: addImpact(s, 10), last_promo_age: s.age, message: '奇迹登顶！你打破硅谷天花板，结合顶层架构产出与全公司影响力，成功晋升为万里挑一的 L6 Staff 架构师！总包调升 +$12w！' };
             }
           } else if (curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') {
             const promoChance = 0.10 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
-            if (s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && (s.impact || 0) >= 45 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.20, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', impact: addImpact(s, 12), last_promo_age: s.age, message: '战略突围！凭借高层 VP Sponsor 与跨部门整合能力，全票通过晋升为 L7 Senior Staff 资深架构师！总包狂飙 +$20w！' };
+            if (meetsOrganicPromo(s, 'L7 (Senior Staff)') && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.20, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', impact: addImpact(s, 12), last_promo_age: s.age, message: '战略突围！凭借高层 VP Sponsor 与跨部门整合能力，全票通过晋升为 L7 Senior Staff 资深架构师！总包狂飙 +$20w！' };
           } else if (curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') {
             const promoChance = 0.08 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
-            if (s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && (s.impact || 0) >= 80 && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 35.0, level: 'L8 (Principal)', impact: addImpact(s, 15), last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
+            if (meetsOrganicPromo(s, 'L8 (Principal)') && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 35.0, level: 'L8 (Principal)', impact: addImpact(s, 15), last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
           }
           const meritBonus = gameRandom() < 0.35 ? 2.0 : 1.0;
           return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + meritBonus, impact: addImpact(s, 6), message: isKingOfRoll ? `【卷王日常高产】你高质高效交付了核心模块，拿到了项目奖金 (+${meritBonus}w TC)！` : `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年部门升职 Quota 紧张，你的指标已入库，明年一定为你申请！”` };
@@ -1720,7 +1721,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L5 升 L6 专属高门槛)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return (cur === 'L5 (Senior)' || cur === 'L5') && s.leetcode >= 65 && (s.charm || 10) >= 15 && (s.network || 10) >= 25 && s.health >= 35 && s.tc >= 30 && (s.impact || 0) >= 20;
+          return normalizeLevel(cur) === 'L5 (Senior)' && meetsOrganicPromo(s, 'L6 (Staff)');
         },
         effect: (s) => {
           // L6 Staff 非常难；impact(影响力/项目产出)是 Staff 晋升的关键杠杆 —— 躺平(低 impact)几乎升不动。
@@ -1739,7 +1740,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【角逐 L7 Senior Staff 资深架构师】统领跨部门级核心技术战略与下一代基建 (L6 升 L7 专属)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return (cur === 'L6 (Staff)' || cur === 'Staff' || cur === 'MTS') && s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && (s.impact || 0) >= 45;
+          return normalizeLevel(cur) === 'L6 (Staff)' && meetsOrganicPromo(s, 'L7 (Senior Staff)');
         },
         reqBadge: '需 L6 职级 & LeetCode >= 70 & Impact >= 45',
         costBadge: '消耗健康与高阶政治与战略心智',
@@ -1758,7 +1759,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【登顶 L8 Principal 首席架构师】定义行业技术范式与下一代算力/模型标准 (L7 升 L8 终极天堑)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return (cur === 'L7 (Senior Staff)' || cur === 'Senior Staff' || cur === 'L7') && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && (s.impact || 0) >= 80;
+          return normalizeLevel(cur) === 'L7 (Senior Staff)' && meetsOrganicPromo(s, 'L8 (Principal)');
         },
         reqBadge: '需 L7 职级 & LeetCode >= 80 & Impact >= 80',
         costBadge: '消耗健康与终极政治心智',

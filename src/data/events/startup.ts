@@ -159,7 +159,7 @@ export const startupEvents: Record<string, GameEvent> = {
           mid_year: true, season_stage: 'h1',
           health: Math.max(0, s.health - 4),
           network: Math.min(100, (s.network || 0) + 3),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           company_valuation: (s.company_valuation || 180) + 200,
           message: '【Live Demo 技惊全场！】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页，吸引了上千名早期极客用户注册体验！'
         }),
@@ -304,7 +304,7 @@ export const startupEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < (0.55 + s.leetcode / 300);
           return win 
-            ? { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(25, (s.charm || 10) + 4), health: s.health - 15, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' }
+            ? { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4), health: s.health - 15, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' }
             : { health: s.health - 15, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
         },
         nextEventId: h1ToH2Router,
@@ -350,7 +350,7 @@ export const startupEvents: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: (s) => ({
           network: Math.min(100, (s.network || 0) + 4),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           company_valuation: (s.company_valuation || 180) + 80,
           message: '【VC 出面平息】沙丘路领投合伙人亲自出面做利益平衡与期权重组，公司治理结构走向规范化！'
         }),
@@ -388,7 +388,7 @@ export const startupEvents: Record<string, GameEvent> = {
         condition: (s) => (s.charm || 0) >= 14,
         hideIfUnavailable: true,
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           health: Math.max(0, s.health - 6),
           company_valuation: (s.company_valuation || 180) + 150,
           message: '【强大的 Founder 气场】你在咖啡馆用极具感染力的 Demo 与最新 ARR 增长数据彻底打消了合伙人的顾虑，促成对方重新盖章签字！'
@@ -467,7 +467,7 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【现场疯狂 Network】在黑客松现场疯狂 Networking，结识顶级天使投资人与硬核天才',
         effect: (s) => ({
           network: Math.min(100, (s.network || 0) + 4),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           message: '【人脉大丰收】在酒会与披萨台前认识了数位 Sandbox 与 YC 背景的顶尖极客，为下一轮招聘打下了坚实基础。'
         }),
         nextEventId: 'sv_year_end_settlement',
@@ -495,7 +495,7 @@ export const startupEvents: Record<string, GameEvent> = {
           mid_year: true, season_stage: 'h1',
           cash: parseFloat((s.cash + 6).toFixed(1)),
           network: Math.min(100, (s.network || 0) + 10),
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           company_valuation: (s.company_valuation || 180) + 400,
           health: Math.max(0, s.health - 6),
           message: '【YC 加持】你在 Demo Day 面对上千投资人路演，估值信誉暴涨！虽然稀释了 7% 股权，但拿到了顶级校友网络与后续融资的敲门砖！'

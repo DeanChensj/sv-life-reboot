@@ -1796,6 +1796,30 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 32 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 33: charm cap respects max_charm (湾区海王 can exceed 25 up to max_charm)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 33] Charm cap honors max_charm (海王 breaks the old hard-25 ceiling) ---');
+  // 海王: max_charm 30. A charm-granting effect must push charm past 25, up to 30.
+  const seaKing: GameState = { ...generateInitialState(), max_charm: 30, charm: 24, job_type: 'big_tech', company: 'google', level: 'L5 (Senior)' } as GameState;
+  const kingAfter = applyStateTransition(seaKing, { charm: Math.min(seaKing.max_charm ?? 25, seaKing.charm + 8) }, { eventId: 'test' }).nextState;
+  assert((kingAfter.charm ?? 0) > 25, `海王 charm can exceed the old 25 ceiling (got ${kingAfter.charm})`);
+  assert((kingAfter.charm ?? 0) === 30, `海王 charm caps at max_charm=30 (got ${kingAfter.charm})`);
+
+  // Normal player: max_charm 25 still caps at 25 (central clamp backstop).
+  const normal: GameState = { ...generateInitialState(), max_charm: 25, charm: 24 } as GameState;
+  const normalAfter = applyStateTransition(normal, { charm: 24 + 8 }, { eventId: 'test' }).nextState;
+  assert((normalAfter.charm ?? 0) === 25, `Normal player charm still capped at max_charm=25 (got ${normalAfter.charm})`);
+
+  // Central clamp also floors luck at 0 / impact at 0 (robustness backstop).
+  const rogue = applyStateTransition({ ...generateInitialState() } as GameState, { luck: -5, impact: -10 }, { eventId: 'test' }).nextState;
+  assert((rogue.luck ?? 0) >= 0, 'luck floored at 0 by central clamp');
+  assert((rogue.impact ?? 0) >= 0, 'impact floored at 0 by central clamp');
+
+  console.log('✅ CUJ 33 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

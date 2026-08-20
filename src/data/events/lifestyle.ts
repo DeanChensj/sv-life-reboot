@@ -1613,7 +1613,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           ...deductAssets(s, 2),
           health: Math.min(100, s.health + 8),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
           message: '【海岛度假蜜月修复】彻底关掉 Slack 消息通知，在海风与日光下重拾当年的心动，伴侣眼中的坚冰融化，感情重归于好 (花费 $2w, 健康 +8)！'
         }),
@@ -1658,7 +1658,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1.5),
           health: Math.min(100, s.health + 10),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           message: '【远程办公逃离】你果断收拾行李飞往夏威夷茂宜岛！白天在蔚蓝海滩边的遮阳伞下提交 PR，傍晚在落日余晖中冲浪，身心得到了极致放松 (花费 $1.5w, 健康 +10)！'
         }),
         nextEventId: 'sv_year_end_settlement'

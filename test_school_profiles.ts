@@ -53,9 +53,9 @@ for (const [slug, profile] of Object.entries(SCHOOL_PROFILES)) {
   check(`table undergradLabel ${slug}`, getJobDisplayInfo(mkStudent({ school: slug })).companyLabel, profile.undergradLabel);
 }
 
-// 6. choose_school event choices match SCHOOL_PROFILES
+// 6. choose_school event choices: 4 CS-ranking tiers + 1 转码 (career-switcher) entry
 const chooseSchoolEvent = events['choose_school'];
-check('choose_school choices length', chooseSchoolEvent.choices.length, 4);
+check('choose_school choices length', chooseSchoolEvent.choices.length, 5);
 
 console.log(fail === 0 ? '\n🎉 ALL SCHOOL BEHAVIOR CHECKS PASSED' : `\n❌ ${fail} CHECKS FAILED`);
 process.exit(fail === 0 ? 0 : 1);

@@ -105,6 +105,23 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     } else if (currentEventId === 'marriage_divorce_crisis') {
       const reconcile = validChoices.find(c => c.text.includes('婚姻咨询') || c.text.includes('蜜月'));
       chosen = reconcile || validChoices[0];
+    } else if (currentEventId === 'choose_school') {
+      // 转码是少数派起点(~15%,现实中多数玩家走 CS 科班);其余在 CS 排名档里随机。
+      const zhuanma = validChoices.find(c => c.text.includes('转码'));
+      const csChoices = validChoices.filter(c => !c.text.includes('转码'));
+      chosen = (zhuanma && Math.random() < 0.15) ? zhuanma : csChoices[Math.floor(Math.random() * csChoices.length)];
+    } else if (currentEventId === 'zhuanma_background') {
+      // 能力型转码:美本非CS(三条路全开)最灵活。
+      chosen = validChoices.find(c => c.text.includes('美本非CS')) || validChoices[0];
+    } else if (currentEventId === 'zhuanma_decision') {
+      // 付得起就读 CS 美硕(最稳,复用科班管线);否则自学(免费且 signal 略高于 bootcamp)。
+      const ms = validChoices.find(c => c.text.includes('CS 美硕'));
+      const self = validChoices.find(c => c.text.includes('纯自学'));
+      const canAffordMs = (state.cash + (state.stocks || 0)) >= 30;
+      chosen = (canAffordMs && ms) ? ms : (self || validChoices[0]);
+    } else if (currentEventId === 'zhuanma_setback') {
+      // 只要还能再战就不放弃(competent 玩家坚持);实在不行才止损 washout。
+      chosen = validChoices.find(c => c.text.includes('再刷一年')) || validChoices[validChoices.length - 1];
     } else {
       chosen = validChoices[Math.floor(Math.random() * validChoices.length)];
     }

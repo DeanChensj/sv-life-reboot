@@ -402,7 +402,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '作为创投项目负责人，你在“挑战杯”全国决赛答辩环节面对 VC 评委对商业变现路径的犀利连环追问！',
     choices: [
       {
-        text: '【详实财报应对】用详实的财报模型与用户 LTV 数据沉着应对',
+        text: '【详实财报答辩】用详实的财报模型与用户 LTV 数据沉着应对',
         effect: (s) => ({ cash: s.cash + 1.2, charm: Math.min(25, s.charm + 6), message: ' 斩获金奖！评委大赞你的商业逻辑极具实战价值，当场颁发了 $1.2w 比赛项目奖金！' }),
         nextEventId: 'cn_college_year3',
       },
@@ -760,7 +760,7 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '春假到了！室友们租了辆车，喊你一起沿加州 1 号公路自驾去 LA / 拉斯维加斯浪一圈。可是下周就是期中考。',
      choices: [
        {
-         text: '【青春就该疯一把】青春就该疯一把！Let\u0027s go 公路旅行',
+         text: "【加州公路自驾】青春就该疯一把！Let's go 开启加州 1 号公路自驾",
          condition: (s) => s.cash >= 1,
          effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 12), charm: Math.min(s.max_charm ?? 25, s.charm + 6), luck: Math.min(99, s.luck + 3), message: '17 英里海岸、比克斯比大桥、赌城霓虹……你拍了一路大片，身心彻底放松，还和同行的朋友结下了铁哥们儿情谊！' }),
          nextEventId: collegeNextStage,
@@ -941,7 +941,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: pickCollegeEvent,
       },
       {
-        text: '【华尔街量化方向】选择 2 年标准项目，准备 Quant/风控与投资面试 (24岁毕业)',
+        text: '【主攻量化金融】选择 2 年标准项目，准备 Quant/风控与投资面试 (24岁毕业)',
         effect: (s) => ({
           cash: s.cash + 2.5,
           leetcode: s.leetcode + 8,

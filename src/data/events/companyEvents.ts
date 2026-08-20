@@ -54,7 +54,7 @@ export const companyEvents: Record<string, GameEvent> = {
     description: '小扎在全员会上再次宣布公司要 All-in 新方向，你手上的项目被当场砍掉。要么赌一把转去新方向的核心组冲业绩，要么稳一手混个 Meets 保平安。',
     choices: [
       {
-        text: '【转去核心新方向】赌一把：转去 All-in 新方向核心组，冲影响力',
+        text: '【转投 AI 核心架构】赌一把：转去 All-in 新方向核心组，冲影响力',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.35 + ((s.network || 10) / 100) * 0.5);

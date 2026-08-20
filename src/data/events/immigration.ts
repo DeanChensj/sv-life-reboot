@@ -96,7 +96,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'post_green_card',
       },
       {
-        text: '【申请】申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国，搬迁成本)',
+        text: '【外派温哥华 L-1】申请 Relocate 到温哥华 Office 办 L-1 签证 (曲线救国)',
         costBadge: '花费 $3w',
         // Kept universally available (it is the crisis's guaranteed fallback so the
         // screen always has an actionable choice), but no longer FREE — a relocation
@@ -141,7 +141,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (s.story_flags?.h1b_rfe_denied ? 'h1b_fallback_options' : h1ToH2Router(s)),
       },
       {
-        text: '【摆烂】摆烂：把 RFE 抛诸脑后，先跟老妈吐槽一通 (不答复 RFE，赌它平稳失效)',
+        text: '【消极摆烂吐槽】摆烂：把 RFE 抛诸脑后，先跟老妈吐槽一通 (不答复 RFE)',
         // No longer a free crisis solver: ignoring the RFE is a real gamble — 35% the
         // visa falls into jeopardy. It trades health relief for that risk vs choice 1.
         effect: (s) => {
@@ -256,7 +256,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【选择】砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD或硬核算法背景)',
+        text: '【砸重金急办 O-1 签证】找顶级律所加急办理 O-1 杰出人才签证 (需现金 >= $8w，限 PhD 或硬核背景)',
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
@@ -301,13 +301,13 @@ export const immigrationEvents: Record<string, GameEvent> = {
     choices: [
 
       {
-        text: '【选择】砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
+        text: '【全款买下 Atherton 豪宅】全款拿下 Atherton 顶级学区豪宅！(消耗 $300w · 可用股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
         effect: (s) => ({ ...deductAssets(s, 300), visa: s.visa === VISA_STATUS.CITIZEN ? VISA_STATUS.CITIZEN : VISA_STATUS.GREEN_CARD, gc_progress: 5, gc_stage: 'approved', rent: 0, has_housing: true, housing_name: HOUSING_NAMES.ATHERTON, charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【继续在】继续在 Open House 现场观望挑房 (回到日常行动)',
+        text: '【现场观望挑房】继续在 Open House 现场观望挑房 (回到日常行动)',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
         nextEventId: 'sv_year_end_settlement',
       },

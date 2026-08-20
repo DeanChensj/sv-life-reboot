@@ -11,7 +11,7 @@ export const settlementEvents: Record<string, GameEvent> = {
     description: '今年的精力已耗尽，系统正在为你结算工资、扣除房租，并计算绿卡排期...',
     choices: [
       {
-        text: '【结算并迎接新的一】结算并迎接新的一年',
+        text: '【迎接新的一年】年终结算完毕，以全新状态迎接新的一年',
         effect: (s) => {
            let newStartupTenure = s.startup_tenure || 0;
            if (!s.laid_off && s.job_type === 'startup') {

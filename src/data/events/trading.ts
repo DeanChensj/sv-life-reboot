@@ -367,7 +367,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '一个高中同学突然拉你进了一个 Web3 交流群，里面的人天天晒豪车和几十倍收益的截图。',
     choices: [
       {
-        text: '【冲土狗币搏一把】搏一搏，单车变摩托！投入 $5w',
+        text: '【高杠杆冲土狗币】搏一搏，单车变摩托！投入 $5w (高风险)',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
           const winRate = 0.01 + (Math.min(45, s.luck) / 100) * 0.15;

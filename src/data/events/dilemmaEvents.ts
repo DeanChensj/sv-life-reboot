@@ -56,7 +56,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
     description: '公司到了决定生死的冲刺窗口：投资人等着看数据，deadline 迫在眉睫。而家里，伴侣已经独自撑了好几个月，最近一次争吵后对你说：「你心里到底还有没有这个家？」',
     choices: [
       {
-        text: '【All-in 初创拼一把】All-in 扑进公司，赌一把改变命运窗口 (冷落家庭)',
+        text: '【All-in 初创拼搏】All-in 扑进公司，赌一把改变命运窗口 (冷落家庭)',
         condition: employed,
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 6),

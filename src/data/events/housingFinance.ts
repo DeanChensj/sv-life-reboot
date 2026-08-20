@@ -18,17 +18,17 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     description: '恭喜你拿到 Offer 开启职场生涯！现在你需要在湾区租房。房租会作为你每年的固定开销。',
     choices: [
       {
-        text: '【豪华】豪华 1b1b (每年 4 万美元): 环境好，心情愉悦',
+        text: '【整租豪华 1B1B】泳池健身房全配，独立私密品质生活 (年租金 $4w)',
         effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: HOUSING_NAMES.SAN_JOSE_LUXURY, message: '你租下了带有池高级公寓，生活质量极高，相亲市场竞争力上升。' }),
         nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
       {
-        text: '【和朋友合租】和朋友合租 2b2b (每年 2 万美元): 性价比高',
+        text: '【合租南湾 2B2B】与室友分摊开销，性价比之选 (年租金 $2w)',
         effect: (s) => ({ rent: 2, has_housing: true, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, message: '你和朋友合租，偶尔会因为抢厕所和洗碗吵架，但省下了不少钱。' }),
         nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       },
       {
-        text: '【挂壁大客厅】挂壁大客厅 (每年 1 万美元): 终极省钱',
+        text: '【挂壁客厅隔间】极致压低开销狂攒首付，终极省钱 (年租金 $1w)',
         effect: (s) => ({ rent: 1, charm: s.charm - 2, health: s.health - 15, has_housing: true, housing_name: HOUSING_NAMES.LIVING_ROOM_SCREEN, message: '你睡在客厅，用帘子隔开。每天被室友做饭吵醒，毫无隐私，连相亲都不敢带人回家。' }),
         nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : 'sv_daily_life'
       }
@@ -41,29 +41,29 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     description: '身价与年薪变了，是时候调整你的固定住房开支与居住体验了。',
     choices: [
       {
-        text: '【豪华】豪华 1b1b (每年 4 万美元): 泳池健身房与全职门卫，提振相亲社交',
+        text: '【升级豪华 1B1B】泳池健身房与全职门卫，提振社交生活 (年租金 $4w)',
         condition: (s) => s.cash >= 4 || s.tc >= 18,
         effect: (s) => ({ rent: 4, charm: Math.min(25, s.charm + 3), health: Math.min(100, s.health + 15), housing_name: HOUSING_NAMES.SAN_JOSE_LUXURY, last_housing_action_year: s.year, message: '你搬进了带无边泳池的高级公寓！生活质量飙升！' }),
         nextEventId: returnToAnnualPanel
       },
       {
-        text: '【和朋友合租】和朋友合租 2b2b (每年 2 万美元): 性价比极高的湾区中产标准',
+        text: '【合租标准 2B2B】性价比极高的湾区中产标准 (年租金 $2w)',
         effect: (s) => ({ rent: 2, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, last_housing_action_year: s.year, message: '你搬进了 Cupertino 经典的双主卧合租公寓，省钱又方便。' }),
         nextEventId: returnToAnnualPanel
       },
       {
-        text: '【挂壁大客厅隔间】挂壁大客厅隔间 (每年 1 万美元): 极致压低开销狂攒首付/防破产',
+        text: '【降级挂壁客厅隔间】极致压低开销狂攒首付/防破产 (年租金 $1w)',
         effect: (s) => ({ rent: 1, charm: Math.max(0, s.charm - 2), health: Math.max(0, s.health - 10), housing_name: HOUSING_NAMES.LIVING_ROOM_SCREEN, last_housing_action_year: s.year, message: '你搬回了客厅屏风隔间，将每年固定的房租开销砍到了极致。' }),
         nextEventId: returnToAnnualPanel
       },
       {
-        text: '【终极挂壁】终极挂壁：连夜退租！搬进特斯拉/租用 Van 里睡车顶 (房租归零 $0/年)',
+        text: '【终极挂壁睡车顶】连夜退租！搬进特斯拉/露营车里睡车顶 (房租归零 $0/年)',
         condition: (s) => !!(s.car && s.car !== 'none'),
         effect: (s) => ({ rent: 0, housing_name: HOUSING_NAMES.TESLA_ROOF, health: Math.max(0, s.health - 15), last_housing_action_year: s.year, message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
         nextEventId: returnToAnnualPanel
       },
       {
-        text: '【算了】算了，目前的房子住得挺好，不搬了',
+        text: '【维持现状不搬家】目前的房子住得挺好，暂不搬家',
         effect: (s) => ({ last_housing_action_year: s.year, message: '你打消了搬家念头。' }),
         nextEventId: returnToAnnualPanel
       }
@@ -77,7 +77,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     imageUrl: 'images/house.jpg',
     choices: [
       {
-        text: '【选择】抢 Sunnyvale 70年代加州单层老破小 SFH (首付 $45w, 每年地税/房贷消耗低) - 湾区做题家神房',
+        text: '【抢 Sunnyvale 单层老破小】首付 $45w 拿下 Sunnyvale 做题家神房 (年供地税低)',
         costBadge: '首付 $45w',
         reqBadge: '需现金+股票 >= $45w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 45,
@@ -85,7 +85,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: returnToAnnualPanel,
       },
       {
-        text: '【选择】买 North San Jose 现代挑高高密度 Townhouse (首付 $40w, 年供折算 $2.5w) - 颜值极高的小红书美宅',
+        text: '【买 North San Jose 现代美宅】首付 $40w 买下现代挑高 Townhouse (颜值极高)',
         costBadge: '首付 $40w',
         reqBadge: '需现金+股票 >= $40w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 40,
@@ -93,7 +93,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: returnToAnnualPanel,
       },
       {
-        text: '【攻下】攻下 Fremont Mission San Jose 9分顶配学区房 (首付 $65w, 年负担 $4.5w) - 卷二代的终极战场',
+        text: '【攻下 Fremont 顶配学区房】首付 $65w 拿下 Mission San Jose 9分学区房 (卷娃终极战场)',
         costBadge: '首付 $65w',
         reqBadge: '需现金+股票 >= $65w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 65,
@@ -101,7 +101,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: returnToAnnualPanel,
       },
       {
-        text: '【向国内父母紧急开】向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
+        text: '【父母紧急开支票】向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
         costBadge: '自付 $3w (父母资助)',
         reqBadge: '需现金 < $40w 且未曾受助',
         // Available when your own CASH can't cover a down payment (buy_house is only entered
@@ -115,7 +115,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'house_slave',
       },
       {
-        text: '【资金暂时不足】资金暂时不足 / 观望行情，先返回日常行动攒钱',
+        text: '【观望行情继续攒钱】资金暂时不足或观望行情，先返回日常行动攒钱',
         effect: (s) => ({ last_housing_action_year: s.year, message: '你看了一眼加价疯狂且竞争白热化的湾区房市，决定等现金流更充裕时再做打算。' }),
         nextEventId: returnToAnnualPanel,
       },
@@ -128,12 +128,12 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     description: '通过父母举债六个钱包交齐首付买下 Sunnyvale 老破小后，每年固定房屋供税支出让手头极度紧绷。你决定怎么应对接下来的挑战？',
     choices: [
       {
-        text: '【老老实实上班】老老实实上班，咬牙扛住房贷（进入日常行动）',
+        text: '【老实打工扛住房贷】老老实实上班，咬牙扛住房贷月供',
         effect: (s) => ({ rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: Math.max(0, s.health - 5), message: '你把心安在了加州木板老破小里，虽然房贷沉重，但每次看到属于自己的草坪，干劲又回来了！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【把次卧与车库偷偷】把次卧与车库偷偷出租给转码留学生（每年回血 $1.5w 被动现金流）',
+        text: '【次卧车库出租回血】把次卧与车库出租给留学生 (每年回血 $1.5w 现金流)',
         effect: (s) => {
           const badTenant = gameRandom() > 0.65;
           // Renting a spare room does NOT reduce your own mortgage carry; the benefit
@@ -145,7 +145,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【断供卖房！回归租】断供卖房！回归租房生活的自由',
+        text: '【断供卖房回归自由】断供卖房止损，回归租房生活的自由',
         condition: (s) => s.cash < 50,
         // Foreclosure recovers real buyer equity only — nothing if parents funded it
         // (closes the parents-buy → default-sell free-cash exploit). Also stop the
@@ -154,7 +154,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【感觉人生一眼望到】感觉人生一眼望到头，卖房去创业！(要求 100 万现金)',
+        text: '【卖房投身创业浪潮】感觉人生一眼望到头，卖房去创业！(需现金 >= $100w)',
         condition: (s) => s.cash >= 100 && s.job_type !== 'startup_founder',
         // Selling ADDS home equity (was subtracting $50w while keeping the house).
         // Actually liquidate the home and start the FOUNDER path (not the employee event).
@@ -220,7 +220,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【返回日常行动】返回日常行动',
+        text: '【返回日常行动面板】暂不进行房产管理，返回日常行动',
         effect: () => ({ message: '你审视了名下的资产组合与租金收益，决定稳健经营现金流。' }),
         nextEventId: 'sv_year_end_settlement',
       }
@@ -233,7 +233,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     description: '你买下了属于自己的湾区房产，周末在私人草坪庭院举行了乔迁露天烤肉派对 (Housewarming)。',
     choices: [
       {
-        text: '【邀请同事与邻居来】邀请同事与邻居来庭院做天幕 BBQ 派对 (消耗 $0.3w)',
+        text: '【庭院天幕 BBQ 聚会】邀请同事邻居来庭院天幕 BBQ 派对 (消耗 $0.3w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.3),
           charm: Math.min(s.max_charm ?? 25, s.charm + 4),
@@ -245,7 +245,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【拍摄全套】拍摄全套 Home Decor 发小红书“湾区买房心得”',
+        text: '【小红书发买房心得】拍摄全套精致软装，分享“湾区首套房心得”',
         effect: (s) => ({
           charm: Math.min(25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 5),
@@ -263,7 +263,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     description: '手握超过百万元流动现金的你，收到了硅谷华人天使投资俱乐部 (Bay Angels) 的秘密邀请。',
     choices: [
       {
-        text: '【出资】出资 $20w 成为 AI 独角兽 Seed 轮天使投资人 (高风险)',
+        text: '【领投独角兽种子轮】出资 $20w 成为 AI 独角兽 Seed 轮天使投资人 (高风险)',
         // Heavy-tailed like real angel investing: mostly a loss, rare 5x. Stake is
         // deducted up front so a win nets stake×5 − stake = +$80w (was +$100w & +EV).
         effect: (s) => {
@@ -275,7 +275,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【观望不投】观望不投，只去品尝顶级红酒与交流网络',
+        text: '【品尝红酒观望不投】观望不投，只在私宴上品尝顶级红酒拓展人脉',
         effect: (s) => ({
           charm: Math.min(s.max_charm ?? 25, s.charm + 2),
           network: Math.min(100, (s.network || 10) + 3), // "拓展资本圈高管人脉" now grants network
@@ -337,7 +337,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     description: '周五下班回家，你打开信箱赫然发现一封来自 Santa Clara 县 Assessor 评估办公室的挂号信：由于房产评估值重估，你必须限期补缴 Supplemental Property Tax 补充房产税及加州县级附加税！',
     choices: [
       {
-        text: '【咬牙全额缴纳补充】咬牙全额缴纳补充房产税账单 (消耗 $3w 现金)',
+        text: '【全额缴纳补充房产税】咬牙全额缴纳补充房产税账单 (消耗 $3w)',
         costBadge: '消耗 $3w',
         reqBadge: '需现金+股票 >= $3w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 3,
@@ -345,7 +345,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【聘请专业】聘请专业 Property Tax Appeal 申诉律师写辩护书 (花费 $1w 律师费)',
+        text: '【聘请律师申诉减税】聘请 Property Tax Appeal 律师写申诉辩护书 (花费 $1w)',
         costBadge: '花费 $1w',
         reqBadge: '需现金+股票 >= $1w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 1,
@@ -358,7 +358,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【现金吃紧】现金吃紧，向县政府申请税款延期与分期还款协议 (健康 -10)',
+        text: '【申请税款分期还款】向县政府申请税款延期与分期还款协议 (健康 -10)',
         // Safe deferral covers everyone who can't full-pay from assets (<3)
         condition: (s) => (s.cash + (s.stocks || 0)) < 3,
         effect: (s) => ({ health: Math.max(0, s.health - 10), message: '在复杂的延期申诉流程后，你成功申请了税款分期，暂时化解了滞纳金危机。' }),
@@ -373,7 +373,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     description: '周一信箱赫然出现一封盖着 IRS 标志的加急信！美国国税局对你过去三年的股票股票解禁、副业收入以及海外账户 (FBAR) 进行了严格查账，要求补充完整证明或缴纳补税与滞纳金。',
     choices: [
       {
-        text: '【聘请顶级】聘请顶级 CPA 注册会计师与税务律师处理 (消耗 $4w 现金)',
+        text: '【聘请顶级 CPA 律师】聘请顶级 CPA 注册会计师与税务律师处理 (消耗 $4w)',
         costBadge: '消耗 $4w',
         reqBadge: '需现金+股票 >= $4w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 4,
@@ -381,7 +381,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【自己跟】自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w 现金)',
+        text: '【自行沟通补缴罚款】自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w)',
         costBadge: '消耗 $2.5w',
         reqBadge: '需现金+股票 >= $2.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 2.5,
@@ -389,7 +389,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【资金吃紧】资金吃紧，向 IRS 申请分期付款协议 (IA Plan) 并配合补交材料 (健康 -15)',
+        text: '【申请 IRS 分期协议】向 IRS 申请分期付款协议并补交材料 (健康 -15)',
         condition: (s) => (s.cash + (s.stocks || 0)) < 2.5,
         effect: (s) => ({ health: Math.max(0, s.health - 15), message: '经过漫长的电话排队与表格递交，你成功与 IRS 达成了分期付款协议。' }),
         nextEventId: 'sv_year_end_settlement'

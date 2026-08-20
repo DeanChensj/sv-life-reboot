@@ -11,21 +11,21 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【高端局】参加南湾高阶桌游与剧本杀局',
-        reqBadge: '需 算法能力',
+        reqBadge: '需算法硬核能力',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.leetcode >= 40,
         effect: (s) => ({ relationship_status: 'matched', partner_type: 'engineer', message: '【匹配成功】在激烈的狼人杀中，你敏锐的逻辑吸引了同为大厂码农的 TA。双方互加微信，进入 Matched 状态！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【看展看演出】去 SF MOMA 看展或看独立乐队演出',
-        reqBadge: '需 出众形象',
+        reqBadge: '需出众形象',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.charm >= 15,
         effect: (s) => ({ relationship_status: 'matched', partner_type: 'artist', charm: Math.min(30, s.charm + 3), message: '【匹配成功】在昏暗的 Livehouse 里，你与一位在设计学院读书的文青对上了眼。你们聊了王家卫和坂本龙一，进入 Matched 状态！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【高端社交】混入沙丘路 VC 晚宴与红酒品鉴会',
-        reqBadge: '需 雄厚财力',
+        reqBadge: '需雄厚财力',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 50,
         effect: (s) => ({ relationship_status: 'matched', partner_type: 'vc', network: s.network + 10, message: '【匹配成功】你端着香槟在沙丘路的高端晚宴上侃侃而谈，成功吸引了一位年轻有为的 VC 投资人/创业大佬，进入 Matched 状态！' }),
         nextEventId: 'sv_year_end_settlement',
@@ -76,7 +76,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【豪车开局】开豪车直接闪婚 (单身直达结婚)',
-        reqBadge: '需 保时捷/赛博皮卡',
+        reqBadge: '需保时捷/赛博皮卡座驾',
         condition: (s) => (s.car === 'porsche' || s.car === 'cybertruck') && (s.relationship_status === 'single' || !s.relationship_status),
         effect: (s) => {
           return {
@@ -1475,7 +1475,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【家庭顶梁柱】安抚伴侣，支持 TA 居家休整半年 (支出少量积蓄，家庭温情)',
-        costBadge: '支出 $1w 应急金',
+        costBadge: '花费 $1w (应急金)',
         reqBadge: '需总资产 >= $1w',
         condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 1,
         effect: (s) => ({
@@ -1518,7 +1518,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【全力支持 All-in】你单挑大厂房贷底盘，鼓励伴侣去初创博取财富自由',
-        reqBadge: '需现金流稳健 (总资产>=30w)',
+        reqBadge: '需总资产 >= $30w (现金流稳健)',
         condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 30,
         effect: (s) => {
           const hit = gameRandom() < 0.35;

@@ -150,7 +150,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     else if (gameState.cash >= 300 || isOwnedHousing(gameState.housing_name)) medals.push({ tag: 'EST', title: '【Atherton 征服者】', desc: '积攒重金，成功跨越硅谷阶级门槛', rarity: 'SSR', color: '#10b981' });
     if (gameState.car === 'porsche') medals.push({ tag: 'LUX', title: '【脱离民工车鄙视链】', desc: '开上保时捷 Porsche 震撼全场', rarity: 'SR', color: '#c084fc' });
     if (gameState.car === 'cybertruck') medals.push({ tag: 'RAW', title: '【赛博朋克硬核族】', desc: '驾驶多边形皮卡征服 237 号公路', rarity: 'SR', color: '#22d3ee' });
-    if (gameState.visa === '公民') medals.push({ tag: 'SSR', title: '【出生在终点线】', desc: '天生具备美国国籍，不知 H1B 与排期为何物', rarity: 'SSR', color: '#fbbf24' });
+    if (gameState.visa === '公民') medals.push({ tag: 'SSR', title: '【出生在终点线】', desc: '天生具备美国国籍，不知 H-1B 与排期为何物', rarity: 'SSR', color: '#fbbf24' });
     else if (gameState.visa === '绿卡') medals.push({ tag: 'PR', title: '【上岸自由身】', desc: '彻底甩开 USCIS 抽签与签证枷锁', rarity: 'SSR', color: '#60a5fa' });
     if (medals.length === 0) medals.push({ tag: 'SURV', title: '【硅谷打工特种兵】', desc: '在湾区高压环境中顽强奋斗', rarity: 'R', color: '#9ca3af' });
 

@@ -113,7 +113,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: 'wolf',
     category: 'wealth',
     description: '重仓期权或 Crypto 实现了不可思议的一夜暴富。',
-    hint: '暗号：在股市极高风险操作中获利'
+    hint: '暗号：在股市极高风险操作中获利。'
   },
   {
     id: 'l7_senior_staff_architect',
@@ -137,7 +137,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: 'leek',
     category: 'fun',
     description: '炒末日期权或土狗币血本无归，成为华尔街绿油油的韭菜。',
-    hint: '暗号：在股市极高风险操作中亏光本金'
+    hint: '暗号：在股市极高风险操作中亏光本金。'
   }
 ];
 
@@ -164,7 +164,6 @@ export function unlockAchievement(id: string): boolean {
 
 export function checkAndUnlockAchievements(state: GameState): string[] {
   const newlyUnlocked: string[] = [];
-  const msg = state.message || '';
 
   if (((state.job_type === 'ai_research' || state.job_type === 'startup_founder' || state.story_flags?.alex_ipo_done || state.founder_stage === 'exit') && state.status === 'win')) {
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');

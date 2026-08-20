@@ -302,7 +302,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           tc: 0,
           cash: parseFloat((s.cash - 0.5 + 4.5).toFixed(1)),
           network: Math.min(100, (s.network || 0) + 3),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           health: Math.max(0, s.health - 2),
           message: '【斩获 LP 管理费分红】你在量化私董会上凭借优秀的夏普比率惊艳全场，数位科技新贵与天使 LP 委托你打理资金池，获得 +$4.0w 净管理分红！'
         }),
@@ -483,7 +483,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           return win
             ? {
                 cash: parseFloat((s.cash + 8).toFixed(1)),
-                charm: Math.min(25, (s.charm || 10) + 2),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
                 message: '【逃顶大师】你在股票第 4 次向上熔断时果断挂单市价全平，精准收割了 +$8w 游资利润！'
               }
             : {
@@ -509,7 +509,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       {
         text: '【吃瓜看戏发 Meme】吃瓜看戏：拒绝情绪化交易，在 Twitter/X 上发 Meme 表情包',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           health: Math.min(100, s.health + 6),
           message: '【心态超然】你在社交媒体上输出神级 Meme 嘲讽空头与散户互割，收获 10 万浏览量与点赞！'
         }),
@@ -547,7 +547,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.max(0, s.health - 8),
           leetcode: Math.min(100, s.leetcode + 6),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           message: '【深度研报收获】通宵研读让你发现了某半导体产业链的隐藏预期差，交易认知大幅进化！'
         }),
         nextEventId: 'sv_year_end_settlement',

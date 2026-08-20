@@ -741,7 +741,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 last_limited_opp_year: s.year,
                 cash: s.cash + 8,
                 leetcode: s.leetcode + 10,
-                charm: Math.min(25, (s.charm || 10) + 3),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
                 impact: addImpact(s, 8),
                 story_flags: { ...(s.story_flags || {}), last_treehacks_year: s.year },
                 message: '【Hackathon 夺冠】比赛通宵 48 小时！你们的 Demo 拿下了全场总冠军！硅谷顶级天使投资人现场开出 $30w 支票支持团队继续研发，作为核心开发你分到了 $8w！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
@@ -764,7 +764,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           last_limited_opp_year: s.year,
           cash: s.cash - 2.5,
-          charm: Math.min(25, (s.charm || 10) + 5),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 6),
           story_flags: {
             ...(s.story_flags || {}),
@@ -782,7 +782,7 @@ export const careerEvents: Record<string, GameEvent> = {
           last_limited_opp_year: s.year,
           cash: s.cash - 1.2,
           health: Math.min(100, s.health + 10),
-          charm: Math.min(25, (s.charm || 10) + 4),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
           luck: Math.min(99, (s.luck || 20) + 8),
           story_flags: {
             ...(s.story_flags || {}),
@@ -817,7 +817,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           last_limited_opp_year: s.year,
           cash: s.cash - 1.5,
-          charm: Math.min(25, (s.charm || 10) + 5),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 12),
           story_flags: {
             ...(s.story_flags || {}),
@@ -851,7 +851,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 last_limited_opp_year: s.year,
                 cash: s.cash + 3.5,
                 health: Math.max(0, s.health - 5),
-                charm: Math.min(25, (s.charm || 10) + 4),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
                 impact: addImpact(s, 4),
                 message: '【测评爆火】你连续肝夜剪出的 AI Agent 深度评测视频在 YouTube 和小红书大爆！收割了 $4.3w 广告赞助 (净赚 $3.5w)！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
               }
@@ -859,7 +859,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 last_limited_opp_year: s.year,
                 cash: s.cash - 0.8,
                 health: Math.max(0, s.health - 5),
-                charm: Math.min(25, (s.charm || 10) + 2),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
                 message: '【流量平平】视频遭遇了平台算法限流，虽然熬夜没能回本，但积累了宝贵的自媒体剪辑与运营经验。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
               };
         },
@@ -889,7 +889,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           last_limited_opp_year: s.year,
           health: Math.min(100, s.health + 16),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           story_flags: {
             ...(s.story_flags || {}),
             last_yosemite_year: s.year
@@ -935,7 +935,7 @@ export const careerEvents: Record<string, GameEvent> = {
           last_limited_opp_year: s.year,
           cash: s.cash - 1.8,
           health: Math.min(100, s.health + 10),
-          charm: Math.min(25, (s.charm || 10) + 5),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           luck: Math.min(99, (s.luck || 20) + 8),
           story_flags: {
             ...(s.story_flags || {}),
@@ -1389,7 +1389,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
           health: Math.max(0, s.health - 10),
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
         }),
         nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
@@ -1471,7 +1471,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
           health: Math.min(100, s.health + 22),
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           cash: Math.max(0, parseFloat((s.cash - 0.5).toFixed(1))),
           story_flags: {
             ...(s.story_flags || {}),
@@ -1981,7 +1981,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           tc: s.tc + 5,
           health: Math.min(100, s.health + 10),
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           npcs: {
             ...(s.npcs || {}),
             dave: { name: 'Manager Dave', role: 'manager', status: 'nemesis', note: '被你反杀的职场宿敌' }
@@ -2122,7 +2122,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return win
             ? {
                 tc: s.tc + 2,
-                charm: Math.min(25, s.charm + 5),
+                charm: Math.min(s.max_charm ?? 25, s.charm + 5),
                 story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
                 message: '由于你是团队的核心骨干（High Performer），Manager 妥协了，给你申请了特殊的 Remote Exception！'
               }
@@ -2158,7 +2158,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【私信交流面基同胞】私信发帖人交流，结果发现竟然是隔壁工位同胞',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 3), cash: Math.max(0, s.cash - 0.2), message: '你们在 Palo Alto 密谋了一下午抱团取暖指南，并交换了彼此的 Referral 资源库。' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), cash: Math.max(0, s.cash - 0.2), message: '你们在 Palo Alto 密谋了一下午抱团取暖指南，并交换了彼此的 Referral 资源库。' }),
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -2171,12 +2171,12 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【老油条打太极】“抱歉刚才网络卡了……这要看 Trade-off，建议我们 Offline Align 一下”',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 2), message: '经典的硅谷废话太极！高管满意地点了点头，你成功保住了饭碗并继续写出 O(1) 空间复杂度的指针翻转。' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '经典的硅谷废话太极！高管满意地点了点头，你成功保住了饭碗并继续写出 O(1) 空间复杂度的指针翻转。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【手滑共享力扣窗口】手滑点错！把 LeetCode Hard 解题窗口共享给了全会场 60 人！',
-        effect: (s) => ({ health: s.health - 15, charm: Math.min(25, s.charm + 8), cash: s.cash + 10, message: '会议室内一片死寂。你把自己的社死截图匿名发到小红书《全员大会手滑投影了力扣Hard怎么破？》，收获 3 万点赞和 200 条求职 Referral 软广费！' }),
+        effect: (s) => ({ health: s.health - 15, charm: Math.min(s.max_charm ?? 25, s.charm + 8), cash: s.cash + 10, message: '会议室内一片死寂。你把自己的社死截图匿名发到小红书《全员大会手滑投影了力扣Hard怎么破？》，收获 3 万点赞和 200 条求职 Referral 软广费！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -2196,7 +2196,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【打卡户外与极限运动】参加 Lake Tahoe 滑雪 / Hawaii 冲浪 & 纳帕酒庄品酒',
         effect: (s) => ({
           health: Math.min(100, s.health + 10),
-          charm: Math.min(25, (s.charm || 10) + 1),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
           message: '【爽玩雪山与海滩】打卡了顶级雪道与海滩冲浪！全额公费报销，身心得到了放松与充电 (健康 +10)！'
         }),
         nextEventId: 'sv_year_end_settlement',
@@ -2205,7 +2205,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【深夜酒吧与德州扑克】和组员喝精酿鸡尾酒、打德扑、聊湾区八卦与职场内幕',
         effect: (s) => ({
           network: Math.min(99, (s.network || 10) + 4),
-          charm: Math.min(25, (s.charm || 10) + 2),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           health: Math.min(100, s.health + 5),
           message: '【八卦与社交收获】在晚宴酒桌与德扑桌上畅饮谈笑，拉近了与组内同事和小领导的关系，积累了宝贵的职场人际默契。'
         }),
@@ -2447,7 +2447,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【迎合向上管理】通宵帮 VP 定制炫酷的 Agent 营销 Demo，在全网发布会为他站台',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           tc: s.tc + 3.0,
           health: Math.max(0, s.health - 15),
           message: '【成为嫡系】Demo 在社交平台爆火百万转发，VP 逢人便夸你是他的核心技术心腹，年底直接为你破格申请了 +$3w 调薪！'
@@ -2462,7 +2462,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return win
             ? {
                 tc: s.tc + 2.0,
-                charm: Math.min(25, (s.charm || 10) + 4),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
                 message: '【技术派胜利】你的专业驳斥被更高层 CTO 听到了！CTO 叫停了形式主义项目并将技术决策权重新交还给你，你在组员中威望极高！'
               }
             : {
@@ -2540,7 +2540,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.5),
           health: Math.min(100, s.health + 20),
-          charm: Math.min(25, s.charm + 5),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 5),
           message: '全组同事与 VP 亲临现场向你祝贺！你挂上了 L6 Staff 的终极胸牌，成为了湾区技术圈里的传奇神仙！'
         }),
         nextEventId: h1ToH2Router,
@@ -2548,7 +2548,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【深藏功名】保持低调，发小红书“L5 升 L6 心得与系统架构面经”',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 6),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 6),
           luck: Math.min(99, (s.luck || 20) + 10),
           message: '干货面经收割了数千赞！你被尊称为小红书与 Blind 上大佬级技术导师！'
         }),
@@ -2567,7 +2567,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1.0),
           health: Math.min(100, s.health + 25),
-          charm: Math.min(25, (s.charm || 10) + 6),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 6),
           network: Math.min(99, (s.network || 10) + 15),
           message: '全公司各条业务线的 VP 与顶级 VC 合伙人纷纷举杯致意！你已立于硅谷大厂高管与资深决策层的核心交汇点！'
         }),
@@ -2576,7 +2576,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【学术发表】受邀在 IEEE / NeurIPS 发表顶会 Keynote 演讲',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 8),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 8),
           luck: Math.min(99, (s.luck || 20) + 12),
           message: '你的演讲在业界引起巨大轰动，行业内无数顶尖工程师与学生将你视作全领域技术偶像！'
         }),
@@ -2595,7 +2595,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: Math.max(0, s.cash - 2.5),
           health: Math.min(100, s.health + 30),
-          charm: Math.min(25, (s.charm || 10) + 10),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 10),
           network: Math.min(99, (s.network || 10) + 20),
           message: 'CEO 亲自为你颁发公司终身荣誉技术院士奖章！在名流云集的庄园夜色中，你成为了硅谷华人史上无可争议的传世传奇！'
         }),
@@ -2712,7 +2712,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【稳健保守】婉拒全职加入，答应担任外部兼职技术顾问 (保持盟友关系)',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           network: Math.min(100, (s.network || 10) + 15),
           npcs: {
             ...(s.npcs || {}),
@@ -2821,7 +2821,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【朋友圈见证】在朋友圈转发 OmniAgent 商业新闻并为老友 Alex 点赞',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 1),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
           story_flags: {
             ...(s.story_flags || {}),
             alex_ipo_done: true
@@ -2850,7 +2850,7 @@ export const careerEvents: Record<string, GameEvent> = {
             tc: s.tc + 4.5,
             level: nextLvl, last_promo_age: promoted ? s.age : s.last_promo_age, // only stamp on a real level-up
             health: Math.min(100, s.health + 8),
-            charm: Math.min(25, (s.charm || 10) + 3),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
             npcs: {
               ...(s.npcs || {}),
               dave: { name: 'Manager Dave', role: 'manager', status: 'nemesis', note: '职场宿敌，被你的审计证据直接击溃' }
@@ -2939,7 +2939,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【招入麾下】“准了！招进来当我的汇报下属，天天给我写对齐周报”',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 5),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           health: Math.min(100, s.health + 10),
           npcs: {
             ...(s.npcs || {}),
@@ -2956,7 +2956,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【客观包容】不带个人恩怨，就事论事客观评估技术表现',
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 6),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 6),
           network: Math.min(100, (s.network || 10) + 10),
           story_flags: {
             ...(s.story_flags || {}),
@@ -3120,7 +3120,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.max(0, s.health - 8),
           network: Math.min(100, (s.network || 0) + 3),
-          charm: Math.min(25, s.charm + 1),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 1),
           impact: addImpact(s, 5),
           message: '【全球影响力与黑眼圈】早上在被窝里对接伦敦，深夜在书房连线北京。虽然作息紊乱且黑眼圈深重，但你在跨国团队中树立了极强的技术号召力与跨区域影响力。'
         }),
@@ -3521,7 +3521,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【在 Slack `#all-hands` 频道狂发 Meme 表情包】与同组战友用 Emoji 盖楼',
         condition: (_s) => true,
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           network: Math.min(100, (s.network || 10) + 5),
           message: '【Meme 大师破防】每当高管口吐抽象新黑话，你便在内部群精准补刀 :popcorn: :clown: :this_is_fine: 表情包，引得同组同事和跨组好友疯狂点赞，摸鱼革命友谊迅速升温！'
         }),
@@ -3559,7 +3559,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【在内网发起联名请愿书】组织上千名工程师向 CEO 上书要求恢复零食等级',
         condition: (_s) => true,
         effect: (s) => ({
-          charm: Math.min(25, (s.charm || 10) + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           network: Math.min(100, (s.network || 10) + 6),
           message: '【打工人嘴替】你的请愿书一夜之间收获 2,000+ 个 Upvote，高管迫于舆论恢复了部分气泡水供应，你成了大家口中敢于发声的英雄！'
         }),

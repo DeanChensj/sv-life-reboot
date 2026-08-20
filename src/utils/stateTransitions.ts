@@ -101,6 +101,9 @@ export function applyStateTransition(
     newState.stocks = parseFloat(rawStocks.toFixed(2));
   }
   newState.tc = parseFloat(sanitizeNum(newState.tc, 0, 0).toFixed(2));
+  // luck ∈ [0,99],impact 有下限 0 无硬上限(靠自然衰减压住)。集中兜底,事件无需再各自 clamp。
+  if (newState.luck !== undefined) newState.luck = sanitizeNum(newState.luck, 20, 0, 99);
+  if (newState.impact !== undefined) newState.impact = sanitizeNum(newState.impact, 0, 0);
 
   // 3. Global Invariant Guard: Protect Citizen & Green Card status against accidental downgrades
   if (prevState.visa === VISA_STATUS.CITIZEN) {

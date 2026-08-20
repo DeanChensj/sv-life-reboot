@@ -303,12 +303,12 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【金融创投比赛】参加全国大学生商业创投挑战赛',
-        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 4), age: s.age + 2, message: '商业计划书打动了校外评委，拿到了创业鼓励金与名企实习推荐！两年时光悄然流逝。' }),
+        effect: (s) => ({ cash: s.cash + 1.5, charm: Math.min(s.max_charm ?? 25, s.charm + 6), luck: Math.min(99, s.luck + 4), age: s.age + 2, message: '商业计划书打动了校外评委，拿到了创业鼓励金与名企实习推荐！两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(gameRandom() * 4)],
       },
       {
         text: '【文娱自媒体】担任社团主唱 / 运营大学生活 VLOG',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 8), cash: s.cash + 0.8, health: Math.min(100, s.health + 5), age: s.age + 2, message: '你的网游/校园 VLOG 在 B站和小红书小火，涨粉数千并吸引了不少粉丝打赏！两年时光悄然流逝。' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 8), cash: s.cash + 0.8, health: Math.min(100, s.health + 5), age: s.age + 2, message: '你的网游/校园 VLOG 在 B站和小红书小火，涨粉数千并吸引了不少粉丝打赏！两年时光悄然流逝。' }),
         nextEventId: () => ['cn_dorm_game', 'cn_acm_contest', 'cn_business_competition', 'cn_campus_romance'][Math.floor(gameRandom() * 4)],
       },
       {
@@ -343,7 +343,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const pass = s.leetcode >= 20 || gameRandom() < 0.5;
           return pass
-            ? { charm: Math.min(25, s.charm + 4), message: '你的专业术语把辅导员说蒙了，居然逃过一劫还顺手完成了抓包实验！' }
+            ? { charm: Math.min(s.max_charm ?? 25, s.charm + 4), message: '你的专业术语把辅导员说蒙了，居然逃过一劫还顺手完成了抓包实验！' }
             : { health: s.health - 10, message: '辅导员根本不信你的鬼话，寝室被通报批评，扣除当月奖学金评定资格。' };
         },
         nextEventId: 'cn_college_year3',
@@ -404,7 +404,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【详实财报答辩】用详实的财报模型与用户 LTV 数据沉着应对',
-        effect: (s) => ({ cash: s.cash + 1.2, charm: Math.min(25, s.charm + 6), message: ' 斩获金奖！评委大赞你的商业逻辑极具实战价值，当场颁发了 $1.2w 比赛项目奖金！' }),
+        effect: (s) => ({ cash: s.cash + 1.2, charm: Math.min(s.max_charm ?? 25, s.charm + 6), message: ' 斩获金奖！评委大赞你的商业逻辑极具实战价值，当场颁发了 $1.2w 比赛项目奖金！' }),
         nextEventId: 'cn_college_year3',
       },
       {
@@ -423,12 +423,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【顺水推舟加微信】顺水推舟互加微信，约对方周末去逛街看电影',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '极速脱单！你们聊得无比投机，顺理成章确立了热恋关系 (Dating)！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '极速脱单！你们聊得无比投机，顺理成章确立了热恋关系 (Dating)！' }),
         nextEventId: 'cn_college_year3',
       },
       {
         text: '【硬核直男讲题】高冷解答：“这道题用拉格朗日中值定理即可，不必客气”',
-        effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(25, s.charm + 2), message: '你保持了高冷做题家的尊严！虽然错过了恋爱，但对方直呼你是“解题考霸”！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你保持了高冷做题家的尊严！虽然错过了恋爱，但对方直呼你是“解题考霸”！' }),
         nextEventId: 'cn_college_year3',
       }
     ]
@@ -454,7 +454,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【金融咨询实习】投递顶级外企咨询与券商行研实习',
-        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(25, s.charm + 6), health: s.health - 8, age: s.age + 2, message: '获得了极佳的金融行研锻炼，简历含金量大增！顺利从本科毕业！' }),
+        effect: (s) => ({ cash: s.cash + 3, charm: Math.min(s.max_charm ?? 25, s.charm + 6), health: s.health - 8, age: s.age + 2, message: '获得了极佳的金融行研锻炼，简历含金量大增！顺利从本科毕业！' }),
         nextEventId: 'cn_undergrad_grad',
       },
       {
@@ -665,7 +665,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【精致 Demo 视觉致胜】砍掉复杂并发功能，专注于写精致的前端 Demo 与 PPT 演示',
         effect: (s) => ({
-          charm: Math.min(25, s.charm + 5),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 5),
           cash: s.cash + 0.5,
           npcs: {
             ...(s.npcs || {}),
@@ -695,7 +695,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【找学霸室友抱大腿】找学霸室友通宵抱大腿，共同解出作业与例题',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: s.health + 2, message: '成功靠团队协作渡过难关，保住了 3.8+ 的优异 GPA！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: s.health + 2, message: '成功靠团队协作渡过难关，保住了 3.8+ 的优异 GPA！' }),
         nextEventId: collegeNextStage,
       }
     ]
@@ -708,12 +708,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【严谨财务模型】用严谨的财务模型与用户增长曲线征服投资人',
-        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 5), message: ' 拿到种子轮支票！VC 现场为你开出了 $2w 创业启动扶持资金！' }),
+        effect: (s) => ({ cash: s.cash + 2, charm: Math.min(s.max_charm ?? 25, s.charm + 5), message: ' 拿到种子轮支票！VC 现场为你开出了 $2w 创业启动扶持资金！' }),
         nextEventId: collegeNextStage,
       },
       {
         text: '【动人愿景故事】讲出动人的愿景故事，拉满现场演示舞台感染力',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 5), message: '全场爆发出欢呼！虽然没要投资，但结识了一圈顶级投资圈高管人脉！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 6), luck: Math.min(99, s.luck + 5), message: '全场爆发出欢呼！虽然没要投资，但结识了一圈顶级投资圈高管人脉！' }),
         nextEventId: collegeNextStage,
       }
     ]
@@ -726,12 +726,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【主动邀约 Boba 奶茶】主动邀请对方去饮品店喝 Boba 奶茶交流音乐',
-        effect: (s) => ({ charm: Math.min(25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '恋爱甜度拉满！你们越聊越投机，顺理成章确立了热恋关系 (Dating)！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '恋爱甜度拉满！你们越聊越投机，顺理成章确立了热恋关系 (Dating)！' }),
         nextEventId: collegeNextStage,
       },
       {
         text: '【礼貌道谢奔向机房】礼貌道谢：“谢谢夸奖，我还要去机房调代码”',
-        effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(25, s.charm + 2), message: '高冷风范！你潇洒地背起吉他走向机房，成为了传说中的冷酷吉他手！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '高冷风范！你潇洒地背起吉他走向机房，成为了传说中的冷酷吉他手！' }),
         nextEventId: collegeNextStage,
        }
      ]
@@ -905,7 +905,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         text: '【前沿学术科研】跟教授进 AI 实验室做 Research (冲全奖 PhD)',
         // Being research-ready is NOT the same as holding a PhD. Track it as a flag
         // that boosts PhD-admit odds; is_phd is only set where a PhD is actually earned.
-        effect: (s) => ({ leetcode: s.leetcode + 12, charm: Math.min(25, s.charm + 4), health: s.health - 8, age: s.age + 2, story_flags: { ...(s.story_flags || {}), phd_ready: true, college_next: 'us_undergrad_grad' }, message: '你拿到了顶尖教授的强力推荐信，具备了申请顶尖 PhD 的资本！顺利毕业！' }),
+        effect: (s) => ({ leetcode: s.leetcode + 12, charm: Math.min(s.max_charm ?? 25, s.charm + 4), health: s.health - 8, age: s.age + 2, story_flags: { ...(s.story_flags || {}), phd_ready: true, college_next: 'us_undergrad_grad' }, message: '你拿到了顶尖教授的强力推荐信，具备了申请顶尖 PhD 的资本！顺利毕业！' }),
         nextEventId: pickCollegeEvent,
       },
       {
@@ -918,7 +918,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【佛系阳光青春】适度放松，在加州阳光下享受最后的大学青春',
-        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(25, s.charm + 5), age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '虽然没有实习经历，但你度过了人生中最无忧无虑的高年级时光！' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(s.max_charm ?? 25, s.charm + 5), age: s.age + 2, story_flags: { ...(s.story_flags || {}), college_next: 'us_undergrad_grad' }, message: '虽然没有实习经历，但你度过了人生中最无忧无虑的高年级时光！' }),
         nextEventId: pickCollegeEvent,
       }
     ]
@@ -946,7 +946,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: s.cash + 2.5,
           leetcode: s.leetcode + 8,
-          charm: Math.min(25, s.charm + 4),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 4),
           age: s.age + 2,
           is_master: true,
           story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
@@ -959,7 +959,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           leetcode: s.leetcode + 6,
           health: s.health - 8,
-          charm: Math.min(25, s.charm + 3),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           age: s.age + 1,
           is_master: true,
           story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
@@ -1083,7 +1083,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           age: s.age + 1,
           year: s.year + 1,
           leetcode: s.leetcode + 18,
-          charm: Math.min(25, (s.charm || 10) + 1),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
           company: 'cn_big_tech',
           job_type: 'cn_tech',
           level: '初级研发',
@@ -1431,12 +1431,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【疯狂 Network】疯狂 Network，结识学术大牛与顶尖 Lab 负责人 (耗时 1 年顺利毕业答辩)',
-        effect: (s) => ({ charm: Math.min(25, (s.charm || 10) + 5), age: s.age + 1, year: s.year + 1, health: Math.max(0, s.health - 8), is_phd: true, network: Math.min(100, (s.network || 10) + 20), leetcode: Math.min(100, s.leetcode + 20), message: '你成功给几位学术大佬与 OpenAI/Google 研究员留下了深刻印象。回到学校后顺利完成 Defense，拿到了沉甸甸的 PhD 学位！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5), age: s.age + 1, year: s.year + 1, health: Math.max(0, s.health - 8), is_phd: true, network: Math.min(100, (s.network || 10) + 20), leetcode: Math.min(100, s.leetcode + 20), message: '你成功给几位学术大佬与 OpenAI/Google 研究员留下了深刻印象。回到学校后顺利完成 Defense，拿到了沉甸甸的 PhD 学位！' }),
         nextEventId: 'phd_job_hunt'
       },
       {
         text: '【海滩冲浪放飞自我】去海滩冲浪放飞自我 (引起老板不满，延毕 1 年)',
-        effect: (s) => ({ health: Math.min(100, s.health + 20), charm: Math.min(25, (s.charm || 10) + 5), age: s.age + 2, year: s.year + 2, is_phd: true, leetcode: Math.min(100, s.leetcode + 10), message: '你在海滩上玩疯了，没参加老板组织的组会。老板很生气，多留了你一年才放你毕业。' }),
+        effect: (s) => ({ health: Math.min(100, s.health + 20), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5), age: s.age + 2, year: s.year + 2, is_phd: true, leetcode: Math.min(100, s.leetcode + 10), message: '你在海滩上玩疯了，没参加老板组织的组会。老板很生气，多留了你一年才放你毕业。' }),
         nextEventId: 'phd_job_hunt'
       }
     ]

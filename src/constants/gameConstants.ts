@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   WELCOME_SEEN: 'sv_life_welcome_seen',
   SOUND_MUTED: 'sv_sound_muted',
   ACHIEVEMENTS: 'sv_life_achievements',
+  DYNASTY_SAVE: 'sv_life_dynasty_save',
 } as const;
 
 export const HOUSING_NAMES = {

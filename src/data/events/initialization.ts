@@ -11,9 +11,9 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【隐藏款 SSR·原生美籍】湾区二代，生在终点线！持有美国护照，自带 $15w 留学专款，终身免除 H1B 抽签与 PERM 排期。',
-        reqBadge: '8% 概率开局刷出',
+        reqBadge: '8% 概率开局刷出 (宗族基因可保送)',
         hideIfUnavailable: true,
-        condition: (s) => !!s.is_ssr_unlocked,
+        condition: (s) => !!s.is_ssr_unlocked || (s.active_dynasty_perks || []).includes('perk_native_citizen'),
         effect: (s) => ({
           trait_title: '原生美籍',
           visa: '公民',

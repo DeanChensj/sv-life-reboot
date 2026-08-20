@@ -3,9 +3,11 @@ import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface WelcomeModalProps {
   onStart: () => void;
+  onOpenDynasty?: () => void;
+  generation?: number;
 }
 
-export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onStart }) => {
+export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onStart, onOpenDynasty, generation = 1 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef);
   return (
@@ -57,21 +59,31 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onStart }) => {
             <div>
               <h3 className="text-amber-300 font-bold text-base sm:text-lg mb-0.5 sm:mb-1">隐形枷锁：签证与绿卡</h3>
               <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-                H1B 抽签与绿卡排期，是悬在第一代移民头顶的达摩克利斯之剑。只有尽早上岸，才能在无情的 PIP 与裁员潮中拥有喘息之机。
+                H-1B 抽签与绿卡排期，是悬在第一代移民头顶的达摩克利斯之剑。只有尽早上岸，才能在无情的 PIP 与裁员潮中拥有喘息之机。
               </p>
             </div>
           </div>
 
         </div>
 
-        {/* Start Button */}
-        <button
-          onClick={onStart}
-          className="w-full sm:w-2/3 py-3.5 sm:py-4 rounded-xl font-black text-base sm:text-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 cursor-pointer shrink-0 mb-1"
-        >
-          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          抽取初始天赋 (开启人生)
-        </button>
+        {/* Start Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-4/5 justify-center mb-1">
+          <button
+            onClick={onStart}
+            className="flex-1 py-3.5 sm:py-4 rounded-xl font-black text-base sm:text-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          >
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            抽取初始天赋 (第 {generation} 代)
+          </button>
+          {onOpenDynasty && (
+            <button
+              onClick={onOpenDynasty}
+              className="py-3.5 sm:py-4 px-5 rounded-xl font-bold text-sm bg-zinc-800 hover:bg-zinc-700 text-amber-300 border border-amber-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer shrink-0 shadow-md"
+            >
+              <span>🏛️ 宗族基因库</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

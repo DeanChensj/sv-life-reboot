@@ -6,6 +6,7 @@ import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBrea
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
 import { setGameSeed, gameRandom } from './src/utils/random';
 import { determineEnding } from './src/utils/endings';
+import { getDynastyState, saveDynastyState, calculateSettlementRewards, settleDynastyRun, unlockDynastyPerk, applyDynastyToNewGame, DEFAULT_DYNASTY_STATE } from './src/utils/dynastyManager';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
@@ -1794,6 +1795,70 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(washPct >= 25 && washPct <= 40, `转码 washout rate must be in the 25-40% hard-but-fair band (got ${washPct.toFixed(0)}%)`);
 
   console.log('✅ CUJ 32 Passed\n');
+}
+
+// =========================================================================
+// CUJ 33: Roguelite Tech Dynasty & Legacy Heritage Loop
+// =========================================================================
+console.log('--- [CUJ 33] Roguelite Tech Dynasty & Legacy Heritage Loop ---');
+{
+  // Reset clean dynasty state
+  saveDynastyState({ ...DEFAULT_DYNASTY_STATE });
+  let dynasty = getDynastyState();
+  assert(dynasty.generation === 1, 'Initial dynasty starts at generation 1');
+  assert(dynasty.leet_points === 0, 'Initial leet points is 0');
+  assert(dynasty.dynasty_trust_cash === 0, 'Initial trust cash is 0');
+
+  // 1. Simulate a successful Gen-1 FIRE Run ($850w net worth, L8 Principal)
+  let gen1State = generateInitialState();
+  gen1State.age = 42;
+  gen1State.cash = 350;
+  gen1State.stocks = 500;
+  gen1State.level = 'L8 Principal 首席架构师';
+  gen1State.company = 'apple';
+  gen1State.job_type = 'big_tech';
+  gen1State.status = 'win';
+  gen1State.fire_tier = 'comfortable';
+  gen1State.trait_title = '卷王之王';
+
+  const rewards = calculateSettlementRewards(gen1State);
+  assert(rewards.leetPointsEarned >= 400, `Earned substantial leet points (${rewards.leetPointsEarned} >= 400)`);
+  assert(rewards.trustCashEarned >= 20, `Earned dynasty trust fund cash ($${rewards.trustCashEarned}w >= $20w)`);
+  assert(rewards.ancestorRecord.generation === 1, 'Ancestor record tagged with Gen 1');
+
+  // Settle run into persistent store
+  const { updatedDynasty } = settleDynastyRun(gen1State);
+  assert(updatedDynasty.generation === 2, 'Advances to generation 2');
+  assert(updatedDynasty.total_runs === 1, 'Total runs recorded as 1');
+  assert(updatedDynasty.ancestor_hall_of_fame.length === 1, 'Ancestor preserved in Hall of Fame');
+  assert(updatedDynasty.dynasty_trust_cash === rewards.trustCashEarned, 'Trust cash saved');
+
+  // 2. Unlock Dynasty Perks using points
+  const unlockRes1 = unlockDynastyPerk('perk_acm_gold_gene'); // 150 pts
+  assert(unlockRes1.success === true, 'Successfully purchased perk_acm_gold_gene');
+  assert(getDynastyState().unlocked_perk_ids.includes('perk_acm_gold_gene'), 'Perk added to unlocked list');
+
+  const unlockResDuplicate = unlockDynastyPerk('perk_acm_gold_gene');
+  assert(unlockResDuplicate.success === false, 'Cannot re-purchase already unlocked perk');
+
+  // Unlock titanium liver (250 pts)
+  const unlockRes2 = unlockDynastyPerk('perk_titanium_liver');
+  assert(unlockRes2.success === true, 'Successfully purchased perk_titanium_liver');
+
+  // 3. Start Gen-2 New Life and verify inheritance
+  const rawGen2 = generateInitialState();
+  const gen2Life = applyDynastyToNewGame(rawGen2);
+
+  assert(gen2Life.generation === 2, 'Gen-2 life tagged with generation 2');
+  assert(gen2Life.cash > rawGen2.cash, `Gen-2 inherits trust cash ($${gen2Life.cash} > $${rawGen2.cash})`);
+  assert(gen2Life.leetcode >= rawGen2.leetcode + 25, 'Inherited ACM gold gene (+25 LeetCode boost)');
+  assert(gen2Life.health >= rawGen2.health + 10, 'Inherited Titanium liver (+10 Health boost)');
+  assert(gen2Life.active_dynasty_perks?.includes('perk_acm_gold_gene') === true, 'Active perks list populated');
+
+  // Clean up
+  saveDynastyState({ ...DEFAULT_DYNASTY_STATE });
+
+  console.log('✅ CUJ 33 Passed\n');
 }
 
 console.log(`\n======================================================`);

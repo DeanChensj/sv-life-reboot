@@ -58,7 +58,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
 
     ctx.font = '600 18px monospace';
     ctx.fillStyle = primaryColor;
-    ctx.fillText(`${ending.subtitle} // [${ending.rarity}] 结局`, 70, 135);
+    ctx.fillText(`${ending.subtitle} // [${ending.rarity}] 结局 · 第 ${gameState.generation || 1} 代`, 70, 135);
 
     // Divider Line
     ctx.strokeStyle = '#3f3f46';

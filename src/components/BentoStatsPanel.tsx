@@ -9,6 +9,7 @@ interface BentoStatsPanelProps {
   onOpenCodex?: () => void;
   onOpenShop?: () => void;
   onOpenTimeline?: (tab?: 'timeline' | 'chart' | 'summary') => void;
+  onOpenDynasty?: () => void;
   onToggleSound?: () => void;
   isMuted?: boolean;
   hasOpenedShop?: boolean;
@@ -20,6 +21,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   onOpenCodex,
   onOpenShop,
   onOpenTimeline,
+  onOpenDynasty,
   onToggleSound,
   isMuted,
   hasOpenedShop = false,
@@ -94,6 +96,15 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
               >
                 <svg className="w-3 h-3 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>[T] 大事记</span>
+              </button>
+            )}
+            {onOpenDynasty && (
+              <button
+                onClick={onOpenDynasty}
+                className="px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+                title="查看做题家宗族信托与先祖基因"
+              >
+                <span>🏛️ 第 {gameState.generation || 1} 代</span>
               </button>
             )}
           </div>

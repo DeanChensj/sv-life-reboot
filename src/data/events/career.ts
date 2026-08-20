@@ -48,11 +48,12 @@ export const careerEvents: Record<string, GameEvent> = {
           // 中年 ageism (T2)：科技行业的隐性年龄歧视现实里从 ~35 岁就开始 —— 面试通过率随年龄递减
           // (35 岁起每岁 -1.5%，最多 -18%)，让中后期失业/跳槽不再稳稳翻身，制造真实存亡压力。
           const ageBonus = s.age >= 35 ? -Math.min(0.18, (s.age - 35) * 0.015) : 0;
+          const dynastyBonus = (s.active_dynasty_perks || []).includes('perk_sand_hill_uncle') ? 0.12 : 0;
 
           for (const comp of targetCompanies) {
             if (newLeet >= comp.minLeet) {
               const diff = newLeet - comp.minLeet;
-              const passProb = Math.max(0.05, Math.min(0.72, (0.20 + (diff / 85) + econBonus + charmBonus + luckBonus + ageBonus) * comp.weight));
+              const passProb = Math.max(0.05, Math.min(0.78, (0.20 + (diff / 85) + econBonus + charmBonus + luckBonus + ageBonus + dynastyBonus) * comp.weight));
               if (gameRandom() < passProb) {
                 wonOffers.push(comp.id);
               }

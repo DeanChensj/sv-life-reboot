@@ -19,8 +19,10 @@ const AchievementCodexModal = lazy(() => import('./components/AchievementCodexMo
 const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
 const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const CareerTimelineModal = lazy(() => import('./components/CareerTimelineModal').then(m => ({ default: m.CareerTimelineModal })));
+const DynastyModal = lazy(() => import('./components/DynastyModal').then(m => ({ default: m.DynastyModal })));
 
 import { STORAGE_KEYS, isOwnedHousing } from './constants/gameConstants';
+import { applyDynastyToNewGame, settleDynastyRun } from './utils/dynastyManager';
 
 const loadInitialGameData = (): {
   gameState: GameState;
@@ -32,7 +34,11 @@ const loadInitialGameData = (): {
   const raw = safeStorage.getItem(STORAGE_KEYS.GAME_SAVE);
   // No existing save is a clean first run, NOT an error.
   if (!raw) {
-    return migrateSaveData(null);
+    const fresh = migrateSaveData(null);
+    return {
+      ...fresh,
+      gameState: applyDynastyToNewGame(fresh.gameState),
+    };
   }
   try {
     const parsed = JSON.parse(raw);
@@ -78,6 +84,7 @@ export default function App() {
   const [showWarReport, setShowWarReport] = useState<boolean>(false);
   const [showAchievementCodex, setShowAchievementCodex] = useState<boolean>(false);
   const [showCareerTimeline, setShowCareerTimeline] = useState<boolean>(false);
+  const [showDynastyModal, setShowDynastyModal] = useState<boolean>(false);
   const [timelineInitialTab, setTimelineInitialTab] = useState<'timeline' | 'chart' | 'summary'>('chart');
   const [isShopOpen, setIsShopOpen] = useState<boolean>(false);
   const [hasOpenedShop, setHasOpenedShop] = useState<boolean>(initialGameData.hasOpenedShop);
@@ -554,6 +561,15 @@ export default function App() {
       }
     }
 
+    // Check if run just finished (win / retired / game_over)
+    if (finalState.status !== 'playing' && gameState.status === 'playing') {
+      try {
+        settleDynastyRun(finalState);
+      } catch (e) {
+        console.error('[settleDynastyRun] failed', e);
+      }
+    }
+
     // 3. Commit state exactly once with the final immutable object.
     setGameState(finalState);
     if (nextId) {
@@ -564,11 +580,14 @@ export default function App() {
   const resetGame = () => {
     safeStorage.removeItem(STORAGE_KEYS.GAME_SAVE);
     safeStorage.removeItem(STORAGE_KEYS.INITIAL_SEED);
-    setGameState(generateInitialState());
+    const newBase = generateInitialState();
+    const dynastyState = applyDynastyToNewGame(newBase);
+    setGameState(dynastyState);
     setCurrentEventId('choose_trait');
     setShowWarReport(false);
     setShowAchievementCodex(false);
     setShowCareerTimeline(false);
+    setShowDynastyModal(false);
     setHasUnlockedShopToast(false);
     setHasOpenedShop(false);
   };
@@ -603,6 +622,15 @@ export default function App() {
                 setShowWelcome(false);
                 safeStorage.setItem(STORAGE_KEYS.WELCOME_SEEN, 'true');
               }}
+              onOpenDynasty={() => setShowDynastyModal(true)}
+              generation={gameState.generation || 1}
+            />
+          )}
+
+          {/* Dynasty & Ancestor Codex Modal */}
+          {showDynastyModal && (
+            <DynastyModal
+              onClose={() => setShowDynastyModal(false)}
             />
           )}
 
@@ -876,6 +904,14 @@ export default function App() {
               <svg className="w-3 h-3 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span>大事记</span>
             </button>
+
+            {/* Dynasty Mobile Button */}
+            <button
+              onClick={() => setShowDynastyModal(true)}
+              className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>🏛️ #{gameState.generation || 1}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -901,6 +937,7 @@ export default function App() {
             onOpenCodex={handleOpenCodex} 
             onOpenShop={handleOpenShop}
             onOpenTimeline={handleOpenTimeline}
+            onOpenDynasty={() => setShowDynastyModal(true)}
             onToggleSound={handleToggleSound} 
             isMuted={isMuted} 
             hasOpenedShop={hasOpenedShop}
@@ -919,6 +956,7 @@ export default function App() {
               onOpenCodex={handleOpenCodex} 
               onOpenShop={handleOpenShop}
               onOpenTimeline={handleOpenTimeline}
+              onOpenDynasty={() => setShowDynastyModal(true)}
               onToggleSound={handleToggleSound} 
               isMuted={isMuted} 
               hasOpenedShop={hasOpenedShop}
@@ -1152,26 +1190,32 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <button
                       onClick={() => setShowWarReport(true)}
-                      className="px-6 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-base transition-all duration-200 active:scale-[0.985] shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2.5"
+                      className="px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-extrabold text-sm sm:text-base transition-all duration-200 active:scale-[0.985] shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2"
                     >
-                      <svg className="w-5 h-5 text-zinc-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                      <span>生成炫彩战报海报</span>
+                      <svg className="w-4 h-4 text-zinc-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      <span>战报海报</span>
                     </button>
                     <button
                       onClick={() => setShowCareerTimeline(true)}
-                      className="px-6 py-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-sky-300 border border-sky-500/30 font-bold text-base transition-all active:scale-[0.985] cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                      className="px-5 py-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-sky-300 border border-sky-500/30 font-bold text-sm sm:text-base transition-all active:scale-[0.985] cursor-pointer flex items-center justify-center gap-2 shadow-md"
                     >
-                      <svg className="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      <span>大事记编年史</span>
+                      <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <span>大事记</span>
+                    </button>
+                    <button
+                      onClick={() => setShowDynastyModal(true)}
+                      className="px-5 py-3.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-sm sm:text-base transition-all active:scale-[0.985] cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                    >
+                      <span>🏛️ 宗族基因库</span>
                     </button>
                     <button
                       onClick={resetGame}
-                      className="px-6 py-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-base transition-all active:scale-[0.985] cursor-pointer"
+                      className="px-5 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-semibold text-sm sm:text-base transition-all active:scale-[0.985] cursor-pointer"
                     >
-                      再次重开人生
+                      开启第 {(gameState.generation || 1) + 1} 代
                     </button>
                   </div>
                 </div>

@@ -152,6 +152,9 @@ export interface GameState {
   timeline?: TimelineRecord[]; // 历年生涯大事记
   history_net_worth?: { age: number; year: number; netWorth: number; cash: number; stocks: number }[]; // 资产历年走势
   seed?: number; // 可复现的 PRNG 随机数种子
+  generation?: number; // 宗族代际代数 (第 1 代做题家, 第 2 代二代, ...)
+  inherited_cash?: number; // 继承自先祖信托的启动金 (万美元)
+  active_dynasty_perks?: string[]; // 本局生效的宗族基因 Perks
 }
 
 export interface Choice {
@@ -170,6 +173,44 @@ export interface GameEvent {
   description: string;
   imageUrl?: string;
   choices: Choice[];
+}
+
+export interface AncestorRecord {
+  generation: number;
+  name: string;
+  age: number;
+  finalNetWorth: number; // 万美元
+  endingTitle: string;
+  companyOrRole: string;
+  levelOrStage?: string;
+  fireTier?: string;
+  quote?: string;
+  completedAt: number;
+}
+
+export interface DynastyPerk {
+  id: string;
+  name: string;
+  cost: number; // LeetPoints
+  category: 'health' | 'wealth' | 'career' | 'immigration' | 'network';
+  icon: string;
+  description: string;
+  effectDescription: string;
+}
+
+export interface DynastyState {
+  generation: number; // 宗族代际 (1 = 初代做题家, 2 = 二代, ...)
+  leet_points: number; // 做题家点数
+  total_runs: number; // 累计游玩局数
+  dynasty_trust_cash: number; // 宗族信托启动资金 (万美元)
+  unlocked_perk_ids: string[]; // 已永久解锁的宗族基因
+  ancestor_hall_of_fame: AncestorRecord[]; // 先祖名人堂
+  last_inheritance_summary?: {
+    prevGeneration: number;
+    pointsEarned: number;
+    trustCashEarned: number;
+    reason: string;
+  };
 }
 
 export interface Achievement {

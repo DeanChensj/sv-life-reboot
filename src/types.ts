@@ -63,6 +63,13 @@ export interface StoryFlags {
   macro_efficiency_seen?: boolean;
   macro_rto_seen?: boolean;
   intern_mentored?: boolean;
+  // 转码 on-ramp (非科班逆袭)
+  non_cs_background?: boolean;
+  zhuanma_origin?: 'us' | 'cn'; // 美本非CS / 陆本非CS
+  zhuanma_method?: 'bootcamp' | 'ms' | 'self' | 'cn_defer';
+  zhuanma_attempts?: number; // 转码首战失败次数(控制 washout 阈值)
+  zhuanma_landed?: boolean; // 已上岸(用于后期事件门控 + recap)
+  zhuanma_washout?: boolean; // 转码劝退退出 → 触发 washout 结局
   [key: string]: unknown;
 }
 

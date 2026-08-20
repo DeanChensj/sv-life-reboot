@@ -1712,6 +1712,78 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 31 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 32: 转码 On-Ramp — 起点/方式/上岸/翻车 结构与平衡(失败率 25-40%)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 32] Career-switcher (转码) on-ramp: structure, landing & washout balance ---');
+
+  // 1. Pipeline events exist + choose_school has the 转码 entry
+  for (const id of ['zhuanma_background', 'zhuanma_decision', 'zhuanma_apply', 'zhuanma_setback']) {
+    assert(!!events[id], `${id} event is defined`);
+  }
+  const entry = events['choose_school'].choices.find((c) => c.text.includes('转码'));
+  assert(!!entry, 'choose_school has a 转码 entry option');
+
+  // 2. CS 美硕 method reuses the existing us_master pipeline + launders background
+  const msChoice = events['zhuanma_decision'].choices.find((c) => c.text.includes('CS 美硕'))!;
+  const cnSwitcher: GameState = { ...generateInitialState(), cash: 40, story_flags: { non_cs_background: true, zhuanma_origin: 'cn' } } as GameState;
+  assert(msChoice.condition!(cnSwitcher) === true, 'CS master method available to 陆本 switcher with funds');
+  const msRes = msChoice.effect(cnSwitcher) as Partial<GameState>;
+  assert(msRes.has_us_degree === true, 'CS master method grants US degree (launders non-CS background)');
+  assert(msChoice.nextEventId === 'us_master_year1', 'CS master method reuses us_master pipeline');
+
+  // 3. Bootcamp is 美本-only; 陆本 without master funds cannot pick it
+  const bootcamp = events['zhuanma_decision'].choices.find((c) => c.text.includes('Bootcamp'))!;
+  assert(bootcamp.condition!(cnSwitcher) === false, 'Bootcamp NOT available to 陆本 switcher');
+  const usSwitcherRich: GameState = { ...generateInitialState(), cash: 20, story_flags: { non_cs_background: true, zhuanma_origin: 'us' } } as GameState;
+  assert(bootcamp.condition!(usSwitcherRich) === true, 'Bootcamp available to 美本 switcher with funds');
+
+  // 4. Washout: quitting sets game_over + flag → determineEnding gives the 转码劝退 card
+  const quit = events['zhuanma_setback'].choices.find((c) => c.text.includes('退出转码'))!;
+  const quitRes = quit.effect({ ...generateInitialState(), story_flags: { non_cs_background: true, zhuanma_attempts: 3 } } as GameState) as Partial<GameState>;
+  assert(quitRes.status === 'game_over', 'Quitting 转码 sets game_over');
+  assert(quitRes.story_flags?.zhuanma_washout === true, 'Quitting sets zhuanma_washout flag');
+  const washEnding = determineEnding({ ...generateInitialState(), status: 'game_over', story_flags: { zhuanma_washout: true } } as GameState);
+  assert(washEnding.id === 'zhuanma_washout', 'Washout flag maps to 转码劝退 ending');
+
+  // 5. Balance: a competent self-taught 美本 switcher washes out in 25-40% of careers.
+  //    Models: pick 背水一战 each year; on setback re-grind while allowed, else quit.
+  const applyChoice = events['zhuanma_apply'].choices[0];
+  const retry = events['zhuanma_setback'].choices.find((c) => c.text.includes('再刷一年'))!;
+  let washouts = 0;
+  let cashWentNegative = false;
+  const N = 400;
+  for (let t = 0; t < N; t++) {
+    setGameSeed(9000 + t);
+    // Competent 美本 self-taught entering first hunt: leetcode ~35, age 24.
+    let s: GameState = {
+      ...generateInitialState(7000 + t), job_type: undefined, leetcode: 35, luck: 20, health: 85, cash: 6,
+      age: 24, status: 'playing', has_us_degree: true, visa: 'F1 (学生)',
+      story_flags: { non_cs_background: true, zhuanma_origin: 'us', zhuanma_method: 'self' },
+    } as GameState;
+    let landed = false;
+    for (let guard = 0; guard < 8 && s.status === 'playing'; guard++) {
+      s = applyStateTransition(s, applyChoice.effect(s), { eventId: 'zhuanma_apply' }).nextState;
+      if ((s.cash ?? 0) < 0) cashWentNegative = true;
+      if (s.story_flags?.zhuanma_landed) { landed = true; break; }
+      // setback: re-grind if allowed, else quit (washout)
+      const canRetry = !!retry.condition && retry.condition(s);
+      const pick = canRetry ? retry : quit;
+      s = applyStateTransition(s, pick.effect(s), { eventId: 'zhuanma_setback' }).nextState;
+      if ((s.cash ?? 0) < 0) cashWentNegative = true;
+      if (s.story_flags?.zhuanma_washout || s.status === 'game_over') break;
+    }
+    if (!landed) washouts++;
+  }
+  assert(!cashWentNegative, '转码 path never drives cash negative across samples');
+  const washPct = (washouts / N) * 100;
+  console.log(`   转码(competent 美本自学)washout 率: ${washPct.toFixed(0)}% (目标带 25%~40%)`);
+  assert(washPct >= 25 && washPct <= 40, `转码 washout rate must be in the 25-40% hard-but-fair band (got ${washPct.toFixed(0)}%)`);
+
+  console.log('✅ CUJ 32 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

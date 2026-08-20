@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage, addImpact } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage, addImpact, deductAssets } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 import { SCHOOL_PROFILES } from '../schoolProfiles';
 
@@ -119,8 +119,175 @@ export const initializationEvents: Record<string, GameEvent> = {
         costBadge: `花费 $${SCHOOL_PROFILES.cn.tuition}w`,
         effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.cn.tuition), school: 'cn', leetcode: s.leetcode + SCHOOL_PROFILES.cn.leetcodeBonus, health: Math.min(100, s.health + (SCHOOL_PROFILES.cn.healthDelta || 0)), housing_name: SCHOOL_PROFILES.cn.defaultHousing }),
         nextEventId: 'cn_college_grad',
+      },
+      {
+        text: '【非科班 · 半路转码】读的不是 CS(生化环材 / 文社科 / 金融…)，决心转码入行 (硬开局)',
+        effect: (s) => ({ leetcode: Math.max(0, s.leetcode - 2), charm: Math.min(s.max_charm ?? 25, s.charm + 2), story_flags: { ...(s.story_flags || {}), non_cs_background: true }, message: '你读的并不是计算机专业，但看着同学们纷纷转码进大厂拿高薪，你也咬牙决定投身这场逆袭。' }),
+        nextEventId: 'zhuanma_background',
       }
     ]
+  },
+
+  // ============================ 转码 On-Ramp (非科班逆袭) ============================
+  'zhuanma_background': {
+    id: 'zhuanma_background',
+    title: '转码起点：你的非 CS 本科在哪读？',
+    description: '半路转码,起点决定了你能走哪几条路。美本非科班已经在美国、身份灵活;陆本非科班没有美国学位,基本只能靠一个 CS 美硕来美上岸——但那也意味着最硬核的逆袭。',
+    choices: [
+      {
+        text: '【美本非CS】已在美国读了个非 CS 本科 (F1/OPT),沉没成本已付,可就地转码',
+        effect: (s) => ({
+          has_us_degree: true,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us' },
+          message: '你在美国读了个非 CS 专业,毕业在即才幡然醒悟,决心就地转码上岸。',
+        }),
+        nextEventId: 'zhuanma_decision',
+      },
+      {
+        text: '【陆本非CS】国内非 CS 本科,无美国学位,只能搏一个 CS 美硕来美 (全游戏最硬开局)',
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'cn' },
+          message: '你在国内读了个非 CS 专业,决心砸锅卖铁读个美国 CS 硕士,一步登天转码来美。',
+        }),
+        nextEventId: 'zhuanma_decision',
+      },
+    ],
+  },
+
+  'zhuanma_decision': {
+    id: 'zhuanma_decision',
+    title: '怎么转？三条路各有代价',
+    description: 'Bootcamp 速成快而险、CS 美硕贵而稳、纯自学最省最难。掂量一下自己的钱包、时间与毅力。',
+    choices: [
+      {
+        text: '【Bootcamp 速成训练营】3-6 个月速成刷题,快但 signal 弱、上岸看运气 (花费 $12w)',
+        reqBadge: '美本非CS 专属',
+        condition: (s) => s.story_flags?.zhuanma_origin === 'us' && s.cash >= 12,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 12),
+          leetcode: Math.min(100, s.leetcode + 25),
+          health: Math.max(0, s.health - 5),
+          age: s.age + 1,
+          story_flags: { ...(s.story_flags || {}), zhuanma_method: 'bootcamp' },
+          message: '你报了个硅谷知名 Bootcamp,3 个月魔鬼刷题速成,项目作品集堆了一堆,准备海投！',
+        }),
+        nextEventId: 'zhuanma_apply',
+      },
+      {
+        text: '【CS 美硕 · 洗背景】读个正经 CS 硕士,贵且慢,但学历直接洗白非科班 (花费 $30w · 可股票抵扣)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 30,
+        effect: (s) => {
+          const paid = deductAssets(s, 30);
+          return {
+            ...paid,
+            has_us_degree: true,
+            visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+            story_flags: { ...(s.story_flags || {}), zhuanma_method: 'ms' },
+            message: '你决定读一个正经 CS 硕士,用学历彻底洗白非科班背景——虽然贵,但这是最稳的上岸路。',
+          };
+        },
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【纯自学 + 疯狂刷题】边打工边自学,最省钱但最熬人、最看毅力与运气 (几乎免费)',
+        reqBadge: '美本非CS 专属',
+        condition: (s) => s.story_flags?.zhuanma_origin === 'us',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 2),
+          leetcode: Math.min(100, s.leetcode + 20),
+          health: Math.max(0, s.health - 12),
+          age: s.age + 2,
+          story_flags: { ...(s.story_flags || {}), zhuanma_method: 'self' },
+          message: '你白天搬砖、深夜刷题,啃完了几十本算法书与无数 LeetCode Hard,咬牙自学转码。',
+        }),
+        nextEventId: 'zhuanma_apply',
+      },
+      {
+        text: '【陆本无美硕预算,先回国互联网卷】攒够钱/背景再图后计 (暂缓转码)',
+        condition: (s) => s.story_flags?.zhuanma_origin === 'cn' && (s.cash + (s.stocks || 0)) < 30,
+        effect: (s) => ({
+          job_type: 'cn_tech',
+          company: 'cn_big_tech',
+          level: 'L3',
+          tc: 20,
+          story_flags: { ...(s.story_flags || {}), zhuanma_method: 'cn_defer' },
+          message: '预算不够读美硕,你只能先回国内大厂卷着攒钱,把转码来美的梦想暂时压在心底。',
+        }),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'),
+      },
+    ],
+  },
+
+  'zhuanma_apply': {
+    id: 'zhuanma_apply',
+    title: '转码首战：海投与 Onsite 车轮战',
+    description: '非科班简历、无实习、年龄还比应届生大——你顶着 HR 的挑剔目光,开始了地狱级的海投与 Onsite 车轮战。能不能上岸,就看这一搏了。',
+    choices: [
+      {
+        text: '【背水一战 · 疯狂海投 + 全力 Onsite】赌上一切拿下人生第一个 SWE offer',
+        effect: (s) => {
+          const attempts = Number(s.story_flags?.zhuanma_attempts || 0);
+          // 转码首战上岸率(每次尝试):非科班门槛高,故基数低 + 算法/运气加成 − 年龄歧视(复用 35 岁拐点)。
+          // 自学 signal 略高于 bootcamp。配合最多 3 次重试(每次再刷 +10 算法),目标 competent
+          // 玩家累计上岸 ~60-75%(即 washout 25-40%),让"逆袭"有真实翻车风险。
+          const methodBonus = s.story_flags?.zhuanma_method === 'self' ? 0.03 : 0;
+          const ageMalus = s.age >= 35 ? Math.min(0.18, (s.age - 35) * 0.015) : 0;
+          const prob = Math.max(0.08, Math.min(0.6, 0.12 + (s.leetcode / 320) + ((s.luck || 20) / 500) + methodBonus - ageMalus));
+          if (gameRandom() < prob) {
+            // 上岸:非科班先够得着初创/中型公司(Top100 档),日后再跳。
+            const lvl = s.is_phd ? 'L4' : 'L3';
+            return {
+              job_type: 'startup',
+              company: 'startup',
+              level: lvl,
+              tc: getLevelScaledTC(16, lvl),
+              laid_off: false,
+              story_flags: { ...(s.story_flags || {}), zhuanma_landed: true },
+              message: `【上岸！非科班逆袭成功】历经数十场 Onsite 车轮战,你终于拿到了人生第一个 SWE offer(定级 ${lvl})！非科班的你,正式踏进了梦寐以求的码农大军!`,
+            };
+          }
+          return {
+            health: Math.max(0, s.health - 6),
+            story_flags: { ...(s.story_flags || {}), zhuanma_attempts: attempts + 1 },
+            message: '【全军覆没】几十份简历石沉大海,少数几场 Onsite 也惨遭挂经。非科班的门槛比想象中更高,你有些心力交瘁……',
+          };
+        },
+        nextEventId: (s) => s.story_flags?.zhuanma_landed
+          ? (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
+          : 'zhuanma_setback',
+      },
+    ],
+  },
+
+  'zhuanma_setback': {
+    id: 'zhuanma_setback',
+    title: '转码受挫：再搏一次，还是认清现实？',
+    description: '第一轮全挂了。要不要再花一年沉淀技术、明年再战?还是承认自己不适合、及时止损?',
+    choices: [
+      {
+        text: '【再刷一年题,明年再战】沉淀技术、打磨项目,东山再起 (age +1)',
+        condition: (s) => Number(s.story_flags?.zhuanma_attempts || 0) < 3 && s.health > 15,
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 10),
+          health: Math.max(0, s.health - 5),
+          cash: Math.max(0, s.cash - 2),
+          age: s.age + 1,
+          message: '你把挂经一场场复盘,系统设计与算法又精进了一大截,憋着一口气准备明年卷土重来!',
+        }),
+        nextEventId: 'zhuanma_apply',
+      },
+      {
+        text: '【认清现实,退出转码】耗尽了积蓄与心气,你决定止损,告别这场逆袭梦',
+        condition: (_s) => true,
+        effect: (s) => ({
+          status: 'game_over',
+          story_flags: { ...(s.story_flags || {}), zhuanma_washout: true },
+          message: '几轮下来积蓄见底、心气耗尽,你最终承认转码这条路太难了。你带着遗憾退出了这场逆袭——但重开的机会永远都在。',
+        }),
+        nextEventId: 'end',
+      },
+    ],
   },
 
   'cn_college_grad': {

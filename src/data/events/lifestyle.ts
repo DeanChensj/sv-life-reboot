@@ -1626,6 +1626,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           is_married: false,
           relationship_status: 'single',
           partner: undefined,
+          partner_type: undefined,
           cash: Math.floor(s.cash * 0.5 * 10) / 10,
           stocks: Math.floor((s.stocks || 0) * 0.5 * 10) / 10,
           health: Math.max(0, s.health - 8),

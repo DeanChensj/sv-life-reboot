@@ -54,8 +54,13 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>): void {
       }
     };
 
+    // Lock background scroll while modal is open (prevents mobile double-scroll)
+    const origOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     node.addEventListener('keydown', onKeyDown);
     return () => {
+      document.body.style.overflow = origOverflow;
       node.removeEventListener('keydown', onKeyDown);
       // Restore focus to whatever was focused before the dialog opened.
       previouslyFocused?.focus?.();

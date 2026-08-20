@@ -65,7 +65,6 @@ export const lateGameEvents: Record<string, GameEvent> = {
       {
         text: '【砸钱系统抗衰】砸钱系统抗衰：私教 + 全套体检 + 营养管理 (花费 $5w)',
         costBadge: '花费 $5w',
-        reqBadge: '需现金+股票 >= $5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 5,
         effect: (s) => ({
           cash: parseFloat((s.cash - 5).toFixed(1)),

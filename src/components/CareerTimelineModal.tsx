@@ -231,7 +231,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
               <h2 id="timeline-modal-title" className="text-base sm:text-2xl font-black tracking-tight text-zinc-100 flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <span>生涯大事记 · 资产走势</span>
                 <span className="text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  {gameState.age} 岁 · {gameState.year} 年
+                  {gameState.age} 岁
                 </span>
               </h2>
               <p className="text-[10px] sm:text-xs text-zinc-400 font-mono mt-0.5 line-clamp-1">
@@ -536,19 +536,11 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                             {/* X-axis Tick & Label */}
                             <text 
                               x={p.x} 
-                              y={padTop + plotH + 16} 
+                              y={padTop + plotH + 18} 
                               textAnchor="middle" 
                               className="text-[9px] fill-zinc-500 font-mono"
                             >
                               {p.age}岁
-                            </text>
-                            <text 
-                              x={p.x} 
-                              y={padTop + plotH + 26} 
-                              textAnchor="middle" 
-                              className="text-[8px] fill-zinc-600 font-mono"
-                            >
-                              {p.year}
                             </text>
                           </g>
                         );
@@ -559,7 +551,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                     {hoveredIndex !== null && points[hoveredIndex] && (
                       <div className="mt-3 p-3 rounded-xl bg-zinc-900 border border-zinc-700 flex flex-wrap items-center justify-between gap-3 text-xs font-mono animate-in fade-in">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-zinc-100">{points[hoveredIndex].year} 年 ({points[hoveredIndex].age} 岁)</span>
+                          <span className="font-bold text-zinc-100">{points[hoveredIndex].age} 岁</span>
                           {points[hoveredIndex].isLive && (
                             <span className="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 text-[10px] border border-sky-500/30">实时进行中</span>
                           )}
@@ -594,7 +586,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                             {/* Tooltip */}
                             <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900/95 border border-zinc-700 text-[10px] sm:text-xs font-mono p-2 rounded-xl shadow-2xl pointer-events-none whitespace-nowrap z-30 backdrop-blur-md">
                               <div className="text-zinc-300 font-bold flex items-center gap-1.5">
-                                <span>{h.year} 年 ({h.age} 岁)</span>
+                                <span>{h.age} 岁</span>
                                 {h.isLive && (
                                   <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[9px] border border-emerald-500/30">当前</span>
                                 )}
@@ -642,9 +634,6 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                               <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 group-hover:text-zinc-200">
                                 {h.age}岁
                               </span>
-                              <span className="text-[8px] font-mono text-zinc-600">
-                                {h.year}
-                              </span>
                             </div>
                           </div>
                         );
@@ -681,7 +670,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                   <table className="w-full min-w-[360px] text-left text-xs font-mono">
                     <thead className="text-zinc-500 border-b border-zinc-800 bg-zinc-950/40 sticky top-0">
                       <tr>
-                        <th className="py-1.5 px-2">年份/年龄</th>
+                        <th className="py-1.5 px-2">年龄 / 阶段</th>
                         <th className="py-1.5 px-2 text-right">现金储备</th>
                         <th className="py-1.5 px-2 text-right">股票持仓</th>
                         <th className="py-1.5 px-2 text-right">总净资产</th>
@@ -692,7 +681,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                       {[...chartHistory].reverse().map((row, idx) => (
                         <tr key={idx} className="hover:bg-zinc-800/30 transition-colors">
                           <td className="py-1.5 px-2 font-bold text-zinc-200">
-                            {row.year} 年 ({row.age} 岁)
+                            {row.age} 岁
                           </td>
                           <td className="py-1.5 px-2 text-right text-sky-400">
                             ${row.cash.toFixed(1)}w
@@ -786,7 +775,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                               <span className="text-[11px] sm:text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
-                                {item.year} 年 · {item.age} 岁
+                                {item.age} 岁
                               </span>
                               <span className={`text-[10px] sm:text-[11px] font-mono font-semibold px-2 py-0.5 rounded border flex items-center gap-1 ${meta.badgeClass}`}>
                                 {getCategoryIcon(item.category)}

@@ -5,8 +5,8 @@ import { HOUSING_NAMES, VISA_STATUS } from '../../constants/gameConstants';
 export const immigrationEvents: Record<string, GameEvent> = {
   'h1b_fallback_options': {
     id: 'h1b_fallback_options',
-    title: '【身份突围】H-1B 拯救绝境对策',
-    description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
+    title: '【身份突围】H-1B 拒签应对与紧急自救',
+    description: 'H-1B 遭遇 RFE 拒签或工签出现重大变故！公司律所发来通知需尽快解决合法留美身份，请选择你的自救路线：',
     choices: [
       {
         text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
@@ -39,7 +39,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需总资产 >= $8w, 极高风险)',
         costBadge: '花费 $8w',
-        reqBadge: '需总资产 >= $8w (高风险)',
+        reqBadge: '高风险',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.cash + (s.stocks || 0)) >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const roll = gameRandom();
@@ -85,7 +85,6 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w 总资产)',
         costBadge: '花费 $80w',
-        reqBadge: '需总资产 >= $80w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         // Liquidate stocks to cover the cost when cash is short (was cash-80 only,
         // leaving transient negative cash that poisoned downstream cash-based rolls).
@@ -108,7 +107,6 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【紧急挂靠】紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
         costBadge: '花费 $1.5w',
-        reqBadge: '需总资产 >= $1.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
         nextEventId: 'sv_year_end_settlement',
@@ -215,7 +213,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
-        reqBadge: '需现金 >= $8w (高风险)',
+        costBadge: '花费 $8w',
+        reqBadge: '高风险',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const roll = gameRandom();
@@ -247,6 +246,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 $1.5w)',
+        costBadge: '花费 $1.5w',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           visa: 'Day 1 CPT',
@@ -257,7 +257,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【砸重金急办 O-1 签证】找顶级律所加急办理 O-1 杰出人才签证 (需现金 >= $8w，限 PhD 或硬核背景)',
-        reqBadge: '需现金 >= $8w + 超凡背景',
+        costBadge: '花费 $8w',
+        reqBadge: '需 PhD 或硬核背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = gameRandom() < o1PassProb(s); // shared, consistent O1 odds
@@ -269,7 +270,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w 总资产)',
-        reqBadge: '需总资产 >= $80w',
+        costBadge: '花费 $80w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const fromStocks = Math.max(0, 80 - s.cash);

@@ -90,7 +90,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: SCHOOL_PROFILES.cmu.choiceText,
         costBadge: `花费 $${SCHOOL_PROFILES.cmu.tuition}w`,
-        reqBadge: `需现金 >= $${SCHOOL_PROFILES.cmu.tuition}w`,
         condition: (s) => s.cash >= SCHOOL_PROFILES.cmu.tuition,
         effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.cmu.tuition), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'cmu', age: s.age, leetcode: s.leetcode + SCHOOL_PROFILES.cmu.leetcodeBonus, health: Math.max(0, s.health + (SCHOOL_PROFILES.cmu.healthDelta || 0)), housing_name: SCHOOL_PROFILES.cmu.defaultHousing, message: SCHOOL_PROFILES.cmu.enrollMessage }),
         nextEventId: 'us_undergrad_year1',
@@ -98,7 +97,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: SCHOOL_PROFILES.ucb.choiceText,
         costBadge: `花费 $${SCHOOL_PROFILES.ucb.tuition}w`,
-        reqBadge: `需现金 >= $${SCHOOL_PROFILES.ucb.tuition}w`,
         condition: (s) => s.cash >= SCHOOL_PROFILES.ucb.tuition,
         effect: (s) => ({ cash: Math.max(0, s.cash - SCHOOL_PROFILES.ucb.tuition), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', has_us_degree: true, school: 'ucb', age: s.age, leetcode: s.leetcode + SCHOOL_PROFILES.ucb.leetcodeBonus, network: Math.min(100, (s.network || 10) + (SCHOOL_PROFILES.ucb.networkBonus || 0)), housing_name: SCHOOL_PROFILES.ucb.defaultHousing, message: SCHOOL_PROFILES.ucb.enrollMessage }),
         nextEventId: 'us_undergrad_year1',
@@ -106,7 +104,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: SCHOOL_PROFILES.state.choiceText,
         costBadge: `花费 $${SCHOOL_PROFILES.state.tuition}w (美籍/绿卡 $${SCHOOL_PROFILES.state.inStateTuition}w)`,
-        reqBadge: `需现金 >= $${SCHOOL_PROFILES.state.tuition}w (美籍/绿卡 $${SCHOOL_PROFILES.state.inStateTuition}w)`,
         condition: (s) => s.cash >= ((s.visa === '公民' || s.visa === '绿卡') ? (SCHOOL_PROFILES.state.inStateTuition || 4) : SCHOOL_PROFILES.state.tuition),
         effect: (s) => {
           const cost = (s.visa === '公民' || s.visa === '绿卡') ? (SCHOOL_PROFILES.state.inStateTuition || 4) : SCHOOL_PROFILES.state.tuition;
@@ -499,7 +496,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【申请大U硕士】刷题进厂预备役，避避风头',
         costBadge: '学费 $10w',
-        reqBadge: '需现金 >= $10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => ({
           cash: s.cash - 10,
@@ -536,7 +532,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【自筹申请美国 CS 硕士】自筹资金读正统美硕 (积蓄 $5w 即可申请)',
         costBadge: '花费 $5w',
-        reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => ({
           cash: s.cash - 5,
@@ -968,9 +963,8 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: pickCollegeEvent,
       },
       {
-        text: '【校友人脉内推】选择 2 年标准项目，去硅谷大厂活动混脸熟要内推 (24岁毕业)',
+        text: '【校友人脉内推】选择 2 年标准项目，去硅谷大厂活动混脸熟积累内推 (24岁毕业)',
         costBadge: '花费 $1w',
-        reqBadge: '需现金 >= $1w',
         condition: (s) => s.cash >= 1,
         effect: (s) => ({
           cash: s.cash - 1,
@@ -1018,7 +1012,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【找 ICC 挂靠保底】找 ICC 挂靠 (保底策略)',
         costBadge: '花费 $1w',
-        reqBadge: '需现金 >= $1w',
         condition: (s) => s.cash >= 1,
         effect: (s) => ({
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',

@@ -21,7 +21,6 @@ export const startupEvents: Record<string, GameEvent> = {
       {
         text: '【带资领投】自己掏 $10w 领投公司 Seed 轮自救',
         costBadge: '出资 $10w',
-        reqBadge: '需总资产 >= $10w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 10,
         effect: (s) => {
           const win = gameRandom() < 0.25;
@@ -166,8 +165,8 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【高举高打招聘】重金从 Meta/Google 挖掘架构师补齐工程团队 (需现金>=8w)',
-        reqBadge: '需现金 >= $8w',
+        text: '【高举高打招聘】重金从 Meta/Google 挖掘架构师补齐工程团队',
+        costBadge: '花费 $8w',
         condition: (s) => s.cash >= 8,
         effect: (s) => {
           const success = gameRandom() < 0.65;
@@ -415,8 +414,8 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '随着 AI 算力与 GPU 训练开销激增，公司 Mercury 银行账户里的资金仅够支撑 60 天了。如果无法及时止血，公司将面临断粮关停。',
     choices: [
       {
-        text: '【创始人自掏腰包垫资】创始人自掏腰包垫资 $4w，全力扛到下半年企业客户续约 (需现金>=4w)',
-        reqBadge: '需现金 >= $4w',
+        text: '【创始人自掏腰包垫资】创始人自掏腰包垫资 $4w，全力扛到下半年企业客户续约',
+        costBadge: '垫资 $4w',
         condition: (s) => s.cash >= 4,
         effect: (s) => ({
           cash: parseFloat((s.cash - 4).toFixed(1)),

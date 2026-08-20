@@ -116,16 +116,16 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'interview_onsite_gauntlet_r1',
       },
       {
-        text: '【强力人脉 Referral】凭借学长学姐/熟人总监直通大厂团队',
-        reqBadge: '需人脉关系 >= 25',
-        condition: (s) => (s.network || 0) >= 25,
+        text: '【强力人脉 Referral】凭借学长学姐/熟人总监内推直通终面',
+        reqBadge: '需资深人脉背书 & LeetCode >= 35',
+        condition: (s) => (s.network || 0) >= 30 && s.leetcode >= 35,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
           const referralPool = [
-            { company: 'google', name: 'Google', baseTc: 20, healthDelta: 6, desc: '凭借强大人脉网络 (Referral)，熟人总监推荐你免除简历初筛无缝上岸 Google，享受顶尖 WLB！' },
-            { company: 'meta', name: 'Meta', baseTc: 22, healthDelta: -10, desc: '在熟人 Tech Lead 的强力背书下，你直接拿下 Menlo Park Meta 核心组高额总包，但面临高强度挑战！' },
-            { company: 'apple', name: 'Apple', baseTc: 20, healthDelta: 4, desc: '库比蒂诺 Apple 资深总监开绿灯，将你内推至 Apple Park 核心工程团队，发展平稳且福利丰厚！' },
-            { company: 'microsoft', name: 'Microsoft', baseTc: 19, healthDelta: 8, desc: '微软云与 AI 部门熟人校友直接拉你入组，作息极度规律，生活质量拉满！' }
+            { company: 'google', name: 'Google', baseTc: 20, healthDelta: 6, desc: '凭借强大人脉网络 (Referral) 与扎实的算法储备，熟人总监力挺免除简历初筛，终面发挥出色顺利上岸 Google，享受顶尖 WLB！' },
+            { company: 'meta', name: 'Meta', baseTc: 22, healthDelta: -10, desc: '在熟人 Tech Lead 的强力内推与手撕代码的高分表现下，你直接拿下 Menlo Park Meta 核心组高额总包，但面临高强度挑战！' },
+            { company: 'apple', name: 'Apple', baseTc: 20, healthDelta: 4, desc: '库比蒂诺 Apple 资深总监开绿灯加急终面，你凭借扎实算法顺利过关，内推至 Apple Park 核心工程团队！' },
+            { company: 'microsoft', name: 'Microsoft', baseTc: 19, healthDelta: 8, desc: '微软云与 AI 部门熟人校友直接内推并加急面试，你顺利通过技术终面入组，作息极度规律，生活质量拉满！' }
           ];
           const chosen = referralPool[Math.floor(gameRandom() * referralPool.length)];
           return {
@@ -145,15 +145,16 @@ export const careerEvents: Record<string, GameEvent> = {
         },
       },
       {
-        text: '【校友黑手党/教授内推】凭借名校校友网络与导师背书直通大厂',
-        condition: (s) => isTopTierCSSchool(s.school) || s.is_phd,
+        text: '【校友黑手党/教授内推】凭借名校校友网络与导师背书冲击核心团队',
+        reqBadge: '需名校背景/PhD & LeetCode >= 45',
+        condition: (s) => (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
           const mafiaTargets = [
-            { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: '名校校友直接将你内推进山景城 Googleplex 基础设施组！享受顶尖 WLB 与美味食堂。' },
-            { company: 'meta', name: 'Meta (AI 算法与分布式系统)', tcBoost: 35, healthDrain: 16, desc: '校友总监将你拉入 Menlo Park Meta 核心组，拿到顶格包裹但面临高压节奏！' },
-            { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: '校友学长内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态！' },
-            { company: 'robinhood', name: 'Robinhood (核心交易撮合引擎)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌，校友学姐直接将你带入 Robinhood 核心交易团队，赶上牛市红利期！' }
+            { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: '名校校友与硬核算法表现直接将你推进山景城 Googleplex 基础设施组！享受顶尖 WLB 与美味食堂。' },
+            { company: 'meta', name: 'Meta (AI 算法与分布式系统)', tcBoost: 35, healthDrain: 16, desc: '校友总监与硬核手撕 Hard 题表现将你拉入 Menlo Park Meta 核心组，拿到顶格包裹但面临高压节奏！' },
+            { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: '校友学长与顶尖工程底子内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态！' },
+            { company: 'robinhood', name: 'Robinhood (核心交易撮合引擎)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌与过硬算法，校友学姐直接将你带入 Robinhood 核心交易团队，赶上牛市红利期！' }
           ];
           const chosen = mafiaTargets[Math.floor(gameRandom() * mafiaTargets.length)];
           return { 
@@ -603,10 +604,10 @@ export const careerEvents: Record<string, GameEvent> = {
           const winRate = 0.25 + (s.luck / 100) * 0.15; // 25% - ~40%, realistic H1B lottery odds
           const win = gameRandom() < winRate;
           return win 
-            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
-            : { h1b_attempts: 1, cash: s.cash, health: s.health - 5, message: '第一年 H1B 没抽中！已自动激活 STEM OPT 延期，继续在大厂奋斗并可在年底迎来后续抽签！' };
+            ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, story_flags: { ...(s.story_flags || {}), last_h1b_lottery_year: s.year }, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
+            : { h1b_attempts: 1, story_flags: { ...(s.story_flags || {}), last_h1b_lottery_year: s.year }, cash: s.cash, health: s.health - 5, message: '第一年 H1B 没抽中！已自动激活 STEM OPT 2年延期，继续在大厂奋斗，后续还有2次抽签机会！' };
         },
-        nextEventId: (s) => (!isPermanentVisa(s.visa) && s.visa !== 'H1B (工签)' && s.visa !== 'O1 (杰出人才)' && gameRandom() < 0.35 ? 'h1b_fallback_options' : 'sv_daily_life'),
+        nextEventId: (s) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life',
       },
       {
         text: '【砸钱申办 O-1 签证】找顶级律所申办 O-1 杰出人才签证 (需现金 >= $8w)',
@@ -3168,7 +3169,6 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【敏捷结盟】私下请 Raj 喝 Chai 咖啡，主动学习他的向上汇报与对齐艺术',
         costBadge: '花费 $0.2w',
-        reqBadge: '需现金 >= $0.2w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 0.2,
         effect: (s) => ({
           cash: s.cash - 0.2,

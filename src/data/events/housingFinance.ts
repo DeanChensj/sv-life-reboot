@@ -79,7 +79,6 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【抢 Sunnyvale 单层老破小】首付 $45w 拿下 Sunnyvale 做题家神房 (年供地税低)',
         costBadge: '首付 $45w',
-        reqBadge: '需现金+股票 >= $45w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 45,
         effect: (s) => ({ ...deductAssets(s, 45), rent: 1.5, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health + 10, last_housing_action_year: s.year, imageUrl: 'images/house.jpg', message: '虽说是 1974 年木板老破小且地板走起来吱吱响，但地大 7500 尺能开辟菜园种葱，去 Apple Park 和 Googleplex 只要 12 分钟！做题家终极神房落地！' }),
         nextEventId: returnToAnnualPanel,
@@ -87,7 +86,6 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【买 North San Jose 现代美宅】首付 $40w 买下现代挑高 Townhouse (颜值极高)',
         costBadge: '首付 $40w',
-        reqBadge: '需现金+股票 >= $40w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 40,
         effect: (s) => ({ ...deductAssets(s, 40), rent: 2.5, has_housing: true, housing_name: HOUSING_NAMES.NORTH_SAN_JOSE, charm: Math.min(s.max_charm ?? 25, s.charm + 5), last_housing_action_year: s.year, message: '全套智能家电、石英石大理石中岛！虽然贴着 neighbor 抽油烟机且每月要上缴 $550 恶心 HOA 费，但每天拍 home decor 发小红书点赞爆表！' }),
         nextEventId: returnToAnnualPanel,
@@ -95,7 +93,6 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【攻下 Fremont 顶配学区房】首付 $65w 拿下 Mission San Jose 9分学区房 (卷娃终极战场)',
         costBadge: '首付 $65w',
-        reqBadge: '需现金+股票 >= $65w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 65,
         effect: (s) => ({ ...deductAssets(s, 65), rent: 4.5, has_housing: true, housing_name: HOUSING_NAMES.FREMONT, charm: Math.min(s.max_charm ?? 25, s.charm + 4), luck: s.luck + 10, last_housing_action_year: s.year, message: '为了娃彻底豁出去了！隔壁邻居全是高强度卷 AMC10 和卡内基梅隆机器人夏令营的硅谷老爹，社区图书馆周末全是解题小孩，神教合一！' }),
         nextEventId: returnToAnnualPanel,
@@ -339,7 +336,6 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【全额缴纳补充房产税】咬牙全额缴纳补充房产税账单 (消耗 $3w)',
         costBadge: '花费 $3w',
-        reqBadge: '需现金+股票 >= $3w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 3,
         effect: (s) => ({ cash: s.cash - 3, health: s.health - 5, message: '你一次性补齐了 $3w 房产税账单，虽然心痛不已，但保住了房产产权。' }),
         nextEventId: 'sv_year_end_settlement'
@@ -347,7 +343,6 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【聘请律师申诉减税】聘请 Property Tax Appeal 律师写申诉辩护书 (花费 $1w)',
         costBadge: '花费 $1w',
-        reqBadge: '需现金+股票 >= $1w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 1,
         effect: (s) => {
           const win = gameRandom() < 0.5;
@@ -375,7 +370,6 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【聘请顶级 CPA 律师】聘请顶级 CPA 注册会计师与税务律师处理 (消耗 $4w)',
         costBadge: '花费 $4w',
-        reqBadge: '需现金+股票 >= $4w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 4,
         effect: (s) => ({ cash: s.cash - 4, message: '顶级 CPA 出面帮你处理了所有复杂的税务审计纠纷，彻底平息了 IRS 查账危机！' }),
         nextEventId: 'sv_year_end_settlement'
@@ -383,7 +377,6 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【自行沟通补缴罚款】自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w)',
         costBadge: '花费 $2.5w',
-        reqBadge: '需现金+股票 >= $2.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 2.5,
         effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(0, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),
         nextEventId: 'sv_year_end_settlement'

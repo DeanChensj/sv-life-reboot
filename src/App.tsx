@@ -967,12 +967,23 @@ export default function App() {
                       const isSSR = choice.text.includes('隐藏款') || choice.text.includes('SSR');
                       
                       // Precise badge extraction (prioritize Choice.costBadge / Choice.reqBadge if defined)
-                      const costMatch = choice.costBadge || choice.text.match(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/)?.[0]?.slice(1, -1);
-                      const reqMatch = choice.reqBadge || choice.text.match(/\((?:需要|需|算法|高魅力|现金).*?\)/)?.[0]?.slice(1, -1);
+                      const costMatch = choice.costBadge || choice.text.match(/\((?:消耗|花费|每年|成本|折抵|实付|首付|出资|学费|自付|垫资).*?\)/)?.[0]?.slice(1, -1);
+                      let reqMatch: string | undefined = choice.reqBadge || choice.text.match(/\((?:需要|需|仅限|限|超凡|高魅力|算法|高风险).*?\)/)?.[0]?.slice(1, -1);
+
+                      // Smart Deduplication: If reqMatch only restates the monetary cash requirement that costMatch already conveys, suppress reqMatch
+                      if (costMatch && reqMatch) {
+                        if (costMatch === reqMatch) {
+                          reqMatch = undefined;
+                        } else if (
+                          /^(?:需现金|需现金\+股票|需总资产|需持股|需持有股票)\s*(?:>=|>|<=|<|==|:|=|)\s*[\$0-9.wW万]+$/i.test(reqMatch.trim())
+                        ) {
+                          reqMatch = undefined;
+                        }
+                      }
                       
                       let mainText = choice.text
-                        .replace(/\((?:消耗|花费|每年|\$|成本|折抵|实付).*?\)/g, '')
-                        .replace(/\((?:需要|需|算法|高魅力|现金).*?\)/g, '')
+                        .replace(/\((?:消耗|花费|每年|成本|折抵|实付|首付|出资|学费|自付|垫资).*?\)/g, '')
+                        .replace(/\((?:需要|需|仅限|限|超凡|高魅力|算法|高风险).*?\)/g, '')
                         .trim();
                       
                       if (mainText.endsWith('-') || mainText.endsWith('：') || mainText.endsWith(':')) {

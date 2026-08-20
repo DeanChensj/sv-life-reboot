@@ -237,8 +237,16 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
     visaLabel = isLocked ? 'H-1B (已锁PD)' : 'H-1B (工作签证)';
     visaClassName = 'text-amber-300 bg-amber-500/15 border-amber-500/30 font-bold';
   } else if (state.visa === 'OPT (实习)') {
-    const isStem = (state.h1b_attempts || 0) >= 1;
-    visaLabel = isStem ? 'STEM OPT (延期)' : 'Initial OPT (1年)';
+    const attempts = state.h1b_attempts || 0;
+    if (attempts === 0) {
+      visaLabel = 'OPT (首年 · 共3年)';
+    } else if (attempts === 1) {
+      visaLabel = 'STEM OPT (第2年 · 剩2抽)';
+    } else if (attempts === 2) {
+      visaLabel = 'STEM OPT (第3年 · 终抽)';
+    } else {
+      visaLabel = 'STEM OPT (延期)';
+    }
     visaClassName = 'text-amber-400 bg-amber-400/10 border-amber-400/20 font-semibold';
   } else if (state.visa === 'F1 (学生)') {
     visaLabel = state.is_phd ? 'F-1 (博士在读)' : state.is_master ? 'F-1 (硕士在读)' : 'F-1 (在读学生)';

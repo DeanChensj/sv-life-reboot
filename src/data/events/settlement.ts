@@ -218,8 +218,9 @@ export const settlementEvents: Record<string, GameEvent> = {
             let h1bMsg = '';
             let newVisa = s.visa;
             let newAttempts = s.h1b_attempts || 0;
+            const alreadyDrewThisYear = s.story_flags?.last_h1b_lottery_year === s.year;
 
-            if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.company !== 'cn_big_tech') {
+            if (!alreadyDrewThisYear && (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.company !== 'cn_big_tech') {
               newAttempts += 1;
               // Consistent with the first-attempt odds (career.ts big_tech_work) and
               // realistic H1B lottery rates (~25-40%); was 0.40-0.65 base which made
@@ -237,13 +238,17 @@ export const settlementEvents: Record<string, GameEvent> = {
                   h1bMsg = ` 【CPT 抽签未中】第 ${newAttempts} 次 H1B 抽签未能中签！好在有 Day 1 CPT 学籍维持合法全职工作，明年继续冲刺抽签！`;
                 } else {
                   if (newAttempts === 1) {
-                    h1bMsg = ' 【H1B首抽未中】第一年 H1B 未中签！已自动激活 STEM OPT 2 年延期，明年还有抽签机会！';
+                    h1bMsg = ' 【H1B首抽未中】第一年 H1B 未中签！已自动激活 STEM OPT 2 年延期，还有 2 次抽签机会！';
                   } else if (newAttempts === 2) {
-                    h1bMsg = ' 【H1B二抽未中】第二年 H1B 依然未中签！只剩最后一年 STEM OPT 抽签机会，需密切关注转学挂靠或外派后路！';
+                    h1bMsg = ' 【H1B二抽未中】第二年 H1B 依然未中签！还剩最后 1 年 STEM OPT 抽签机会，需密切关注转学挂靠或外派后路！';
                   } else {
                     h1bMsg = ' 【三年未中告急】警告：三年 H1B 抽签均未能中签！STEM OPT 身份即将到期，面临离境遣返危机！';
                   }
                 }
+              }
+            } else if (alreadyDrewThisYear && s.visa === 'OPT (实习)') {
+              if (newAttempts === 1) {
+                h1bMsg = ' 【STEM OPT】已激活 STEM OPT 2年延期，当前合法工作无忧，明年将继续参加 H1B 抽签！';
               }
             }
 
@@ -306,7 +311,10 @@ export const settlementEvents: Record<string, GameEvent> = {
             ];
 
             let newTimeline = [...(s.timeline || [])];
-            let newStoryFlags = { ...(s.story_flags || {}) };
+            let newStoryFlags = { 
+              ...(s.story_flags || {}),
+              ...(alreadyDrewThisYear ? {} : { last_h1b_lottery_year: s.year }),
+            };
 
             if (newNetWorth >= 100 && !newStoryFlags.milestone_100w) {
               newStoryFlags.milestone_100w = true;

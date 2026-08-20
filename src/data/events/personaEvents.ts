@@ -18,11 +18,11 @@ export const personaEvents: Record<string, GameEvent> = {
   // ---------------- 卷王之王: 极限 deadline 爆肝 (H1, 在职) ----------------
   'persona_grind_king_crunch': {
     id: 'persona_grind_king_crunch',
-    title: '卷王之王：不可能的 Deadline',
+    title: '【卷王本色】不可能的 Deadline 与极限冲刺',
     description: 'VP 拍脑袋定下一个「三周上线」的死线，全组都觉得是 mission impossible。作为天生的做题家，你却隐隐兴奋——这正是你碾压同僚、证明抗压天赋的舞台。',
     choices: [
       {
-        text: '极限爆肝：连轴转三周单挑核心模块，一战封神 (卷王抗压)',
+        text: '【极限爆肝单挑模块】极限爆肝：连轴转三周单挑核心模块，一战封神 (卷王抗压)',
         condition: employed,
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 10),
@@ -36,7 +36,7 @@ export const personaEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '学着收着点：合理排期、拒绝无意义加班，身心为重',
+        text: '【拒绝无意义加班】学着收着点：合理排期、拒绝无意义加班，身心为重',
         effect: (s) => ({
           health: Math.min(100, s.health + 8),
           leetcode: Math.min(100, s.leetcode + 2),
@@ -51,11 +51,11 @@ export const personaEvents: Record<string, GameEvent> = {
   // ---------------- 小镇做题家: 冒名顶替综合症 (H1, 在职) ----------------
   'persona_impostor_syndrome': {
     id: 'persona_impostor_syndrome',
-    title: '小镇做题家：冒名顶替综合症',
+    title: '【做题家心魔】冒名顶替综合症与硬核突围',
     description: '组里周围全是藤校、大厂履历闪闪发光的天才，开会时的黑话你有时都跟不上。深夜你盯着天花板，怀疑自己是不是只是运气好混进来的冒牌货。',
     choices: [
       {
-        text: '闷头刷题、死磕源码，用硬实力堵住所有人的嘴 (实力翻盘)',
+        text: '【死磕源码实力翻盘】闷头刷题、死磕源码，用硬实力堵住所有人的嘴 (实力翻盘)',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 12),
           health: Math.max(0, s.health - 8),
@@ -65,7 +65,7 @@ export const personaEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '找 mentor 敞开聊，学着接纳并肯定自己',
+        text: '【找 Mentor 敞开长谈】找 Mentor 敞开聊，学着接纳并肯定自己',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 6),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
@@ -81,11 +81,11 @@ export const personaEvents: Record<string, GameEvent> = {
   // ---------------- 湾区海王: 顶级社交局 (H2, 生活) ----------------
   'persona_playboy_high_society': {
     id: 'persona_playboy_high_society',
-    title: '湾区海王：Sand Hill 顶级私宴',
+    title: '【海王社交】Sand Hill 顶级私宴与人脉拿捏',
     description: '凭着你八面玲珑的名声，你被拉进了一场 Sand Hill Road 的顶级私人晚宴——满屋子的 VC、连续创业者和网红。这是你的主场。',
     choices: [
       {
-        text: '长袖善舞、拿捏全场，把每个大佬都聊成朋友 (海王本色)',
+        text: '【长袖善舞拿捏全场】长袖善舞、拿捏全场，把每个大佬都聊成朋友 (海王本色)',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 10),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
@@ -96,7 +96,7 @@ export const personaEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '低调出席，只重点结交几个真正靠谱的人',
+        text: '【低调结交靠谱人脉】低调出席，只重点结交几个真正靠谱的人',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 5),
           health: Math.min(100, s.health + 2),
@@ -111,11 +111,11 @@ export const personaEvents: Record<string, GameEvent> = {
   // ---------------- 原生美籍: 本地二代主场 (H2, 生活) ----------------
   'persona_native_hometown_edge': {
     id: 'persona_native_hometown_edge',
-    title: '原生美籍：发小的主场情报',
+    title: '【美籍优势】发小的主场内推与行业情报',
     description: '一个从小一起长大的湾区发小如今在某热门公司当 Hiring Manager，约你在老家后院烧烤。没有签证焦虑、没有身份包袱，你享受着二代土著独有的松弛感。',
     choices: [
       {
-        text: '动用本地人脉，套内推与一手行业情报',
+        text: '【动用本地主场人脉】动用本地人脉，套内推与一手行业情报',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
@@ -126,7 +126,7 @@ export const personaEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '纯粹享受没有 H1B 焦虑的周末，回老宅彻底放松',
+        text: '【回老宅彻底放松】纯粹享受没有 H-1B 焦虑的周末，回老宅彻底放松',
         effect: (s) => ({
           health: Math.min(100, s.health + 12),
           story_flags: seen(s, 'persona_native_hometown_edge'),
@@ -140,11 +140,11 @@ export const personaEvents: Record<string, GameEvent> = {
   // ---------------- 家里有矿: 父母加码赞助 (H2, 生活) ----------------
   'persona_rich_family_offer': {
     id: 'persona_rich_family_offer',
-    title: '家里有矿：父母的第二笔赞助',
+    title: '【矿主底气】父母的第二笔赞助与独立抉择',
     description: '过年视频时，父母主动提出再给你一笔钱「垫一垫」——可以加码买房，也可以做启动金。但话里话外，也带着对你人生规划的期待与掌控。',
     choices: [
       {
-        text: '欣然接受，如虎添翼 (接受家庭期待的附加压力)',
+        text: '【欣然接受家庭赞助】欣然接受，如虎添翼 (接受家庭期待的附加压力)',
         effect: (s) => ({
           cash: s.cash + 8,
           network: Math.min(100, (s.network || 10) + 3),
@@ -155,7 +155,7 @@ export const personaEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '婉拒：这次想靠自己闯出来 (独立自证)',
+        text: '【婉拒赞助独立闯荡】婉拒：这次想靠自己闯出来 (独立自证)',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 5),
           network: Math.min(100, (s.network || 10) + 3),
@@ -171,11 +171,11 @@ export const personaEvents: Record<string, GameEvent> = {
   // ---------------- 天选之子: 玄学横财 (H2, 生活) ----------------
   'persona_chosen_windfall': {
     id: 'persona_chosen_windfall',
-    title: '天选之子：玄学横财',
+    title: '【天选气运】玄学横财与气运爆发',
     description: '你莫名收到一个空投/内测资格，朋友神秘兮兮地说「兄弟这波稳的」。以你逆天的气运，梭一把说不定就是一夜暴富——当然，玄学也有翻车的时候。',
     choices: [
       {
-        text: '梭哈信运气！气运护体一把梭 (高波动)',
+        text: '【气运护体一把梭】梭哈信运气！气运护体一把梭 (高波动)',
         condition: (s) => s.cash >= 3,
         effect: (s) => {
           const hit = gameRandom() < Math.min(0.8, 0.45 + (Math.min(80, s.luck) / 100) * 0.4);
@@ -186,7 +186,7 @@ export const personaEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '落袋为安，再玄学也不碰投机',
+        text: '【落袋为安拒绝投机】落袋为安，再玄学也不碰投机',
         effect: (s) => ({
           health: Math.min(100, s.health + 5),
           story_flags: seen(s, 'persona_chosen_windfall'),

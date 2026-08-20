@@ -20,7 +20,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
     description: '人到中年，你站在了职业身份的岔路口：是继续深耕成为无可替代的资深技术专家 (IC)，还是转型带团队、走管理路线 (EM)？两条路没有对错，只有取舍。',
     choices: [
       {
-        text: '深耕 IC：死磕架构与技术影响力，冲 Staff / Principal 技术天花板',
+        text: '【深耕 IC】深耕 IC：死磕架构与技术影响力，冲 Staff / Principal 技术天花板',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 8),
           network: Math.min(100, (s.network || 10) + 4),
@@ -32,7 +32,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '转型 EM：放下键盘带团队，用杠杆放大影响力',
+        text: '【转型 EM】转型 EM：放下键盘带团队，用杠杆放大影响力',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
@@ -45,7 +45,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '暂不站队：维持现状，先把手头的事做好',
+        text: '【暂不站队】暂不站队：维持现状，先把手头的事做好',
         effect: (s) => ({
           health: Math.min(100, s.health + 4),
           story_flags: seen(s, 'late_ic_vs_management'),
@@ -63,7 +63,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
     description: '一次体检报告让你惊出一身冷汗——常年久坐、熬夜、外卖的账，身体开始跟你算了。是时候认真对待健康这件人生头等大事了。',
     choices: [
       {
-        text: '砸钱系统抗衰：私教 + 全套体检 + 营养管理 (花费 $5w)',
+        text: '【砸钱系统抗衰】砸钱系统抗衰：私教 + 全套体检 + 营养管理 (花费 $5w)',
         costBadge: '花费 $5w',
         reqBadge: '需现金+股票 >= $5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 5,
@@ -76,7 +76,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '免费养生：早睡早起、跑步、戒糖戒外卖',
+        text: '【免费养生】免费养生：早睡早起、跑步、戒糖戒外卖',
         effect: (s) => ({
           health: Math.min(100, s.health + 8),
           story_flags: seen(s, 'late_longevity_investment'),
@@ -94,7 +94,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
     description: '走到这个阶段，你开始思考：除了 TC 和职级，你还想给这个行业、给后来人留下点什么？',
     choices: [
       {
-        text: '带新人 / 做开源 maintainer / 写技术书，沉淀影响力',
+        text: '【带新人】带新人 / 做开源 maintainer / 写技术书，沉淀影响力',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
@@ -106,7 +106,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '做天使 / Advisor，用资源与经验扶持后辈创业 (需现金>=20w)',
+        text: '【做天使】做天使 / Advisor，用资源与经验扶持后辈创业 (需现金>=20w)',
         condition: (s) => s.cash >= 20,
         effect: (s) => ({
           cash: parseFloat((s.cash - 3).toFixed(1)),
@@ -118,7 +118,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '顺其自然：先过好自己的小日子',
+        text: '【顺其自然】顺其自然：先过好自己的小日子',
         effect: (s) => ({
           health: Math.min(100, s.health + 6),
           story_flags: seen(s, 'late_mentor_legacy'),
@@ -136,7 +136,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
     description: '你早已越过 FIRE 线，钱不再是问题。真正的问题变成了：接下来这几十年，你想怎么过？',
     choices: [
       {
-        text: '环游世界 Gap Year：把攒了半辈子的诗与远方一次走个够 (花现金 $5w)',
+        text: '【环游世界】环游世界 Gap Year：把攒了半辈子的诗与远方一次走个够 (花现金 $5w)',
         condition: (s) => s.cash >= 5,
         effect: (s) => ({
           cash: parseFloat((s.cash - 5).toFixed(1)),
@@ -148,7 +148,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '投身慈善 / 成立开源基金会，把财富转化为影响力 (捐赠 $10w)',
+        text: '【投身慈善】投身慈善 / 成立开源基金会，把财富转化为影响力 (捐赠 $10w)',
         condition: (s) => s.cash >= 20,
         effect: (s) => ({
           cash: parseFloat((s.cash - 10).toFixed(1)),
@@ -160,7 +160,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: 'Encore Career：重新出发做一直想做的事 (写作 / 教学 / 独立开发)',
+        text: '【Encore】Encore Career：重新出发做一直想做的事 (写作 / 教学 / 独立开发)',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 4),
           network: Math.min(100, (s.network || 10) + 4),
@@ -171,7 +171,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '岁月静好：就这么低调惬意地享受生活',
+        text: '【岁月静好】岁月静好：就这么低调惬意地享受生活',
         effect: (s) => ({
           health: Math.min(100, s.health + 10),
           story_flags: seen(s, 'late_post_fire_exploration'),

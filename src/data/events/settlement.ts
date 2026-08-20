@@ -7,11 +7,11 @@ import { getCompanyProfile } from '../companyProfiles';
 export const settlementEvents: Record<string, GameEvent> = {
   'sv_year_end_settlement': {
     id: 'sv_year_end_settlement',
-    title: '年底结算',
+    title: '【年终结算】年度盘点与财务报表',
     description: '今年的精力已耗尽，系统正在为你结算工资、扣除房租，并计算绿卡排期...',
     choices: [
       {
-        text: '结算并迎接新的一年',
+        text: '【结算并迎接新的一】结算并迎接新的一年',
         effect: (s) => {
            let newStartupTenure = s.startup_tenure || 0;
            if (!s.laid_off && s.job_type === 'startup') {
@@ -424,7 +424,7 @@ export const settlementEvents: Record<string, GameEvent> = {
 
   'fire_milestone_choice': {
     id: 'fire_milestone_choice',
-    title: '硅谷奇迹：达成财务自由 (FIRE)',
+    title: '【硅谷奇迹】达成财务自由 (FIRE)',
     description: '看着银行账户与股票投资组合上的数字突破了既定目标，你深吸了一口气。曾经在 LeetCode 上死磕的深夜、在工位上焦灼等待 H1B/PERM 排期的日子，终于在此刻结出了丰硕的果实。你已经拥有了随时登出硅谷内卷的底气！接下来，你打算怎么选择？',
     imageUrl: 'images/house.jpg',
     choices: [
@@ -574,7 +574,7 @@ export const settlementEvents: Record<string, GameEvent> = {
 
   'end': {
     id: 'end',
-    title: '游戏结束',
+    title: '【生涯终局】硅谷人生落幕',
     description: '你的硅谷人生模拟旅程已经达成终局结算。',
     choices: [
       {

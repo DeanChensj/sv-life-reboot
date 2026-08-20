@@ -20,11 +20,11 @@ export const levelEvents: Record<string, GameEvent> = {
   // ---------------- 入门 (L3 / L4 / 初级研发): 杂活与 oncall 地狱 ----------------
   'level_entry_grunt_work': {
     id: 'level_entry_grunt_work',
-    title: '初级工程师：杂活与 Oncall 地狱',
+    title: '【初级萌新】杂活与 On-call 连环地狱',
     description: '作为组里最 junior 的人，你被塞满了没人愿意接的 oncall 值班、线上 bug 修复和文档杂活，离「有影响力的核心项目」似乎遥遥无期。',
     choices: [
       {
-        text: '埋头把脏活累活做到极致，用可靠度攒满老板与同事的信任',
+        text: '【埋头把脏活累活做】埋头把脏活累活做到极致，用可靠度攒满老板与同事的信任',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 8),
           network: Math.min(100, (s.network || 10) + 4),
@@ -35,7 +35,7 @@ export const levelEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '主动找老板争取一块有影响力的模块来 own',
+        text: '【主动找老板争取一】主动找老板争取一块有影响力的模块来 own',
         condition: employed,
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 6),
@@ -49,7 +49,7 @@ export const levelEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '先稳住节奏，按部就班攒经验，别一上来就 burnout',
+        text: '【按部就班稳住节奏】先稳住节奏，按部就班攒经验，避免早期 Burnout',
         effect: (s) => ({
           health: Math.min(100, s.health + 8),
           leetcode: Math.min(100, s.leetcode + 3),
@@ -64,11 +64,11 @@ export const levelEvents: Record<string, GameEvent> = {
   // ---------------- 资深 (L5 Senior): 高原期 / 资深永动机 ----------------
   'level_senior_plateau': {
     id: 'level_senior_plateau',
-    title: '资深永动机：Senior 的高原期',
+    title: '【资深瓶颈】Senior 永动机与职业高原期',
     description: '作为 L5 Senior，你成了组里的救火队员——所有人的疑难杂症都来找你。但你隐隐发现自己卡在了原地，离 Staff 那道「影响力与政治」的天堑越来越远。',
     choices: [
       {
-        text: '主动扩 scope、抢跨组大项目，争取 Staff 的 Sponsorship (冲天花板)',
+        text: '【抢跨组项目冲 L6】主动扩 Scope、抢跨组大项目，争取 Staff Sponsorship',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.3 + ((s.network || 10) / 100) * 0.5);
@@ -79,7 +79,7 @@ export const levelEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '接受「常青 Senior」的定位，守住 WLB、深耕技术手艺',
+        text: '【坚守常青 Senior】接受常青 Senior 定位，守住 WLB、深耕技术手艺',
         effect: (s) => ({
           health: Math.min(100, s.health + 10),
           leetcode: Math.min(100, s.leetcode + 5),
@@ -94,11 +94,11 @@ export const levelEvents: Record<string, GameEvent> = {
   // ---------------- Staff+ (L6 / L7 / L8): 胶水工作困境 ----------------
   'level_staff_glue_work': {
     id: 'level_staff_glue_work',
-    title: 'Staff 的「胶水工作」困境',
+    title: '【架构困境】Staff 的胶水工作与跨组撕逼',
     description: '升到 Staff+ 后，你发现大量时间花在了没人看得见却至关重要的「胶水工作」——跨组对齐、救火续命、带教新人。这些都不会写进你的晋升 packet，但整个组织都离不开它们。',
     choices: [
       {
-        text: '默默做好胶水工作，当组织不可或缺的粘合剂 (无曝光但稳)',
+        text: '【做好组织粘合剂】默默做好胶水工作，当组织不可或缺的粘合剂 (稳健)',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 8),
           health: Math.max(0, s.health - 6),
@@ -109,7 +109,7 @@ export const levelEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '抓一个高曝光的旗舰大项目，博 VP 眼球冲 L7/L8 (高波动)',
+        text: '【抓旗舰大项目冲 L7】抓高曝光旗舰大项目，博 VP 眼球冲刺高职级',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.55, 0.25 + ((s.network || 10) / 100) * 0.35 + ((s.charm || 10) / 100) * 0.3);

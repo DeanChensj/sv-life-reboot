@@ -7,7 +7,7 @@ import { isTopTierCSSchool } from '../schoolProfiles';
 export const careerEvents: Record<string, GameEvent> = {
   'job_hunt': {
     id: 'job_hunt',
-    title: '湾区求职季 / 职业方向抉择',
+    title: '【求职征程】湾区求职季与职业方向抉择',
     description: '身处全球科技中心的湾区，你面临着下一阶段的人生与职业方向抉择。无论是积极重返大厂、动用人脉捷径，还是彻底换个赛道休养调养，命运全由你掌握：',
     choices: [
       {
@@ -281,7 +281,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'job_hunt_fail': {
     id: 'job_hunt_fail',
-    title: '求职受挫',
+    title: '【求职受挫】失业断粮与绝境突围',
     description: '由于迟迟找不到理想工作，你面临着现实的压力...',
     choices: [
       {
@@ -296,7 +296,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'job_hunt',
       },
       {
-        text: '去墨西哥 Tijuana 闯关重签签证 (高风险 Visa Run) - 消耗 $1w',
+        text: '【墨西哥闯关重签】去 Tijuana 闯关重签签证 (高风险 Visa Run · 消耗 $1w)',
         condition: (s) => s.cash >= 1 && (s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)'),
         effect: (s) => {
           const win = gameRandom() > 0.15; // 85% success
@@ -307,7 +307,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.status === 'game_over' ? 'end' : 'job_hunt',
       },
       {
-        text: '不卷了！回大理/清迈做数字游民躺平',
+        text: '【回大理数字游民】不卷了！回大理/清迈做数字游民躺平',
         condition: (s) => s.cash >= 5,
         // Giving up to go be a digital nomad is a CONTENT ending, not a FIRE 'win' — a
         // broke quitter must not render the fire_basic triumph card (endings.ts keys the
@@ -326,7 +326,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '放弃求职 / 离开硅谷',
+        text: '【放弃求职告别硅谷】放弃求职，打包行李离开硅谷',
         effect: (s) => {
           // Temp-visa branches are forced departures (visa loss) → must classify as
           // 'deported' in endings.ts, which matches on keywords like 离境/登机. Keep such a
@@ -341,7 +341,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '再读一个水硕维持身份 (Day 1 CPT) - (消耗 $5w)',
+        text: '【读水硕维持身份】读 Day 1 CPT 水硕维持合法身份 (消耗 $5w)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)' && s.cash >= 5,
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
         nextEventId: 'job_hunt',
@@ -351,7 +351,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'job_hop_market': {
     id: 'job_hop_market',
-    title: '湾区跳槽季：多重 Offer 签约抉择',
+    title: '【跳槽风暴】湾区跳槽季与多重 Offer 抉择',
     description: '经过一整年的多轮 Onsite 厮杀与算法洗礼，各大厂 HR 陆续向你发来了正式录用意向！\n\n【注意】跳槽将重置未获批 I-140 的 PERM 排期；新公司入职第一年往往伴随高压 Ramp-up 考验。请根据你的包裹意向与职业规划，慎重签署正式合同：',
     choices: [
       {
@@ -592,12 +592,12 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'big_tech_work': {
     id: 'big_tech_work',
-    title: '开启打工生涯',
+    title: '【大厂打工】开启大厂打工生涯',
     description: '你正式开启了职场生涯，成为了光荣的湾区码农。接下来要面临第一道坎：H1B 抽签。',
     imageUrl: 'images/h1b_lottery_win.jpg',
     choices: [
       {
-        text: '老老实实祈祷 H1B 中签 (免费)',
+        text: '【祈祷 H-1B 中签】老老实实祈祷 H-1B 抽签命中 (免费)',
         effect: (s) => {
           const winRate = 0.25 + (s.luck / 100) * 0.15; // 25% - ~40%, realistic H1B lottery odds
           const win = gameRandom() < winRate;
@@ -608,7 +608,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (!isPermanentVisa(s.visa) && s.visa !== 'H1B (工签)' && s.visa !== 'O1 (杰出人才)' && gameRandom() < 0.35 ? 'h1b_fallback_options' : 'sv_daily_life'),
       },
       {
-        text: '砸 $8w 现金找顶级律所申办 O1 杰出人才签证 (需现金 >= $8w, 限 PhD/AI研究员/硬核算法背景)',
+        text: '【砸钱申办 O-1 签证】找顶级律所申办 O-1 杰出人才签证 (需现金 >= $8w)',
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.job_type === 'ai_research' || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
@@ -689,7 +689,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'sv_daily_life': {
     id: 'sv_daily_life',
-    title: '湾区日常 (行动面板)',
+    title: '【硅谷日常】年度行动面板与策略规划',
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
       // 1. 【每年专属动态轮替机遇池】 (每年动态激活 1~2 个专属限时奇遇)
@@ -1188,7 +1188,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const win = gameRandom() < Math.min(0.85, 0.6 + (s.leetcode / 300) + ((s.luck || 20) / 400));
           return win
             ? { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 3), tc: s.tc + 1.0, impact: addImpact(s, 10), message: '【顶会 Oral / 开源爆款】你主导的研究被顶会 Oral 收录、开源项目冲上 GitHub Trending，行业影响力 (Impact) 大增！' }
-            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 5), impact: addImpact(s, 5), message: '【拒稿但沉淀】论文惨遭 Reviewer 2 拒稿，但你摸清了前沿方向、积累了扎实的研究影响力,稳步提升。' };
+            : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 5), impact: addImpact(s, 5), message: '【拒稿但沉淀】论文惨遭 Reviewer 2 拒稿，但你摸清了前沿方向、积累了扎实的研究影响力，稳步提升。' };
         },
         nextEventId: (s) => midYearEventRouter(s),
       },
@@ -1669,7 +1669,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'perf_review': {
     id: 'perf_review',
-    title: '年底 Perf Review 绩效考核',
+    title: '【年底考核】Perf Review 绩效评定与答辩',
     description: '又到了公司一年一度的 PSC 绩效考核时间，大家都开始疯狂抢 Project Impact 争夺升职名额。',
     choices: [
       {
@@ -1774,7 +1774,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : h1ToH2Router(s)),
       },
       {
-        text: '准点下班，躺平拿 Meets (保重身体)',
+        text: '【准点下班佛系保命】准点下班，躺平拿 Meets (保重身体)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你按时下班，维持着普通的绩效，拿了标准的工资，身心愉悦。' }),
         nextEventId: h1ToH2Router,
@@ -1784,12 +1784,12 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'layoff_rumor': {
     id: 'layoff_rumor',
-    title: 'Blind 裁员谣言',
+    title: '【风雨欲来】Blind 裁员谣言与恐慌蔓延',
     description: '有一天，Blind 上传出你们部门要被整个裁掉的消息，人心惶惶。',
     choices: [
 
       {
-        text: '疯狂加班，讨好 Manager 试图留下',
+        text: '【疯狂加班表忠心】疯狂加班，讨好 Manager 争取留队',
         effect: (s) => {
           let surviveRate = 0.4;
           if (s.leetcode >= 80) surviveRate = 0.8;
@@ -1801,7 +1801,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'layoff_hit' : h1ToH2Router(s),
       },
       {
-        text: '立刻开始刷题，准备后路',
+        text: '【立刻狂刷算法题】立刻开始刷题备战跳槽，准备后路',
         effect: (s) => ({ leetcode: s.leetcode + 20, health: s.health - 10, cash: s.cash, laid_off: true, tc: 0, job_type: 'unemployed', message: '你偷偷在上班时间刷题。果不其然，你被裁了，但你已经做好了准备。' }),
         nextEventId: 'layoff_hit',
       }
@@ -1810,7 +1810,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'layoff_hit': {
     id: 'layoff_hit',
-    title: '不幸被裁 (裁员风暴)',
+    title: '【裁员风暴】不幸中招与大礼包清算',
     description: '不幸遭遇了湾区科技公司大厂裁员潮，你抱着个人物品箱退出了 Slack。面对突如其来的失业与身份倒计时，请选择你的应对策略：',
     imageUrl: 'images/layoff_box.jpg',
     choices: [
@@ -1970,7 +1970,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'friday_pip': {
     id: 'friday_pip',
-    title: '周五下午四点的 1:1',
+    title: '【周五惊魂】下午四点的 1:1 与 PIP 预警',
     description: '你的 Manager 突然在周五下午 4 点给你发了个 "Quick Sync" 的日历邀请。会上，他用着毫无感情的 corporate 语调表示你的 "impact" 没有 "move the needle"，并将你放入了为期 30 天的 Focus/PIP 计划。',
     choices: [
       {
@@ -1996,7 +1996,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       },
       {
-        text: '认怂疯狂加班，证明自己的 Synergy',
+        text: '【认怂狂暴加班】疯狂加班补救，极力证明自己的 Synergy 价值',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const isHighPipCompany = s.company === 'amazon' || s.company === 'meta';
@@ -2016,7 +2016,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       },
       {
-        text: '选择拿钱走人 (Pivot / Buyout 离职包)，领 2 个月 Severance 在家刷题',
+        text: '【拿钱走人全职刷题】领取 2 个月 Severance 离职大礼包，在家全职刷题',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ 
           cash: s.cash + 4, 
@@ -2077,11 +2077,11 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'rto_wars': {
     id: 'rto_wars',
-    title: 'RTO (Return to Office) 查考勤大战',
+    title: '【考勤大战】RTO 强制回办公室与打卡风波',
     description: 'CEO 突然宣布全员每周必须在办公室打卡 3 天，否则直接取消奖金甚至开除！你之前为了省房租偷偷搬到了便宜的外州/偏远地区，现在面临极大危机。',
     choices: [
       {
-        text: '老老实实搬回湾区租昂贵的公寓 (房租重置为 4w)',
+        text: '【搬回湾区租公寓】老老实实搬回湾区租昂贵的公寓 (房租重置为 $4w)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           rent: 4,
@@ -2092,7 +2092,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       },
       {
-        text: '淘宝买物理点击器+找同事代刷工牌 (高风险)',
+        text: '【物理点击器代刷卡】网购物理点击器 + 托同事代刷工牌 (高风险)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const caught = gameRandom() < 0.3;
@@ -2115,7 +2115,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s)
       },
       {
-        text: '硬刚 Manager：“要么让我 Remote，要么我走人！”',
+        text: '【硬刚 Manager 要求远程】硬刚 Manager：“要么让我 Remote，要么我走人！”',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const win = s.leetcode >= 70 && gameRandom() < 0.5;
@@ -2145,19 +2145,19 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '深夜一点半，你躺在 Sunnyvale 的床上翻看 Blind。热榜第一条加红帖标题赫然写着：\n"Avoid Org [X] in [Company]: Micromanaging Director pip-ing top performers to hit quota, run before it is too late!"\n你越读越心惊——代号项目名、下周 Milestone 日期、以及下午 4 点死盯 Progress 的习惯……这说的特么不就是你的组？！',
     choices: [
       {
-        text: '混水摸鱼匿名跟帖：“TC 380k，做过同组，TL 人格分裂确实坑”',
+        text: '【匿名跟帖吐槽 TL】混水摸鱼匿名跟帖：“TC 380k，做过同组，TL 人格分裂确实坑”',
         // Anonymous-solidarity flavor now grants a little network and costs less health,
         // so it's a real alt to the "add on WeChat" option (was worse on charm AND health).
         effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 2), network: Math.min(100, (s.network || 10) + 2), health: Math.max(0, s.health - 2), message: '你出了一口恶气，还在匿名区结识了几个同病相怜的战友，但第二天看到 Manager 脸色阴沉地在全员会强调“我们要加强团队信任与通力协作”。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '极度恐慌！连夜关摄像头，边开全员大会边狂刷 LeetCode 备战跳槽',
+        text: '【闭麦通宵狂刷算法】极度恐慌！连夜关摄像头，边开大会边狂刷 LeetCode',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: s.health - 15, message: '你吓得半夜爬起来刷了 6 道动态规划困难题，咖啡因过量导致心率达到了 130。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '私信发帖人“同在湾区可以加微信交流吗”，结果发现是隔壁工位的同胞',
+        text: '【私信交流面基同胞】私信发帖人交流，结果发现竟然是隔壁工位同胞',
         effect: (s) => ({ charm: Math.min(25, s.charm + 3), cash: Math.max(0, s.cash - 0.2), message: '你们在 Palo Alto 密谋了一下午抱团取暖指南，并交换了彼此的 Referral 资源库。' }),
         nextEventId: 'sv_year_end_settlement',
       }
@@ -2170,17 +2170,17 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '部门 60 人的 Quarterly Architecture Review 线上大会正在进行。你关着摄像头、开启静音，一边听高管讲 AI Roadmap，一边全神贯注地切 LeetCode 困难题 #2097。\n突然 Principal Architect 话锋一转：“[你的名字]，针对刚才这个微服务重构方案，你觉得 Rust 和 Go 哪个更适合你们组？”',
     choices: [
       {
-        text: '老油条废话推手：“Hello？抱歉刚才 AirPods 断了……我觉得这个要看 Trade-off，建议我们 Offline 找时间 Align 一下。”',
+        text: '【老油条打太极】“抱歉刚才网络卡了……这要看 Trade-off，建议我们 Offline Align 一下”',
         effect: (s) => ({ charm: Math.min(25, s.charm + 2), message: '经典的硅谷废话太极！高管满意地点了点头，你成功保住了饭碗并继续写出 O(1) 空间复杂度的指针翻转。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '手滑点错！把力扣 Hard 解题窗口共享给了全公司 60 个人！',
+        text: '【手滑共享力扣窗口】手滑点错！把 LeetCode Hard 解题窗口共享给了全会场 60 人！',
         effect: (s) => ({ health: s.health - 15, charm: Math.min(25, s.charm + 8), cash: s.cash + 10, message: '会议室内一片死寂。你把自己的社死截图匿名发到小红书《全员大会手滑投影了力扣Hard怎么破？》，收获 3 万点赞和 200 条求职 Referral 软广费！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '3 秒把问题扔给 ChatGPT，照着读“High throughput, horizontal scalability, zero-cost abstractions”',
+        text: '【ChatGPT 念稿救场】3 秒把问题扔给 AI，照着念“High throughput, horizontal scalability”',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 5), tc: s.tc + 2, message: '高管赞叹你的技术深度，当场决定下季度让你负责这个高风险架构重组。' }),
         nextEventId: 'sv_year_end_settlement',
       }
@@ -2189,7 +2189,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'team_offsite': {
     id: 'team_offsite',
-    title: ' Tahoe / Hawaii 部门 Team Offsite 免费团建大游',
+    title: '【部门团建】Tahoe / Hawaii 免费 Offsite 之旅',
     description: '部门老板今年预算充沛，全组飞往 Lake Tahoe 豪华雪山木屋与 Hawaii 夏威夷海滩，开启为期 3 天的公费 Team Offsite 度假！不用干活，全额报销，全组同事开启狂欢度假模式。',
     choices: [
       {
@@ -2225,16 +2225,16 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'office_politics': {
     id: 'office_politics',
-    title: '职场宫心计 (Office Politics)',
+    title: '【职场暗战】办公室政治与向上管理',
     description: '没了绿卡约束，你决定在公司大干一场。现在公司空出了一个 Director 的位子，你的竞争对手是深谙 PPT 之道的印度同事 Raj。',
     choices: [
       {
-        text: '疯狂写代码，用硬实力说话',
+        text: '【埋头写代码用实力说话】疯狂写代码，用硬核交付证明实力',
         effect: (s) => ({ health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 5), charm: Math.max(0, (s.charm || 10) - 2), message: 'Raj 用你写的硬核代码做了一份精美的 PPT 向上汇报，他获得了晋升。你被边缘化，但硬核攻坚让你的算法功底更上一层楼，依旧手握高薪大包稳坐工位。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '放下 IDE，打开 PPT 开始高强度向上管理 (成败取决于社交手腕)',
+        text: '【高强度向上管理】放下 IDE，打开 PPT 开始高强度向上管理',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
         // No longer a deterministic +$30w no-brainer: it's a charm-scaled gamble
         // with a real failure branch, and the reward is a modest raise.
@@ -2251,11 +2251,11 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'overemployed': {
     id: 'overemployed',
-    title: 'OE (Overemployed) 诱惑：身兼数职',
+    title: '【身兼数职】OE 双倍全职诱惑与时间管理',
     description: '你在 Blind 上看到了一个神秘的 OE 社区。里面的人同时拿着 3 份全职远程工作的薪水（J1, J2, J3），年收入突破 100 万美元。你看着自己轻松的“养老厂”工作，有些心动。',
     choices: [
       {
-        text: '接下第二份全职工作 (J2)！赚双倍的钱！',
+        text: '【接下 J2 双倍薪酬】接下第二份全职工作 (J2)，赚取双倍 TC！',
         condition: (s) => s.job_type === 'big_tech',
         effect: (s) => {
           const caught = gameRandom() < 0.25;
@@ -2268,7 +2268,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s)
       },
       {
-        text: '算了吧，安分守己',
+        text: '【安分守己拒绝风险】算了吧，安分守己做好本职工作',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '你拒绝了高危的诱惑，每天下午 3 点准时躺在沙发上看 Netflix，这就是 WLB。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -2277,11 +2277,11 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'meta_tlm': {
     id: 'meta_tlm',
-    title: 'Meta TLM 卷王之王',
+    title: '【卷王之王】Meta TLM 极限狂飙',
     description: '在 Meta，你不进则退。当上 Tech Lead Manager 后，手下管着 5 个人，每天被拉进无数个群，晚上 11 点还在回复印度总监的邮件。',
     choices: [
       {
-        text: '继续卷升职 (冲击下一级别 M1 / L6 Staff)',
+        text: '【继续卷升职冲刺】继续卷升职 (冲击下一级别 M1 / L6 Staff)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => {
           const cur = s.level || 'L5 (Senior)';
@@ -2298,7 +2298,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.health <= 0 ? 'end' : h1ToH2Router(s),
       },
       {
-        text: '太累了，降薪跳槽去 Google/Apple 养老',
+        text: '【降薪跳槽养老】太累了，降薪跳槽去 Google/Apple 养老',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({ tc: Math.max(26, s.tc - 8), company: 'google', health: Math.min(100, s.health + 20), message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹略有回落，但终于有了生活。' }),
         nextEventId: h1ToH2Router,
@@ -2312,12 +2312,12 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '周一例行 All-hands 会议上，你的直属 Manager 突然宣布离职。新调来的 Manager 对你过去半年的成果完全不了解，把你正在负责的核心项目划给了他的亲信...',
     choices: [
       {
-        text: '主动约新 Manager 1:1，带上精心准备的 30 页 PPT 汇报展现价值',
+        text: '【主动约 1:1 展现价值】主动约新 Manager 1:1，带上 30 页 PPT 汇报展现价值',
         effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), health: Math.max(0, s.health - 10), impact: addImpact(s, 5), message: '你的主动与专业打动了新老板，成功保住了原本的项目 Owner 身份！' }),
         nextEventId: h1ToH2Router
       },
       {
-        text: '彻底失望，借机关摄像头狂刷 LeetCode 准备跳槽',
+        text: '【借机关摄像头刷题】彻底失望，借机关摄像头狂刷 LeetCode 准备跳槽',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 15), health: Math.max(0, s.health - 10), message: '你在摸鱼中狂刷了 50 道 Hard 题，算法功力大增，准备随时寻找下家！' }),
         nextEventId: h1ToH2Router
       }
@@ -2330,12 +2330,12 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '苹果发布 Vision Pro 后，VP 要求团队立刻将主站应用重构为空间计算版本。你拿到了组里唯一一台试用设备。',
     choices: [
       {
-        text: '自告奋勇担任 Head of Spatial App 领头人',
+        text: '【领衔 Spatial App】自告奋勇担任 Head of Spatial App 领头人',
         effect: (s) => ({ tc: s.tc + 3, health: Math.max(0, s.health - 15), impact: addImpact(s, 8), message: '你成为了公司内部空间计算的第一专家，产品上线后获得了大批关注！总包获得增长！' }),
         nextEventId: h1ToH2Router
       },
       {
-        text: '体验完 3D 效果后吐槽“戴着颈椎酸痛”，按部就班写网页版代码',
+        text: '【按部就班写网页】体验后吐槽戴着颈椎酸痛，按部就班写网页版代码',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '你维持了健康的生活节奏，避开了空间计算概念退潮后的热度崩塌。' }),
         nextEventId: h1ToH2Router
       }
@@ -2348,12 +2348,12 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '周二凌晨 2 点，PagerDuty 尖锐狂响！公司在 Santa Clara 的 AI 数据中心因为酷暑供电过载跳闸，集群全部掉线。你训了 14 天的 100B 参数大模型没有及时存 Checkpoint...',
     choices: [
       {
-        text: '通宵 48 小时手写 Recovery 恢复脚本救回权重',
+        text: '【通宵手写恢复脚本】通宵 48 小时手写 Recovery 恢复脚本救回权重',
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 15), impact: addImpact(s, 8), message: '凭借硬核的 Infra 恢复脚本，你奇迹般地挽回了 90% 的权重数据，VP 在 Slack 全员频道为你点赞！' }),
         nextEventId: h1ToH2Router
       },
       {
-        text: '果断甩锅给基础设施 Infra 部门，关掉手机继续睡觉',
+        text: '【果断甩锅 Infra 部门】果断甩锅给基础设施 Infra 部门，关掉手机继续睡觉',
         effect: (s) => ({ health: Math.min(100, s.health + 10), network: Math.max(0, (s.network || 0) - 3), message: '第二天 Infra 组扛下了所有责任，你虽然保住了睡眠，但跟 Infra 组领队关系降到了冰点。' }),
         nextEventId: h1ToH2Router
       }
@@ -2366,7 +2366,7 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '组里尝试用自主 Agent 跑 CI/CD 自动部署，结果 Agent 产生幻觉在脚本里执行了 DROP DATABASE，把生产环境数据库给删了！',
     choices: [
       {
-        text: '通宵手写 SQL 脚本与备份恢复',
+        text: '【通宵手写 SQL 恢复】通宵手写 SQL 脚本与备份恢复',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 10),
           health: Math.max(0, s.health - 15),
@@ -2377,7 +2377,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       },
       {
-        text: '甩锅给大模型 API 供应商，申请专项赔偿 (消耗 $0.5w)',
+        text: '【甩锅大模型供应商】甩锅给大模型 API 供应商，申请专项赔偿 (消耗 $0.5w)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({
           network: Math.max(0, (s.network || 0) - 2),
@@ -2396,12 +2396,12 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '公司高层爆发权斗，新上任的 VP 带来了自己的亲信。你带领团队搭建了三年的核心系统架构被宣布“全盘废弃，全面拥抱新架构”！多年积累的领域知识 (Domain Knowledge) 一夕沉没...',
     choices: [
       {
-        text: '通宵加班重头学习最新 Infra 业务架构',
+        text: '【重头学习最新架构】通宵加班重头学习最新 Infra 业务架构',
         effect: (s) => ({ health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 10), impact: addImpact(s, 6), message: '凭着硬核的学习能力，你咬牙掌握了新架构，重新站稳了团队的核心位置！' }),
         nextEventId: h1ToH2Router
       },
       {
-        text: '极度挫败！因长期未手写底层代码，算法实力与热情下滑',
+        text: '【退守舒适区】因长期未手写底层代码，算法实力与热情下滑',
         effect: (s) => ({ leetcode: Math.max(20, s.leetcode - 15), health: Math.min(100, s.health + 5), message: '长期从事高层画饼与 PPT 汇报，导致你的手写算法功力大幅生疏，算法实力下滑。' }),
         nextEventId: h1ToH2Router
       }
@@ -2518,7 +2518,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'promo_celebration': {
     id: 'promo_celebration',
-    title: ' 职级大晋升喜报！PROMOTION UNLOCKED',
+    title: '【晋升喜报】职级大晋升解锁！',
     description: '轰动部门！鉴于你在公司核心业务中的突出 Impact，晋升委员会 (Promo Committee) 官方批准了你的职级晋升！',
     choices: [
       {
@@ -2532,7 +2532,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'l6_staff_celebration': {
     id: 'l6_staff_celebration',
-    title: ' 突破硅谷天花板！晋升 L6 Staff 架构师',
+    title: '【登堂入室】突破天花板！晋升 L6 Staff 架构师',
     description: '轰动全公司！你突破了 35 岁天花板与硅谷码农最大天堑，正式晋升为 L6 Staff Engineer 架构师！手握跨组技术决策权，年薪总包与期权迈入顶级行业前列。',
     choices: [
       {
@@ -2559,7 +2559,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'l7_senior_staff_celebration': {
     id: 'l7_senior_staff_celebration',
-    title: ' 跨部门战略统帅！晋升 L7 Senior Staff 资深架构师',
+    title: '【统帅三军】跨部门统帅！晋升 L7 Senior Staff 资深架构师',
     description: '战略封神！你赢得了全公司高层 VP 的政治背书与全域架构指导权，破格批准晋升为 L7 Senior Staff Engineer 资深架构师！你的决策将深刻影响公司下一代技术路线图。',
     choices: [
       {
@@ -2587,7 +2587,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'l8_principal_celebration': {
     id: 'l8_principal_celebration',
-    title: ' 硅谷传世神话！登顶 L8 Principal 首席架构师 / 技术院士',
+    title: '【硅谷传奇】登顶 L8 Principal 首席架构师 / 技术院士',
     description: '硅谷巅峰至尊！你成功攻克终极天堑，在董事会答辩中获得 CEO、CTO 及顶级投资人全票推举，破格登顶 L8 Principal Engineer / Fellow 首席架构师！全公司数万人中仅有屈指可数的数位泰斗能臻此境！',
     choices: [
       {
@@ -2615,12 +2615,12 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'icc_work': {
     id: 'icc_work',
-    title: 'ICC 挂靠',
+    title: '【外包求生】ICC 挂靠与外包项目交付',
     description: '你在 ICC 拿着微薄的薪水，随时可能被开除。',
     choices: [
 
       {
-        text: '偷偷刷题，准备跳槽大厂',
+        text: '【偷偷刷题跳槽】在 ICC 偷偷刷题，准备跳槽大厂',
         effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 15, age: s.age + 1 }),
         nextEventId: 'job_hunt',
       }
@@ -2629,12 +2629,12 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'startup_work': {
     id: 'startup_work',
-    title: '初创公司风云',
+    title: '【初创风云】初创公司血泪与期权博弈',
     description: '你加入了一家 Early-Stage Startup，一个人干三个人的活。现在的风向变了，关于公司的发展方向：',
     imageUrl: 'images/ai_startup.jpg',
     choices: [
       {
-        text: '坚守传统赛道 (如 SaaS / Web3 工具)',
+        text: '【坚守传统赛道】坚守传统赛道 (如 SaaS / Web3 工具)',
         effect: (s) => {
           let winRate = 0.15;
           if (s.year >= 2020 && s.year <= 2022) winRate = 0.30;
@@ -2646,7 +2646,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (s.laid_off || s.job_type === 'unemployed' ? 'job_hunt' : 'sv_daily_life'),
       },
       {
-        text: '立刻 Pivot (转型) 做 AI / 大模型架构',
+        text: '【立刻 Pivot 转型 AI】立刻 Pivot (转型) 做 AI / 大模型架构',
         effect: (s) => {
           if (s.year < 2022) {
             return { cash: Math.max(0, s.cash - 10), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: `在 ${s.year} 年盲目跟风 AI 概念缺乏底层研发，产品无人问津，公司资金链断裂倒闭，你重新失业。` };
@@ -3007,7 +3007,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '劝阻 Sam 并注意安全合规，专注于大厂正规架构工作',
+        text: '【劝阻合规专注正道】劝阻 Sam 并注意安全合规，专注于大厂正规架构工作',
         effect: (s) => ({
           health: Math.min(100, s.health + 5),
           story_flags: {
@@ -3379,7 +3379,7 @@ export const careerEvents: Record<string, GameEvent> = {
             health: Math.max(0, s.health - 12),
             network: Math.max(0, (s.network || 10) - 3),
             story_flags: { ...(s.story_flags || {}), intern_mentored: true },
-            message: '【放养翻车！】你疏于跟进，实习生在无人指导下把核心模块写成了一坨技术债，上线即回滚，Return Offer 被拒。Manager 在 Calibration 上质疑你“只会甩手、带人不力”，这次带教反成了晋升路上的污点 (Impact 受损, 健康与口碑双跌)！'
+            message: '【放养翻车！】你疏于跟进，实习生在无人指导下把核心模块写成了一坨技术债，上线即回滚，Return Offer 被拒。Manager 在 Calibration 上质疑你“只会甩手、带人不力”，这次带教反成了晋升路上的污点 (Impact 受损，健康与口碑双跌)！'
           };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -3421,7 +3421,7 @@ export const careerEvents: Record<string, GameEvent> = {
             impact: addImpact(s, -3),
             network: Math.max(0, (s.network || 10) - 6),
             health: Math.max(0, s.health - 12),
-            message: '【跨组战役折戟！】兄弟团队为保住自己的地盘明里附和、暗里抵制，你的 RFC 在无尽的对齐会里被拖成一纸空文，还得罪了两位平级 Staff。VP 认为你“搞不定跨组协同”，这次挂帅反而烧掉了你宝贵的政治资本 (Impact 受损, 人脉与健康俱伤)！'
+            message: '【跨组战役折戟！】兄弟团队为保住自己的地盘明里附和、暗里抵制，你的 RFC 在无尽的对齐会里被拖成一纸空文，还得罪了两位平级 Staff。VP 认为你“搞不定跨组协同”，这次挂帅反而烧掉了你宝贵的政治资本 (Impact 受损，人脉与健康俱伤)！'
           };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -3474,7 +3474,7 @@ export const careerEvents: Record<string, GameEvent> = {
             impact: addImpact(s, -5),
             network: Math.max(0, (s.network || 10) - 6),
             health: Math.max(0, s.health - 12),
-            message: '【技术强推反噬！】各大业务线集体抵制“一刀切”迁移，半年投入付诸东流，两个核心团队因内耗爆发离职潮。董事会质疑你“脱离一线、独断专行”，你多年积累的架构威望遭遇重大反噬 (Impact 重挫, 人脉与健康俱损)！'
+            message: '【技术强推反噬！】各大业务线集体抵制“一刀切”迁移，半年投入付诸东流，两个核心团队因内耗爆发离职潮。董事会质疑你“脱离一线、独断专行”，你多年积累的架构威望遭遇重大反噬 (Impact 重挫，人脉与健康俱损)！'
           };
         },
         nextEventId: 'sv_year_end_settlement'

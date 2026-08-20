@@ -65,8 +65,8 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     leetcodeBonus: 7,
     healthDelta: -8,
     defaultHousing: '四大 校内宿舍',
-    choiceText: '北美 CS Top 4 (Stanford / MIT / CMU / Berkeley)：算法天花板、校友与 Quant 门路最广,但最贵最卷 (四年 $30w)',
-    enrollMessage: '你步入了世界计算机最高学府,准备迎接魔鬼课业。',
+    choiceText: '【北美 CS Top 4】Stanford / MIT / CMU / Berkeley：算法天花板、校友与 Quant 门路最广 (四年 $30w)',
+    enrollMessage: '你步入了世界计算机最高学府，准备迎接魔鬼课业。',
     isTopTierCS: true,
   },
   // CS Top 30:大U 理工强校梯队 (UIUC/UW/UMich…)。注意 slug 历史上叫 'ucb',但这一档代表
@@ -84,8 +84,8 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     leetcodeBonus: 5,
     networkBonus: 3,
     defaultHousing: '大U 校内宿舍',
-    choiceText: '北美 CS Top 30 (UIUC / UW / UMich / GaTech…)：扎实工科 + 深厚校友网络,性价比之选 (四年 $18w)',
-    enrollMessage: '你来到了全美顶尖理工强校,准备体验硬核课业与庞大的校友圈。',
+    choiceText: '【北美 CS Top 30】UIUC / UW / UMich / GaTech：扎实工科 + 深厚校友网络 (四年 $18w)',
+    enrollMessage: '你来到了全美顶尖理工强校，准备体验硬核课业与庞大的校友圈。',
     isTopTierCS: true,
   },
   // CS Top 100:普通州立 (SJSU 等)。地处湾区,人脉/实习地利最好、最轻松,但算法根基偏弱、无名校门槛。
@@ -104,8 +104,8 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     charmBonus: 2,
     networkBonus: 4,
     defaultHousing: '美大U 校内宿舍',
-    choiceText: '北美 CS Top 100 (SJSU / 普通州立…)：地处湾区,人脉与实习地利最佳、生活轻松,但算法根基偏弱 (四年 $10w,美籍/绿卡 $4w)',
-    enrollMessage: '你飞往湾区,准备开启轻松惬意、人脉广布的本科生活。',
+    choiceText: '【北美 CS Top 100】SJSU / 普通州立：地处湾区，人脉与实习地利最佳 (四年 $10w，美籍/绿卡 $4w)',
+    enrollMessage: '你飞往湾区，准备开启轻松惬意、人脉广布的本科生活。',
     isTopTierCS: false,
   },
   // 国内 985/211:排名阶梯外的"硬模式"——最省钱、数理算法功底扎实,但无美国学位,想上美国
@@ -122,8 +122,8 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     tuition: 2,
     leetcodeBonus: 3,
     defaultHousing: '国内大学宿舍',
-    choiceText: '国内 985 / 211 (陆本)：数理算法功底扎实、最省钱,但无美国学位 —— 想上美国 SWE 通常需再读一个美硕 (额外时间与学费) (四年 $2w)',
-    enrollMessage: '你进入了国内重点高校,打下了扎实的数理基础与算法底子。',
+    choiceText: '【国内 985/211】数理算法功底扎实、极度省钱，四年总花费 $2w',
+    enrollMessage: '你进入了国内重点高校，打下了扎实的数理基础与算法底子。',
     isTopTierCS: false,
   },
 };

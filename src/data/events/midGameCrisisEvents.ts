@@ -20,7 +20,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
     description: '新来的年轻 VP 在全员会上反复强调「团队要年轻化、要性价比」。你敏锐地嗅到危险：作为组里最资深、也最贵的那个人，你已被悄悄划进了「优化」名单的观察区。',
     choices: [
       {
-        text: '忍辱负重：主动收缩 scope、接受降薪，保住这份饭碗',
+        text: '【忍辱负重求稳】主动收缩 Scope、接受降薪，保住这份饭碗',
         effect: (s) => ({
           tc: Math.max(22, Math.floor(s.tc * 0.85)),
           health: Math.max(0, s.health - 8),
@@ -30,7 +30,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '不服老，硬刚证明价值 (赌一把，败则被优化)',
+        text: '【硬刚证明价值】不服老，硬刚证明价值 (赌一把，败则被优化)',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.30 + (s.leetcode / 250) + ((s.network || 10) / 200));
@@ -41,7 +41,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
-        text: '体面离场：拿赔偿走人，凭积蓄考虑转型或提前 FIRE',
+        text: '【体面拿钱离场】体面离场：拿赔偿走人，凭积蓄考虑转型或提前 FIRE',
         condition: employed,
         effect: (s) => ({
           cash: parseFloat((s.cash + Math.min(20, Math.max(3, s.tc * 0.5))).toFixed(1)),
@@ -64,7 +64,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
     description: '大模型海啸拍了下来：公司高层宣布，你所在的整条业务线将由 AI 工具与 Agent 全面替代，全组就地解散。这一次不是你表现不好——是你这个岗位，从此不存在了。',
     choices: [
       {
-        text: '拼命 reskill：抢转公司前沿 AI 大模型核心组 (需硬核算法，赌一把)',
+        text: '【拼命 Reskill 转组】拼命 Reskill：抢转公司前沿 AI 大模型核心组 (需硬核算法，赌一把)',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.65, 0.25 + (s.leetcode / 200));
@@ -75,7 +75,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
-        text: '拿 N+2 赔偿，体面离场再战',
+        text: '【拿 N+2 赔偿体面离场】拿 N+2 赔偿，体面离场再战',
         condition: employed,
         effect: (s) => ({
           cash: parseFloat((s.cash + Math.min(25, Math.max(4, s.tc * 0.6))).toFixed(1)),
@@ -89,7 +89,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: 'job_hunt',
       },
       {
-        text: '降维求生：接受去小厂 / 早期 startup 续命',
+        text: '【降维小厂续命】降维求生：接受去小厂 / 早期 Startup 续命',
         condition: employed,
         effect: (s) => ({
           job_type: 'startup',
@@ -117,7 +117,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
     description: '新任 VP 上任三把火，一纸重组令下，你倾注两年心血、马上要出成果的核心项目被直接砍掉，团队打散。多年攒下的影响力 (Impact) 面临大幅缩水。',
     choices: [
       {
-        text: '快速转身：把技术资产包装成内部平台，抢占新方向的话语权',
+        text: '【快速包装内部平台】快速转身：把技术资产包装成内部平台，抢占新方向的话语权',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.65, 0.35 + (s.leetcode / 250) + ((s.network || 10) / 200));
@@ -128,7 +128,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '接受现实：平静转岗到别的组，从零开始沉淀心态',
+        text: '【平静接受转岗】接受现实：平静转岗到别的组，从零开始沉淀心态',
         effect: (s) => ({ impact: addImpact(s, -10), health: Math.max(0, s.health - 4), story_flags: seen(s, 'impact_project_cancelled'), message: '【认栽重来】你接受了组织的安排，转到新组从零做起。影响力清零了一大截，但也卸下了包袱。' }),
         nextEventId: h1ToH2Router,
       },
@@ -142,12 +142,12 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
     description: '你负责的旗舰功能上线当天引发大规模线上故障，登上内部事故榜，高管在事故复盘会上震怒。你之前攒下的技术声誉 (Impact) 岌岌可危。',
     choices: [
       {
-        text: '扛下来：牵头复盘、通宵修复、写事故报告担当到底',
+        text: '【主动担当通宵修复】扛下来：牵头复盘、通宵修复、写事故报告担当到底',
         effect: (s) => ({ impact: addImpact(s, -4), leetcode: Math.min(100, s.leetcode + 4), network: Math.min(100, (s.network || 10) + 3), health: Math.max(0, s.health - 12), story_flags: seen(s, 'impact_launch_incident'), message: '【担当挽回口碑】你没有回避，牵头三天两夜复盘修复并写出高质量事故报告，高管看到了你的担当，影响力损失被止住。' }),
         nextEventId: h1ToH2Router,
       },
       {
-        text: '甩锅：把责任推给下游依赖与 Oncall，撇清自己',
+        text: '【战术甩锅下游依赖】甩锅：把责任推给下游依赖与 On-call，撇清自己',
         effect: (s) => ({ impact: addImpact(s, -10), network: Math.max(0, (s.network || 10) - 4), health: Math.max(0, s.health - 6), story_flags: seen(s, 'impact_launch_incident'), message: '【口碑双损】你撇清了直接责任，但甩锅的姿态被同事看在眼里，影响力与人脉口碑一起受损。' }),
         nextEventId: h1ToH2Router,
       },
@@ -161,7 +161,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
     description: '组织调整，你被 PM「借调」去维护一个即将下线、却又不敢关的 legacy 系统。没有新项目、没有曝光，同期的人一个个超过你，影响力 (Impact) 悄悄流失。',
     choices: [
       {
-        text: '主动突围：一边维护一边偷做高曝光 side project 争取转回主线',
+        text: '【突围做 Side Project】主动突围：一边维护一边偷做高曝光 Side Project 争取转回主线',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.30 + (s.leetcode / 250) + ((s.network || 10) / 200));
@@ -172,7 +172,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '躺平维护：反正 WLB 拉满，养生要紧',
+        text: '【佛系躺平维护】躺平维护：反正 WLB 拉满，养生要紧',
         effect: (s) => ({ impact: addImpact(s, -10), health: Math.min(100, s.health + 10), story_flags: seen(s, 'impact_legacy_maintenance'), message: '【彻底躺平】你安心当起了 legacy 系统的守墓人，身体舒服了，但影响力与职业前景一起停摆。' }),
         nextEventId: h1ToH2Router,
       },

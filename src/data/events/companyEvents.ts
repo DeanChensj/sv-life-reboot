@@ -19,11 +19,11 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Google: 养老厂反复重组 ----------------
   'google_reorg_limbo': {
     id: 'google_reorg_limbo',
-    title: 'Google 又一轮重组 (Reorg Limbo)',
+    title: '【巨头动荡】Google 又一轮重组 (Reorg Limbo)',
     description: '新一轮组织架构调整降临，你的组被并入一个新部门，新老板还没到位，你陷入了“组织待定”的模糊地带。好在 Google 极少裁人，你有的是时间观望。',
     choices: [
       {
-        text: '主动出击：疯狂 networking 抱大腿，争取转去热门 Gemini / AI 核心组',
+        text: '【主动出击抱大腿】主动出击：疯狂 Network，争取转去热门 Gemini / AI 核心组',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
@@ -34,7 +34,7 @@ export const companyEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '佛系躺平：反正饿不死，安心 rest and vest 等尘埃落定',
+        text: '【佛系躺平等待稳定】佛系躺平：反正饿不死，安心 Rest and Vest 等尘埃落定',
         effect: (s) => ({
           health: Math.min(100, s.health + 12),
           leetcode: Math.max(0, s.leetcode - 3),
@@ -50,11 +50,11 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Meta: All-in 转型豪赌 ----------------
   'meta_metaverse_pivot': {
     id: 'meta_metaverse_pivot',
-    title: 'Meta 战略 All-in (元宇宙 → AI)',
+    title: '【战略转向】Meta 战略 All-in (元宇宙 → AI)',
     description: '小扎在全员会上再次宣布公司要 All-in 新方向，你手上的项目被当场砍掉。要么赌一把转去新方向的核心组冲业绩，要么稳一手混个 Meets 保平安。',
     choices: [
       {
-        text: '赌一把：转去 All-in 新方向的核心组，冲影响力 (成败看造化)',
+        text: '【转去核心新方向】赌一把：转去 All-in 新方向核心组，冲影响力',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.35 + ((s.network || 10) / 100) * 0.5);
@@ -65,7 +65,7 @@ export const companyEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '稳一手：低调维持 Meets 绩效，不掺和高层路线斗争',
+        text: '【稳健维持 Meets】稳一手：低调维持 Meets 绩效，不掺和高层斗争',
         effect: (s) => ({
           health: Math.max(0, s.health - 4),
           story_flags: seen(s, 'meta_metaverse_pivot'),
@@ -79,11 +79,11 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- NVIDIA: 皮衣黄股价狂飙 ----------------
   'nvidia_rsu_moonshot': {
     id: 'nvidia_rsu_moonshot',
-    title: 'NVIDIA RSU 一飞冲天',
+    title: '【黄氏狂欢】NVIDIA 算力暴涨与 RSU 封神',
     description: 'AI 算力军备竞赛下，英伟达股价一年翻了几倍，你的 RSU 账户肉眼可见地膨胀。茶水间里同事都在争论：是套现落袋买房，还是钻石手继续持有？',
     choices: [
       {
-        text: '见好就收：套现一部分 RSU 锁定收益，落袋为安',
+        text: '【套现锁定部分收益】见好就收：套现一部分 RSU 锁定收益，落袋为安',
         condition: (s) => (s.stocks || 0) >= 8,
         effect: (s) => ({
           stocks: Math.max(0, (s.stocks || 0) - 8),
@@ -95,7 +95,7 @@ export const companyEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '钻石手：All-in 信仰，一股不卖赌它继续涨 (高波动)',
+        text: '【钻石手一股不卖】钻石手：All-in 信仰，一股不卖赌它继续暴涨',
         condition: employed,
         effect: (s) => {
           const moon = gameRandom() < Math.min(0.6, 0.45 + (Math.min(60, s.luck) / 100) * 0.2);
@@ -111,11 +111,11 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- TikTok / 字节: 美国封禁听证会 ----------------
   'tiktok_us_ban_hearing': {
     id: 'tiktok_us_ban_hearing',
-    title: 'TikTok 强制剥离听证会',
+    title: '【风口浪尖】TikTok 听证会与地缘风暴',
     description: '国会又双叒在讨论强制剥离 TikTok 美国业务，你所在的组前途未卜，Slack 里人心惶惶，猎头电话却打爆了。',
     choices: [
       {
-        text: '留守赌一把：相信禁令会被推翻 / 剥离顺利 (前途未卜)',
+        text: '【留守相信禁令推翻】留守赌一把：相信禁令会被推翻 / 剥离顺利',
         condition: employed,
         effect: (s) => {
           const survive = gameRandom() < 0.6;
@@ -126,7 +126,7 @@ export const companyEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
-        text: '骑驴找马：主动跳槽到更稳的大厂避险 (损失部分现金流)',
+        text: '【主动跳槽大厂避险】骑驴找马：主动跳槽到更稳的大厂避险',
         condition: employed,
         effect: (s) => ({
           company: 'google',
@@ -146,11 +146,11 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- OpenAI / AI 实验室: 发布会前夜 crunch ----------------
   'openai_launch_crunch': {
     id: 'openai_launch_crunch',
-    title: '下一代模型发布会倒计时',
+    title: '【发布倒计时】下一代前沿大模型发布狂飙',
     description: 'AGI 军备竞赛白热化，下一代旗舰模型发布会只剩 72 小时，全组进入 war room 通宵冲刺。Sam 在群里发了「Ship it」表情包。',
     choices: [
       {
-        text: '全力冲刺：主动请缨做发布会 Demo 主讲，赌一把高曝光',
+        text: '【主动请缨主讲 Demo】全力冲刺：主动请缨做发布会 Demo 主讲，赌一把高曝光',
         condition: employed,
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 8),
@@ -164,7 +164,7 @@ export const companyEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '稳住节奏：只做好分内的 eval 与上线保障，不硬熬',
+        text: '【做好分内评测上线】稳住节奏：只做好分内的 Eval 与上线保障，不硬熬',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 3),
           health: Math.max(0, s.health - 4),
@@ -179,11 +179,11 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Apple: 保密文化 ----------------
   'apple_secrecy_crackdown': {
     id: 'apple_secrecy_crackdown',
-    title: 'Apple 保密审查升级',
+    title: '【黑屋风暴】Apple 严苛保密审查升级',
     description: '库比蒂诺的保密文化再次收紧。你因为在内部群里随手发了一张未发布产品的截图，被合规团队约谈，气氛一度非常紧张。',
     choices: [
       {
-        text: '老实配合：诚恳认错、删除记录、参加合规培训',
+        text: '【诚恳认错合规】老实配合：诚恳认错、删除记录并参加合规培训',
         effect: (s) => ({
           health: Math.max(0, s.health - 8),
           charm: Math.max(0, (s.charm || 10) - 1),
@@ -193,7 +193,7 @@ export const companyEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '据理力争：那只是内部群，何况早有外媒爆料了 (高风险)',
+        text: '【据理力争申辩】据理力争：那只是内部群，早有外媒爆料 (高风险)',
         condition: employed,
         effect: (s) => {
           const ok = gameRandom() < Math.min(0.7, 0.4 + ((s.charm || 10) / 100) * 0.3);
@@ -209,28 +209,28 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Robinhood: 散户 meme 股狂潮 / SEC 问询 ----------------
   'robinhood_meme_stock_frenzy': {
     id: 'robinhood_meme_stock_frenzy',
-    title: 'Robinhood: meme 股狂潮与 SEC 问询',
-    description: '散户在论坛上抱团逼空,某 meme 股单周暴涨十倍,你们的下单与撮合系统被交易洪峰冲到宕机边缘。App 商店涌入百万新用户,但 SEC 已就"限制买入"与订单流返佣 (PFOF) 向公司发来问询函……',
+    title: '【散户狂欢】Robinhood Meme 股暴动与 SEC 问询',
+    description: '散户在论坛上抱团逼空，某 meme 股单周暴涨十倍，你们的下单与撮合系统被交易洪峰冲到宕机边缘。App 商店涌入百万新用户，但 SEC 已就"限制买入"与订单流返佣 (PFOF) 向公司发来问询函……',
     choices: [
       {
-        text: '连夜扩容撮合引擎顶住洪峰,赌自己成为这场散户狂欢的英雄 (成败看造化)',
+        text: '【连夜扩容顶住洪峰】连夜扩容撮合引擎顶住洪峰，赌一把成为英雄',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.4 + (s.leetcode / 100) * 0.25);
           return win
-            ? { impact: addImpact(s, 8), stocks: (s.stocks || 0) + 6, health: Math.max(0, s.health - 12), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '你带队通宵扩容,系统在交易洪峰中稳如泰山!新增用户暴涨、HOOD 股价起飞,你吃到丰厚 RSU 刷新与全公司认可 (Impact 大涨)!' }
-            : { health: Math.max(0, s.health - 14), impact: addImpact(s, -3), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '撮合系统还是在最高峰宕机数小时,散户集体声讨、监管盯上你们组,你背了故障锅、身心俱疲,这半年的产出付诸东流。' };
+            ? { impact: addImpact(s, 8), stocks: (s.stocks || 0) + 6, health: Math.max(0, s.health - 12), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '你带队通宵扩容，系统在交易洪峰中稳如泰山！新增用户暴涨、HOOD 股价起飞，你吃到丰厚 RSU 刷新与全公司认可 (Impact 大涨)!' }
+            : { health: Math.max(0, s.health - 14), impact: addImpact(s, -3), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '撮合系统还是在最高峰宕机数小时，散户集体声讨、监管盯上你们组，你背了故障锅、身心俱疲，这半年的产出付诸东流。' };
         },
         nextEventId: (s) => h1ToH2Router(s),
       },
       {
-        text: '配合合规团队应对 SEC 问询与 PFOF 审查,稳妥收尾不冒险',
+        text: '【配合合规应对问询】配合合规团队应对 SEC 问询与 PFOF 审查，稳妥收尾',
         effect: (s) => ({
           health: Math.max(0, s.health - 5),
           network: Math.min(100, (s.network || 10) + 5),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           story_flags: seen(s, 'robinhood_meme_stock_frenzy'),
-          message: '你协助法务与合规连夜准备应询材料,滴水不漏地扛过了监管风波。虽没吃到风口红利,却赢得了跨部门的信任与人脉。',
+          message: '你协助法务与合规连夜准备应询材料，滴水不漏地扛过了监管风波。虽没吃到风口红利，却赢得了跨部门的信任与人脉。',
         }),
         nextEventId: (s) => h1ToH2Router(s),
       },

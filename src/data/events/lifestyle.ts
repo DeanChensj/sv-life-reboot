@@ -5,7 +5,7 @@ import { HOUSING_NAMES } from '../../constants/gameConstants';
 export const lifestyleEvents: Record<string, GameEvent> = {
   'dating_market': {
     id: 'dating_market',
-    title: '湾区婚恋交友 (CMB & 情感发展)',
+    title: '【湾区交友】CMB 刷人与情感发展',
     description: '湾区高压生活下，你打开了 Coffee Meets Bagel (CMB) 与朋友圈，开启属于你的情感阶段探索。',
     imageUrl: 'images/boba_date.jpg',
     choices: [
@@ -90,7 +90,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '放弃交友，专心搞钱',
+        text: '【放弃交友】放弃交友，专心搞钱',
         condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '觉得相亲太累，你回到家里躺着刷了一整天 YouTube，感到内心十分平静。' }),
         nextEventId: 'sv_year_end_settlement',
@@ -100,11 +100,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'breakup_crisis': {
     id: 'breakup_crisis',
-    title: '感情危机：七年之痒',
+    title: '【感情危机】七年之痒与价值分歧',
     description: '由于湾区高压的生活节奏、永远在比拼薪资的焦虑、以及你长期对伴侣的忽视，你们的感情走到了破裂的边缘。对方正式向你提出了分手/离婚。',
     choices: [
       {
-        text: '和平分手 / 离婚',
+        text: '【和平分手】和平分手 / 离婚',
         // Only a MARRIED split divides assets (community property). A dating breakup
         // has no merged finances, so no asset division.
         effect: (s) => s.is_married
@@ -113,7 +113,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '花 $10w 请湾区顶级离婚律师打官司 (仅限已婚, 高风险)',
+        text: '【选择】花 $10w 请湾区顶级离婚律师打官司 (仅限已婚，高风险)',
         costBadge: '律师费 $10w',
         reqBadge: '需总资产 >= $15w',
         condition: (s) => s.is_married === true && (s.cash + (s.stocks || 0)) >= 15,
@@ -138,7 +138,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '痛哭流涕挽留，发誓每天准时 5 点下班做饭',
+        text: '【痛哭流涕挽留】痛哭流涕挽留，发誓每天准时 5 点下班做饭',
         effect: (s) => {
           const win = s.charm >= 10 && gameRandom() > 0.5;
           if (win) {
@@ -158,16 +158,16 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'boardgame_dating': {
     id: 'boardgame_dating',
-    title: '狼人杀/剧本杀相亲局',
+    title: '【桌游相亲】狼人杀与剧本杀交友局',
     description: '周末你被朋友拉去参加南湾的百人桌游大群局。名义上是玩剧本杀和狼人杀，实际上是大型单身男女相亲局。',
     choices: [
       {
-        text: '逻辑拉满！强势 Carry 狂踩全场 (展现高智商)',
+        text: '【逻辑拉满！强势】逻辑拉满！强势 Carry 狂踩全场 (展现高智商)',
         effect: (s) => ({ charm: Math.max(0, (s.charm || 10) - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你逻辑严密，把全场玩伴的漏洞指得一清二楚，带领好人阵营完胜！但是大家觉得你太有压迫感了，活动结束后没一个人加你微信。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '装小白疯狂给人递水，主打情绪价值',
+        text: '【装小白疯狂给人递】装小白疯狂给人递水，主打情绪价值',
         effect: (s) => {
           const win = gameRandom() > 0.5;
           const isMarriedNow = s.is_married || s.relationship_status === 'married';
@@ -184,7 +184,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '发现场地的老板正在招全栈工程师，去聊聊',
+        text: '【发现场地的老板正】发现场地的老板正在招全栈工程师，去聊聊',
         effect: (s) => {
           const win = s.leetcode >= 50;
           const isEmployed = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
@@ -262,17 +262,17 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'ex_wedding_invite': {
     id: 'ex_wedding_invite',
-    title: '红色炸弹来袭',
+    title: '【前任喜帖】红色炸弹与青春落幕',
     description: '周末你收到了一份精致的电子请柬。你曾经暧昧过/交往过的前任下个月要在 Napa 酒庄举办盛大婚礼了。',
     choices: [
       {
-        text: '大方随份子钱并出席 (花费 $0.2w)',
+        text: '【大方随份子钱并出】大方随份子钱并出席 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(30, s.charm + 1), health: s.health - 5, message: '你强颜欢笑在 Napa 酒庄吃了一顿精致但毫无味道的西餐，包了 $2000 的份子钱，心里拔凉拔凉的。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '装没看见，默默拉黑',
+        text: '【装没看见】装没看见，默默拉黑',
         effect: (s) => ({ network: Math.max(0, s.network - 5), health: Math.min(100, s.health + 5), message: '你选择无视请柬并删除了对方的好友。圈子里传言你“格局太小”，人脉受损，但你觉得心情舒畅多了！' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -285,7 +285,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '深夜微信群被一条一亩三分地热帖刷屏，标题赫然写着《湾区某大厂 L5 避雷，分手抢搬家具 + AA 小费极品全纪录》。帖子附带了匿名聊天记录截图与你特征极度明显的描述，瞬时冲上了论坛热榜第一！',
     choices: [
       {
-        text: '亲自下场在论坛回复发帖与前任对撕澄清 (放手一搏挽回形象)',
+        text: '【亲自下场在论坛回】亲自下场在论坛回复发帖与前任对撕澄清 (放手一搏挽回形象)',
         // Now a real gamble instead of a strict loss: ~45% you clear your name
         // (recover charm/network), else it backfires harder. vs the safe "delete" option.
         effect: (s) => {
@@ -297,7 +297,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '装作没看见并找论坛管理员申请隐去敏感信息 (花费 $0.1w)',
+        text: '【装作没看见并找论】装作没看见并找论坛管理员申请隐去敏感信息 (花费 $0.1w)',
         condition: (s) => s.cash >= 0.1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), network: Math.max(0, (s.network || 0) - 2), charm: Math.max(0, s.charm - 2), message: '论坛管理员删除了包含个人身份的信息，虽然负面影响逐渐平息，但你依然社死休养了半个月。' }),
         nextEventId: 'sv_year_end_settlement'
@@ -338,11 +338,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'ikea_furniture_fight': {
     id: 'ikea_furniture_fight',
-    title: '周末危机：宜家家具组装',
+    title: '【组装家具】周末宜家家具大战与感情考验',
     description: '为了布置温馨的小家，周末你和伴侣去 IKEA 买了一个巨型衣柜。回到家后，面对一堆木板和毫无逻辑的说明书，气氛变得十分焦灼。',
     choices: [
       {
-        text: '自告奋勇，独自一人闷头组装 (拼体力)',
+        text: '【自告奋勇】自告奋勇，独自一人闷头组装 (拼体力)',
         effect: (s) => {
           const pass = gameRandom() < 0.5;
           return pass 
@@ -352,7 +352,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '花钱消灾，直接请 TaskRabbit 师傅 (花费 $0.1w)',
+        text: '【花钱消灾】花钱消灾，直接请 TaskRabbit 师傅 (花费 $0.1w)',
         condition: (s) => s.cash >= 0.1,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.1), health: Math.min(100, s.health + 5), message: '你果断打开 TaskRabbit 花了 $1000 请了墨西哥老哥。半小时搞定，你们开开心心出门吃大餐去了。' }),
         nextEventId: 'sv_year_end_settlement'
@@ -362,7 +362,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'pickleball_networking': {
     id: 'pickleball_networking',
-    title: 'Pickleball (匹克球) 社交局',
+    title: '【球场社交】Pickleball 匹克球高端局',
     description: '最近湾区不流行高尔夫了，所有人都在打匹克球。你的朋友拉你去参加一个高端局，据说有很多投资人和大厂 Director。',
     choices: [
       {
@@ -396,7 +396,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '花 $1w 买全套顶级装备去混圈子',
+        text: '【选择】花 $1w 买全套顶级装备去混圈子',
         condition: (s) => s.cash >= 1,
         effect: (s) => {
           const win = gameRandom() > 0.5;
@@ -414,7 +414,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '不去，宅在家打黑神话',
+        text: '【不去】不去，宅在家打黑神话',
         effect: (s) => ({ health: Math.min(100, s.health + 10), message: '你拒绝了无效社交，在家又通关了一次二郎神，神清气爽。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -427,7 +427,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周末你穿上始祖鸟，来到了 Sunnyvale 的 Movement 抱石馆。馆里到处都是身穿 Lululemon 和始祖鸟黑标的硅谷码农在研究 V4/V5 路线。',
     choices: [
       {
-        text: '挑战 V5 难度黑点路线 (体验攀岩硬核快感)',
+        text: '【挑战】挑战 V5 难度黑点路线 (体验攀岩硬核快感)',
         effect: (s) => ({
           health: Math.min(100, s.health + 20),
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
@@ -436,7 +436,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '与旁边脱下镁粉袋的老哥交流动态跳跃 (尝试搭讪拓展人脉)',
+        text: '【与旁边脱下镁粉袋】与旁边脱下镁粉袋的老哥交流动态跳跃 (尝试搭讪拓展人脉)',
         effect: (s) => {
           const win = gameRandom() < 0.45;
           const isUnemployed = s.job_type === 'unemployed' || s.laid_off;
@@ -477,7 +477,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周六加州阳光明媚，你带着 Babolat 拍子来到了 Cupertino 的网球场。几位大厂 Senior 与 Startup Founder 正好缺一个双打搭档...',
     choices: [
       {
-        text: '轰出 100mph 强力发球，统治比赛',
+        text: '【轰出】轰出 100mph 强力发球，统治比赛',
         effect: (s) => ({
           health: Math.min(100, s.health + 20),
           charm: Math.min(s.max_charm ?? 25, s.charm + 4),
@@ -487,7 +487,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '打温和拉球，场下与搭档畅聊 AI 风口与美股',
+        text: '【打温和拉球】打温和拉球，场下与搭档畅聊 AI 风口与美股',
         effect: (s) => ({
           cash: s.cash + 4,
           health: Math.min(100, s.health + 10),
@@ -505,7 +505,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周末清晨，你被朋友拉去 Fremont 的 Mission Peak 徒步。面对 6 英里无遮挡的大斜坡与湾区烈日，你一步步迈向山顶那根著名的“拔剑柱” (Mission Peaker)...',
     choices: [
       {
-        text: '一口气冲上山顶，在拔剑柱前拍 OOTD 大片',
+        text: '【一口气冲上山顶】一口气冲上山顶，在拔剑柱前拍 OOTD 大片',
         effect: (s) => ({
           health: Math.min(100, s.health + 15),
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
@@ -514,7 +514,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '中途在草地上躺平休养，呼吸湾区新鲜空气',
+        text: '【中途在草地上躺平】中途在草地上躺平休养，呼吸湾区新鲜空气',
         effect: (s) => ({
           health: Math.min(100, s.health + 18),
           message: '阳光洒在身上，看着远处的牛群与红木山谷，你久违地感受到了灵魂的放松与惬意。'
@@ -530,7 +530,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周五下午 3:15，Slack 上的 #skiing 频道与微信群全炸了：“Tahoe 今晚开大雪，明早 Pow 天雪质爆满！”你急忙合上电脑，把滑雪板扣进车顶箱狂飙出门。然而刚到 Truckee，I-80 公路突然由于暴雪启动了 Chain Control (强制雪链停摆检查)，成千上万台 Tesla 和斯巴鲁卡在雪堆里动弹不得。',
     choices: [
       {
-        text: '硬着头皮睡车里！启动特斯拉营地模式或开足暖气在车厢睡袋硬扛',
+        text: '【硬着头皮睡车里】硬着头皮睡车里！启动特斯拉营地模式或开足暖气在车厢睡袋硬扛',
         effect: (s) => ({
           health: Math.max(15, s.health - 10),
           cash: Math.max(0, s.cash - 0.2),
@@ -540,7 +540,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '识时务者为俊杰！果断掉头在 Sacramento 找快捷酒店吃自热火锅',
+        text: '【识时务者为俊杰】识时务者为俊杰！果断掉头在 Sacramento 找快捷酒店吃自热火锅',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.4),
           health: Math.min(100, s.health + 15),
@@ -558,7 +558,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '积攒了一整年的 PTO 假期，你终于买好了飞往夏威夷 (Hawaii) 的机票。漫步在威基基海滩 (Waikiki) 的落日余晖中，手里拿着冰镇椰汁与新鲜 Poke ...',
     choices: [
       {
-        text: '体验欧胡岛冲浪与火山潜水 (花费 $0.8w)',
+        text: '【体验欧胡岛冲浪与】体验欧胡岛冲浪与火山潜水 (花费 $0.8w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.8),
           health: Math.min(100, s.health + 18),
@@ -568,7 +568,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '海景酒店阳台躺平，听海浪声睡三整天 (花费 $0.4w)',
+        text: '【海景酒店阳台躺平】海景酒店阳台躺平，听海浪声睡三整天 (花费 $0.4w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.4),
           health: Math.min(100, s.health + 22),
@@ -585,7 +585,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '彻底摆脱了 H1B 返美签 Stamp 审查与出入境限制的心理阴影，你享受着无需为签证焦虑的自由，买了一张旧金山直飞东京羽田的头等舱机票！',
     choices: [
       {
-        text: '银座狂买 & 奢华怀石料理/米其林 (消耗 $1.5w)',
+        text: '【银座狂买】银座狂买 & 奢华怀石料理/米其林 (消耗 $1.5w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1.5),
           health: Math.min(100, s.health + 15),
@@ -596,7 +596,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '富士山小木屋温泉私汤连泡 5 天 (消耗 $0.8w)',
+        text: '【富士山小木屋温泉】富士山小木屋温泉私汤连泡 5 天 (消耗 $0.8w)',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.8),
           health: Math.min(100, s.health + 20),
@@ -614,13 +614,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '阳光明媚的周末，你和几位湾区同行驱车前往 Napa 纳帕谷高端酒庄。在葡萄园城堡里，侍酒师倒上了 2018 年 Cab Sauv...',
     choices: [
       {
-        text: '入坑购买 2 箱高端红酒并订阅 Wine Club 会员 (花费 $0.8w)',
+        text: '【入坑购买】入坑购买 2 箱高端红酒并订阅 Wine Club 会员 (花费 $0.8w)',
         condition: (s) => s.cash >= 0.8,
         effect: (s) => ({ cash: s.cash - 0.8, charm: Math.min(s.max_charm ?? 25, s.charm + 4), health: Math.min(100, s.health + 10), message: '你体验到了正宗的湾区中产生活方式，品味大幅上升，社交话题更加丰富！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '纯打卡拍照发朋友圈，喝葡萄汁享受阳光',
+        text: '【纯打卡拍照发朋友】纯打卡拍照发朋友圈，喝葡萄汁享受阳光',
         effect: (s) => ({ health: Math.min(100, s.health + 15), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '纳帕谷的明媚阳光与绿油油的葡萄园让你极度放松，身心得到了全面滋养！' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -629,11 +629,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'burning_man_invite': {
     id: 'burning_man_invite',
-    title: '火人节的召唤',
+    title: '【荒漠狂欢】火人节的召唤与精神洗礼',
     description: '在 Dolores Park 晒太阳时，你的一群朋友（他们是一个住在 SOMA 三居室里的 6 人 Polycule / 开放式关系群体）邀请你加入他们的 Burning Man 营地。他们说这不仅是心灵的洗礼，还能结识顶级 VC。',
     choices: [
       {
-        text: '去！拥抱尘土与自由！',
+        text: '【去！拥抱尘土与自】去！拥抱尘土与自由！',
         effect: (s) => ({ 
           cash: s.cash - 1.5, 
           health: s.health - 15,
@@ -644,7 +644,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 1.5
       },
       {
-        text: '算了吧，我还要在家 On-Call',
+        text: '【算了吧】算了吧，我还要在家 On-Call',
         effect: (s) => ({ 
           health: s.health + 5,
           cash: s.cash + (s.tc / 12),
@@ -696,7 +696,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '理智消费：在体育场外草坪“挂壁”听免费漏音',
+        text: '【理智消费】理智消费：在体育场外草坪“挂壁”听免费漏音',
         effect: (s) => ({
           health: Math.min(100, s.health + 5),
           message: '你带着折叠椅和野餐垫坐在场外草坪上，吹着加州晚风听着里面的合唱，一分钱没花也感受到了现场的欢乐。'
@@ -712,13 +712,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周六下午，你来到 Cupertino 的奶茶店。点了一杯“黑糖珍珠鲜奶微糖加蛋布丁”，结账单显示：$12.85。\n接着店员把旋转 iPad 屏幕转面向你，提示音响起，屏幕上赫然出现四个巨大按钮：\n【20%】   【25%】   【30%】   【Custom】',
     choices: [
       {
-        text: '冒着被店员白眼的风险，眯着眼准确点击极小的字体 Custom Tip -> $0.50',
+        text: '【冒着被店员白眼的】冒着被店员白眼的风险，眯着眼准确点击极小的字体 Custom Tip -> $0.50',
         // A $13 boba + tip is ~$13-16 = ~0.0013-0.0016w, not $1000-2000 (100x slip).
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.0013), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '痛快点击 25%，拍照发朋友圈：“湾区物价让硅谷 L5 活得不如国内县城中产 [流泪]”',
+        text: '【痛快点击】痛快点击 25%，拍照发朋友圈：“湾区物价让硅谷 L5 活得不如国内县城中产 [流泪]”',
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.0016), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你的朋友圈成功引起了老同学的围观和暗酸，完成了标准的硅谷式哭穷炫耀。' }),
         nextEventId: 'sv_year_end_settlement',
       }
@@ -731,18 +731,18 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周末不知道吃什么，你打开小红书，看到首页全在推 Cupertino Main Street 新开的排队王川湘菜馆与粤式早茶。',
     choices: [
       {
-        text: '约上两位大厂好友前去拼桌大快朵颐 (花费 $0.05w)',
+        text: '【约上两位大厂好友】约上两位大厂好友前去拼桌大快朵颐 (花费 $0.05w)',
         condition: (s) => s.cash >= 0.05,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '地道的辣子鸡与虾饺治愈了一整周的工位内耗，大家边吃边聊硅谷八卦，身心愉悦！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '看着人均 $70+ 账单与 18% 强制服务费，果断回家煮螺蛳粉与煎蛋',
+        text: '【看着人均】看着人均 $70+ 账单与 18% 强制服务费，果断回家煮螺蛳粉与煎蛋',
         effect: (s) => ({ health: Math.min(100, s.health + 2), cash: s.cash + 0.05, message: '你拒绝为湾区溢价买单。自己在家煮了螺蛳粉加溏心蛋，省下一大笔钱，主打一个平平淡淡才是真。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '探店拍照发小红书写深度避坑攻略',
+        text: '【探店拍照发小红书】探店拍照发小红书写深度避坑攻略',
         effect: (s) => {
           const viral = gameRandom() > 0.65;
           return viral 
@@ -760,7 +760,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '南湾 Westfield 购物中心新开了一家号称“国内顶流”的网红奶茶烘焙店，朋友圈与小红书被全网刷爆，连湾区大厂码农和网红都在烈日下排起了长龙！',
     choices: [
       {
-        text: '跟风排队！周末烈日下排队 2 小时打卡并发小红书 (花费 $0.02w)',
+        text: '【跟风排队！周末烈】跟风排队！周末烈日下排队 2 小时打卡并发小红书 (花费 $0.02w)',
         condition: (s) => s.cash >= 0.02,
         effect: (s) => {
           const win = gameRandom() < 0.70;
@@ -771,13 +771,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '闪送黄牛代排！多花钱找跑腿黄牛送至办公室 (花费 $0.08w)',
+        text: '【闪送黄牛代排！多】闪送黄牛代排！多花钱找跑腿黄牛送至办公室 (花费 $0.08w)',
         condition: (s) => s.cash >= 0.08,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.08), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '多花了几万韩元/跑腿费免去了排队晒太阳之苦，你在办公室悠闲地喝着网红奶茶，收获了同事羡慕的目光。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '清流拒绝！去大厂 MicroKitchen (MK) 薅免费 LaCroix 气泡水',
+        text: '【清流拒绝！去大厂】清流拒绝！去大厂 MicroKitchen (MK) 薅免费 LaCroix 气泡水',
         effect: (s) => ({ health: Math.min(100, s.health + 5), cash: s.cash + 0.05, message: '你拒绝了消费主义洗脑。周末假装去公司加班，从 MicroKitchen (MK) 顺走了两罐气泡水与坚果，省钱又健康！' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -788,11 +788,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'biohacking_party': {
     id: 'biohacking_party',
-    title: 'Atherton 的长寿教徒',
+    title: '【长寿邪教】Atherton 生物黑客长寿狂欢',
     description: '在 Atherton 的一个豪宅派对上，主人戴着三个智能指环，宣称自己把生物钟逆转到了 18 岁。他递给你一杯绿色的不明液体，说是他独家研发的“细胞级抗衰老矩阵精华”，只要 $500 一杯。',
     choices: [
       {
-        text: '报名“长寿换血抗衰老”年度会员 (消耗 $50w)',
+        text: '【报名“长寿换血抗】报名“长寿换血抗衰老”年度会员 (消耗 $50w)',
         effect: (s) => ({ 
           cash: s.cash - 50, 
           health: 100,
@@ -802,7 +802,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 50
       },
       {
-        text: '买！一杯“细胞级精华” ($500) 尝尝鲜',
+        text: '【买！一杯“细胞级】买！一杯“细胞级精华” ($500) 尝尝鲜',
         effect: (s) => ({ 
           cash: s.cash - 0.05, 
           health: Math.min(100, s.health + 5),
@@ -812,7 +812,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 0.05
       },
       {
-        text: '拒绝，并去厨房找多力多滋和可乐',
+        text: '【拒绝】拒绝，并去厨房找多力多滋和可乐',
         // Comfort-food relief instead of a pure double-penalty (was health-2 & charm-2,
         // a strict loss). You skip the woo and just enjoy yourself.
         effect: (s) => ({ 
@@ -823,7 +823,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '跟他探讨脑机接口，看能不能弄点融资',
+        text: '【跟他探讨脑机接口】跟他探讨脑机接口，看能不能弄点融资',
         // Trimmed from a free +$10w to a plausible small pre-seed check.
         effect: (s) => ({ 
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
@@ -838,11 +838,11 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'dental_emergency': {
     id: 'dental_emergency',
-    title: '突发：智齿发炎',
+    title: '【肉体暴击】突发智齿发炎与美国天价账单',
     description: '你的智齿突然发炎，痛得满地打滚，必须拔除。',
     choices: [
       {
-        text: '在湾区看牙医 (贵但顶级医疗，无需奔波)',
+        text: '【在湾区看牙医】在湾区看牙医 (贵但顶级医疗，无需奔波)',
         condition: (s) => s.cash >= 0.5,
         // Pay more for better care + zero travel hassle: now beats the fly-home option
         // on health, so the higher cost buys something (was strictly dominated).
@@ -850,13 +850,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '买机票回国拔牙！',
+        text: '【买机票回国拔牙】买机票回国拔牙！',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: s.cash - 0.2, health: s.health + 20, message: '机票 $1500，拔牙只要 200 块人民币！顺便还能吃顿火锅，身心愉悦！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '吃布洛芬硬抗 (免费)',
+        text: '【吃布洛芬硬抗】吃布洛芬硬抗 (免费)',
         effect: (s) => ({ health: s.health - 15, message: '为了省钱你选择了硬抗，结果引发了感染，痛不欲生。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -895,14 +895,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '消息在湾区微信群疯传：Sunnyvale Costco 突然上架了 1 盎司 Pamp 瑞士 24K 纯金条，大批码农排起长队抢购以抵御高通货膨胀！',
     choices: [
       {
-        text: '刷信用卡加码买入 2 块金条避险 (消耗 $0.4w 现金)',
+        text: '【刷信用卡加码买入】刷信用卡加码买入 2 块金条避险 (消耗 $0.4w 现金)',
         condition: (s) => s.cash >= 0.4,
         // Gold is a store of value: the $0.4w converts into a tradeable asset (stocks), not vanishes.
         effect: (s) => ({ cash: s.cash - 0.4, stocks: (s.stocks || 0) + 0.4, luck: Math.min(99, s.luck + 2), message: '你成功抢到了两块实物金条装进保险柜，踏实感满满！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '吐槽“码农盲目跟风”，转身买了两盒烤鸡和热狗回家',
+        text: '【吐槽“码农盲目跟】吐槽“码农盲目跟风”，转身买了两盒烤鸡和热狗回家',
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.02), health: Math.min(100, s.health + 5), message: '啃着 $4.99 美元的 Costco 烤鸡，你觉得这才是实打实的性价比自由。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -915,12 +915,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周五晚上，Stanford 校园礼堂举办 AI 领袖公开讲座。黄仁勋穿着皮衣登台演讲，现场挤爆了来自 Sand Hill Road 的 VC 和各大厂码农。',
     choices: [
       {
-        text: '讲座后抢占 Q&A 提问环节，自信展示技术见解',
+        text: '【讲座后抢占】讲座后抢占 Q&A 提问环节，自信展示技术见解',
         effect: (s) => ({ network: Math.min(100, (s.network || 0) + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你的提问得到了老黄的幽默点评，现场几位 VC 主动递上了名片！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '默默听完讲座，去大学路吃一碗热气腾腾的拉面',
+        text: '【默默听完讲座】默默听完讲座，去大学路吃一碗热气腾腾的拉面',
         effect: (s) => ({ health: Math.min(100, s.health + 10), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '顶级思维碰撞加上一碗热拉面，让你度过了一个充实而愉快的周五夜晚。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -933,19 +933,19 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '爸妈拿着 10 年 B2 签证飞抵旧金山 SFO！老两口打算在湾区住上三个月。老爸每天在小区后院尝试种韭菜养鸡被 HOA 警告，老妈则带你在 99 大华超市狂购并吐槽湾区天价中餐...',
     choices: [
       {
-        text: '全程陪同！请假带爸妈自驾一号公路去 17 Mile 与 Napa 品酒 (花费 $0.3w)',
+        text: '【全程陪同！请假带】全程陪同！请假带爸妈自驾一号公路去 17 Mile 与 Napa 品酒 (花费 $0.3w)',
         condition: (s) => s.cash >= 0.3,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.3), health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 2), network: Math.min(100, (s.network || 0) + 2), message: '虽然老妈一路吐槽加州紫外线强且嫌纳帕红酒贵，但看到朋友圈晒满照片并收获老家亲戚数百赞，你感受到了久违的家庭温暖。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '给爸妈报华人大巴老年团，让他们自己去黄石公园与大峡谷 (花费 $0.15w)',
+        text: '【给爸妈报华人大巴】给爸妈报华人大巴老年团，让他们自己去黄石公园与大峡谷 (花费 $0.15w)',
         condition: (s) => s.cash >= 0.15,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.15), health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '老两口在大巴团里结识了一圈同龄阿姨叔叔，每天聊得热火朝天，顺便还帮你拉到了几个潜在相亲对象的信息。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '工作太忙无暇陪同，让爸妈自己在 South Bay 散步看戏 (换来加班时间)',
+        text: '【工作太忙无暇陪同】工作太忙无暇陪同，让爸妈自己在 South Bay 散步看戏 (换来加班时间)',
         // Not a pure penalty: the time you didn't spend went into work (leetcode).
         effect: (s) => ({ health: Math.max(0, s.health - 5), leetcode: Math.min(100, s.leetcode + 3), message: '你埋头加班，老爸因后院翻土种韭菜遭到 HOA 邻居联名警告，老妈抱怨湾区像大农村，老两口带着满腹牢骚提前回国 —— 但你的项目倒是赶出来了。' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1014,12 +1014,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'ai_wrapper_startup': {
     id: 'ai_wrapper_startup',
-    title: 'Hayes Valley 的 AGI 革命',
+    title: '【套壳创业】Hayes Valley 的 AGI 淘金热',
     description: '在 Hayes Valley 的咖啡馆，一个穿着 Patagonia 背心的 Founder 凑过来。他宣称自己正在做“颠覆人类的 AGI”，但你发现他的产品只是个调 OpenAI API 的壳子。他邀请你加入当 CTO，开价 0 薪水 + 10% 期权（四年 Vesting），并让你立刻修一个 prompt injection 的 bug。',
     imageUrl: 'images/ai_startup.jpg',
     choices: [
       {
-        text: 'All in! 辞职加入，这波必成独角兽',
+        text: '【All】All in! 辞职加入，这波必成独角兽',
         effect: (s) => ({ 
           cash: s.cash - 5, 
           tc: 0, 
@@ -1033,7 +1033,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.tc > 0 && s.cash >= 5
       },
       {
-        text: '投资 $10k，当个天使投资人',
+        text: '【投资】投资 $10k，当个天使投资人',
         effect: (s) => {
           const success = gameRandom() > 0.9;
           return success 
@@ -1044,7 +1044,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 1
       },
       {
-        text: '冷笑一声，继续刷我的 LeetCode',
+        text: '【冷笑一声】冷笑一声，继续刷我的 LeetCode',
         effect: (s) => ({ 
           leetcode: s.leetcode + 5, 
           charm: s.charm - 1,
@@ -1061,19 +1061,19 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '为避免云端 API 账单爆表与隐私泄露，你果断花了 $2,000 美金抢购了一台 64GB 统一内存的 Mac Mini，在客厅 24 小时本地部署跑 OpenClaw / 本地自主 Agent！',
     choices: [
       {
-        text: '调教 Agent 替你跑抓取与总结邮件 (花费 $0.2w)',
+        text: '【调教】调教 Agent 替你跑抓取与总结邮件 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), leetcode: Math.min(100, s.leetcode + 4), health: Math.min(100, s.health + 5), message: '本地 OpenClaw 部署成功！虽然折腾 YAML 配置有点累，但 Agent 帮处理了不少琐碎爬虫与邮件任务。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '折腾三天环境，发小红书“湾区码农客厅 AI 服务器” (花费 $0.2w)',
+        text: '【折腾三天环境】折腾三天环境，发小红书“湾区码农客厅 AI 服务器” (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你的客厅 Mac Mini 服务器组照获得了 200+ 赞，不少极客同仁在评论区交流开源部署心得。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '资金吃紧，改在旧电脑上配置免费开源 Local Model 尝试轻量测试',
+        text: '【资金吃紧】资金吃紧，改在旧电脑上配置免费开源 Local Model 尝试轻量测试',
         condition: (s) => s.cash < 0.2,
         effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 2), message: '你在旧设备上搭建了轻量版本地 Agent，虽然算力有限但体验了本地 AI 的乐趣。' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1089,7 +1089,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         // Was an unconditional +$12w faucet with a strictly-worse alternative. Now a
         // modest, genuinely risky side income (EV ~ +$1.75w/yr).
-        text: '全力运行 Multi-Agent 自动套利脚本 (高波动副业)',
+        text: '【全力运行】全力运行 Multi-Agent 自动套利脚本 (高波动副业)',
         effect: (s) => {
           const win = gameRandom() < 0.55;
           return win
@@ -1099,7 +1099,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '浅尝辄止，不大规模部署',
+        text: '【浅尝辄止】浅尝辄止，不大规模部署',
         effect: () => ({ message: '你担心合规与封号风险，只把它当成一个玩具项目，没有实际收益。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1112,12 +1112,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你穿着起球的大厂旧 Hoodie、Patagonia 夹克和洞洞鞋去 Palo Alto 约会。餐桌上，朋友开玩笑吐槽：“你这一身活脱脱就是湾区油腻码农标配啊！”',
     choices: [
       {
-        text: '坚称“这是极客硬核文化与 WLB 的象征”',
+        text: '【坚称“这是极客硬】坚称“这是极客硬核文化与 WLB 的象征”',
         effect: (s) => ({ charm: Math.max(0, s.charm - 3), health: Math.min(100, s.health + 5), message: '你维持了自己的穿搭习惯，但在朋友眼里你的精致度与个人形象有所减分。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '痛下决心，去 Santana Row 购买几套修身休闲装 (花费 $0.2w)',
+        text: '【痛下决心】痛下决心，去 Santana Row 购买几套修身休闲装 (花费 $0.2w)',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '换上合身的新衣服后，你整个人精神焕发，颜值与个人吸引力大幅提升！' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1131,14 +1131,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你急于拓展圈子，用自动化脚本向湾区 200 多位大厂 Director / VP 批量发送了推销自己的 Cold Message。结果被某总监截图发在 Pulse 专栏吐槽“缺乏基本职业素养”...',
     choices: [
       {
-        text: '在评论区与发帖总监论战维护尊严 (硬刚涨黑粉气场)',
+        text: '【在评论区与发帖总】在评论区与发帖总监论战维护尊严 (硬刚涨黑粉气场)',
         // No longer a strict loss: fighting back costs network but a vocal minority
         // finds you "based" (charm up), so it trades network for charm vs the apology.
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 4), charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.max(0, s.health - 3), message: '你在评论区舌战群儒，虽然得罪了部分业内大佬(人脉受损)，但你的犀利与硬气也圈了一批欣赏你的粉丝！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '私信向对方诚恳致歉并主动关闭脚本',
+        text: '【私信向对方诚恳致】私信向对方诚恳致歉并主动关闭脚本',
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 2), charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: '你的诚恳态度平息了波澜，成功控制住了负面影响。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1151,12 +1151,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '由于你出众的形象与湾区大厂生活 Vlog，你在小红书和 YouTube 积累了数万粉丝，多家品牌方发来商业广告邀约！',
     choices: [
       {
-        text: '接下品牌商业植入推广，开启副业变现！',
+        text: '【接下品牌商业植入】接下品牌商业植入推广，开启副业变现！',
         effect: (s) => ({ cash: s.cash + 2, charm: Math.min(s.max_charm ?? 25, s.charm + 1), message: ' 爆款变现！商业合作广告大获成功，你轻松斩获 $2w 美元额外副业收益！' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '保持纯粹，只分享生活日常，拒绝硬广洗脑',
+        text: '【保持纯粹】保持纯粹，只分享生活日常，拒绝硬广洗脑',
         effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 5), message: '你的真实与接地气圈粉无数，获得了绝佳的粉丝口碑！' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1169,7 +1169,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '作为保时捷/Cybertruck 豪车车主，你受邀参加了湾区 35 号公路 (Skyline Blvd) 的周末豪车车友会。',
     choices: [
       {
-        text: '和 VC / 大厂 Director 交流豪车与独角兽投资',
+        text: '【选择】和 VC / 大厂 Director 交流豪车与独角兽投资',
         // Only raise TC if actually employed (middleware zeroes tc for unemployed,
         // silently voiding the promised raise); otherwise it's a networking gain.
         effect: (s) => {
@@ -1187,7 +1187,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '下场 17-Mile 沿海公路体验极限跑山 (消耗 $0.5w)',
+        text: '【下场】下场 17-Mile 沿海公路体验极限跑山 (消耗 $0.5w)',
         // Distinct payoff (charm + car-scene clout as luck) so it isn't just a
         // worse version of the networking option for employed players.
         effect: (s) => ({
@@ -1208,7 +1208,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周六下午，你开车去旧金山 Mission 区吃网红 Tacos。停在路边仅 1 小时，回来赫然发现后车窗被打碎，后备箱里的健身包与备用笔记本被搜刮一空...',
     choices: [
       {
-        text: '自认倒霉走自付费 Deductible 立刻换玻璃 (消耗 $0.1w，省心)',
+        text: '【自认倒霉走自付费】自认倒霉走自付费 Deductible 立刻换玻璃 (消耗 $0.1w，省心)',
         condition: (s) => s.cash >= 0.1,
         // Fixing it promptly = no lingering stress (no health hit); the tradeoff is
         // paying $0.1w vs the free "post it online" option that keeps the -5 health.
@@ -1216,7 +1216,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '拍照发小红书“旧金山治安体验”，引发热烈围观',
+        text: '【拍照发小红书“旧】拍照发小红书“旧金山治安体验”，引发热烈围观',
         effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.max(0, s.health - 5), message: '你的小红书帖子获得了 300+ 赞，不少湾区博主在评论区感同身受地交流防砸车经验。' }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -1239,12 +1239,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周一早高峰晚点，你在 101 高速上开启了最新版的 Tesla FSD 自动驾驶。车子在 Passing 施工路段时突然无征兆幽灵急刹...',
     choices: [
       {
-        text: '吓出一身冷汗，立刻双手接管车轮',
+        text: '【吓出一身冷汗】吓出一身冷汗，立刻双手接管车轮',
         effect: (s) => ({ health: Math.max(0, s.health - 5), leetcode: s.leetcode + 3, message: '你惊险避免了后车追尾！经此一役，你对自动驾驶边界条件有了更深的工程体会。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '把行车记录仪视频剪辑发 YouTube / B站爆火',
+        text: '【把行车记录仪视频】把行车记录仪视频剪辑发 YouTube / B站爆火',
         effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 4), message: '你的幽灵刹车测试视频获得了 50,000+ 播放，吸引了大批极客粉丝关注！' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1257,19 +1257,19 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你停在 Palo Alto 大学路旁边的保时捷 / 豪车突然被无良拖车公司强行拖走！不仅车窗被恶意损坏，恶霸拖车公司还开出了包含强制 Storage 存放费的天价赎车单...',
     choices: [
       {
-        text: '花钱消灾，直接缴纳天价赎车费与维修费 (消耗 $2w 现金)',
+        text: '【花钱消灾】花钱消灾，直接缴纳天价赎车费与维修费 (消耗 $2w 现金)',
         condition: (s) => s.cash >= 2,
         effect: (s) => ({ cash: s.cash - 2, health: s.health - 5, message: '你一次性掏出 $2w 赎回了豪车并修好了大灯。高阶玩家的烦恼往往就是这么朴实无华。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '找律师控诉并录制视频发小红书/YouTube 曝光 (消耗 $0.5w 现金)',
+        text: '【找律师控诉并录制】找律师控诉并录制视频发小红书/YouTube 曝光 (消耗 $0.5w 现金)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: s.cash - 0.5, health: s.health - 10, charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你的曝光视频引发了舆论关注，拖车公司迫于压力退还了赎车费，但你折腾得精疲力竭。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '现金不足，强行刷信用卡透支支付赎车费 (健康 -10)',
+        text: '【现金不足】现金不足，强行刷信用卡透支支付赎车费 (健康 -10)',
         condition: (s) => s.cash < 0.5,
         // Narrative is "survive via credit-card overdraft", so floor cash at 0 — never let this
         // safe branch itself trigger bankruptcy for a sub-$0.5w player.
@@ -1312,14 +1312,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '长期 996 熬夜死磕代码与高压 Oncall，你无意中照镜子惊恐地发现自己的发际线急剧后移，且出现了严重的倒三角龟脖与弯腰驼背体态！',
     choices: [
       {
-        text: '无视它，“程序员靠硬核算法实力说话，不靠颜值”',
+        text: '【无视它】无视它，“程序员靠硬核算法实力说话，不靠颜值”',
         // The time/energy saved goes into code (leetcode), so ignoring looks is a real
         // charm-vs-skill trade, not a pure double-penalty.
         effect: (s) => ({ charm: Math.max(0, s.charm - 3), leetcode: Math.min(100, s.leetcode + 5), message: '你把照镜子的时间都拿去刷题攻坚了，颜值形象是滑坡了，但算法功底又精进了一层。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '预约土耳其植发与高端体态矫正普拉提 (花费 $0.5w)',
+        text: '【预约土耳其植发与】预约土耳其植发与高端体态矫正普拉提 (花费 $0.5w)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: '植发与体态矫正效果显著！你的精气神与个人吸引力大幅度恢复！' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1333,12 +1333,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '近两年来你除了在 MicroKitchen (MK) 拿气泡水外几乎没进行过工作以外的社交，感觉自己的口头表达能力与圈子广度急剧退化...',
     choices: [
       {
-        text: '继续宅在宿舍/家里，下班打单机游戏',
+        text: '【继续宅在宿舍/家】继续宅在宿舍/家里，下班打单机游戏',
         effect: (s) => ({ charm: Math.max(0, s.charm - 3), network: Math.max(0, (s.network || 0) - 3), health: Math.min(100, s.health + 5), message: '你沉浸在宅家快乐中，但你的社交朋友圈与个人形象进一步萎缩。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '强迫自己报名湾区狼人杀局与攀岩圈 (花费 $0.05w)',
+        text: '【强迫自己报名湾区】强迫自己报名湾区狼人杀局与攀岩圈 (花费 $0.05w)',
         condition: (s) => s.cash >= 0.05,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), charm: Math.min(s.max_charm ?? 25, s.charm + 2), network: Math.min(100, (s.network || 0) + 3), message: '在桌游与攀岩中你结识了多位开朗的新朋友，重新找回了社交节奏！' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1630,7 +1630,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           stocks: Math.floor((s.stocks || 0) * 0.5 * 10) / 10,
           health: Math.max(0, s.health - 8),
           story_flags: { ...(s.story_flags || {}), partner_strain: 0, had_divorce: true },
-          message: '【加州五五割席与单身自由】签完字走出法庭，你的现金与股票被切走了一半，身心也极度内耗疲惫。但长痛不如短痛，你重新恢复了单身自由 (资产减半, 健康 -8)！'
+          message: '【加州五五割席与单身自由】签完字走出法庭，你的现金与股票被切走了一半，身心也极度内耗疲惫。但长痛不如短痛，你重新恢复了单身自由 (资产减半，健康 -8)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }

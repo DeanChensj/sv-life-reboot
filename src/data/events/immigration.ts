@@ -5,7 +5,7 @@ import { HOUSING_NAMES, VISA_STATUS } from '../../constants/gameConstants';
 export const immigrationEvents: Record<string, GameEvent> = {
   'h1b_fallback_options': {
     id: 'h1b_fallback_options',
-    title: 'H1B 拯救绝境对策',
+    title: '【身份突围】H-1B 拯救绝境对策',
     description: '抽签未能中签，但你还有最后自救机会，请选择你的拯救路线：',
     choices: [
       {
@@ -96,7 +96,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'post_green_card',
       },
       {
-        text: '申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国, 搬迁成本)',
+        text: '【申请】申请 Relocate 到温哥华 Office 办 L1 签证 (曲线救国，搬迁成本)',
         costBadge: '花费 $3w',
         // Kept universally available (it is the crisis's guaranteed fallback so the
         // screen always has an actionable choice), but no longer FREE — a relocation
@@ -106,7 +106,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
+        text: '【紧急挂靠】紧急挂靠 Day 1 CPT 水硕 (花费 $1.5w)',
         costBadge: '花费 $1.5w',
         reqBadge: '需总资产 >= $1.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
@@ -128,7 +128,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
     description: '周五下午 4:55，律所律师发来紧急邮件：“USCIS 针对你的 H1B 发出了 Specialty Occupation RFE，质疑写前端 React 代码不需要计算机学士学位。”\n与此同时，你微信弹出老妈连续三条 60 秒语音：“隔壁王阿姨的小儿子在老家公务员双胞胎都两岁了！你整天在美利坚租房 4000 美金图个啥？！今年到底带不带女朋友回来？！”',
     choices: [
       {
-        text: '通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
+        text: '【通宵三个晚上】通宵三个晚上，写出 120 页辩护报告阐述“为什么 Virtual DOM 调 CSS 属于高等应用数学”',
         condition: (s) => s.visa === 'H1B (工签)',
         // Diligence pays: lower health cost and higher (85%) survival than before, so
         // it isn't dominated by the lazy option (which now gambles the visa).
@@ -141,7 +141,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (s.story_flags?.h1b_rfe_denied ? 'h1b_fallback_options' : h1ToH2Router(s)),
       },
       {
-        text: '摆烂：把 RFE 抛诸脑后，先跟老妈吐槽一通 (不答复 RFE，赌它平稳失效)',
+        text: '【摆烂】摆烂：把 RFE 抛诸脑后，先跟老妈吐槽一通 (不答复 RFE，赌它平稳失效)',
         // No longer a free crisis solver: ignoring the RFE is a real gamble — 35% the
         // visa falls into jeopardy. It trades health relief for that risk vs choice 1.
         effect: (s) => {
@@ -157,17 +157,17 @@ export const immigrationEvents: Record<string, GameEvent> = {
 
   'visa_check': {
     id: 'visa_check',
-    title: 'H1B 被 Check',
+    title: '【海关渡劫】H-1B 被 Check 与漫长等待',
     description: '你回国探亲，顺便去大使馆签证，结果喜提行政审查 (Check)，签证官冷漠地扔给你一张黄条。',
     choices: [
       {
-        text: '在国内每天熬夜，按美国时间远程上班',
+        text: '【在国内每天熬夜】在国内每天熬夜，按美国时间远程上班',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ health: Math.max(0, s.health - 15), cash: s.cash, imageUrl: 'images/visa_denied.jpg', message: '你昼夜颠倒地干了两个月，头发掉光了，但保住了工作。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '管他呢，直接请无薪假在国内到处旅游！',
+        text: '【管他呢】管他呢，直接请无薪假在国内到处旅游！',
         condition: (s) => s.cash >= 20 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ cash: s.cash - 20, health: Math.min(100, s.health + 30), leetcode: Math.max(0, s.leetcode - 10), imageUrl: 'images/visa_denied.jpg', message: '你顺便打卡了三亚和新疆，身体是养好了，但是现金流大幅缩水，算法也生疏了。' }),
         nextEventId: 'sv_year_end_settlement',
@@ -179,7 +179,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
 
   'h1b_final_crisis': {
     id: 'h1b_final_crisis',
-    title: 'H1B 三抽不中 (绝境危机)',
+    title: '【身份悬崖】H-1B 三抽不中与离境危机',
     description: '连续三年 H1B 抽签全军覆没！你的 STEM OPT 即将到期，公司 HR 和律所发来最终通知：必须在 30 天内解决合法身份，否则将被终止合同并安排外派离境！',
     choices: [
       {
@@ -256,7 +256,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD或硬核算法背景)',
+        text: '【选择】砸 $8w 现金找顶级律所紧急加急办理 O1 杰出人才签证 (需现金 >= $8w, 限 PhD或硬核算法背景)',
         reqBadge: '现金>=8w+超凡背景',
         condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
@@ -278,7 +278,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'post_green_card',
       },
       {
-        text: '接受外派温哥华/多伦多 L1 办公室 (曲线救国, 搬迁成本)',
+        text: '【接受外派温哥华/】接受外派温哥华/多伦多 L1 办公室 (曲线救国，搬迁成本)',
         costBadge: '搬迁成本',
         // Kept universal (guaranteed crisis fallback → no dead-end) but no longer free.
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
@@ -296,23 +296,23 @@ export const immigrationEvents: Record<string, GameEvent> = {
 
   'post_green_card': {
     id: 'post_green_card',
-    title: '绿卡到手：硅谷新篇章',
+    title: '【绿卡上岸】硅谷新篇章与自由翱翔',
     description: '身份的枷锁解除后，你发现硅谷的烦恼并没有结束。现在的你面临着人生新的十字路口。',
     choices: [
 
       {
-        text: '砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
+        text: '【选择】砸 300 万现金全款买下 Atherton 顶级学区豪宅！(消耗 300 万 · 可用股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
         effect: (s) => ({ ...deductAssets(s, 300), visa: s.visa === VISA_STATUS.CITIZEN ? VISA_STATUS.CITIZEN : VISA_STATUS.GREEN_CARD, gc_progress: 5, gc_stage: 'approved', rent: 0, has_housing: true, housing_name: HOUSING_NAMES.ATHERTON, charm: Math.min(25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '继续在 Open House 现场观望挑房 (回到日常行动)',
+        text: '【继续在】继续在 Open House 现场观望挑房 (回到日常行动)',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '搞副业炒股：梭哈英伟达 (NVDA)！',
+        text: '【搞副业炒股】搞副业炒股：梭哈英伟达 (NVDA)！',
         effect: (s) => {
           const winProb = 0.25 + (Math.min(45, s.luck) / 150);
           const win = gameRandom() < winProb;
@@ -323,7 +323,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '辞职！凭多年大厂的技术积累直接搞 AI Startup',
+        text: '【辞职！凭多年大厂】辞职！凭多年大厂的技术积累直接搞 AI Startup',
         effect: (s) => {
           const success = s.leetcode >= 50 && gameRandom() < 0.3;
           return success
@@ -352,12 +352,12 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '不再唯唯诺诺，开始在职场上重拳出击',
+        text: '【不再唯唯诺诺】不再唯唯诺诺，开始在职场上重拳出击',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
         nextEventId: 'office_politics',
       },
       {
-        text: '彻底摆烂，佛系上班',
+        text: '【彻底摆烂】彻底摆烂，佛系上班',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
         nextEventId: 'sv_year_end_settlement',
       }
@@ -370,7 +370,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
     description: '你趁假期回国探亲顺便预约了美领馆 H1B 续签 Stamp。结果因为 CS/AI 敏感专业，签证官微笑着递给你一张黄单（221g Administrative Processing 行政审查）！',
     choices: [
       {
-        text: '在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
+        text: '【在国内远程克服时】在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           health: Math.max(0, s.health - 15),
@@ -379,7 +379,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '联系公司法务开具紧急加急信 (Expedite Request)',
+        text: '【联系公司法务开具】联系公司法务开具紧急加急信 (Expedite Request)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = gameRandom() < 0.55;

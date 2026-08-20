@@ -162,11 +162,11 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: 'Bootcamp 速成快而险、CS 美硕贵而稳、纯自学最省最难。掂量一下自己的钱包、时间与毅力。',
     choices: [
       {
-        text: '【Bootcamp 速成训练营】3-6 个月速成刷题,快但 signal 弱、上岸看运气 (花费 $12w)',
+        text: '【Bootcamp 速成训练营】3-6 个月速成刷题,快但 signal 弱、上岸看运气 (花费 $2w)',
         reqBadge: '美本非CS 专属',
-        condition: (s) => s.story_flags?.zhuanma_origin === 'us' && s.cash >= 12,
+        condition: (s) => s.story_flags?.zhuanma_origin === 'us' && s.cash >= 2,
         effect: (s) => ({
-          cash: Math.max(0, s.cash - 12),
+          cash: Math.max(0, s.cash - 2),
           leetcode: Math.min(100, s.leetcode + 25),
           health: Math.max(0, s.health - 5),
           age: s.age + 1,
@@ -176,10 +176,10 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'zhuanma_apply',
       },
       {
-        text: '【CS 美硕 · 洗背景】读个正经 CS 硕士,贵且慢,但学历直接洗白非科班 (花费 $30w · 可股票抵扣)',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 30,
+        text: '【CS 美硕 · 洗背景】读个正经 CS 硕士,贵且慢,但学历直接洗白非科班 (花费 $10w · 可股票抵扣)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 10,
         effect: (s) => {
-          const paid = deductAssets(s, 30);
+          const paid = deductAssets(s, 10);
           return {
             ...paid,
             has_us_degree: true,
@@ -206,7 +206,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【陆本无美硕预算,先回国互联网卷】攒够钱/背景再图后计 (暂缓转码)',
-        condition: (s) => s.story_flags?.zhuanma_origin === 'cn' && (s.cash + (s.stocks || 0)) < 30,
+        condition: (s) => s.story_flags?.zhuanma_origin === 'cn' && (s.cash + (s.stocks || 0)) < 10,
         effect: (s) => ({
           job_type: 'cn_tech',
           company: 'cn_big_tech',

@@ -117,7 +117,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       // 付得起就读 CS 美硕(最稳,复用科班管线);否则自学(免费且 signal 略高于 bootcamp)。
       const ms = validChoices.find(c => c.text.includes('CS 美硕'));
       const self = validChoices.find(c => c.text.includes('纯自学'));
-      const canAffordMs = (state.cash + (state.stocks || 0)) >= 30;
+      const canAffordMs = (state.cash + (state.stocks || 0)) >= 10;
       chosen = (canAffordMs && ms) ? ms : (self || validChoices[0]);
     } else if (currentEventId === 'zhuanma_setback') {
       // 只要还能再战就不放弃(competent 玩家坚持);实在不行才止损 washout。

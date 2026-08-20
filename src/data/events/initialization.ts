@@ -6,7 +6,7 @@ import { SCHOOL_PROFILES } from '../schoolProfiles';
 export const initializationEvents: Record<string, GameEvent> = {
   'choose_trait': {
     id: 'choose_trait',
-    title: '重新投胎 (选择天赋)',
+    title: '【天赋抉择】投胎十字路口与先天基因',
     description: '在转生到硅谷之前，上帝给了你一次选择天赋的机会。每个天赋都有独特的加成，也伴随着相应的代价。',
     choices: [
       {
@@ -61,7 +61,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'choose_year': {
     id: 'choose_year',
-    title: '选择游戏难度',
+    title: '【难度选择】宏观周期与历史浪潮',
     description: '宏观周期决定了个人命运。请选择你的游戏难度：',
     choices: [
       {
@@ -84,7 +84,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'choose_school': {
     id: 'choose_school',
-    title: '第一步：人生十字路口',
+    title: '【求学之路】人生第一步与高校抉择',
     description: '恭喜你高中毕业！拿着家里的启动资金，你现在面临择校 Choice 的选择：',
     choices: [
       {
@@ -132,24 +132,24 @@ export const initializationEvents: Record<string, GameEvent> = {
   // ============================ 转码 On-Ramp (非科班逆袭) ============================
   'zhuanma_background': {
     id: 'zhuanma_background',
-    title: '转码起点：你的非 CS 本科在哪读？',
-    description: '半路转码,起点决定了你能走哪几条路。美本非科班已经在美国、身份灵活;陆本非科班没有美国学位,基本只能靠一个 CS 美硕来美上岸——但那也意味着最硬核的逆袭。',
+    title: '【转码起点】非 CS 本科学历与跑毒背景',
+    description: '半路转码，起点决定了你能走哪几条路。美本非科班已经在美国、身份灵活;陆本非科班没有美国学位，基本只能靠一个 CS 美硕来美上岸——但那也意味着最硬核的逆袭。',
     choices: [
       {
-        text: '【美本非CS】已在美国读了个非 CS 本科 (F1/OPT),沉没成本已付,可就地转码',
+        text: '【美本非CS】已在美国读了个非 CS 本科 (F1/OPT),沉没成本已付，可就地转码',
         effect: (s) => ({
           has_us_degree: true,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
           story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us' },
-          message: '你在美国读了个非 CS 专业,毕业在即才幡然醒悟,决心就地转码上岸。',
+          message: '你在美国读了个非 CS 专业，毕业在即才幡然醒悟，决心就地转码上岸。',
         }),
         nextEventId: 'zhuanma_decision',
       },
       {
-        text: '【陆本非CS】国内非 CS 本科,无美国学位,只能搏一个 CS 美硕来美 (全游戏最硬开局)',
+        text: '【陆本非CS】国内非 CS 本科，无美国学位，只能搏一个 CS 美硕来美 (全游戏最硬开局)',
         effect: (s) => ({
           story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'cn' },
-          message: '你在国内读了个非 CS 专业,决心砸锅卖铁读个美国 CS 硕士,一步登天转码来美。',
+          message: '你在国内读了个非 CS 专业，决心砸锅卖铁读个美国 CS 硕士，一步登天转码来美。',
         }),
         nextEventId: 'zhuanma_decision',
       },
@@ -158,11 +158,11 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'zhuanma_decision': {
     id: 'zhuanma_decision',
-    title: '怎么转？三条路各有代价',
+    title: '【转码破局】跨专业转码的三条路线抉择',
     description: 'Bootcamp 速成快而险、CS 美硕贵而稳、纯自学最省最难。掂量一下自己的钱包、时间与毅力。',
     choices: [
       {
-        text: '【Bootcamp 速成训练营】3-6 个月速成刷题,快但 signal 弱、上岸看运气 (花费 $2w)',
+        text: '【Bootcamp 速成训练营】3-6 个月速成刷题，快但 signal 弱、上岸看运气 (花费 $2w)',
         reqBadge: '美本非CS 专属',
         condition: (s) => s.story_flags?.zhuanma_origin === 'us' && s.cash >= 2,
         effect: (s) => ({
@@ -171,12 +171,12 @@ export const initializationEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           age: s.age + 1,
           story_flags: { ...(s.story_flags || {}), zhuanma_method: 'bootcamp' },
-          message: '你报了个硅谷知名 Bootcamp,3 个月魔鬼刷题速成,项目作品集堆了一堆,准备海投！',
+          message: '你报了个硅谷知名 Bootcamp,3 个月魔鬼刷题速成，项目作品集堆了一堆，准备海投！',
         }),
         nextEventId: 'zhuanma_apply',
       },
       {
-        text: '【CS 美硕 · 洗背景】读个正经 CS 硕士,贵且慢,但学历直接洗白非科班 (花费 $10w · 可股票抵扣)',
+        text: '【CS 美硕 · 洗背景】读个正经 CS 硕士，贵且慢，但学历直接洗白非科班 (花费 $10w · 可股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 10,
         effect: (s) => {
           const paid = deductAssets(s, 10);
@@ -185,13 +185,13 @@ export const initializationEvents: Record<string, GameEvent> = {
             has_us_degree: true,
             visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
             story_flags: { ...(s.story_flags || {}), zhuanma_method: 'ms' },
-            message: '你决定读一个正经 CS 硕士,用学历彻底洗白非科班背景——虽然贵,但这是最稳的上岸路。',
+            message: '你决定读一个正经 CS 硕士，用学历彻底洗白非科班背景——虽然贵，但这是最稳的上岸路。',
           };
         },
         nextEventId: 'us_master_year1',
       },
       {
-        text: '【纯自学 + 疯狂刷题】边打工边自学,最省钱但最熬人、最看毅力与运气 (几乎免费)',
+        text: '【纯自学 + 疯狂刷题】边打工边自学，最省钱但最熬人、最看毅力与运气 (几乎免费)',
         reqBadge: '美本非CS 专属',
         condition: (s) => s.story_flags?.zhuanma_origin === 'us',
         effect: (s) => ({
@@ -200,12 +200,12 @@ export const initializationEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 12),
           age: s.age + 2,
           story_flags: { ...(s.story_flags || {}), zhuanma_method: 'self' },
-          message: '你白天搬砖、深夜刷题,啃完了几十本算法书与无数 LeetCode Hard,咬牙自学转码。',
+          message: '你白天搬砖、深夜刷题，啃完了几十本算法书与无数 LeetCode Hard，咬牙自学转码。',
         }),
         nextEventId: 'zhuanma_apply',
       },
       {
-        text: '【陆本无美硕预算,先回国互联网卷】攒够钱/背景再图后计 (暂缓转码)',
+        text: '【陆本无美硕预算，先回国互联网卷】攒够钱/背景再图后计 (暂缓转码)',
         condition: (s) => s.story_flags?.zhuanma_origin === 'cn' && (s.cash + (s.stocks || 0)) < 10,
         effect: (s) => ({
           job_type: 'cn_tech',
@@ -213,7 +213,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           level: 'L3',
           tc: 20,
           story_flags: { ...(s.story_flags || {}), zhuanma_method: 'cn_defer' },
-          message: '预算不够读美硕,你只能先回国内大厂卷着攒钱,把转码来美的梦想暂时压在心底。',
+          message: '预算不够读美硕，你只能先回国内大厂卷着攒钱，把转码来美的梦想暂时压在心底。',
         }),
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'),
       },
@@ -222,8 +222,8 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'zhuanma_apply': {
     id: 'zhuanma_apply',
-    title: '转码首战：海投与 Onsite 车轮战',
-    description: '非科班简历、无实习、年龄还比应届生大——你顶着 HR 的挑剔目光,开始了地狱级的海投与 Onsite 车轮战。能不能上岸,就看这一搏了。',
+    title: '【转码首战】海投狂潮与 Onsite 车轮战',
+    description: '非科班简历、无实习、年龄还比应届生大——你顶着 HR 的挑剔目光，开始了地狱级的海投与 Onsite 车轮战。能不能上岸，就看这一搏了。',
     choices: [
       {
         text: '【背水一战 · 疯狂海投 + 全力 Onsite】赌上一切拿下人生第一个 SWE offer',
@@ -245,13 +245,13 @@ export const initializationEvents: Record<string, GameEvent> = {
               tc: getLevelScaledTC(16, lvl),
               laid_off: false,
               story_flags: { ...(s.story_flags || {}), zhuanma_landed: true },
-              message: `【上岸！非科班逆袭成功】历经数十场 Onsite 车轮战,你终于拿到了人生第一个 SWE offer(定级 ${lvl})！非科班的你,正式踏进了梦寐以求的码农大军!`,
+              message: `【上岸！非科班逆袭成功】历经数十场 Onsite 车轮战，你终于拿到了人生第一个 SWE offer (定级 ${lvl})！非科班的你，正式踏进了梦寐以求的码农大军！`,
             };
           }
           return {
             health: Math.max(0, s.health - 6),
             story_flags: { ...(s.story_flags || {}), zhuanma_attempts: attempts + 1 },
-            message: '【全军覆没】几十份简历石沉大海,少数几场 Onsite 也惨遭挂经。非科班的门槛比想象中更高,你有些心力交瘁……',
+            message: '【全军覆没】几十份简历石沉大海，少数几场 Onsite 也惨遭挂经。非科班的门槛比想象中更高，你有些心力交瘁……',
           };
         },
         nextEventId: (s) => s.story_flags?.zhuanma_landed
@@ -263,28 +263,28 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'zhuanma_setback': {
     id: 'zhuanma_setback',
-    title: '转码受挫：再搏一次，还是认清现实？',
+    title: '【转码受挫】再搏一次还是认清现实',
     description: '第一轮全挂了。要不要再花一年沉淀技术、明年再战?还是承认自己不适合、及时止损?',
     choices: [
       {
-        text: '【再刷一年题,明年再战】沉淀技术、打磨项目,东山再起 (age +1)',
+        text: '【再刷一年题，明年再战】沉淀技术、打磨项目，东山再起 (age +1)',
         condition: (s) => Number(s.story_flags?.zhuanma_attempts || 0) < 3 && s.health > 15,
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 10),
           health: Math.max(0, s.health - 5),
           cash: Math.max(0, s.cash - 2),
           age: s.age + 1,
-          message: '你把挂经一场场复盘,系统设计与算法又精进了一大截,憋着一口气准备明年卷土重来!',
+          message: '你把挂经一场场复盘，系统设计与算法又精进了一大截，憋着一口气准备明年卷土重来！',
         }),
         nextEventId: 'zhuanma_apply',
       },
       {
-        text: '【认清现实,退出转码】耗尽了积蓄与心气,你决定止损,告别这场逆袭梦',
+        text: '【认清现实，退出转码】耗尽了积蓄与心气，你决定止损，告别这场逆袭梦',
         condition: (_s) => true,
         effect: (s) => ({
           status: 'game_over',
           story_flags: { ...(s.story_flags || {}), zhuanma_washout: true },
-          message: '几轮下来积蓄见底、心气耗尽,你最终承认转码这条路太难了。你带着遗憾退出了这场逆袭——但重开的机会永远都在。',
+          message: '几轮下来积蓄见底、心气耗尽，你最终承认转码这条路太难了。你带着遗憾退出了这场逆袭——但重开的机会永远都在。',
         }),
         nextEventId: 'end',
       },
@@ -293,7 +293,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_college_grad': {
     id: 'cn_college_grad',
-    title: '大学前期：百团大战与多维探索',
+    title: '【大学前期】百团大战与多维探索',
     description: '进入了国内大学，开学百团大战，各种社团、比赛与创业社招新。你打算如何安排这最初的两年？',
     choices: [
       {
@@ -334,12 +334,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '大二下学期，寝室四人组通宵开黑打游戏正酣，突然门外响起了辅导员查寝的敲门声！',
     choices: [
       {
-        text: '迅速关灯藏起电脑，假装在背四六级单词',
+        text: '【战术秒关电脑】迅速关灯藏起电脑，假装在背四六级单词',
         effect: (s) => ({ health: Math.min(100, s.health + 5), message: '无惊无险！辅导员夸赞你们宿舍学习氛围浓厚，安然度过查寝！' }),
         nextEventId: 'cn_college_year3',
       },
       {
-        text: '硬刚：“我们这是在做计算机图形学与网络抓包实训！”',
+        text: '【理直气壮硬刚】硬刚：“我们这是在做计算机图形学与网络抓包实训！”',
         effect: (s) => {
           const pass = s.leetcode >= 20 || gameRandom() < 0.5;
           return pass
@@ -357,7 +357,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '代表学校参加程序设计竞赛，比赛倒计时 15 分钟，核心题目评测机突然返回 TLE！同队的算法怪才 Sam 正满头大汗狂敲键盘！',
     choices: [
       {
-        text: '冷静打印 Code，用笔手写推导复杂度 (与 Sam 并肩死磕)',
+        text: '【冷静手推复杂度】冷静打印 Code，用笔手写推导复杂度 (与 Sam 并肩死磕)',
         effect: (s) => ({
           leetcode: s.leetcode + 8,
           npcs: {
@@ -373,7 +373,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'cn_college_year3',
       },
       {
-        text: '狂换算法！重写线段树数据结构',
+        text: '【狂换算法重构】狂换算法！重写线段树数据结构',
         effect: (s) => {
           const win = gameRandom() < 0.45 + (s.leetcode / 200);
           return win
@@ -403,12 +403,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '作为创投项目负责人，你在“挑战杯”全国决赛答辩环节面对 VC 评委对商业变现路径的犀利连环追问！',
     choices: [
       {
-        text: '用详实的财报模型与用户 LTV 数据沉着应对',
+        text: '【详实财报答辩】用详实的财报模型与用户 LTV 数据沉着应对',
         effect: (s) => ({ cash: s.cash + 1.2, charm: Math.min(25, s.charm + 6), message: ' 斩获金奖！评委大赞你的商业逻辑极具实战价值，当场颁发了 $1.2w 比赛项目奖金！' }),
         nextEventId: 'cn_college_year3',
       },
       {
-        text: '临场发挥讲述情怀故事，拉满现场演讲感染力',
+        text: '【情怀故事宣讲】临场发挥讲述情怀故事，拉满现场演讲感染力',
         // "结识多位投资界大咖" now grants network (was luck only — flavor/effect mismatch).
         effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 5), network: Math.min(100, (s.network || 10) + 8), message: '全场响起热烈掌声！拿下了最佳台风奖，并在场外结识了多位投资界大咖！' }),
         nextEventId: 'cn_college_year3',
@@ -422,12 +422,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '期末考试周，你在图书馆帮隔壁桌同系学妹/学长解答了一道高数难题，对方微笑着递给你一杯冰拿铁...',
     choices: [
       {
-        text: '顺水推舟互加微信，约对方周末去逛街看电影',
+        text: '【顺水推舟加微信】顺水推舟互加微信，约对方周末去逛街看电影',
         effect: (s) => ({ charm: Math.min(25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '极速脱单！你们聊得无比投机，顺理成章确立了热恋关系 (Dating)！' }),
         nextEventId: 'cn_college_year3',
       },
       {
-        text: '高冷解答：“这道题用拉格朗日中值定理即可，不必客气”',
+        text: '【硬核直男讲题】高冷解答：“这道题用拉格朗日中值定理即可，不必客气”',
         effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(25, s.charm + 2), message: '你保持了高冷做题家的尊严！虽然错过了恋爱，但对方直呼你是“解题考霸”！' }),
         nextEventId: 'cn_college_year3',
       }
@@ -436,7 +436,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_college_year3': {
     id: 'cn_college_year3',
-    title: '大三抉择：保研、秋招与留学',
+    title: '【大三抉择】保研、秋招与留学十字路口',
     description: '大三了，周围人都在考研、秋招、准备出国或直接创业。你的室友托福连挂三次，气氛格外紧张。',
     choices: [
       {
@@ -467,12 +467,12 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'us_undergrad_grad': {
     id: 'us_undergrad_grad',
-    title: '走出象牙塔：北美本科毕业何去何从',
+    title: '【本科毕业】走出象牙塔与未来去向',
     description: '四年过去了，你顺利从美国大学毕业，目前持有 OPT。现在是找工作还是继续深造？',
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
       {
-        text: '申请北美顶尖 PhD (录取率低, 需 LeetCode >= 50)',
+        text: '【申请北美顶尖 PhD】追求学术殿堂与科研圣杯 (录取率低 · 需 LeetCode >= 50)',
         reqBadge: '全奖直博 / 需 LeetCode >= 50',
         condition: (s) => s.leetcode >= 50,
         effect: (s) => {
@@ -485,7 +485,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
 
       {
-        text: '直接找工作 (开启大厂校招与社招海投)',
+        text: '【直接找工作】全美开启大厂校招与社招海投',
         reqBadge: '激活 OPT 实习期',
         // (Removed a dead `year === 2020` pandemic branch: year is frozen during
         // school so it could never fire. Graduation now cleanly activates OPT.)
@@ -497,7 +497,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.visa === 'F1 (学生)' ? 'us_undergrad_grad' : 'job_hunt',
       },
       {
-        text: '申请大U硕士 (刷题进厂预备役 / 避避风头)',
+        text: '【申请大U硕士】刷题进厂预备役，避避风头',
         costBadge: '学费 $10w',
         reqBadge: '需现金 >= $10w',
         condition: (s) => s.cash >= 10,
@@ -517,11 +517,11 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_undergrad_grad': {
     id: 'cn_undergrad_grad',
-    title: '走出象牙塔：国内本科毕业抉择',
+    title: '【国内毕业】走出象牙塔与赴美抉择',
     description: '四年过去了，你在国内大学打下了坚实的代码基础。接下来去哪里？',
     choices: [
       {
-        text: '全奖直博美国 (录取率地狱级, 需 LeetCode >= 50)',
+        text: '【全奖直博美国】地狱级硬核申请 (录取率地狱级 · 需 LeetCode >= 50)',
         reqBadge: '全奖直博 / 需 LeetCode >= 50',
         condition: (s) => s.leetcode >= 50,
         effect: (s) => {
@@ -534,7 +534,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
 
       {
-        text: '申请美国 CS 硕士 (自筹资金 / 积蓄 $5w 即可申请)',
+        text: '【自筹申请美国 CS 硕士】自筹资金读正统美硕 (积蓄 $5w 即可申请)',
         costBadge: '自筹 $5w',
         reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
@@ -551,7 +551,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'us_master_year1',
       },
       {
-        text: '申请美国 CS 硕士 (无抵押留学贷款 + 校内 TA 助教，需评估算法/背景)',
+        text: '【无抵押留学贷款 + TA 助教】申请美国 CS 硕士，自力更生逆袭 (需评估算法/背景)',
         costBadge: '首期 $2w',
         reqBadge: '需算法/GPA评估',
         effect: (s) => {
@@ -578,7 +578,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.is_master ? 'us_master_year1' : 'cn_undergrad_grad',
       },
       {
-        text: '在国内大厂打工攒钱 (积累工作经验)',
+        text: '【国内大厂打工攒钱】先在国内大厂打工攒钱积累工作经验',
         reqBadge: '起薪 $8w',
         effect: (s) => ({
           cash: s.cash + 2.5,
@@ -601,7 +601,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'us_undergrad_year1': {
     id: 'us_undergrad_year1',
-    title: '初入北美：文化冲击与多元探索',
+    title: '【初入北美】文化冲击与多元探索',
     description: '刚来北美，你对一切都很新奇。你决定怎么度过最初的两年？',
     choices: [
       {
@@ -645,7 +645,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '校园阶段，你组队参加全美大学黑客松。主评委是 Stanford 博士、AI 开源先锋 Alex 师兄，以及大厂总监 Dave。比赛倒计时 2 小时，你们的项目因为并发逻辑出现卡顿！',
     choices: [
       {
-        text: '紧急接入 Claude/Cursor 重新优化 Agent 调度层 (硬核技术攻坚)',
+        text: '【硬核优化 Agent 调度】紧急接入 Claude/Cursor 重新优化 Agent 调度层 (硬核技术攻坚)',
         effect: (s) => ({
           leetcode: s.leetcode + 12,
           cash: s.cash + 1.5,
@@ -663,7 +663,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: collegeNextStage,
       },
       {
-        text: '砍掉复杂并发功能，专注于写精致的前端 Demo 与 PPT 演示',
+        text: '【精致 Demo 视觉致胜】砍掉复杂并发功能，专注于写精致的前端 Demo 与 PPT 演示',
         effect: (s) => ({
           charm: Math.min(25, s.charm + 5),
           cash: s.cash + 0.5,
@@ -689,12 +689,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '教授出了地狱级期末试题，全班平均分只有 35 分！曲线打分决定你的 GPA 生死。',
     choices: [
       {
-        text: '通宵翻阅经典教材，用反证法完美解答压轴题',
+        text: '【通宵死磕反证法】通宵翻阅经典教材，用反证法完美解答压轴题',
         effect: (s) => ({ leetcode: s.leetcode + 10, health: s.health - 8, message: '教授被你的硬核推导折服，期末单科拿到 A+！' }),
         nextEventId: collegeNextStage,
       },
       {
-        text: '找学霸室友通宵抱大腿，共同解出作业与例题',
+        text: '【找学霸室友抱大腿】找学霸室友通宵抱大腿，共同解出作业与例题',
         effect: (s) => ({ charm: Math.min(25, s.charm + 3), health: s.health + 2, message: '成功靠团队协作渡过难关，保住了 3.8+ 的优异 GPA！' }),
         nextEventId: collegeNextStage,
       }
@@ -707,12 +707,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '在校园创投大赛上，你面对几位来自硅谷沙丘路 (Sand Hill Road) VC 的合伙人展示商业模型推介！',
     choices: [
       {
-        text: '用严谨的财务模型与用户增长曲线征服投资人',
+        text: '【严谨财务模型】用严谨的财务模型与用户增长曲线征服投资人',
         effect: (s) => ({ cash: s.cash + 2, charm: Math.min(25, s.charm + 5), message: ' 拿到种子轮支票！VC 现场为你开出了 $2w 创业启动扶持资金！' }),
         nextEventId: collegeNextStage,
       },
       {
-        text: '讲出动人的愿景故事，拉满现场演示舞台感染力',
+        text: '【动人愿景故事】讲出动人的愿景故事，拉满现场演示舞台感染力',
         effect: (s) => ({ charm: Math.min(25, s.charm + 6), luck: Math.min(99, s.luck + 5), message: '全场爆发出欢呼！虽然没要投资，但结识了一圈顶级投资圈高管人脉！' }),
         nextEventId: collegeNextStage,
       }
@@ -725,12 +725,12 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '春季草坪音乐节盛大开启！作为音乐节吉他手演完后，你在后台擦汗时遇到了一位赞赏你琴技的心动同学...',
     choices: [
       {
-        text: '主动邀请对方去饮品店喝 Boba 奶茶交流音乐',
+        text: '【主动邀约 Boba 奶茶】主动邀请对方去饮品店喝 Boba 奶茶交流音乐',
         effect: (s) => ({ charm: Math.min(25, s.charm + 6), health: Math.min(100, s.health + 10), relationship_status: 'dating', message: '恋爱甜度拉满！你们越聊越投机，顺理成章确立了热恋关系 (Dating)！' }),
         nextEventId: collegeNextStage,
       },
       {
-        text: '礼貌道谢：“谢谢夸奖，我还要去机房调代码”',
+        text: '【礼貌道谢奔向机房】礼貌道谢：“谢谢夸奖，我还要去机房调代码”',
         effect: (s) => ({ leetcode: s.leetcode + 5, charm: Math.min(25, s.charm + 2), message: '高冷风范！你潇洒地背起吉他走向机房，成为了传说中的冷酷吉他手！' }),
         nextEventId: collegeNextStage,
        }
@@ -743,12 +743,12 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '你的印度室友 Raj 半夜偷偷用宿舍电费跑 6 张 4090 挖矿/训模型，房间热得像桑拿房，跳闸把你的作业进度也搞没了。',
      choices: [
        {
-         text: '跟他摊牌，顺便入伙一起搞算力租赁小生意',
+         text: '【入伙搞算力租赁】跟他摊牌，顺便入伙一起搞算力租赁小生意',
          effect: (s) => ({ cash: s.cash + 1.5, network: Math.min(100, (s.network || 10) + 8), health: Math.max(0, s.health - 5), message: '你俩一拍即合，把矿机改成给同学跑深度学习作业的算力出租，赚到了第一桶创业小钱，还结识了一票 CS 人脉！' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '果断投诉换宿舍，眼不见心不烦专心学习',
+         text: '【果断投诉更换宿舍】果断投诉换宿舍，眼不见心不烦专心学习',
          effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 8), charm: Math.max(0, s.charm - 1), message: '你搬进了安静的单人间，虽然得罪了 Raj，但清净的环境让你的 GPA 和刷题效率直线上升！' }),
          nextEventId: collegeNextStage,
        }
@@ -761,13 +761,13 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '春假到了！室友们租了辆车，喊你一起沿加州 1 号公路自驾去 LA / 拉斯维加斯浪一圈。可是下周就是期中考。',
      choices: [
        {
-         text: '青春就该疯一把！Let\u0027s go 公路旅行',
+         text: "【加州公路自驾】青春就该疯一把！Let's go 开启加州 1 号公路自驾",
          condition: (s) => s.cash >= 1,
          effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 12), charm: Math.min(s.max_charm ?? 25, s.charm + 6), luck: Math.min(99, s.luck + 3), message: '17 英里海岸、比克斯比大桥、赌城霓虹……你拍了一路大片，身心彻底放松，还和同行的朋友结下了铁哥们儿情谊！' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '忍痛留守图书馆，稳住绩点要紧',
+         text: '【留守图书馆刷绩点】忍痛留守图书馆，稳住绩点要紧',
          effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 3), message: '当别人在赌城蹦迪时，你刷完了整本算法导论习题。期中考你稳居年级前列，但错过了青春限定的疯狂。' }),
          nextEventId: collegeNextStage,
        }
@@ -780,12 +780,12 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '你竟然在大二就海投中了一个硅谷大厂的暑期实习 Offer！Mentor 暗示：好好干，转正 Return Offer 有戏。',
      choices: [
        {
-         text: '玩命卷这个实习，冲刺 Return Offer',
+         text: '【玩命卷实习】玩命卷这个实习，冲刺 Return Offer',
          effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 12), cash: s.cash + 2, health: Math.max(0, s.health - 12), network: Math.min(100, (s.network || 10) + 5), message: '你超额完成了实习项目并成功上线，拿到了梦寐以求的转正 Return Offer 意向，简历含金量拉满！但连续加班让你透支不少。' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '带薪学习，享受大厂免费三餐与健身房',
+         text: '【带薪学习免费三餐】带薪学习，享受大厂免费三餐与健身房',
          effect: (s) => ({ cash: s.cash + 2, health: Math.min(100, s.health + 8), charm: Math.min(s.max_charm ?? 25, s.charm + 4), message: '你摸鱼薅满了大厂福利，健身房练出腹肌、food truck 吃到扶墙，虽然没冲转正，但过了个神仙暑假！' }),
          nextEventId: collegeNextStage,
        }
@@ -798,12 +798,12 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '交往了两年的对象在电话那头说：“我们……还是算了吧。太平洋两岸的时差和距离，我撑不住了。” 你在深夜的宿舍楼道里久久没能说出话。',
      choices: [
        {
-         text: '化悲愤为代码，把自己埋进 GitHub 和图书馆',
+         text: '【化悲愤为代码】化悲愤为代码，把自己埋进 GitHub 和图书馆',
          effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 15), health: Math.max(0, s.health - 8), relationship_status: 'single', message: '接下来的三个月你 commit 了上千次，用一个个绿格子填满了空虚。失恋让你痛，却也把你锤炼成了刷题机器。' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '和朋友去 Tahoe 滑雪散心，好好告别这段感情',
+         text: '【Tahoe 滑雪散心】和朋友去 Tahoe 滑雪散心，好好告别这段感情',
          condition: (s) => s.cash >= 1,
          effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 12), charm: Math.min(s.max_charm ?? 25, s.charm + 3), relationship_status: 'single', luck: Math.min(99, s.luck + 3), message: '雪山、篝火、朋友的陪伴，让你慢慢放下。你明白了成年人的告别，也更懂得了照顾自己。' }),
          nextEventId: collegeNextStage,
@@ -817,12 +817,12 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '连续通宵赶 due 加灌了五罐 Red Bull 后，你在机房心悸眼前发黑，被同学送进了校医院急诊。医生严肃警告你：再这么熬，命都要没了。',
      choices: [
        {
-         text: '听劝！从此规律作息、健身养生',
+         text: '【听劝规律养生】听劝！从此规律作息、健身养生',
          effect: (s) => ({ health: Math.min(100, s.health + 15), leetcode: Math.max(0, s.leetcode - 3), luck: Math.min(99, s.luck + 3), message: '你痛定思痛，办了健身房卡、戒了通宵。虽然刷题时间少了点，但你养成了受用一生的健康习惯，这才是长期主义。' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '休息两天又满血复活，继续爆肝冲绩点',
+         text: '【休息两天继续爆肝】休息两天又满血复活，继续爆肝冲绩点',
          effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 10), health: Math.max(0, s.health - 10), message: '你把医生的话当耳旁风，缓了两天又回到了机房。GPA 是保住了，但你的身体亮起了红灯……年轻人，悠着点。' }),
          nextEventId: collegeNextStage,
        }
@@ -835,12 +835,12 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '生活费有点紧，你决定找份课余兼职补贴一下。摆在你面前有两个选择。',
      choices: [
        {
-         text: '当 CS 课程助教 / 私教补习 (体面又对口)',
+         text: '【担任 CS 课程助教】当 CS 课程助教 / 私教补习 (体面又对口)',
          effect: (s) => ({ cash: s.cash + 1.5, leetcode: Math.min(100, s.leetcode + 8), charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你成了热门算法课的 TA，一边讲题一边把知识点吃得更透，还被教授记住了名字，简历又添一笔！' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '下课就跑 DoorDash / Uber Eats 送外卖 (纯体力赚快钱)',
+         text: '【课后跑外卖送餐】下课就跑 DoorDash / Uber Eats 送外卖 (纯体力赚快钱)',
          effect: (s) => ({ cash: s.cash + 2, health: Math.max(0, s.health - 6), luck: Math.min(99, s.luck + 2), message: '你风里来雨里去送了一学期外卖，虽然累，但钱包鼓了，也算把湾区的大街小巷跑熟了。' }),
          nextEventId: collegeNextStage,
        }
@@ -853,12 +853,12 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '感恩节假期，宿舍楼空了大半，本地同学都回家过节。你的美国室友热情地邀请你去他家吃火鸡大餐，可你有点社恐，也担心英语跟不上。',
      choices: [
        {
-         text: '大方赴约，硬着头皮融入美式家庭聚会',
+         text: '【赴约美式聚会】大方赴约，硬着头皮融入美式家庭聚会',
          effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, s.charm + 8), network: Math.min(100, (s.network || 10) + 6), health: Math.min(100, s.health + 3), message: '一开始磕磕巴巴，后来你用一手正宗麻婆豆腐征服了全家人。口语突飞猛进，还收获了一个把你当家人的美国朋友圈！' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '婉拒，约上中国同学在家煮火锅打游戏',
+         text: '【约中国同学煮火锅】婉拒，约上中国同学在家煮火锅打游戏',
          effect: (s) => ({ health: Math.min(100, s.health + 10), leetcode: Math.min(100, s.leetcode + 4), message: '热气腾腾的火锅、熟悉的乡音、通宵的黑神话，让你在异国他乡找到了归属感。舒适圈虽小，却很治愈。' }),
          nextEventId: collegeNextStage,
        }
@@ -871,12 +871,12 @@ export const initializationEvents: Record<string, GameEvent> = {
      description: '你随手发的一条吐槽“湾区码农悲惨生活”的段子/AI 梗图在 X (Twitter) 和小红书上一夜爆火，涨粉几万，连科技大 V 都转发了！',
      choices: [
        {
-         text: '趁热接广告、开付费专栏，把流量变现',
+         text: '【接广告专栏变现】趁热接广告、开付费专栏，把流量变现',
          effect: (s) => ({ cash: s.cash + 2, charm: Math.min(s.max_charm ?? 25, s.charm + 6), luck: Math.min(99, s.luck + 5), message: '你顺势做起了自媒体，接了几单科技公司的软广，还开了付费社群。虽然有点耽误学习，但你尝到了“个人 IP”的甜头！' }),
          nextEventId: collegeNextStage,
        },
        {
-         text: '见好就收，删帖低调，怕影响将来 background check',
+         text: '【见好就收低调删帖】见好就收，删帖低调，怕影响将来 Background Check',
          effect: (s) => ({ leetcode: Math.min(100, s.leetcode + 8), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你冷静地想到大厂入职要查网络背景，果断删帖低调收场。放弃了流量，但守住了一份职业规划的清醒。' }),
          nextEventId: collegeNextStage,
        }
@@ -885,7 +885,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'us_undergrad_year3': {
      id: 'us_undergrad_year3',
-    title: '高年级冲刺：Intern 与求职季',
+    title: '【高年级冲刺】Intern 实习与求职季',
     description: '转眼到了大三和大四，周围的中国同学都在疯狂准备 Summer Intern 与全职 Offer。你打算怎么办？',
     choices: [
       {
@@ -926,7 +926,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'us_master_year1': {
     id: 'us_master_year1',
-    title: '美硕生活：内卷倒计时',
+    title: '【美硕生活】内卷倒计时与加急学制',
     description: '时间紧迫！美硕只有短短一年半到两年。你一边要应付繁重的课业，一边又要准备残酷的秋招。',
     choices: [
       {
@@ -942,7 +942,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: pickCollegeEvent,
       },
       {
-        text: '【华尔街量化方向】选择 2 年标准项目，准备 Quant/风控与投资面试 (24岁毕业)',
+        text: '【主攻量化金融】选择 2 年标准项目，准备 Quant/风控与投资面试 (24岁毕业)',
         effect: (s) => ({
           cash: s.cash + 2.5,
           leetcode: s.leetcode + 8,
@@ -988,7 +988,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'us_master_grad': {
     id: 'us_master_grad',
-    title: '硕士毕业',
+    title: '【硕士毕业】秋招上岸与硅谷求职',
     description: '你拿到了硕士学位，OPT 已经激活。现在必须在三个月内找到工作，否则就要被送中了。',
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
@@ -1016,7 +1016,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'job_hunt',
       },
       {
-        text: '找 ICC 挂靠 (保底策略)',
+        text: '【找 ICC 挂靠保底】找 ICC 挂靠 (保底策略)',
         costBadge: '花费 $1w',
         reqBadge: '需现金 >= $1w',
         condition: (s) => s.cash >= 1,
@@ -1035,7 +1035,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'icc_work',
       },
       {
-        text: '加入一家刚成立的 AI 初创公司 (高风险高回报)',
+        text: '【加入 AI 初创公司】加入一家刚成立的 AI 初创公司 (高风险高回报)',
         reqBadge: '高风险高回报',
         // Available to any master's grad (was gated on year>=2023, which is unreachable
         // because `year` is frozen during school — the option could never appear).
@@ -1056,11 +1056,11 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_work': {
     id: 'cn_work',
-    title: '国内大厂体验期 (新人起步)',
+    title: '【国内大厂】新人起步与 996 体验期',
     description: '你在国内一线互联网大厂入职。每天早 10 晚 10 挤地铁、写业务需求、参与大促压测。扣除北上深高额房租、五险一金与日常税费开销，你正全力攒下赴美的第一桶金。',
     choices: [
       {
-        text: '【996 拼命攒钱】高强度加班与硬核业务落地 (耗时 1 年, 净攒 $2.5w)',
+        text: '【996 拼命攒钱】高强度加班与硬核业务落地 (耗时 1 年，净攒 $2.5w)',
         effect: (s) => ({
           health: Math.max(15, s.health - 15),
           cash: s.cash + 2.5,
@@ -1076,7 +1076,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work_mid',
       },
       {
-        text: '【白天打工，周末备考】平衡作息，死磕托福/GRE 与算法 (耗时 1 年, 净攒 $1.8w)',
+        text: '【白天打工，周末备考】平衡作息，死磕托福/GRE 与算法 (耗时 1 年，净攒 $1.8w)',
         effect: (s) => ({
           health: Math.max(20, s.health - 8),
           cash: s.cash + 1.8,
@@ -1134,11 +1134,11 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_work_mid': {
     id: 'cn_work_mid',
-    title: '国内大厂发展期 (晋升与优化潮)',
+    title: '【国内发展】晋升答辩与降本增效潮',
     description: '你在大厂已工作数年，代码能力与业务理解日臻成熟。面对互联网行业的降本增效与职场竞争，你面临着关键的人生路线选择：',
     choices: [
       {
-        text: '【冲击 P7 核心研发晋升】带团队攻坚高并发大模型业务 (耗时 2 年, 净攒 $7w)',
+        text: '【冲击 P7 核心研发晋升】带团队攻坚高并发大模型业务 (耗时 2 年，净攒 $7w)',
         effect: (s) => ({
           health: Math.max(10, s.health - 18),
           cash: s.cash + 7,
@@ -1154,7 +1154,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.health <= 25 ? 'cn_burnout' : 'cn_work_late',
       },
       {
-        text: '【大厂业务优化：拿 N+3 大礼包润美】主动拿大额裁员赔偿直接出国 (耗时 1 年, 获 $5w 赔偿)',
+        text: '【大厂业务优化：拿 N+3 大礼包润美】主动拿大额裁员赔偿直接出国 (耗时 1 年，获 $5w 赔偿)',
         effect: (s) => ({
           cash: s.cash + 5,
           health: Math.min(100, s.health + 15),
@@ -1212,7 +1212,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_work_late': {
     id: 'cn_work_late',
-    title: '国内大厂成熟期 (35岁分水岭与终极出路)',
+    title: '【国内成熟】35 岁分水岭与终极出路',
     description: '年近三十，你在国内已是资深技术骨干。面对 35 岁职场分水岭与全球 AI 浪潮，你必须敲定人生的下半场：',
     choices: [
       {
@@ -1290,16 +1290,16 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'cn_burnout': {
     id: 'cn_burnout',
-    title: '职场调养：体检警示',
+    title: '【职场调养】体检警示与健康红线',
     description: '长期加班让你的身体有点疲惫，公司医疗保险为你提供了全面的体检与休养支持。',
     choices: [
       {
-        text: '公司医保大部分报销治病休养 (花费 1 万美元)',
+        text: '【医保报销治病休养】公司医保大部分报销治病休养 (花费 $1w)',
         effect: (s) => ({ cash: Math.max(0, s.cash - 1), health: Math.min(100, s.health + 40), age: s.age + 1, year: s.year + 1, message: '在医保绝大部分报销后，你休养了半个月恢复了健康！' }),
         nextEventId: (s) => (s.level?.includes('资深') || s.level?.includes('Tech Lead')) ? 'cn_work_late' : 'cn_work_mid'
       },
       {
-        text: '趁机申请美硕离开 (留学贷款 + TA 助教，需评估项目背景与算法)',
+        text: '【申请美硕赴美】趁机申请美硕离开 (留学贷款 + TA 助教，需评估项目背景与算法)',
         reqBadge: '需算法/背景评估',
         effect: (s) => {
           const pass = (s.leetcode >= 20) || (gameRandom() < 0.50 + (s.luck / 200));
@@ -1314,7 +1314,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'phd_life': {
     id: 'phd_life',
-    title: '北美读博：学术起步 (博一~博二)',
+    title: '【北美读博】学术起步与科研启航 (博一~博二)',
     description: '你拿着每年 3 万美元的 stipend，看着去湾区大厂打工的同学已经换了保时捷。你的导师极度 push，凌晨两点还在群里圈你改实验。',
     choices: [
       {
@@ -1367,7 +1367,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'phd_mid_stage': {
     id: 'phd_mid_stage',
-    title: '北美读博：学术攻坚与答辩生死线 (博三~博四)',
+    title: '【北美读博】学术攻坚与答辩生死线 (博三~博四)',
     description: '博士进入后半程，导师的 Funding 告急，毕业答辩与论文指标压得你喘不过气。实验室里弥漫着焦虑，今年你必须做出决断。',
     choices: [
       {
@@ -1382,7 +1382,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (s.is_phd ? 'phd_conference' : 'job_hunt')
       },
       {
-        text: '【申请大厂研究实习】申请 Meta FAIR / Google DeepMind 做研究实习 (耗时 1 年, 高风险高回报)',
+        text: '【申请大厂研究实习】申请 Meta FAIR / Google DeepMind 做研究实习 (耗时 1 年，高风险高回报)',
         // The fast lane is now a REAL gamble: on failure you do NOT get the PhD — you go
         // back to grinding (routes to phd_mid_stage). Previously the fail branch still
         // granted the PhD, making this a 1-year guaranteed-PhD path that dominated choice 3.
@@ -1396,7 +1396,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.is_phd ? 'phd_job_hunt' : 'phd_mid_stage'
       },
       {
-        text: '【二线期刊保底答辩】降低身段投中档期刊与 Workshop，申请博士答辩 (耗时 2 年, 稳妥毕业)',
+        text: '【二线期刊保底答辩】降低身段投中档期刊与 Workshop，申请博士答辩 (耗时 2 年，稳妥毕业)',
         // The reliable "safety" path: slowest (2yr) but the highest PhD-pass odds at a
         // low health cost — a genuine low-risk alternative to the research-implant gamble.
         effect: (s) => {
@@ -1426,16 +1426,16 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'phd_conference': {
     id: 'phd_conference',
-    title: '夏威夷学术顶会 (CVPR/NeurIPS)',
+    title: '【学术顶会】夏威夷 CVPR / NeurIPS 巅峰聚会',
     description: '你在夏威夷的会场做完了 Poster 展示。接下来几天，你打算怎么安排？',
     choices: [
       {
-        text: '疯狂 Network，结识学术大牛与顶尖 Lab 负责人 (耗时 1 年顺利毕业答辩)',
+        text: '【疯狂 Network】疯狂 Network，结识学术大牛与顶尖 Lab 负责人 (耗时 1 年顺利毕业答辩)',
         effect: (s) => ({ charm: Math.min(25, (s.charm || 10) + 5), age: s.age + 1, year: s.year + 1, health: Math.max(0, s.health - 8), is_phd: true, network: Math.min(100, (s.network || 10) + 20), leetcode: Math.min(100, s.leetcode + 20), message: '你成功给几位学术大佬与 OpenAI/Google 研究员留下了深刻印象。回到学校后顺利完成 Defense，拿到了沉甸甸的 PhD 学位！' }),
         nextEventId: 'phd_job_hunt'
       },
       {
-        text: '去海滩冲浪放飞自我 (引起老板不满，延毕 1 年)',
+        text: '【海滩冲浪放飞自我】去海滩冲浪放飞自我 (引起老板不满，延毕 1 年)',
         effect: (s) => ({ health: Math.min(100, s.health + 20), charm: Math.min(25, (s.charm || 10) + 5), age: s.age + 2, year: s.year + 2, is_phd: true, leetcode: Math.min(100, s.leetcode + 10), message: '你在海滩上玩疯了，没参加老板组织的组会。老板很生气，多留了你一年才放你毕业。' }),
         nextEventId: 'phd_job_hunt'
       }
@@ -1444,11 +1444,11 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'phd_job_hunt': {
     id: 'phd_job_hunt',
-    title: '博士求职 (降维打击与分层抉择)',
+    title: '【博士求职】降维打击与顶级 Offer 分层抉择',
     description: '顶着 PhD 博士光环，你进入了硅谷人才市场。这不再是一般的初级码农招聘，而是分层走向前沿科学家、顶级量化或大厂核心研发。',
     choices: [
       {
-        text: '申请 OpenAI / Anthropic 核心研究员 (地狱面试, 年薪 $80w, O-1 签证)',
+        text: '【申请 OpenAI / Anthropic】申请 OpenAI / Anthropic 核心研究员 (地狱面试 · 年薪 $80w · O-1 签证)',
         reqBadge: '地狱级门槛',
         effect: (s) => {
           // Top 15%-25% elite path
@@ -1461,7 +1461,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       },
       {
-        text: '申请科技大厂 Applied Scientist (应用科学家, 年薪 $48w, O-1 签证)',
+        text: '【申请科技大厂 Applied Scientist】申请科技大厂 Applied Scientist (应用科学家 · 年薪 $48w · O-1 签证)',
         reqBadge: '需扎实研究成果',
         effect: (s) => {
           const passProb = 0.50 + (s.leetcode >= 70 ? 0.20 : 0.05) + ((s.network || 10) >= 20 ? 0.10 : 0) + ((s.luck || 20) / 200);
@@ -1473,7 +1473,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       },
       {
-        text: '大厂研发工程师保底入职 (免刷题内卷, 定级 L4 · 年薪 $32w)',
+        text: '【大厂研发工程师保底】大厂研发工程师保底入职 (免刷题内卷 · 定级 L4 · 年薪 $32w)',
         effect: (s) => ({
           tc: 32,
           cash: s.cash + 6,
@@ -1486,7 +1486,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       },
       {
-        text: '冲击华尔街 Quant Researcher 量化研究员 (年薪 $60w + 高额奖金)',
+        text: '【冲击华尔街 Quant Researcher】冲击华尔街 Quant Researcher 量化研究员 (年薪 $60w + 高额奖金)',
         reqBadge: '需极高数理算法',
         effect: (s) => {
           const passProb = 0.25 + (s.leetcode >= 85 ? 0.25 : 0.05) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);

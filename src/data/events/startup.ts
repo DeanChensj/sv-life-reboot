@@ -5,11 +5,11 @@ import { getTCBreakdown } from '../../utils/gameStateSelectors';
 export const startupEvents: Record<string, GameEvent> = {
   'startup_crisis': {
     id: 'startup_crisis',
-    title: '初创危机',
+    title: '【初创危机】期权缩水与核心团队动荡',
     description: '你的 Startup 最近融资不太顺利，账上的钱只够发 3 个月工资了。',
     choices: [
       {
-        text: '相信老板的 PPT，自愿降薪换取更多期权 (博取小概率收购变现)',
+        text: '【相信老板期权大饼】相信老板的 PPT，自愿降薪换取更多期权 (博取小概率收购变现)',
         effect: (s) => {
           const win = gameRandom() < 0.05;
           return win 
@@ -32,7 +32,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
-        text: '偷偷骑驴找马，准备跑路',
+        text: '【骑驴找马准备跑路】偷偷骑驴找马，准备跑路',
         effect: (s) => ({ health: s.health - 5, tc: 0, cash: s.cash, laid_off: true, job_type: 'unemployed', message: '你一边假装努力工作，一边偷偷刷题。不久后公司果然资金链断裂，你不得不重新找工作。' }),
         nextEventId: 'job_hunt',
       }
@@ -45,7 +45,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '作为初创公司 CEO，你手下带着团队在硅谷创业。烧钱率 (Burn Rate) 与公司生命线全掌握在你手里。请决定本年度的核心战略：',
     choices: [
       {
-        text: '前往 Sand Hill Road (沙丘路) 向顶级 VC 演示 Pitch 寻求融资',
+        text: '【沙丘路路演融资】前往 Sand Hill Road (沙丘路) 向顶级 VC 演示 Pitch 寻求融资',
         reqBadge: '需丰富人脉或出众形象',
         condition: (s) => (s.network || 0) >= 15 || (s.charm || 0) >= 14,
         effect: (s) => {
@@ -199,7 +199,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'founder_exit_event',
       },
       {
-        text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件, 保现金)',
+        text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件，保现金)',
         // The defensive cash-preservation play: extends runway (gains cash, low health
         // cost) at the price of valuation. No longer a strict trap vs the growth options.
         effect: (s) => ({
@@ -296,11 +296,11 @@ export const startupEvents: Record<string, GameEvent> = {
 
   'ai_research_crisis': {
     id: 'ai_research_crisis',
-    title: 'AGI 的脚步',
+    title: '【行业变革】AGI 浪潮与顶会前沿',
     description: '最近 OpenAI 又发了新模型，你在实验室里的项目面临被降维打击的危险。',
     choices: [
       {
-        text: '抢占先机，连夜写 Paper 冲击顶会！',
+        text: '【抢占先机写 Paper】抢占先机，连夜写 Paper 冲击顶会！',
         effect: (s) => {
           const win = gameRandom() < (0.55 + s.leetcode / 300);
           return win 
@@ -310,7 +310,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '佛系跟进，不争不抢',
+        text: '【佛系跟进不争不抢】佛系跟进，不争不抢',
         effect: (s) => ({ health: s.health + 10, cash: s.cash, message: '反正公司也不差你这一个项目，你按时下班，每天看着同事们卷生卷死。' }),
         nextEventId: h1ToH2Router,
       }
@@ -323,7 +323,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '创业初期和你一起在车库吃泡面的联合创始人兼 CTO 突然在周一早会摊牌：要求重签协议将股权提升至 50%，否则就带走核心模型架构去投奔竞对。',
     choices: [
       {
-        text: '依法办事：依据最初签署的 4 年 Vesting 协议回购未行权股份，强硬止损',
+        text: '【依法强硬回购股份】依法办事：依据最初签署的 4 年 Vesting 协议回购未行权股份，强硬止损',
         effect: (s) => ({
           health: Math.max(0, s.health - 10),
           company_valuation: Math.max(100, (s.company_valuation || 180) - 60),
@@ -333,7 +333,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '协商妥协：释放 5% 股权池与晋升薪酬，维持技术架构稳定推进',
+        text: '【协商妥协稳定架构】协商妥协：释放 5% 股权池与晋升薪酬，维持技术架构稳定推进',
         // The "keep building" play: the retained CTO ships (leetcode) — a real edge over
         // the VC-arbitration option (so it isn't strictly dominated once you've raised).
         effect: (s) => ({
@@ -345,7 +345,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '引入沙丘路 VC 投资人做仲裁调解，以专业治理架构稳定董事会',
+        text: '【引入 VC 仲裁调解】引入沙丘路 VC 投资人做仲裁调解，以专业治理架构稳定董事会',
         condition: (s) => Boolean(s.founder_stage === 'seed' || s.founder_stage === 'series_a' || s.founder_stage === 'series_b' || s.founder_stage === 'exit'),
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -365,7 +365,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '沙丘路一线 VC 合伙人口头承诺领投下轮融资后，却在正式签署前夕的周日深夜发来邮件表示“投委会因宏观不确定性决定暂缓”，单方面反悔撤回。',
     choices: [
       {
-        text: '连夜启动备选应急预案，向 Stanford 校友网络与天使投资人路演求助',
+        text: '【连夜启动备选预案】连夜启动备选应急预案，向 Stanford 校友网络与天使投资人路演求助',
         effect: (s) => {
           const win = gameRandom() < 0.60;
           return win
@@ -384,7 +384,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '直接杀到 Sand Hill Road 咖啡馆堵门当面 Re-pitch，力挽狂澜',
+        text: '【沙丘路咖啡馆堵门】直接杀到 Sand Hill Road 咖啡馆堵门当面 Re-pitch，力挽狂澜',
         condition: (s) => (s.charm || 0) >= 14,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -396,7 +396,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '断臂求生：立刻收紧每月烧钱率，全员降薪延缓 Runway',
+        text: '【断臂求生全员降薪】断臂求生：立刻收紧每月烧钱率，全员降薪延缓 Runway',
         // Cutting burn actually preserves cash (extends runway) — a real cash edge so
         // it isn't dominated by the charm-gated Re-pitch option.
         effect: (s) => ({
@@ -415,7 +415,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '随着 AI 算力与 GPU 训练开销激增，公司 Mercury 银行账户里的资金仅够支撑 60 天了。如果无法及时止血，公司将面临断粮关停。',
     choices: [
       {
-        text: '创始人自掏腰包垫资 $4w，全力扛到下半年企业客户续约 (需现金>=4w)',
+        text: '【创始人自掏腰包垫资】创始人自掏腰包垫资 $4w，全力扛到下半年企业客户续约 (需现金>=4w)',
         reqBadge: '需现金>=4w',
         condition: (s) => s.cash >= 4,
         effect: (s) => ({
@@ -427,7 +427,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '申请云厂商（AWS/Azure/GCP）创业加速算力额度抵扣，死里逃生',
+        text: '【申请云厂商算力额度】申请云厂商（AWS/Azure/GCP）创业加速算力额度抵扣，死里逃生',
         effect: (s) => ({
           health: Math.min(100, s.health + 4),
           company_valuation: (s.company_valuation || 180) + 80,
@@ -436,7 +436,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '带领全员极速交付 MVP 商业化功能，以预付订金补充现金流',
+        text: '【交付 MVP 补充现金流】带领全员极速交付 MVP 商业化功能，以预付订金补充现金流',
         effect: (s) => ({
           health: Math.max(0, s.health - 10),
           cash: parseFloat((s.cash + 2.5).toFixed(1)),
@@ -454,7 +454,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '旧金山 Hayes Valley / SOMA 的极客 Hacker House 正在举办周末 48 小时 AI Agent 黑客松，满屋子都是喝着 Red Bull 狂敲代码的狂热 Founder 与工程师。',
     choices: [
       {
-        text: '带领团队通宵打磨杀手级 Feature，斩获全场冠军 Demo',
+        text: '【通宵打磨冠军 Demo】带领团队通宵打磨杀手级 Feature，斩获全场冠军 Demo',
         effect: (s) => ({
           health: Math.max(0, s.health - 6),
           leetcode: Math.min(100, s.leetcode + 5),
@@ -464,7 +464,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '在黑客松现场疯狂 Networking，结识顶级天使投资人与硬核天才',
+        text: '【现场疯狂 Network】在黑客松现场疯狂 Networking，结识顶级天使投资人与硬核天才',
         effect: (s) => ({
           network: Math.min(100, (s.network || 0) + 4),
           charm: Math.min(25, (s.charm || 10) + 2),
@@ -473,7 +473,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '佛系参赛：蹭免费披萨、精酿啤酒与 $10,000 云算力代金券',
+        text: '【佛系参赛蹭吃蹭券】佛系参赛：蹭免费披萨、精酿啤酒与 $10,000 云算力代金券',
         effect: (s) => ({
           health: Math.min(100, s.health + 8),
           message: '【白嫖算力与放松】没有参赛心理负担，白嫖了满满一袋纪念品与云服务算力 Credits，身心舒畅。'
@@ -490,7 +490,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: 'Y Combinator 合伙人看到了你的增长曲线，邀请你参加下一期 Batch。标准 Deal：出让 7% 股权，换取种子资金、全明星校友网络与 Demo Day 全球曝光。',
     choices: [
       {
-        text: '接受 YC Deal：出让 7% 股权，加入 Batch 冲刺 Demo Day',
+        text: '【接受 YC 孵化 Deal】接受 YC Deal：出让 7% 股权，加入 Batch 冲刺 Demo Day',
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
           cash: parseFloat((s.cash + 6).toFixed(1)),
@@ -503,7 +503,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '婉拒：不愿被稀释 7%，坚持独立自筹发展',
+        text: '【婉拒 YC 独立自筹】婉拒：不愿被稀释 7%，坚持独立自筹发展',
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
           company_valuation: (s.company_valuation || 180) + 60,
@@ -521,7 +521,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '一家世界 500 强巨头释放了 $200w 年度采购意向，但要求你的团队在 3 个月内交付满足企业级合规与 SLA 的私有化部署版本。这是一次决定公司命运的豪赌。',
     choices: [
       {
-        text: '全力接单：集中全员通宵赶工，3 个月啃下企业级版本 (高压高回报)',
+        text: '【全力接单赶工交付】全力接单：集中全员通宵赶工，3 个月啃下企业级版本 (高压高回报)',
         effect: (s) => {
           const win = gameRandom() < (0.55 + (s.leetcode >= 60 ? 0.15 : 0));
           return win
@@ -542,7 +542,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '稳健评估：分阶段签署里程碑交付，不透支团队健康',
+        text: '【稳健签署里程碑交付】稳健评估：分阶段签署里程碑交付，不透支团队健康',
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
           cash: parseFloat((s.cash + 4).toFixed(1)),

@@ -5,7 +5,7 @@ import { getTCBreakdown } from '../../utils/gameStateSelectors';
 export const tradingEvents: Record<string, GameEvent> = {
   'stock_market_annual_gamble': {
     id: 'stock_market_annual_gamble',
-    title: '资产配置：股票市场操作',
+    title: '【资产配置】股票市场操作与仓位管理',
     description: '你可以自由配置你的现金和股票仓位。注意：股票资产在年终结算时会受到宏观大盘（牛市/熊市）的剧烈影响，而现金则不受波动影响。',
     choices: [
       {
@@ -84,7 +84,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: midYearEventRouter,
       },
       {
-        text: '按兵不动：维持目前的仓位组合进入年终结算',
+        text: '【按兵不动维持仓位】按兵不动：维持目前的仓位组合进入年终结算',
         effect: (s) => ({
           message: '你决定什么都不做，做时间的朋友，静静等待跨年的钟声。'
         }),
@@ -95,11 +95,11 @@ export const tradingEvents: Record<string, GameEvent> = {
 
   'stock_crash': {
     id: 'stock_crash',
-    title: '美联储加息，宏观经济遇冷',
+    title: '【宏观海啸】美联储加息与市场寒冬',
     description: '美股大盘全线暴跌，纳斯达克惨不忍睹。你的公司股价腰斩，导致你今年的 RSU 价值大幅缩水！',
     choices: [
       {
-        text: '心在滴血，但也只能接受现实 (总包 TC 缩水 20%)',
+        text: '【心在滴血接受现实】心在滴血，但也只能接受现实 (总包 TC 缩水 20%)',
         effect: (s) => ({
           tc: Math.floor(s.tc * 0.8),
           stocks: Math.floor((s.stocks || 0) * 0.75),
@@ -110,7 +110,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '此时不博何时博？加杠杆抄底！(需现金 > 30w)',
+        text: '【加杠杆暴力抄底】此时不博何时博？加杠杆抄底！(需现金 > 30w)',
         condition: (s) => s.cash >= 30,
         effect: (s) => {
            const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%
@@ -130,7 +130,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '入职第四年，传说中的 4-Year RSU Vesting Cliff (股票归属崖) 正式到来，然而恰逢宏观加息加科技股大暴跌，公司股价从你入职时的 $380 暴跌至 $42。\n你打开 E*TRADE 账户，原本预估的 $40 万美元股票市值缩水成了“能够买两台二手特斯拉”。',
     choices: [
       {
-        text: '心理防御倒塌：跳槽去股价触底的新公司，重新拿一笔低价 RSU 抄底',
+        text: '【跳槽新厂低价抄底】心理防御倒塌：跳槽去股价触底的新公司，重新拿一笔低价 RSU 抄底',
         // The story (fresh cheap grant at the bottom) is now actually implemented as a
         // stock grant, and we no longer set is_new_job (which could reset GC progress).
         // So it's a real "抄底" bet (health cost + slight TC dip for future equity upside).
@@ -145,7 +145,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》(能否爆火看运气)',
+        text: '【拍小红书挂壁 VLOG】拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》(能否爆火看运气)',
         // No longer a free loss-eraser: going viral is a gamble with a real editing/health cost.
         effect: (s) => {
           const viral = gameRandom() < 0.55;
@@ -156,7 +156,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '死扛信仰！每天去大华超市买促销打折盒饭，熬到中东主权基金收购',
+        text: '【死扛信仰吃便当】死扛信仰！每天去大华超市买促销打折盒饭，熬到中东主权基金收购',
         effect: (s) => ({ health: s.health - 12, luck: Math.min(99, (s.luck || 20) + 8), story_flags: { ...(s.story_flags || {}), rsu_cliff_done: true }, message: '你开启了硅谷极简苦行僧模式，胃功能下降了，但心智磨砺得坚不可催。' }),
         nextEventId: 'sv_year_end_settlement',
       }
@@ -325,11 +325,11 @@ export const tradingEvents: Record<string, GameEvent> = {
 
   'quant_stress': {
     id: 'quant_stress',
-    title: '华尔街的脉搏',
+    title: '【量化博弈】华尔街高压博弈与策略干预',
     description: '最近股市剧烈波动，你的量化策略出现了巨大的 Drawdown (回撤)。',
     choices: [
       {
-        text: '顶着高压，手动干预策略并加大杠杆！(40% 概率获得 $60w 巨额 Bonus, 否则爆仓被裁)',
+        text: '【手动干预加大杠杆】顶着高压，手动干预策略并加大杠杆！(40% 概率获得 $60w 巨额 Bonus, 否则爆仓被裁)',
         // Jackpot cut from a degenerate $250w (which alone cleared FIRE) to a
         // realistic top-quant bonus of $60w; the loss still fires you.
         effect: (s) => {
@@ -341,7 +341,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
-        text: '相信数学，不干预策略 (求稳退守)',
+        text: '【相信数学求稳退守】相信数学，不干预策略 (求稳退守)',
         // 反软印钞机：原为无条件 +$15w 现金（每逢 quant_stress 稳拿，健康可回血 → 变相印钞）。
         // 改为随宏观周期与运气小幅波动的「小额 Bonus」，可正可负、上限低，符合「求稳退守」定位。
         effect: (s) => {
@@ -363,11 +363,11 @@ export const tradingEvents: Record<string, GameEvent> = {
 
   'crypto_scam': {
     id: 'crypto_scam',
-    title: '微信群里的财富密码',
+    title: '【投机诱惑】微信群里的财富密码与土狗币',
     description: '一个高中同学突然拉你进了一个 Web3 交流群，里面的人天天晒豪车和几十倍收益的截图。',
     choices: [
       {
-        text: '搏一搏，单车变摩托！投入 $5w',
+        text: '【高杠杆冲土狗币】搏一搏，单车变摩托！投入 $5w (高风险)',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
           const winRate = 0.01 + (Math.min(45, s.luck) / 100) * 0.15;
@@ -379,7 +379,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '天上不会掉馅饼，退群保平安',
+        text: '【退群保平安避坑】天上不会掉馅饼，退群保平安',
         effect: (s) => ({ charm: s.charm + 1, message: '你敏锐地察觉到了这是骗局，并且在小红书上发帖曝光，获得了不少点赞。' }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -422,7 +422,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '今晚美东早 8:30 鲍威尔发表演讲，大盘期权波动率 (IV) 飙升到极致！纳斯达克期货在非农与 CPI 数据公布瞬间剧烈上下插针！',
     choices: [
       {
-        text: '严格纪律：提前平掉所有高杠杆 0DTE 末日轮，空仓观望保护本金',
+        text: '【平仓观望保护本金】严格纪律：提前平掉所有高杠杆 0DTE 末日轮，空仓观望保护本金',
         effect: (s) => ({
           health: Math.min(100, s.health + 4),
           message: '【纪律战胜贪婪】市场插针剧烈多空双爆，许多赌徒惨遭爆仓，而你空仓喝着咖啡，稳稳保住了本金与胜利果实！'
@@ -430,7 +430,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '双向跨式策略 (Straddle)：做多两端波动率，靠大幅跳空捕获暴利',
+        text: '【双向跨式做多波动】双向跨式策略 (Straddle)：做多两端波动率，靠大幅跳空捕获暴利',
         effect: (s) => {
           const win = gameRandom() < 0.55;
           return win
@@ -448,7 +448,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '单边重仓做多科技七巨头 (Magnificent 7) 业绩预期 (需现金>=10w)',
+        text: '【单边重仓科技七巨头】单边重仓做多科技七巨头 (Magnificent 7) 业绩预期 (需现金>=10w)',
         reqBadge: '需现金>=10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => {
@@ -477,7 +477,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: 'Reddit WSB 论坛千万散户集结，猛烈买入深度虚值 Call 期权，将一只空头占比高达 40% 的科技小盘股推向多重熔断！',
     choices: [
       {
-        text: '火中取栗：顺势跟风买入，在盘中剧烈震荡中精准止盈',
+        text: '【跟风追涨精准止盈】火中取栗：顺势跟风买入，在盘中剧烈震荡中精准止盈',
         effect: (s) => {
           const win = gameRandom() < 0.60;
           return win
@@ -495,7 +495,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '反向做空：等待非理性狂热情绪见顶，反手布局 Put 远期看跌期权 (高风险)',
+        text: '【反手做空远期 Put】反向做空：等待非理性狂热情绪见顶，反手布局 Put 远期看跌期权 (高风险)',
         // Shorting a live short-squeeze is one of the most dangerous trades — it's now a
         // real gamble, not a guaranteed free win that dominated the "跟风" option.
         effect: (s) => {
@@ -507,7 +507,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '吃瓜看戏：拒绝情绪化交易，在 Twitter/X 上发 Meme 表情包',
+        text: '【吃瓜看戏发 Meme】吃瓜看戏：拒绝情绪化交易，在 Twitter/X 上发 Meme 表情包',
         effect: (s) => ({
           charm: Math.min(25, (s.charm || 10) + 3),
           health: Math.min(100, s.health + 6),
@@ -524,7 +524,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '连续两周美东开盘（美西清晨 6:30）高强度盯盘，你每天灌下 3 大杯 Cold Brew，心率飙升但精神处于高度亢奋与紧绷状态。',
     choices: [
       {
-        text: '强行关机休市：去 Half Moon Bay 半月湾吹海风吃海鲜，深度养生回血',
+        text: '【关机休市海边养生】强行关机休市：去 Half Moon Bay 半月湾吹海风吃海鲜，深度养生回血',
         effect: (s) => ({
           health: Math.min(100, s.health + 16),
           cash: Math.max(0, parseFloat((s.cash - 0.3).toFixed(1))),
@@ -533,7 +533,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '将核心策略全量托管给 Python/AWS 自动交易网格系统，解放肉身',
+        text: '【全量托管自动网格】将核心策略全量托管给 Python/AWS 自动交易网格系统，解放肉身',
         effect: (s) => ({
           health: Math.min(100, s.health + 10),
           leetcode: s.leetcode + 4,
@@ -543,7 +543,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '通宵复盘：拆解 10-K 年报与美股大宗交易 Dark Pool (暗池) 资金流',
+        text: '【通宵复盘拆解财报】通宵复盘：拆解 10-K 年报与美股大宗交易 Dark Pool (暗池) 资金流',
         effect: (s) => ({
           health: Math.max(0, s.health - 8),
           leetcode: Math.min(100, s.leetcode + 6),

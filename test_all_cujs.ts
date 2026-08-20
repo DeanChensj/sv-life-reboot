@@ -1725,6 +1725,18 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const entry = events['choose_school'].choices.find((c) => c.text.includes('转码'));
   assert(!!entry, 'choose_school has a 转码 entry option');
 
+  // Age sanity: walking the REAL pipeline (含 4 年非科班本科) must reach the first hunt at a
+  // realistic age (~24), NOT as an 18-year-old (regression guard for the missing undergrad years).
+  {
+    let ws = generateInitialState(12345);
+    ws = applyStateTransition(ws, entry!.effect(ws), { eventId: 'choose_school' }).nextState;
+    const bgUs = events['zhuanma_background'].choices.find((c) => c.text.includes('美本'))!;
+    ws = applyStateTransition(ws, bgUs.effect(ws), { eventId: 'zhuanma_background' }).nextState;
+    const selfMethod = events['zhuanma_decision'].choices.find((c) => c.text.includes('纯自学'))!;
+    ws = applyStateTransition(ws, selfMethod.effect(ws), { eventId: 'zhuanma_decision' }).nextState;
+    assert((ws.age ?? 0) >= 22, `转码 reaches first hunt at a realistic age, not a teenager (got age ${ws.age})`);
+  }
+
   // 2. CS 美硕 method reuses the existing us_master pipeline + launders background
   const msChoice = events['zhuanma_decision'].choices.find((c) => c.text.includes('CS 美硕'))!;
   const cnSwitcher: GameState = { ...generateInitialState(), cash: 40, story_flags: { non_cs_background: true, zhuanma_origin: 'cn' } } as GameState;

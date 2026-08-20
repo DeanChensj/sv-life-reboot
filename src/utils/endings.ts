@@ -41,7 +41,7 @@ export function determineEnding(s: GameState): EndingResult {
       return {
         id: 'zhuanma_washout', emoji: '🥀', title: '转码劝退 · 逆袭未竟',
         subtitle: 'STATUS: CAREER-SWITCH WASHOUT', tone: 'tragedy', rarity: 'N',
-        flavor: '非科班转码这条路,终究比想象中更陡。你耗尽了积蓄与心气,在一次次挂经后黯然退场——但逆袭的故事,永远可以从头再写。',
+        flavor: '非科班转码这条路，终究比想象中更陡。你耗尽了积蓄与心气，在一次次挂经后黯然退场——但逆袭的故事，永远可以从头再写。',
       };
     }
     // Deportation / visa loss — message-driven (the visa/OPT/H1B failure events set a
@@ -167,7 +167,7 @@ export function determineEnding(s: GameState): EndingResult {
     return {
       id: 'homecoming', emoji: '✈️', title: '落叶归根 · 海归人生',
       subtitle: 'STATUS: HOMECOMING', tone: 'content', rarity: 'R',
-      flavor: '你终究没有把根扎在硅谷。回到熟悉的土地,用这些年的历练,在故乡书写了另一段人生。',
+      flavor: '你终究没有把根扎在硅谷。回到熟悉的土地，用这些年的历练，在故乡书写了另一段人生。',
     };
   }
   const isPermanent = s.visa === '绿卡' || s.visa === '公民';

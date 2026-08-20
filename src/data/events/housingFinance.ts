@@ -338,7 +338,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【全额缴纳补充房产税】咬牙全额缴纳补充房产税账单 (消耗 $3w)',
-        costBadge: '消耗 $3w',
+        costBadge: '花费 $3w',
         reqBadge: '需现金+股票 >= $3w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 3,
         effect: (s) => ({ cash: s.cash - 3, health: s.health - 5, message: '你一次性补齐了 $3w 房产税账单，虽然心痛不已，但保住了房产产权。' }),
@@ -374,7 +374,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【聘请顶级 CPA 律师】聘请顶级 CPA 注册会计师与税务律师处理 (消耗 $4w)',
-        costBadge: '消耗 $4w',
+        costBadge: '花费 $4w',
         reqBadge: '需现金+股票 >= $4w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 4,
         effect: (s) => ({ cash: s.cash - 4, message: '顶级 CPA 出面帮你处理了所有复杂的税务审计纠纷，彻底平息了 IRS 查账危机！' }),
@@ -382,7 +382,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       },
       {
         text: '【自行沟通补缴罚款】自己跟 IRS 沟通并补交滞纳金与罚款 (消耗 $2.5w)',
-        costBadge: '消耗 $2.5w',
+        costBadge: '花费 $2.5w',
         reqBadge: '需现金+股票 >= $2.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 2.5,
         effect: (s) => ({ cash: s.cash - 2.5, health: Math.max(0, s.health - 10), message: '你在复杂的税务表格与电话排队中被折磨得头昏脑涨，最终补齐了罚款结案。' }),

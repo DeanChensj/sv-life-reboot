@@ -58,7 +58,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【梭哈期权】拼了！用小额现金炒 0DTE 末日期权 (投入 $5w)',
-        costBadge: '投入 $5w',
+        costBadge: '花费 $5w',
         reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
@@ -449,7 +449,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【单边重仓科技七巨头】单边重仓做多科技七巨头 (Magnificent 7) 业绩预期 (需现金>=10w)',
-        reqBadge: '需现金>=10w',
+        reqBadge: '需现金 >= $10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => {
           const win = gameRandom() < 0.50;

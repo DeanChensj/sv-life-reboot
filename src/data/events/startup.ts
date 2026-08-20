@@ -21,7 +21,7 @@ export const startupEvents: Record<string, GameEvent> = {
       {
         text: '【带资领投】自己掏 $10w 领投公司 Seed 轮自救',
         costBadge: '出资 $10w',
-        reqBadge: '需总资产>=10w',
+        reqBadge: '需总资产 >= $10w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 10,
         effect: (s) => {
           const win = gameRandom() < 0.25;
@@ -167,7 +167,7 @@ export const startupEvents: Record<string, GameEvent> = {
       },
       {
         text: '【高举高打招聘】重金从 Meta/Google 挖掘架构师补齐工程团队 (需现金>=8w)',
-        reqBadge: '现金>=8w',
+        reqBadge: '需现金 >= $8w',
         condition: (s) => s.cash >= 8,
         effect: (s) => {
           const success = gameRandom() < 0.65;
@@ -416,7 +416,7 @@ export const startupEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【创始人自掏腰包垫资】创始人自掏腰包垫资 $4w，全力扛到下半年企业客户续约 (需现金>=4w)',
-        reqBadge: '需现金>=4w',
+        reqBadge: '需现金 >= $4w',
         condition: (s) => s.cash >= 4,
         effect: (s) => ({
           cash: parseFloat((s.cash - 4).toFixed(1)),

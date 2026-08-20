@@ -69,7 +69,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 onClick={() => { onClose(); onTriggerEvent('buy_house'); }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative overflow-hidden"
               >
-                <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">参加抢房大战 (首付 $40w+ · 可用股票)</div>
+                <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">【抢房大战】参加抢房大战 (首付 $40w+ · 可用股票)</div>
                 <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已拥有一套自住房产' : '进入买房事件流，挑选湾区房产 (支持股票自动变现)'}</div>
               </button>
               
@@ -78,7 +78,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 onClick={() => { onClose(); onTriggerEvent('change_rental'); }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
-                <div className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">搬家与换租</div>
+                <div className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">【搬家换租】重新挑选租房居住环境</div>
                 <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法换租' : '改变你的租房环境'}</div>
               </button>
 
@@ -87,7 +87,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 onClick={() => onBuy({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, gameState.health - 10) }, '你把睡袋塞进了车后备箱。虽然每天去健身房洗澡极其硬核，但成功将房租消耗砍到了 $0！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-zinc-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed group col-span-1 sm:col-span-2"
               >
-                <div className="font-bold text-zinc-400">挂壁退租睡车顶 (房租归零)</div>
+                <div className="font-bold text-zinc-400">【挂壁退租】退租搬进特斯拉睡车顶 (房租归零)</div>
                 <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法退租' : '要求：总资产 < $10w 且当前有房租。健康大幅下降。'}</div>
               </button>
             </div>
@@ -117,7 +117,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">自住房 ADU 出租</span>
+                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">【ADU 出租】自住房独立套间改造</span>
                   <span className="text-[11px] font-mono text-emerald-400 font-bold">+$1.2w/年 租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
@@ -140,7 +140,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">Austin 远程独栋投资房</span>
+                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">【外州投资】Austin 远程独栋投资房</span>
                   <span className="text-[11px] font-mono text-emerald-400 font-bold">+$1.2w/年 租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
@@ -161,7 +161,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">东湾 Hayward 独栋投资房</span>
+                  <span className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">【东湾投资】东湾 Hayward 独栋投资房</span>
                   <span className="text-[11px] font-mono text-emerald-400 font-bold">+$2.2w/年 租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
@@ -183,7 +183,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-400/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">Sunnyvale 4-Plex 公寓楼</span>
+                  <span className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">【核心公寓】Sunnyvale 4-Plex 公寓楼</span>
                   <span className="text-[11px] font-mono text-amber-400 font-bold">+$6.0w/年 巨额租金</span>
                 </div>
                 <div className="text-xs text-zinc-500 mt-1">
@@ -207,7 +207,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-amber-300 group-hover:text-amber-200 transition-colors text-sm sm:text-base">随时申请 FIRE 提前退休</span>
+                      <span className="font-extrabold text-amber-300 group-hover:text-amber-200 transition-colors text-sm sm:text-base">【提前退休】随时申请 FIRE 退休结算</span>
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-400 text-zinc-950 uppercase">已达标</span>
                     </div>
                     <div className="text-xs text-zinc-400 mt-1">你已具备财务自由资质！点击立即登出硅谷内卷，进入生涯荣誉与战报结算。</div>
@@ -233,7 +233,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">Tesla Model Y</span>
+                    <span className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">【实用座驾】Tesla Model Y</span>
                     {gameState.car === 'model_y' && (
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">已拥有</span>
                     )}
@@ -263,7 +263,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-zinc-200 group-hover:text-zinc-300 transition-colors">Tesla Cybertruck</span>
+                    <span className="font-bold text-zinc-200 group-hover:text-zinc-300 transition-colors">【硬核皮卡】Tesla Cybertruck</span>
                     {gameState.car === 'cybertruck' && (
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">已拥有</span>
                     )}
@@ -292,7 +292,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-zinc-200 group-hover:text-red-400 transition-colors">Porsche 911 / Taycan</span>
+                    <span className="font-bold text-zinc-200 group-hover:text-red-400 transition-colors">【豪华超跑】Porsche 911 / Taycan</span>
                     {gameState.car === 'porsche' && (
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40">已拥有</span>
                     )}
@@ -313,7 +313,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 onClick={() => onBuy({ cash: gameState.cash - 3, health: Math.min(100, gameState.health + 8), charm: Math.min(25, gameState.charm + 2), last_beauty_year: gameState.year }, '做全脸热玛吉，请硅谷最贵的私教。颜值与身体状态有所提升！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-pink-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
-                <div className="font-bold text-zinc-200 group-hover:text-pink-400 transition-colors">医美与高端私教</div>
+                <div className="font-bold text-zinc-200 group-hover:text-pink-400 transition-colors">【医美私教】医美保养与高端私教</div>
                 <div className="text-xs text-zinc-500 mt-1">
                   {gameState.last_beauty_year === gameState.year 
                     ? '本年度已保养 (每年限 1 次)' 
@@ -348,7 +348,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-purple-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
-                <div className="font-bold text-zinc-200 group-hover:text-purple-400 transition-colors">游艇高端局 (需要一定社交资质)</div>
+                <div className="font-bold text-zinc-200 group-hover:text-purple-400 transition-colors">【游艇社交】高端游艇派对人脉局</div>
                 <div className="text-xs text-zinc-500 mt-1">入场费: $5w | 高风险高回报：可能结识大佬涨 TC，也可能白扔钱扣健康。</div>
               </button>
 
@@ -362,7 +362,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">领养一只小狗 (日系柴犬)</div>
+                  <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">【领养萌犬】日系柴犬 (陪伴治愈)</div>
                   {gameState.has_dog && (
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">已领养</span>
                   )}
@@ -380,7 +380,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">领养一只小猫 (布偶猫)</div>
+                  <div className="font-bold text-zinc-200 group-hover:text-blue-400 transition-colors">【领养萌猫】黏人布偶猫 (陪伴治愈)</div>
                   {gameState.has_cat && (
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">已领养</span>
                   )}

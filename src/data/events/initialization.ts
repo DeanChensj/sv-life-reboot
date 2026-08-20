@@ -535,7 +535,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
       {
         text: '【自筹申请美国 CS 硕士】自筹资金读正统美硕 (积蓄 $5w 即可申请)',
-        costBadge: '自筹 $5w',
+        costBadge: '花费 $5w',
         reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => ({
@@ -553,7 +553,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【无抵押留学贷款 + TA 助教】申请美国 CS 硕士，自力更生逆袭 (需评估算法/背景)',
         costBadge: '首期 $2w',
-        reqBadge: '需算法/GPA评估',
+        reqBadge: '需算法与 GPA 评估',
         effect: (s) => {
           const loanPass = (s.leetcode >= 18) || (gameRandom() < 0.40 + (s.luck / 200));
           if (loanPass) {
@@ -1300,7 +1300,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【申请美硕赴美】趁机申请美硕离开 (留学贷款 + TA 助教，需评估项目背景与算法)',
-        reqBadge: '需算法/背景评估',
+        reqBadge: '需算法与背景评估',
         effect: (s) => {
           const pass = (s.leetcode >= 20) || (gameRandom() < 0.50 + (s.luck / 200));
           return pass

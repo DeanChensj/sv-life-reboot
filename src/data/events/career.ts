@@ -116,7 +116,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【强力人脉 Referral】凭借学长学姐/熟人总监直通大厂团队',
-        reqBadge: '需人脉关系>=25',
+        reqBadge: '需人脉关系 >= 25',
         condition: (s) => (s.network || 0) >= 25,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
@@ -241,7 +241,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【转型全职 Day Trader 操盘】凭借 $50w 本金与自由身全职炒股操盘 (需美籍/绿卡 + 现金>=50w)',
-        reqBadge: '需美籍/绿卡+现金>=50w',
+        reqBadge: '需美籍/绿卡 + 现金 >= $50w',
         condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50,
         effect: (_s) => ({
           job_type: 'trader',
@@ -255,7 +255,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup (需美籍/绿卡/O1 或 现金>=45w)',
-        reqBadge: '需美籍/绿卡/O1或现金>=45w',
+        reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
         condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'startup_founder',
         effect: (s) => {
           const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
@@ -609,7 +609,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【砸钱申办 O-1 签证】找顶级律所申办 O-1 杰出人才签证 (需现金 >= $8w)',
-        reqBadge: '现金>=8w+超凡背景',
+        reqBadge: '需现金 >= $8w + 超凡背景',
         condition: (s) => (s.is_phd || s.job_type === 'ai_research' || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const passProb = o1PassProb(s);
@@ -622,7 +622,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $80w 现金)',
-        reqBadge: '现金>=80w',
+        reqBadge: '需现金 >= $80w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - 80, message: '凭家里雄厚的资金实力，直接出资 $80w 办妥了新法 EB-5 投资移民绿卡，跳过一切工签抽签直接上岸！' }),
         nextEventId: 'post_green_card',
@@ -654,7 +654,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【付费商婚上岸】支付 $8w 现金找中介匹配公民商婚领证 (需现金 >= $8w, 极高风险)',
-        reqBadge: '现金>=8w (高风险)',
+        reqBadge: '需现金 >= $8w (高风险)',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const roll = gameRandom();
@@ -1426,7 +1426,7 @@ export const careerEvents: Record<string, GameEvent> = {
       // --- 职业转型：离职去全职操盘 / 创业 (需身份/资金门槛) ---
       {
         text: '【离职全职 Day Trader】凭 $50w 本金与美籍/绿卡自由身全职操盘 (需美籍/绿卡 + 现金>=50w)',
-        reqBadge: '需美籍/绿卡+现金>=50w',
+        reqBadge: '需美籍/绿卡 + 现金 >= $50w',
         condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50 && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (_s) => ({
           job_type: 'trader',
@@ -1440,7 +1440,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=45w办理O1创业工签)',
-        reqBadge: '需美籍/绿卡/O1或现金>=45w',
+        reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
         condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
@@ -1522,7 +1522,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【极客出海 · 独立开发 Micro-SaaS 与 AI 工具】(依赖算法实力 · 产出 Impact 与被动现金流)',
-        reqBadge: '需 算法>=30',
+        reqBadge: '需 LeetCode >= 30',
         condition: (s) => s.leetcode >= 30,
         effect: (s) => {
           const winRate = 0.20 + (s.leetcode / 250) + ((s.luck || 20) / 400);
@@ -1626,7 +1626,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【实体投资 · Fremont/Cupertino 华人奶茶烘焙店合伙】(需 现金>=5w · 博取被动分红)',
-        reqBadge: '需现金>=5w',
+        reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
@@ -1741,7 +1741,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
           return (cur === 'L6 (Staff)' || cur === 'Staff' || cur === 'MTS') && s.leetcode >= 70 && (s.charm || 10) >= 16 && (s.network || 10) >= 35 && s.health >= 40 && s.tc >= 45 && (s.impact || 0) >= 45;
         },
-        reqBadge: '需 当前L6 & 算法≥70 & 影响力≥45 & 跨部门统筹与高管背书',
+        reqBadge: '需 L6 职级 & LeetCode >= 70 & Impact >= 45',
         costBadge: '消耗健康与高阶政治与战略心智',
         effect: (s) => {
           const winRate = 0.05 + ((s.charm || 10) / 100) * 0.20 + ((s.network || 10) / 100) * 0.20 + (s.leetcode / 100) * 0.08 + ((s.impact || 0) / 100) * 0.25;
@@ -1760,7 +1760,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
           return (cur === 'L7 (Senior Staff)' || cur === 'Senior Staff' || cur === 'L7') && s.leetcode >= 80 && (s.charm || 10) >= 20 && (s.network || 10) >= 50 && s.health >= 45 && s.tc >= 65 && (s.impact || 0) >= 80;
         },
-        reqBadge: '需 当前L7 & 算法≥80 & 影响力≥80 & 行业泰斗与战略决策力',
+        reqBadge: '需 L7 职级 & LeetCode >= 80 & Impact >= 80',
         costBadge: '消耗健康与终极政治心智',
         effect: (s) => {
           const winRate = 0.04 + ((s.charm || 10) / 100) * 0.15 + ((s.network || 10) / 100) * 0.15 + (s.leetcode / 100) * 0.05 + ((s.impact || 0) / 100) * 0.20;
@@ -1951,7 +1951,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【钞能力 EB-5 自救】全额出资申办 EB-5 投资移民并递交 I-485 拿 Combo 卡 (花费 $80w)',
-        reqBadge: '现金>=80w',
+        reqBadge: '需现金 >= $80w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           visa: '绿卡',
@@ -1977,7 +1977,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【王牌证据反杀】拿出暗中备份的 40 页 Commit 与沟通记录直接上报 HR 与 VP！',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off && !!s.story_flags?.has_dave_evidence,
         hideIfUnavailable: true,
-        reqBadge: '需 掌握证据链',
+        reqBadge: '需掌握证据链',
         effect: (s) => ({
           tc: s.tc + 5,
           health: Math.min(100, s.health + 10),
@@ -2059,7 +2059,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【钞能力 EB-5 自救】掏出 $80w 办理新法 EB-5 并双递交 (I-485)，拿 EAD Combo 卡解除 PIP 危机！',
-        reqBadge: '需现金>=80w+无绿卡',
+        reqBadge: '需现金 >= $80w (无绿卡)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 80 && s.visa !== '绿卡' && s.visa !== '公民' && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           cash: s.cash - 80,
@@ -2692,7 +2692,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【天使注资支持】出资 $10w 个人现金作为天使轮投资人 (拿早期投资份额)',
         condition: (s) => s.cash >= 10,
-        reqBadge: '需现金≥$10w',
+        reqBadge: '需现金 >= $10w',
         effect: (s) => ({
           cash: s.cash - 10,
           npcs: {
@@ -2841,7 +2841,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【雷霆出击】向 HR 廉政合规组与 Skip-level VP 提交 40 页证据链 (反向击溃 Dave)',
         condition: (s) => !!s.story_flags?.has_dave_evidence,
-        reqBadge: '需 掌握证据链',
+        reqBadge: '需掌握证据链',
         effect: (s) => {
           const cur = s.level || 'L4';
           const nextLvl = (cur === 'L3') ? 'L4' : (cur === 'L4') ? 'L5 (Senior)' : cur;
@@ -3205,7 +3205,7 @@ export const careerEvents: Record<string, GameEvent> = {
         // 且只作用于 L6→L7 (由 helpers 路由限定 level==='L6 (Staff)')。
         text: '【盟友全力托举】(此前与 Raj 结为盟友，Raj 在闭门评审中力推你的 Case · 需 Impact >= 45)',
         condition: (s) => Boolean(s.story_flags?.raj_ally) && (s.impact || 0) >= 45,
-        reqBadge: '需 盟友 & Impact >= 45',
+        reqBadge: '需盟友支持 & Impact >= 45',
         hideIfUnavailable: true,
         effect: (s) => {
           const win = gameRandom() < 0.40;

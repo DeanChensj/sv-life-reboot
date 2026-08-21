@@ -501,9 +501,7 @@ export const careerEvents: Record<string, GameEvent> = {
           is_new_job: true,
           message: '【加入 AI Startup】你接受了一家顶级风投领投的早期初创团队 Offer！虽然现金略微下调，但分到了极其丰厚的早期期权股份！'
         }),
-        // Route to the employee-at-startup episode (keeps startup_work reachable now
-        // that the founder paths correctly go to founder_annual_strategy).
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'startup_work'),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s)),
       },
       {
         text: '【签约入职 Apple】加入库比蒂诺巨头，享受极致稳定性与顶尖硬件生态',

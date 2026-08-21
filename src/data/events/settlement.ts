@@ -27,6 +27,23 @@ export const settlementEvents: Record<string, GameEvent> = {
            const housingExpense = s.rent !== undefined 
              ? s.rent 
              : (isHomeowner ? (s.housing_name === HOUSING_NAMES.ATHERTON ? 5.0 : 2.0) : 4.0);
+
+           // 自有住房维护、HOA 与地税储备金 (Property Maintenance, HOA & Property Tax Reserves)
+           let propertyMaintenanceExpense = 0;
+           let propertyMaintenanceMsg = '';
+           if (isHomeowner) {
+             if (s.housing_name === HOUSING_NAMES.ATHERTON) {
+               propertyMaintenanceExpense = 2.5;
+             } else if (s.housing_name === HOUSING_NAMES.FREMONT || s.housing_name === HOUSING_NAMES.FREMONT_10_DISTRICT) {
+               propertyMaintenanceExpense = 1.2;
+             } else if (s.housing_name === HOUSING_NAMES.NORTH_SAN_JOSE) {
+               propertyMaintenanceExpense = 0.8;
+             } else {
+               propertyMaintenanceExpense = 0.8;
+             }
+             propertyMaintenanceMsg = ` 【房产维护与HOA】自有房产维护、HOA及地税储备金支出: -$${propertyMaintenanceExpense.toFixed(1)}w。`;
+           }
+
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
            const livingExpense = 3.0;
            const petExpense = s.has_pet ? 0.3 : 0;
@@ -34,24 +51,71 @@ export const settlementEvents: Record<string, GameEvent> = {
            // 躺平(TC 停滞)玩家被持续上涨的物价蚕食 —— 与 impact 机制协同，制造「趁早 FIRE、别拖」的压力。
            // 不影响 FIRE 目标与 TC 档,只作用于每年生活开销。
            const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (s.year || 2018) - 2018)));
-           const totalExpense = parseFloat(((housingExpense + carExpense + livingExpense + petExpense) * inflationFactor).toFixed(2));
+           const totalExpense = parseFloat(((housingExpense + propertyMaintenanceExpense + carExpense + livingExpense + petExpense) * inflationFactor).toFixed(2));
 
            let newEconomy = s.macro_economy || 'neutral';
            let economyMsg = '';
 
-           // Mean-reversion: a bull/bear market drifts back toward neutral (~40%/yr)
-           // so no single event can pin the economy to a perpetual bull that
-           // compounds the stock pile at +25%/yr past the FIRE gates.
-           if (newEconomy !== 'neutral' && gameRandom() < 0.4) {
-             newEconomy = 'neutral';
-             economyMsg = ' 宏观经济周期逐步回归常态。';
+           // 宏观经济周期轮动与均值回归 (Realistic Macro Cycle Shifts)
+           if (s.year === 2020 || s.year === 2023) {
+             if (gameRandom() < 0.65) {
+               newEconomy = 'bull';
+               economyMsg = s.year === 2020 ? ' 【流动性放水】美联储大放水与居家科技红利，市场进入大牛市！' : ' 【AI 浪潮狂欢】生成式 AI 与算力革命引爆科技股狂暴牛市！';
+             }
+           } else if (s.year === 2022) {
+             if (gameRandom() < 0.70) {
+               newEconomy = 'bear';
+               economyMsg = ' 【加息寒冬】美联储激进加息抗通胀，科技股遭遇全面杀估值大熊市！';
+             }
+           } else {
+             const cycleRoll = gameRandom();
+             if (newEconomy === 'neutral') {
+               if (cycleRoll < 0.16) {
+                 newEconomy = 'bull';
+                 economyMsg = ' 宏观流动性充裕，科技大盘进入牛市上行周期！';
+               } else if (cycleRoll < 0.30) {
+                 newEconomy = 'bear';
+                 economyMsg = ' 宏观经济降温与通胀压顶，资本市场进入震荡熊市！';
+               }
+             } else if (newEconomy === 'bull') {
+               if (cycleRoll < 0.35) {
+                 newEconomy = 'neutral';
+                 economyMsg = ' 牛市涨势趋缓，大盘逐步回归常态震荡。';
+               } else if (cycleRoll < 0.45) {
+                 newEconomy = 'bear';
+                 economyMsg = ' 科技股估值过热见顶，宏观周期骤转进入熊市调整！';
+               }
+             } else if (newEconomy === 'bear') {
+               if (cycleRoll < 0.40) {
+                 newEconomy = 'neutral';
+                 economyMsg = ' 熊市寒冬探底完成，市场企稳重回常态。';
+               } else if (cycleRoll < 0.50) {
+                 newEconomy = 'bull';
+                 economyMsg = ' 超跌反弹与政策利好共振，大盘强势逆转开启新一轮牛市！';
+               }
+             }
            }
 
-           // Stock market fluctuation
+           // 股票资产真实波动 (Stock Market Fluctuation with Realistic Volatility)
            let currentStocks = s.stocks || 0;
+           let stockReturnPct = 0;
+           let stockFluctuationMsg = '';
            if (currentStocks > 0) {
-             const stockMultiplier = newEconomy === 'bull' ? 1.25 : newEconomy === 'bear' ? 0.75 : 1.05;
+             let stockMultiplier = 1.0;
+             if (newEconomy === 'bull') {
+               stockMultiplier = 1.12 + gameRandom() * 0.16; // +12% ~ +28% (平均 +20%)
+             } else if (newEconomy === 'bear') {
+               stockMultiplier = 0.84 - gameRandom() * 0.12; // -16% ~ -28% (平均 -22%)
+             } else {
+               stockMultiplier = 0.94 + gameRandom() * 0.14; // -6% ~ +8% (平均 +1.0% 震荡)
+             }
+             stockReturnPct = parseFloat(((stockMultiplier - 1) * 100).toFixed(1));
              currentStocks = currentStocks * stockMultiplier;
+             if (stockReturnPct >= 0) {
+               stockFluctuationMsg = ` 【股票持仓收益】股市回报率 +${stockReturnPct}%。`;
+             } else {
+               stockFluctuationMsg = ` 【股票持仓波动】股市回报率 ${stockReturnPct}%。`;
+             }
            }
            
            // Standardized compensation split (Cash & RSU)
@@ -397,6 +461,8 @@ export const settlementEvents: Record<string, GameEvent> = {
               message: [
                 autoStockSellMsg,
                 companyMsg,
+                propertyMaintenanceMsg,
+                stockFluctuationMsg,
                 h1bMsg,
                 gcMsg,
                 meritMsg,

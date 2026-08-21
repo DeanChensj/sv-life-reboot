@@ -2268,9 +2268,11 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { tc: 0, laid_off: true, job_type: 'unemployed', health: Math.max(0, s.health - 15), message: '你在 J1 的架构会上忘记静音，突然用 J2 的称呼回答了问题！两家公司的 HR 连夜拉平信息，你被双双开除！' }
             : { cash: s.cash + s.tc, health: Math.max(0, s.health - 15), leetcode: s.leetcode + 5, message: '你用两台电脑同时开会，成功拿到了双倍工资！但是巨大的上下文切换让你精神分裂。' };
         },
-        // Route to the H2/settlement flow like other H2 events — NOT back to the
-        // annual action hub (which handed out a free extra income + promo cycle).
-        nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s)
+        // overemployed 是 H2 专属生活事件(仅注入 lifeEvents 池)。此前非被裁分支路由到
+        // h1ToH2Router —— 但从 H2 再调 h1ToH2Router 会重跑一遍 H2 (→midYearEventRouter(h2)→
+        // lifeEvents 池),同年可再次抽中 overemployed,导致「一年被邀两次 J2」的双触发。H2 事件
+        // 结束应直接进年终结算。被裁则仍需当年求职自救 (job_hunt)。
+        nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_year_end_settlement'
       },
       {
         text: '【安分守己拒绝风险】算了吧，安分守己做好本职工作',

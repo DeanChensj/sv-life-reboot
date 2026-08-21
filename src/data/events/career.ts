@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa } from '../../constants/gameConstants';
 import { isTopTierCSSchool } from '../schoolProfiles';
@@ -607,7 +607,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'H1B (工签)', h1b_attempts: 1, story_flags: { ...(s.story_flags || {}), last_h1b_lottery_year: s.year }, cash: s.cash, imageUrl: 'images/h1b_lottery_win.jpg', message: '人品爆发，第一年 H1B 就成功中签！顺利解决在美工签身份！' }
             : { h1b_attempts: 1, story_flags: { ...(s.story_flags || {}), last_h1b_lottery_year: s.year }, cash: s.cash, health: s.health - 5, message: '第一年 H1B 没抽中！已自动激活 STEM OPT 2年延期，继续在大厂奋斗，后续还有2次抽签机会！' };
         },
-        nextEventId: (s) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life',
+        nextEventId: (s) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : afterCareerAction(s),
       },
       {
         text: '【砸钱申办 O-1 签证】找顶级律所申办 O-1 杰出人才签证 (需现金 >= $8w)',
@@ -620,7 +620,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'O1 (杰出人才)', cash: s.cash - 8, message: '凭硬核的学术论文与顶会引用，律所成功帮你拿下了 O1 杰出人才签证！彻底摆脱了抽签大坑！' }
             : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局以“缺乏行业顶尖影响力与独创贡献”退回了你的 O1 申请！$8w 律师费彻底打了水漂。' };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: (s) => afterCareerAction(s),
       },
       {
         text: '【钞能力直接上岸】出资申办 EB-5 投资移民绿卡 (花费 $80w 现金)',
@@ -652,7 +652,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或继续维持合法工签！'
           };
         },
-        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'sv_daily_life',
+        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : afterCareerAction(s),
       },
       {
         text: '【付费商婚上岸】支付 $8w 现金找中介匹配公民商婚领证 (需现金 >= $8w, 极高风险)',
@@ -684,7 +684,7 @@ export const careerEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'sv_daily_life'),
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : afterCareerAction(s)),
       }
     ]
   },

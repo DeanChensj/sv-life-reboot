@@ -16,6 +16,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
   useFocusTrap(dialogRef);
   const isHomeowner = isOwnedHousing(gameState.housing_name);
   const totalAssets = gameState.cash + (gameState.stocks || 0);
+  const maxCharm = gameState.max_charm ?? 25;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center bg-zinc-950/80 backdrop-blur-sm p-2.5 sm:p-4 animate-in fade-in duration-200">
@@ -178,7 +179,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                   cash: gameState.cash - 120,
                   rental_income: (gameState.rental_income || 0) + 6.0,
                   investment_properties: [...(gameState.investment_properties || []), 'Sunnyvale 4-Plex 公寓楼'],
-                  charm: Math.min(25, (gameState.charm || 10) + 5),
+                  charm: Math.min(maxCharm, (gameState.charm || 10) + 5),
                 }, '【加州大地主登顶】拿下 Sunnyvale 核心区 4-Plex 公寓楼！每年躺赚 +$6.0w 净租金流，坐稳湾区大地主！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-400/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
@@ -224,7 +225,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <div className="grid grid-cols-1 gap-3">
               <button
                 disabled={totalAssets < 4 || gameState.car === 'model_y' || gameState.car === 'porsche' || gameState.car === 'cybertruck'}
-                onClick={() => onBuy({ cash: gameState.cash - 4, car: 'model_y', charm: gameState.charm + 4 }, '你提了一台白色的 Model Y。去 Cupertino 买奶茶按半天钥匙开错别人的车门。')}
+                onClick={() => onBuy({ cash: gameState.cash - 4, car: 'model_y', charm: Math.min(maxCharm, gameState.charm + 4) }, '你提了一台白色的 Model Y。去 Cupertino 买奶茶按半天钥匙开错别人的车门。')}
                 className={`flex justify-between items-center text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.car === 'model_y' 
                     ? 'border-blue-500/80 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
@@ -251,7 +252,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                     cash: gameState.cash - (9 - tradeInCredit), 
                     car: 'cybertruck', 
                     imageUrl: 'images/cybertruck.jpg',
-                    charm: Math.min(25, gameState.charm + 8), 
+                    charm: Math.min(maxCharm, gameState.charm + 8), 
                     leetcode: gameState.leetcode + 5 
                   }, `置换抵扣了 $${tradeInCredit}w 后，你换上了多边形赛博皮卡！开在 237 公路上所有人都以为你是刚拿到 A 轮的 AI Founder！`);
                 }}
@@ -280,7 +281,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                   onBuy({ 
                     cash: gameState.cash - (12 - tradeInCredit), 
                     car: 'porsche', 
-                    charm: Math.min(25, gameState.charm + 5), 
+                    charm: Math.min(maxCharm, gameState.charm + 5), 
                     health: Math.min(100, gameState.health + 10) 
                   }, `抵扣了 $${tradeInCredit}w 后，开上了全新保时捷！感觉自己脱离了普通码农范畴，CMB 约会匹配率飙升！`);
                 }}
@@ -310,7 +311,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 disabled={totalAssets < 3 || gameState.last_beauty_year === gameState.year}
-                onClick={() => onBuy({ cash: gameState.cash - 3, health: Math.min(100, gameState.health + 8), charm: Math.min(25, gameState.charm + 2), last_beauty_year: gameState.year }, '做全脸热玛吉，请硅谷最贵的私教。颜值与身体状态有所提升！')}
+                onClick={() => onBuy({ cash: gameState.cash - 3, health: Math.min(100, gameState.health + 8), charm: Math.min(maxCharm, gameState.charm + 2), last_beauty_year: gameState.year }, '做全脸热玛吉，请硅谷最贵的私教。颜值与身体状态有所提升！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-pink-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-pink-400 transition-colors">【医美私教】医美保养与高端私教</div>
@@ -333,13 +334,13 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                         company: 'star_startup', 
                         laid_off: false, 
                         tc: 20, 
-                        charm: Math.min(gameState.max_charm ?? 25, gameState.charm + 2) 
+                        charm: Math.min(maxCharm, gameState.charm + 2) 
                       }, '你在游艇派对上认识了顶级风投大佬，对方直接推荐你入职他们领投的明星独角兽 (TC $20w)！成功重返职场！');
                     } else {
                       onBuy({ 
                         cash: gameState.cash - 5, 
                         tc: gameState.tc + 5, 
-                        charm: Math.min(gameState.max_charm ?? 25, gameState.charm + 2) 
+                        charm: Math.min(maxCharm, gameState.charm + 2) 
                       }, '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！');
                     }
                   } else {
@@ -354,7 +355,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
 
               <button
                 disabled={totalAssets < 0.5 || gameState.has_dog}
-                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_dog: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与日系柴犬` : '日系柴犬'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在南湾救助站领养了一只可爱的柴犬！周末遛狗心情大好，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
+                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_dog: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与日系柴犬` : '日系柴犬'), charm: Math.min(maxCharm, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在南湾救助站领养了一只可爱的柴犬！周末遛狗心情大好，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
                 className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.has_dog 
                     ? 'border-amber-500/80 bg-amber-500/10' 
@@ -372,7 +373,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
 
               <button
                 disabled={totalAssets < 0.5 || gameState.has_cat}
-                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_cat: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与布偶猫` : '布偶猫'), charm: Math.min(25, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在收容所带回了一只黏人的布偶猫！从此再也不怕湾区的深夜孤独了，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
+                onClick={() => onBuy({ cash: gameState.cash - 0.5, has_pet: true, has_cat: true, pet_name: (gameState.pet_name ? `${gameState.pet_name}与布偶猫` : '布偶猫'), charm: Math.min(maxCharm, gameState.charm + 3), health: Math.min(100, gameState.health + 10) }, '在收容所带回了一只黏人的布偶猫！从此再也不怕湾区的深夜孤独了，每年陪伴治愈回血 (健康 +2，年开销 $0.3w)！')}
                 className={`flex flex-col text-left p-4 rounded-2xl border transition-all disabled:opacity-40 disabled:cursor-not-allowed group ${
                   gameState.has_cat 
                     ? 'border-blue-500/80 bg-blue-500/10' 

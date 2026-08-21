@@ -314,6 +314,10 @@ export const settlementEvents: Record<string, GameEvent> = {
             let newStoryFlags = { 
               ...(s.story_flags || {}),
               ...(alreadyDrewThisYear ? {} : { last_h1b_lottery_year: s.year }),
+              o1_denied_this_year: false,
+              exit_deliberated: false,
+              scam_marriage_failed: false,
+              side_hustle_canceled: false,
             };
 
             if (newNetWorth >= 100 && !newStoryFlags.milestone_100w) {

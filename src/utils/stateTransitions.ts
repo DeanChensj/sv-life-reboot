@@ -31,10 +31,11 @@ export function applyStateTransition(
   // 1. IMMUNE SYSTEM: STATE NORMALIZATION
   // ==========================================
   // Normalize Layoff / Unemployment: If an event sets laid_off: true or job_type: unemployed, force tc=0
-  if (normalizedEffect.laid_off === true || normalizedEffect.job_type === 'unemployed') {
+  if (normalizedEffect.laid_off === true || normalizedEffect.job_type === 'unemployed' || (prevState.job_type === 'unemployed' && normalizedEffect.job_type === undefined && !normalizedEffect.company)) {
     normalizedEffect.tc = 0;
-    normalizedEffect.job_type = 'unemployed';
-    normalizedEffect.laid_off = true;
+    if (normalizedEffect.laid_off === true) {
+      normalizedEffect.job_type = 'unemployed';
+    }
   }
   // Normalize Employment State: If an event gives a job, force laid_off: false
   if (normalizedEffect.job_type && normalizedEffect.job_type !== 'unemployed') {

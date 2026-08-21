@@ -17,7 +17,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           stocks: (s.stocks || 0) + 10,
           message: '你成功将 $10w 现金转入股票账户。'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【大举加仓】将大部分闲置现金转入股市 (买入 $50w)',
@@ -28,7 +28,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           stocks: (s.stocks || 0) + 50,
           message: '你大手笔加仓，将 $50w 现金买入股票！'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【卖出套现】从股市中套现部分资金 (卖出 $10w)',
@@ -39,7 +39,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           stocks: (s.stocks || 0) - 10,
           message: '你成功卖出了 $10w 股票，落袋为安。'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【清仓股票】一键清仓所有股票，转回现金 (全部卖出)',
@@ -50,7 +50,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           stocks: 0,
           message: '你清空了所有股票仓位，目前全现金持有，防守反击！'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【梭哈期权】拼了！用小额现金炒 0DTE 末日期权 (投入 $5w)',
@@ -76,14 +76,14 @@ export const tradingEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【按兵不动维持仓位】按兵不动：维持目前的仓位组合进入年终结算',
         effect: (s) => ({
           message: '你决定什么都不做，做时间的朋友，静静等待跨年的钟声。'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       }
     ]
   },

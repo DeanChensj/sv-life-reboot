@@ -40,7 +40,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需总资产 >= $8w, 极高风险)',
         costBadge: '花费 $8w',
         reqBadge: '高风险',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.cash + (s.stocks || 0)) >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.cash + (s.stocks || 0)) >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.scam_marriage_failed,
         effect: (s) => {
           const roll = gameRandom();
           if (roll < 0.35) {
@@ -57,6 +57,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
             return {
               cash: s.cash - 8,
               health: Math.max(0, s.health - 15),
+              story_flags: { ...(s.story_flags || {}), scam_marriage_failed: true },
               message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救失败！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
             };
           } else {
@@ -73,14 +74,14 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
         costBadge: '花费 $5w',
         reqBadge: '需 PhD 或硬核算法背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && (s.cash + (s.stocks || 0)) >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && (s.cash + (s.stocks || 0)) >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
         effect: (s) => {
           const win = gameRandom() < o1PassProb(s); // shared, consistent O1 odds across all events
           return win
             ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, health: Math.max(0, s.health - 5), message: '凭硬核论文与行业大牛推荐信，移民局批复了你的 O1 杰出人才签证！成功自救！' }
-            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。' };
+            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), story_flags: { ...(s.story_flags || {}), o1_denied_this_year: true }, message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。请选择其他备选方案！' };
         },
-        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
+        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_year_end_settlement' : 'h1b_fallback_options',
       },
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w 总资产)',
@@ -215,7 +216,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
         costBadge: '花费 $8w',
         reqBadge: '高风险',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.scam_marriage_failed,
         effect: (s) => {
           const roll = gameRandom();
           if (roll < 0.35) {
@@ -232,6 +233,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
             return {
               cash: s.cash - 8,
               health: Math.max(0, s.health - 15),
+              story_flags: { ...(s.story_flags || {}), scam_marriage_failed: true },
               message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份危机迫在眉睫！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
             };
           } else {
@@ -259,14 +261,14 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【砸重金急办 O-1 签证】找顶级律所加急办理 O-1 杰出人才签证 (需现金 >= $8w，限 PhD 或硬核背景)',
         costBadge: '花费 $8w',
         reqBadge: '需 PhD 或硬核背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
         effect: (s) => {
           const pass = gameRandom() < o1PassProb(s); // shared, consistent O1 odds
           return pass
             ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
-            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
+            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), story_flags: { ...(s.story_flags || {}), o1_denied_this_year: true }, message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...请选择其他备选方案！' };
         },
-        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
+        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_year_end_settlement' : 'h1b_final_crisis',
       },
       {
         text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w 总资产)',
@@ -279,7 +281,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'post_green_card',
       },
       {
-        text: '【接受外派温哥华/】接受外派温哥华/多伦多 L1 办公室 (曲线救国，搬迁成本)',
+        text: '【外派温哥华】接受外派温哥华/多伦多 L1 办公室 (曲线救国，搬迁成本)',
         costBadge: '搬迁成本',
         // Kept universal (guaranteed crisis fallback → no dead-end) but no longer free.
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
@@ -324,7 +326,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【辞职！凭多年大厂】辞职！凭多年大厂的技术积累直接搞 AI Startup',
+        text: '【全职创业】辞职！凭大厂技术积累全职创办 AI Startup',
+        condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         effect: (s) => {
           const success = s.leetcode >= 50 && gameRandom() < 0.3;
           return success
@@ -354,13 +357,40 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【不再唯唯诺诺】不再唯唯诺诺，开始在职场上重拳出击',
+        condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
         nextEventId: 'office_politics',
       },
       {
         text: '【彻底摆烂】彻底摆烂，佛系上班',
+        condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
         nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【全速扩张】绿卡彻底解除身份顾虑，全力带领公司冲刺下轮融资与商业化',
+        condition: (s) => s.job_type === 'startup_founder',
+        effect: (s) => ({
+          visa: s.visa === '公民' ? '公民' : '绿卡',
+          gc_progress: 5,
+          gc_stage: 'approved',
+          company_valuation: (s.company_valuation || 800) + 200,
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          message: '绿卡获批彻底解除了你在美的身份枷锁，你可以 100% 专注于带领公司壮大，估值与业务再创新高！'
+        }),
+        nextEventId: 'founder_annual_strategy',
+      },
+      {
+        text: '【深耕交易】获得合法居民身份，心无旁骛专注于二级市场交易',
+        condition: (s) => s.job_type === 'trader',
+        effect: (s) => ({
+          visa: s.visa === '公民' ? '公民' : '绿卡',
+          gc_progress: 5,
+          gc_stage: 'approved',
+          cash: s.cash + 10,
+          message: '摆脱工签束缚，你以完全合法的居民身份专注于资本市场套利与策略研究！'
+        }),
+        nextEventId: 'trader_annual_strategy',
       }
     ]
   },
@@ -371,7 +401,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
     description: '你趁假期回国探亲顺便预约了美领馆 H1B 续签 Stamp。结果因为 CS/AI 敏感专业，签证官微笑着递给你一张黄单（221g Administrative Processing 行政审查）！',
     choices: [
       {
-        text: '【在国内远程克服时】在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
+        text: '【远程办公】在国内远程克服时差高强度打卡，每天刷 CEAC 查询签证状态',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           health: Math.max(0, s.health - 15),
@@ -380,7 +410,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【联系公司法务开具】联系公司法务开具紧急加急信 (Expedite Request)',
+        text: '【加急申诉】联系公司法务开具紧急加急信 (Expedite Request)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = gameRandom() < 0.55;

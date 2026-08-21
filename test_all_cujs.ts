@@ -421,7 +421,7 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
   const prevLeet2 = state.leetcode;
   res = stepChoice(state, 'job_hunt_fail', 4);
   state = res.nextState;
-  assert(res.nextEventId === 'job_hunt', 'Day-1-CPT re-enrollment routes back to job_hunt');
+  assert(res.nextEventId === 'sv_year_end_settlement', 'Day-1-CPT re-enrollment routes to year-end settlement');
   assert(state.visa === 'Day 1 CPT', 'Real effect transfers visa to Day 1 CPT');
   assert(state.cash === prevCash - 5, 'Day-1-CPT masters program costs $5w (real effect)');
   assert(state.leetcode === Math.min(100, prevLeet2 + 25), 'Grinded 250 Hard problems (leetcode +25)');

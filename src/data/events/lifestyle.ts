@@ -1029,7 +1029,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           health: s.health - 15,
           message: '你辞去了大厂工作。熬夜修了三天 Bug 后，OpenAI 发布了新功能，直接把你们的产品做成了免费内置功能。公司破产了。'
         }),
-        nextEventId: 'job_hunt',
+        nextEventId: 'sv_year_end_settlement',
         condition: (s) => s.tc > 0 && s.cash >= 5
       },
       {

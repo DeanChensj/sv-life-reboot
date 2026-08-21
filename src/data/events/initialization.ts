@@ -570,7 +570,7 @@ export const initializationEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: (s: GameState) => s.is_master ? 'us_master_year1' : 'cn_undergrad_grad',
+        nextEventId: (s: GameState) => s.is_master ? 'us_master_year1' : 'cn_work',
       },
       {
         text: '【国内大厂打工攒钱】先在国内大厂打工攒钱积累工作经验',

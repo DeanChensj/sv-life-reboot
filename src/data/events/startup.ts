@@ -192,7 +192,7 @@ export const startupEvents: Record<string, GameEvent> = {
       },
       {
         text: '【终局退场 Exit】启动并购评估 Acqui-hire 或 纳斯达克 IPO 挂牌上市',
-        condition: (s) => s.job_type === 'startup_founder',
+        condition: (s) => s.job_type === 'startup_founder' && !s.story_flags?.exit_deliberated,
         hideIfUnavailable: true,
         effect: () => ({ message: '你召开董事会紧急闭门会议，正式启动退场与并购/IPO 评估！' }),
         nextEventId: 'founder_exit_event',
@@ -282,12 +282,15 @@ export const startupEvents: Record<string, GameEvent> = {
             message: `【公司清盘退场】在与董事会协商后，公司友好关停清盘。VC 拿走剩余资产后，你保留了 $${recovery}w 离场资金与核心人脉。创业告一段落，你带着宝贵经验重新回归求职市场！`
           };
         },
-        nextEventId: 'job_hunt',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【暂缓退场 · 重燃斗志继续带领团队冲刺】取消退场流程，继续作为 CEO 带领团队战斗',
         condition: (s) => true,
-        effect: () => ({ message: '你深吸一口气，决定暂缓退场计划，重新召集团队全力以赴推进业务增长！' }),
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), exit_deliberated: true },
+          message: '你深吸一口气，决定暂缓退场计划，重新召集团队全力以赴推进业务增长！'
+        }),
         nextEventId: 'founder_annual_strategy',
       }
     ]

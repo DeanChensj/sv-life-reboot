@@ -245,94 +245,95 @@ export const generateInitialState = (customSeed?: number): GameState => {
 };
 
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
+// Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
 export const midYearEventRouter = (s: GameState): string => {
   const isWorking = Boolean(s.job_type && s.job_type !== 'unemployed' && !s.laid_off);
   const isBigTech = s.job_type === 'big_tech';
 
-  // --- 0. 优先消费长线因果剧情链 (Priority Narrative Arcs) ---
-  // 1) Alex 博士剧情链：Series A 创业合伙人/天使邀请
-  if (s.story_flags?.met_alex && !s.story_flags?.alex_startup_invited && isWorking && s.age >= 24 && s.year >= (Number(s.story_flags.alex_meet_year || 0) + 1)) {
-    return 'alex_startup_series_a';
-  }
-
-  // 2) Alex 博士剧情链：OmniAgent 纳斯达克 IPO / 退出回报结算
-  if ((s.story_flags?.joined_omniagent || s.story_flags?.angel_invest_omniagent) && !s.story_flags?.alex_ipo_done && s.year >= (Number(s.story_flags.omniagent_start_year || 0) + 3)) {
-    return 'alex_omniagent_ipo_exit';
-  }
-
-  // 3) Dave 职场宿敌剧情链：掌握证据后的年度考核摊牌大反击
-  if (s.story_flags?.has_dave_evidence && !s.story_flags?.dave_defeated && isWorking && s.year >= (Number(s.story_flags.dave_conflict_year || 0) + 1)) {
-    return 'dave_retaliation_showdown';
-  }
-
-  // 4) Dave 职场宿敌剧情链：多年后的面试桌攻守易形逆转
-  if (s.story_flags?.dave_defeated && !s.story_flags?.dave_veto_done && (s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)' || s.job_type === 'startup_founder') && s.year >= (Number(s.story_flags.dave_defeated_year || 0) + 2)) {
-    return 'dave_interview_veto';
-  }
-
-  // 5) Sam 极客战友剧情链：Zero-Day 漏洞与黑客项目
-  if (s.story_flags?.met_sam && !s.story_flags?.sam_zero_day_done && s.age >= 24 && s.leetcode >= 25 && gameRandom() < 0.35) {
-    return 'sam_garage_zero_day';
-  }
-
-  // 6) Raj 职场向上管理与架构评审剧情链：
-  // 6a) 首次相遇与季度对齐
-  if (isWorking && isBigTech && !s.story_flags?.raj_alignment_seen && s.age >= 24 && s.age <= 34 && gameRandom() < 0.28) {
-    return 'raj_scrum_alignment_dilemma';
-  }
-  // 6b) 多年后 Raj 晋升 Director 后的架构委员会提拔 —— 仅对冲击 L7 (Senior Staff) 的 L6 (Staff)
-  // 玩家生效:Raj 的高层背书只在「L6→L7 这种关键大跳」上帮忙,不插手常见的 L5→L6,也不
-  // 白送传奇级 L7→L8。
-  if ((s.story_flags?.raj_ally || s.story_flags?.raj_rival || s.story_flags?.raj_solid) && !s.story_flags?.raj_board_done && isWorking && s.level === 'L6 (Staff)' && s.year >= (Number(s.story_flags.raj_meet_year || 0) + 2)) {
-    return 'raj_director_promotion_board';
-  }
-
-  // 7) Linda 沙丘路华人投资人剧情链：
-  // 7a) 沙丘路闭门沙龙结识
-  if (!s.story_flags?.met_linda && isWorking && s.age >= 25 && ((s.network || 0) >= 12 || (s.charm || 0) >= 12 || s.leetcode >= 60) && gameRandom() < 0.25) {
-    return 'linda_sand_hill_encounter';
-  }
-  // 7b) Pre-IPO 独角兽老股额度与领投资源
-  if (s.story_flags?.met_linda && !s.story_flags?.linda_deal_done && s.year >= (Number(s.story_flags.linda_meet_year || 0) + 2) && gameRandom() < 0.4) {
-    return 'linda_angel_co_investment';
-  }
-
-  // 8) 首次担任暑期实习生 Mentor (L4 / L5 专属，有且仅有 1 次)
-  if (isWorking && isBigTech && !s.story_flags?.intern_mentored && (s.level === 'L4' || s.level === 'L5 (Senior)' || s.level === 'L5') && gameRandom() < 0.35) {
-    return 'career_summer_intern_mentor';
-  }
-
-  // Economy News Broadcasts
-  const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
-  if (gameRandom() < shiftChance && !s.season_stage) {
-    if (s.macro_economy === 'bull') {
-      return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
-    } else if (s.macro_economy === 'bear') {
-      return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bull_market_start';
-    } else {
-      return gameRandom() < 0.5 ? 'news_bull_market_start' : 'news_bear_market_crash';
-    }
-  }
-
   // Stage H1 (Spring/Summer: Career & Major Work Events)
   if (s.season_stage === 'h1' || !s.season_stage) {
-     if (s.job_type === 'trader') return 'trader_annual_strategy';
-     if (s.job_type === 'startup_founder') {
-       // 两难：All-in 冲刺 vs 家庭 (dilemmaEvents.ts)，一局至多一次
-       if (hasPartner(s) && !s.story_flags?.dilemma_startup_allin_family_seen && gameRandom() < 0.3) return 'dilemma_startup_allin_family';
-       // 反单调：founder 年份不再永远是同一个决策枢纽——~40% 概率触发创业专属危机剧情
-       // (合伙人撕逼 / VC 跳票 / 断粮 / 黑客松)，其余年份才回到 founder_annual_strategy 战略枢纽。
-       // 写成字面量 return 便于 audit_all_flows.ts 源码扫描确定性识别可达性。
-       if (gameRandom() < 0.4) {
-         const r = gameRandom();
-         if (r < 0.25) return 'founder_co_founder_drama';
-         if (r < 0.50) return 'founder_vc_term_sheet_ghost';
-         if (r < 0.75) return 'founder_runway_cash_crunch';
-         return 'founder_hacker_house_hackathon';
-       }
-       return 'founder_annual_strategy';
-     }
+    // --- 0. 优先消费长线因果剧情链 (Priority Narrative Arcs) ---
+    // 1) Alex 博士剧情链：Series A 创业合伙人/天使邀请
+    if (s.story_flags?.met_alex && !s.story_flags?.alex_startup_invited && isWorking && s.age >= 24 && s.year >= (Number(s.story_flags.alex_meet_year || 0) + 1)) {
+      return 'alex_startup_series_a';
+    }
+
+    // 2) Alex 博士剧情链：OmniAgent 纳斯达克 IPO / 退出回报结算
+    if ((s.story_flags?.joined_omniagent || s.story_flags?.angel_invest_omniagent) && !s.story_flags?.alex_ipo_done && s.year >= (Number(s.story_flags.omniagent_start_year || 0) + 3)) {
+      return 'alex_omniagent_ipo_exit';
+    }
+
+    // 3) Dave 职场宿敌剧情链：掌握证据后的年度考核摊牌大反击
+    if (s.story_flags?.has_dave_evidence && !s.story_flags?.dave_defeated && isWorking && s.year >= (Number(s.story_flags.dave_conflict_year || 0) + 1)) {
+      return 'dave_retaliation_showdown';
+    }
+
+    // 4) Dave 职场宿敌剧情链：多年后的面试桌攻守易形逆转
+    if (s.story_flags?.dave_defeated && !s.story_flags?.dave_veto_done && (s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)' || s.job_type === 'startup_founder') && s.year >= (Number(s.story_flags.dave_defeated_year || 0) + 2)) {
+      return 'dave_interview_veto';
+    }
+
+    // 5) Sam 极客战友剧情链：Zero-Day 漏洞与黑客项目
+    if (s.story_flags?.met_sam && !s.story_flags?.sam_zero_day_done && s.age >= 24 && s.leetcode >= 25 && gameRandom() < 0.35) {
+      return 'sam_garage_zero_day';
+    }
+
+    // 6) Raj 职场向上管理与架构评审剧情链：
+    // 6a) 首次相遇与季度对齐
+    if (isWorking && isBigTech && !s.story_flags?.raj_alignment_seen && s.age >= 24 && s.age <= 34 && gameRandom() < 0.28) {
+      return 'raj_scrum_alignment_dilemma';
+    }
+    // 6b) 多年后 Raj 晋升 Director 后的架构委员会提拔 —— 仅对冲击 L7 (Senior Staff) 的 L6 (Staff)
+    // 玩家生效:Raj 的高层背书只在「L6→L7 这种关键大跳」上帮忙,不插手常见的 L5→L6,也不
+    // 白送传奇级 L7→L8。
+    if ((s.story_flags?.raj_ally || s.story_flags?.raj_rival || s.story_flags?.raj_solid) && !s.story_flags?.raj_board_done && isWorking && s.level === 'L6 (Staff)' && s.year >= (Number(s.story_flags.raj_meet_year || 0) + 2)) {
+      return 'raj_director_promotion_board';
+    }
+
+    // 7) Linda 沙丘路华人投资人剧情链：
+    // 7a) 沙丘路闭门沙龙结识
+    if (!s.story_flags?.met_linda && isWorking && s.age >= 25 && ((s.network || 0) >= 12 || (s.charm || 0) >= 12 || s.leetcode >= 60) && gameRandom() < 0.25) {
+      return 'linda_sand_hill_encounter';
+    }
+    // 7b) Pre-IPO 独角兽老股额度与领投资源
+    if (s.story_flags?.met_linda && !s.story_flags?.linda_deal_done && s.year >= (Number(s.story_flags.linda_meet_year || 0) + 2) && gameRandom() < 0.4) {
+      return 'linda_angel_co_investment';
+    }
+
+    // 8) 首次担任暑期实习生 Mentor (L4 / L5 专属，有且仅有 1 次)
+    if (isWorking && isBigTech && !s.story_flags?.intern_mentored && (s.level === 'L4' || s.level === 'L5 (Senior)' || s.level === 'L5') && gameRandom() < 0.35) {
+      return 'career_summer_intern_mentor';
+    }
+
+    // Economy News Broadcasts
+    const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
+    if (gameRandom() < shiftChance && !s.season_stage) {
+      if (s.macro_economy === 'bull') {
+        return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
+      } else if (s.macro_economy === 'bear') {
+        return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bull_market_start';
+      } else {
+        return gameRandom() < 0.5 ? 'news_bull_market_start' : 'news_bear_market_crash';
+      }
+    }
+
+    if (s.job_type === 'trader') return 'trader_annual_strategy';
+    if (s.job_type === 'startup_founder') {
+      // 两难：All-in 冲刺 vs 家庭 (dilemmaEvents.ts)，一局至多一次
+      if (hasPartner(s) && !s.story_flags?.dilemma_startup_allin_family_seen && gameRandom() < 0.3) return 'dilemma_startup_allin_family';
+      // 反单调：founder 年份不再永远是同一个决策枢纽——~40% 概率触发创业专属危机剧情
+      // (合伙人撕逼 / VC 跳票 / 断粮 / 黑客松)，其余年份才回到 founder_annual_strategy 战略枢纽。
+      // 写成字面量 return 便于 audit_all_flows.ts 源码扫描确定性识别可达性。
+      if (gameRandom() < 0.4) {
+        const r = gameRandom();
+        if (r < 0.25) return 'founder_co_founder_drama';
+        if (r < 0.50) return 'founder_vc_term_sheet_ghost';
+        if (r < 0.75) return 'founder_runway_cash_crunch';
+        return 'founder_hacker_house_hackathon';
+      }
+      return 'founder_annual_strategy';
+    }
      if (!isWorking) return 'job_hunt';
      if (s.job_type === 'startup') {
        if (hasPartner(s) && !s.story_flags?.dilemma_startup_allin_family_seen && gameRandom() < 0.3) return 'dilemma_startup_allin_family';
@@ -677,9 +678,6 @@ export const midYearEventRouter = (s: GameState): string => {
 export const h1ToH2Router = (s: GameState): string => {
   if (s.laid_off) {
     return (!isPermanentVisa(s.visa) && s.visa !== '无') ? 'layoff_hit' : 'job_hunt';
-  }
-  if (s.job_type === 'unemployed' && (!isPermanentVisa(s.visa) && s.visa !== '无')) {
-    return 'layoff_hit';
   }
   return midYearEventRouter({ ...s, season_stage: 'h2' });
 };

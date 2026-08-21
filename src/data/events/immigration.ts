@@ -40,7 +40,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需总资产 >= $8w, 极高风险)',
         costBadge: '花费 $8w',
         reqBadge: '高风险',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.cash + (s.stocks || 0)) >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.cash + (s.stocks || 0)) >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.scam_marriage_failed,
         effect: (s) => {
           const roll = gameRandom();
           if (roll < 0.35) {
@@ -57,6 +57,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
             return {
               cash: s.cash - 8,
               health: Math.max(0, s.health - 15),
+              story_flags: { ...(s.story_flags || {}), scam_marriage_failed: true },
               message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救失败！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
             };
           } else {
@@ -73,14 +74,14 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
         costBadge: '花费 $5w',
         reqBadge: '需 PhD 或硬核算法背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && (s.cash + (s.stocks || 0)) >= 5 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && (s.cash + (s.stocks || 0)) >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
         effect: (s) => {
           const win = gameRandom() < o1PassProb(s); // shared, consistent O1 odds across all events
           return win
             ? { visa: 'O1 (杰出人才)', cash: s.cash - 5, health: Math.max(0, s.health - 5), message: '凭硬核论文与行业大牛推荐信，移民局批复了你的 O1 杰出人才签证！成功自救！' }
-            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。' };
+            : { cash: s.cash - 5, health: Math.max(0, s.health - 15), story_flags: { ...(s.story_flags || {}), o1_denied_this_year: true }, message: 'O1 申请惨遭 RFE 拒绝，这一自救路线彻底失败。请选择其他备选方案！' };
         },
-        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_fallback_options',
+        nextEventId: (s) => s.visa === 'O1 (杰出人才)' ? 'sv_year_end_settlement' : 'h1b_fallback_options',
       },
       {
         text: '【钞能力投资自救】全额出资申办 EB-5 投资移民绿卡 (花费 $80w 总资产)',
@@ -215,7 +216,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
         costBadge: '花费 $8w',
         reqBadge: '高风险',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.scam_marriage_failed,
         effect: (s) => {
           const roll = gameRandom();
           if (roll < 0.35) {
@@ -232,6 +233,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
             return {
               cash: s.cash - 8,
               health: Math.max(0, s.health - 15),
+              story_flags: { ...(s.story_flags || {}), scam_marriage_failed: true },
               message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份危机迫在眉睫！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
             };
           } else {
@@ -259,14 +261,14 @@ export const immigrationEvents: Record<string, GameEvent> = {
         text: '【砸重金急办 O-1 签证】找顶级律所加急办理 O-1 杰出人才签证 (需现金 >= $8w，限 PhD 或硬核背景)',
         costBadge: '花费 $8w',
         reqBadge: '需 PhD 或硬核背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
         effect: (s) => {
           const pass = gameRandom() < o1PassProb(s); // shared, consistent O1 odds
           return pass
             ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
-            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...' };
+            : { cash: s.cash - 8, health: Math.max(0, s.health - 15), story_flags: { ...(s.story_flags || {}), o1_denied_this_year: true }, message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...请选择其他备选方案！' };
         },
-        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_daily_life' : 'h1b_final_crisis',
+        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_year_end_settlement' : 'h1b_final_crisis',
       },
       {
         text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w 总资产)',
@@ -279,7 +281,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'post_green_card',
       },
       {
-        text: '【接受外派温哥华/】接受外派温哥华/多伦多 L1 办公室 (曲线救国，搬迁成本)',
+        text: '【外派温哥华】接受外派温哥华/多伦多 L1 办公室 (曲线救国，搬迁成本)',
         costBadge: '搬迁成本',
         // Kept universal (guaranteed crisis fallback → no dead-end) but no longer free.
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',

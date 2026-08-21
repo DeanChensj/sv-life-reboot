@@ -141,7 +141,7 @@ export const careerEvents: Record<string, GameEvent> = {
           };
         },
         nextEventId: (s: GameState) => {
-          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);
         },
       },
       {
@@ -169,7 +169,7 @@ export const careerEvents: Record<string, GameEvent> = {
           };
         },
         nextEventId: (s: GameState) => {
-          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);
         },
       },
       {
@@ -195,7 +195,7 @@ export const careerEvents: Record<string, GameEvent> = {
           };
         },
         nextEventId: (s: GameState) => {
-          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);
         },
       },
       {
@@ -219,8 +219,8 @@ export const careerEvents: Record<string, GameEvent> = {
             : { health: s.health - 12, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你的简历或面经遗憾落选...' };
         },
         nextEventId: (s: GameState) => {
-          if (s.job_type !== 'quant') return 'job_hunt';
-          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
+          if (s.job_type !== 'quant') return 'sv_year_end_settlement';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);
         },
       },
       {
@@ -238,7 +238,7 @@ export const careerEvents: Record<string, GameEvent> = {
           message: '【开启慢生活 Gap Year】你决定暂停无休止的内卷与面试焦虑，给自己放个大假！每天睡到自然醒、徒步、做饭、打游戏，身心得到了彻底的治愈与恢复！'
         }),
         nextEventId: (s: GameState) => {
-          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life';
+          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);
         },
       },
       {
@@ -253,7 +253,7 @@ export const careerEvents: Record<string, GameEvent> = {
           laid_off: false,
           message: '你决定不再看任何大厂 HR 与老板的脸色！凭借 $50w 初始本金与自由身，开启全职操盘人生！'
         }),
-        nextEventId: 'trader_annual_strategy',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup (需美籍/绿卡/O1 或 现金>=45w)',
@@ -276,7 +276,7 @@ export const careerEvents: Record<string, GameEvent> = {
               : '你决定自己当老板！凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
           };
         },
-        nextEventId: 'founder_annual_strategy',
+        nextEventId: h1ToH2Router,
       }
     ]
   },
@@ -295,7 +295,7 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           message: '手握绿卡/EAD Combo 身份毫无遣返压力！你在家闭关狂刷算法题，准备下一轮招聘季再战！'
         }),
-        nextEventId: 'job_hunt',
+        nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【墨西哥闯关重签】去 Tijuana 闯关重签签证 (高风险 Visa Run · 消耗 $1w)',
@@ -306,7 +306,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { cash: s.cash - 1, health: s.health - 15, leetcode: s.leetcode + 5, message: '心惊胆战地越过美墨边境，你奇迹般地拿到了新的签证 Stamp！争取到了宝贵的留美时间！' }
             : { status: 'game_over', message: '在边境小黑屋被海关查出挂靠历史，直接吊销签证并被 5 年禁令限制入境！' };
         },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'job_hunt',
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : 'sv_year_end_settlement',
       },
       {
         text: '【回大理数字游民】不卷了！回大理/清迈做数字游民躺平',
@@ -346,7 +346,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【读水硕维持身份】读 Day 1 CPT 水硕维持合法身份 (消耗 $5w)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)' && s.cash >= 5,
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
-        nextEventId: 'job_hunt',
+        nextEventId: 'sv_year_end_settlement',
       }
     ]
   },
@@ -376,7 +376,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package',
@@ -399,7 +399,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -15)。`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 NVIDIA】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
@@ -424,7 +424,7 @@ export const careerEvents: Record<string, GameEvent> = {
               : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 TikTok / 字节】接手中美跨时区核心业务，拿顶格全现金包裹',
@@ -447,7 +447,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -15)。`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 Amazon】加入电商与 AWS 云计算巨头，吃满规模与股票升值，但直面高压 PIP 文化',
@@ -470,7 +470,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职 Amazon / AWS】你拿到了西雅图电商与云计算巨头的 Offer，职级定为 ${nextLvl}，总包 ${newTC}w（RSU 四年后置兑现占大头）！但著名的 PIP 高压文化与 Frugality 节俭作风让你时刻紧绷 (健康 -12)。`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹',
@@ -486,7 +486,7 @@ export const careerEvents: Record<string, GameEvent> = {
           is_new_job: true,
           message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！`
         }),
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : midYearEventRouter(s)),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s)),
       },
       {
         text: '【签约入职 AI Startup 初创团队】降薪赌一把早期核心员工期权大饼 (高风险高回报)',
@@ -525,7 +525,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 Robinhood / 券商】赌上牛熊周期：牛市 Bonus 翻倍，熊市直面裁员风暴',
@@ -555,7 +555,7 @@ export const careerEvents: Record<string, GameEvent> = {
               : `【入职 Robinhood】你加入散户券商核心交易团队，定级 ${nextLvl}、锁定总包 ${newTC}w。fintech 的牛熊节奏让你既兴奋又紧绷。`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : midYearEventRouter(s)) : midYearEventRouter(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',
@@ -565,7 +565,7 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 5),
           message: '【成功 Counter-Offer】老板为了挽留你连夜向 HR 申请了特别加薪 (+4.5w TC)！你零搬迁成本、零 PERM 重置风险，继续在原厂稳步发展！'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【留任原厂】看好原厂股票与团队氛围，婉拒全部外部 Offer',
@@ -573,7 +573,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: () => ({
           message: '你经过慎重考虑，决定婉拒外部机会，继续深耕原厂业务。'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【放弃签约 / 保持现状】婉拒外部 Offer，继续深耕创业/操盘/慢生活',
@@ -587,7 +587,7 @@ export const careerEvents: Record<string, GameEvent> = {
               ? '你经过慎重考虑，决定婉拒打工 Offer，继续作为全职 Trader 自由操盘！'
               : '你经过慎重考虑，决定婉拒当前所有 Offer，继续享受无拘无束的 Gap Year 慢生活。')
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       }
     ]
   },
@@ -1078,7 +1078,7 @@ export const careerEvents: Record<string, GameEvent> = {
             if (s.level === 'L6 (Staff)') return 'l6_staff_celebration';
             return 'promo_celebration';
           }
-          return midYearEventRouter(s);
+          return h1ToH2Router(s);
         },
       },
       {
@@ -1115,7 +1115,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', transferred_to_ai: true, health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, impact: addImpact(s, 4), message: '【成功转岗】顺利 Transfer 到了前沿 AI 研发组！既拥有神仙级的 WLB 作息，又接触到了顶尖行业架构！' }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【安稳养老】原组 Manager 极力挽留，你继续享受着下午 5 点准时下班的惬意大厂时光。' };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【前沿 AI 团队攻坚】主导大模型低延迟推理架构落地，兼顾神仙级 WLB',
@@ -1150,7 +1150,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评，工作与生活达到完美平衡！' }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【惬意养老】AI 组内节奏舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客。' };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : midYearEventRouter(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
@@ -1163,7 +1163,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), cash: s.cash + 5, stocks: (s.stocks || 0) + 10, impact: addImpact(s, 8), message: '【融资大捷】公司顺利拿下 A 轮千万美金融资！你的期权估值大涨并分到了 $5w 现金绩效奖金！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), leetcode: s.leetcode + 5, impact: addImpact(s, 4), message: '【技术硬仗】一人干完了三人的全栈活，虽然融资推迟，但全套云原生与 Agent 架构让你技术实力全面蜕变。' };
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       // 【提前上岸 · 主动退休】后期能动性:永久身份(绿卡/公民) + 资产 ≥ $200w($2M) 起可自主下车。
       // 这是后期的真选择——用「继续冲更高 FIRE、承担健康/年龄歧视/裁员风险」换「立刻自由」——
@@ -1251,7 +1251,7 @@ export const careerEvents: Record<string, GameEvent> = {
             if (s.level === 'L6 (Staff)') return 'l6_staff_celebration';
             return 'promo_celebration';
           }
-          return midYearEventRouter(s);
+          return h1ToH2Router(s);
         },
       },
       {
@@ -1359,12 +1359,12 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => {
           const offers = s.hop_offers || [];
           if (offers.length > 0) return 'job_hop_market';
-          return midYearEventRouter(s);
+          return h1ToH2Router(s);
         },
       },
       {
         text: '【年度重心：拓展副业】探索第二曲线 (微型SaaS/专家顾问/自媒体/实体合伙)',
-        condition: (s) => !s.laid_off && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        condition: (s) => !s.laid_off && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.story_flags?.side_hustle_canceled,
         effect: () => ({ message: '你梳理了自己的核心技能与业余时间，准备在硅谷拓展属于自己的第二曲线副业！' }),
         nextEventId: 'side_hustle_hub',
       },
@@ -1394,7 +1394,7 @@ export const careerEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
           message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
         }),
-        nextEventId: (s) => !s.is_married ? 'dating_market' : midYearEventRouter(s),
+        nextEventId: (s) => !s.is_married ? 'dating_market' : h1ToH2Router(s),
       },
       {
         text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
@@ -1405,7 +1405,7 @@ export const careerEvents: Record<string, GameEvent> = {
           leetcode: Math.max(0, s.leetcode - 8),
           message: '这一年你彻底躺平摸鱼，除了完成最低限度工作外就是打黑神话悟空。身体逐渐恢复了生机，但由于长期不写硬核代码，你的算法手感与面试反应明显下滑！'
         }),
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
 
       // --- 生活与资产：置业 / 租房调整 ---
@@ -1438,7 +1438,7 @@ export const careerEvents: Record<string, GameEvent> = {
           laid_off: false,
           message: '你正式递交了离职辞呈！凭 $50w 初始本金与美籍/绿卡自由身，开启了全职 Day Trader 操盘人生！'
         }),
-        nextEventId: 'trader_annual_strategy',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=45w办理O1创业工签)',
@@ -1462,7 +1462,7 @@ export const careerEvents: Record<string, GameEvent> = {
               : '你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
           };
         },
-        nextEventId: 'founder_annual_strategy',
+        nextEventId: h1ToH2Router,
       },
 
       // --- 待业 / Gap Year 探索 (仅失业或待业时可见) ---
@@ -1561,7 +1561,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: '【技术实战沉淀】独立开发的项目暂未跑通 PMF，扣除了云服务器账单 -$0.5w，但在全栈独立迭代中算法与架构能力明显精进！'
           };
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【高阶咨询 · 初创 Part-time Advisor & 求职私教】(需 L5+资深架构 或 广泛行业人脉)',
@@ -1589,7 +1589,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: '【求职辅导稳健创收】周末利用业余时间辅导了数名转码留学生，扎实的 1v1 Mock 面试为你带来了 +$4.5w 丰厚课时费！'
           };
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【流量自媒体 · 小红书/YouTube 硅谷大厂日常博主】(依赖形象魅力 Charm · 广告代言变现)',
@@ -1624,7 +1624,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: '【遭遇限流吐槽】辛辛苦苦拍摄剪辑的视频遭遇平台算法限流，还在评论区遇到了键盘侠杠精，身心俱疲但积累了镜头感。'
           };
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【实体投资 · Fremont/Cupertino 华人奶茶烘焙店合伙】(需 现金>=5w · 博取被动分红)',
@@ -1659,11 +1659,14 @@ export const careerEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: midYearEventRouter,
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【暂不发展副业】返回年度主面板重新选择精力重心',
-        effect: () => ({ message: '你决定先将精力集中在主线规划上。' }),
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), side_hustle_canceled: true },
+          message: '你决定先将精力集中在主线规划上。'
+        }),
         nextEventId: 'sv_daily_life',
       },
     ]
@@ -1821,27 +1824,27 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.visa === '绿卡' || s.visa === '公民',
         effect: (s) => ({
           cash: s.cash + 8,
-          laid_off: true,
+          laid_off: false,
           tc: 0,
           job_type: 'unemployed',
           health: Math.min(100, s.health + 15),
           leetcode: Math.min(100, s.leetcode + 15),
           message: '手握美籍/绿卡无所畏惧！你拿到了 3 个月 Severance 遣散费 (+$8w)，在家一边散步一边刷题，从容准备下一家大厂 Offer！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【美籍/绿卡玩家专属】申请加州 EDD 失业金，休假半年放空身心',
         condition: (s) => s.visa === '绿卡' || s.visa === '公民',
         effect: (s) => ({
           cash: s.cash + 3,
-          laid_off: true,
+          laid_off: false,
           tc: 0,
           job_type: 'unemployed',
           health: Math.min(100, s.health + 25),
           message: '领着加州 EDD 官方失业补贴，你顺便休假半年去 Lake Tahoe 滑雪，心态极度放松！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【强力人脉救援】联系 LinkedIn 熟人总监直通内部免试 referral 上岸',
@@ -1867,7 +1870,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `人脉发威！你的熟人总监收到求助后连夜开绿灯将你内推拉入 ${rescue.name} 团队，跳过倒计时直接上岸！`
           };
         },
-        nextEventId: 'sv_daily_life',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【F-1 / OPT 身份】利用 90/150 天失业期额度疯狂刷题，火速投递 E-Verify 新公司',
@@ -1880,7 +1883,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: `【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)，成功延续 OPT 身份！` }
             : { status: 'game_over', message: '90 天 OPT 失业期耗尽，且未能及时挂靠转学，SEVIS 状态失效被迫登机回国。' };
         },
-        nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
       {
         text: '【F-1 / OPT 转学自救】失业期告急，紧急注册 Day 1 CPT 大学维持 SEVIS 身份 (消耗 $1.5w)',
@@ -1888,14 +1891,14 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           visa: 'Day 1 CPT',
           cash: s.cash - 1.5,
-          laid_off: true,
+          laid_off: false,
           tc: 0,
           job_type: 'unemployed',
           leetcode: s.leetcode + 15,
           health: Math.min(100, s.health + 5),
           message: '【无缝转 Day 1 CPT】面对 OPT 失业期倒计时，你果断注册了 Day 1 CPT 大学维持合法留美学生身份，从容全职刷题准备下一轮跳槽面试！'
         }),
-        nextEventId: 'job_hunt',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【H-1B 工签身份】利用 60 天 H1B Grace Period 极限刷题办理 H1B Transfer',
@@ -1908,7 +1911,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 15), message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${targetLvl} · 年薪 ${newTC}w) 并成功办理 H1B Transfer 保住工签！` }
             : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，工签身份到期被迫登机离境。' };
         },
-        nextEventId: (s) => s.laid_off ? 'end' : 'sv_daily_life',
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
       {
         text: '【工签紧急挂靠】60 天倒计时逼近，找外包 ICC 公司办理 H1B Transfer 挂靠 (消耗 $2w)',
@@ -1922,7 +1925,7 @@ export const careerEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 10),
           message: '外包中介连夜为你开具了紧急 Offer 办理了 H1B Transfer！虽然总包大打折扣，但你的 60 天工签遣返警报成功解除！'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【工签转 Day 1 CPT】转为学生身份就读 Day 1 CPT 避险，全职备战大厂 (消耗 $1.5w)',
@@ -1930,26 +1933,26 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           visa: 'Day 1 CPT',
           cash: s.cash - 1.5,
-          laid_off: true,
+          laid_off: false,
           tc: 0,
           job_type: 'unemployed',
           leetcode: s.leetcode + 15,
           message: '你将身份转为 Day 1 CPT 维持合法停留，解除 60 天遣返倒计时，开始全职闭关刷题！'
         }),
-        nextEventId: 'job_hunt',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【Day 1 CPT 专属】学籍在册无离境倒计时压力，边上课边全职刷题求职',
         condition: (s) => s.visa === 'Day 1 CPT',
         effect: (s) => ({
-          laid_off: true,
+          laid_off: false,
           tc: 0,
           job_type: 'unemployed',
           leetcode: s.leetcode + 15,
           health: Math.min(100, s.health + 5),
           message: '【学籍保护】由于你早已挂靠在 Day 1 CPT 大学，完全不受 60 天工签驱逐威胁！你按部就班上课并全职刷题准备下一家面试。'
         }),
-        nextEventId: 'job_hunt',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【钞能力 EB-5 自救】全额出资申办 EB-5 投资移民并递交 I-485 拿 Combo 卡 (花费 $80w)',
@@ -2618,13 +2621,16 @@ export const careerEvents: Record<string, GameEvent> = {
   'icc_work': {
     id: 'icc_work',
     title: '【外包求生】ICC 挂靠与外包项目交付',
-    description: '你在 ICC 拿着微薄的薪水，随时可能被开除。',
+    description: '你在 ICC 拿着微薄的薪水，在 Client 客户现场认真交付需求并利用业余时间闭关刷题。',
     choices: [
-
       {
         text: '【偷偷刷题跳槽】在 ICC 偷偷刷题，准备跳槽大厂',
-        effect: (s) => ({ leetcode: s.leetcode + 40, health: s.health - 15, age: s.age + 1 }),
-        nextEventId: 'job_hunt',
+        effect: (s) => ({
+          leetcode: s.leetcode + 25,
+          health: Math.max(0, s.health - 8),
+          message: '你在 ICC 期间白天写业务代码，晚上死磕 LeetCode，算法能力大幅提升！'
+        }),
+        nextEventId: h1ToH2Router,
       }
     ]
   },
@@ -2645,7 +2651,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { cash: s.cash + 60, message: '稳扎稳打！公司被大厂收购了，你的期权兑现了 $60w 现金！' }
             : { cash: Math.max(0, s.cash - 5), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸，你不得不重新进入求职市场。' };
         },
-        nextEventId: (s) => (s.laid_off || s.job_type === 'unemployed' ? 'job_hunt' : 'sv_daily_life'),
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【立刻 Pivot 转型 AI】立刻 Pivot (转型) 做 AI / 大模型架构',
@@ -2658,7 +2664,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { cash: s.cash + 35, stocks: (s.stocks || 0) + 45, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产，顺便拿到了 EB-1 绿卡！' }
             : { cash: Math.max(0, s.cash - 10), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜抱起铺盖重新刷题求职。' };
         },
-        nextEventId: (s) => (s.laid_off || s.job_type === 'unemployed' ? 'job_hunt' : 'post_green_card'),
+        nextEventId: (s) => (!s.laid_off && s.visa === '绿卡' ? 'post_green_card' : h1ToH2Router(s)),
       }
     ]
   },
@@ -2787,7 +2793,7 @@ export const careerEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: (s) => s.laid_off ? 'job_hunt' : 'sv_year_end_settlement'
+        nextEventId: 'sv_year_end_settlement'
       },
       {
         text: '【天使投资人结算】清算天使轮协议与投资回报',

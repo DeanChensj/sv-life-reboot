@@ -1,10 +1,11 @@
 import { events, generateInitialState } from './src/data/events';
 import { GameState, Choice } from './src/types';
 import { applyStateTransition } from './src/utils/stateTransitions';
+import { gameRandom } from './src/utils/random';
 
 console.log('🎰 === 启动蒙特卡洛数值平衡与寿命保障自动化门禁 (Monte Carlo Balance CI) ===\n');
 
-function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_healer'): {
+function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_healer', seed: number): {
   status: 'win' | 'game_over' | 'playing' | 'retired';
   age: number;
   netWorth: number;
@@ -13,7 +14,9 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
   hopsAttempted: number;
   hopsSucceeded: number;
 } {
-  let state = generateInitialState();
+  // #1 种子复现:seed 作为 customSeed 传入,generateInitialState 内部 setGameSeed(seed),使开局面板
+  // 与全程 gameRandom() 消耗完全确定(外部单独 setGameSeed 会被无参重播覆盖,见 helpers.ts)。
+  let state = generateInitialState(seed);
   if (strategy === 'roll_king_healer') {
     state.trait_title = '卷王之王';
     state.leetcode = 40;
@@ -47,14 +50,14 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       } else if (state.leetcode < 40) {
         const grindChoice = validChoices.find(c => c.text.includes('刷题跳槽') || c.text.includes('疯狂内卷'));
         chosen = grindChoice || validChoices[0];
-      } else if (state.tc < 50 && Math.random() < 0.6) {
+      } else if (state.tc < 50 && gameRandom() < 0.6) {
         const hopChoice = validChoices.find(c => c.text.includes('刷题跳槽'));
         const sprintChoice = validChoices.find(c => c.text.includes('战时冲刺') || c.text.includes('疯狂内卷'));
         chosen = hopChoice || sprintChoice || validChoices[0];
       } else {
         const hopChoice = validChoices.find(c => c.text.includes('刷题跳槽'));
         const investChoice = validChoices.find(c => c.text.includes('投资理财') || c.text.includes('拓展副业'));
-        chosen = (Math.random() < 0.40 && hopChoice) ? hopChoice : (investChoice || validChoices[Math.floor(Math.random() * validChoices.length)]);
+        chosen = (gameRandom() < 0.40 && hopChoice) ? hopChoice : (investChoice || validChoices[Math.floor(gameRandom() * validChoices.length)]);
       }
     } else if (currentEventId === 'founder_annual_strategy') {
       // Founders now make their PRIMARY annual decision here (year-end settlement routes them
@@ -68,14 +71,14 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       const survive = validChoices.find(c => c.text.includes('苟活'));
       if (state.health < 40 && survive) chosen = survive;
       else if ((state.founder_stage === 'series_b' || state.founder_stage === 'exit') && exit) chosen = exit;
-      else chosen = fund || pmf || validChoices[Math.floor(Math.random() * validChoices.length)];
+      else chosen = fund || pmf || validChoices[Math.floor(gameRandom() * validChoices.length)];
     } else if (currentEventId === 'trader_annual_strategy') {
       // Competent trader: compound via the moderate-risk growth play, hedge when health is
       // critical. (Was played fully at random once routed off sv_daily_life.)
       const hedge = validChoices.find(c => c.text.includes('对冲股息'));
       const growth = validChoices.find(c => c.text.includes('重仓科技龙头'));
       if (state.health < 40 && hedge) chosen = hedge;
-      else chosen = growth || validChoices[Math.floor(Math.random() * validChoices.length)];
+      else chosen = growth || validChoices[Math.floor(gameRandom() * validChoices.length)];
     } else if (currentEventId === 'side_hustle_hub') {
       // 副业子菜单:玩家仍是全职,来这里挑一条第二曲线。模型一个「有能力的」副业玩家——
       // 按自身强项选最优赛道,而不是随机乱点(否则测出的胜率是「乱点」水平,系统性低估真实平衡)。
@@ -90,7 +93,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       else if (saas) chosen = saas;
       else if ((state.charm || 10) >= 16 && creator) chosen = creator;
       else if (boba && state.macro_economy !== 'bear') chosen = boba;
-      else chosen = creator || boba || validChoices[Math.floor(Math.random() * validChoices.length)];
+      else chosen = creator || boba || validChoices[Math.floor(gameRandom() * validChoices.length)];
     } else if (currentEventId.startsWith('founder_')) {
       // 创始人专属 H2 动态事件(合伙人撕逼/VC 跳票/断粮/黑客松/YC/巨头大单/退场)。这些过去由
       // bot 纯随机选择,系统性低估了「有能力创始人」的真实表现,人为压低 FIRE 并逼出 #65 的降频
@@ -100,7 +103,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
         chosen = pick(['佛系', '云厂商', '稳健', '协商妥协', '断臂', '婉拒']) || validChoices[0];
       } else {
         chosen = pick(['接受 YC', '全力接单', '冠军', 'IPO', '咖啡馆', '仲裁', 'MVP', '备选应急', '协商妥协'])
-          || validChoices[Math.floor(Math.random() * validChoices.length)];
+          || validChoices[Math.floor(gameRandom() * validChoices.length)];
       }
     } else if (currentEventId === 'marriage_divorce_crisis') {
       const reconcile = validChoices.find(c => c.text.includes('婚姻咨询') || c.text.includes('蜜月'));
@@ -109,7 +112,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       // 转码是少数派起点(~15%,现实中多数玩家走 CS 科班);其余在 CS 排名档里随机。
       const zhuanma = validChoices.find(c => c.text.includes('转码'));
       const csChoices = validChoices.filter(c => !c.text.includes('转码'));
-      chosen = (zhuanma && Math.random() < 0.15) ? zhuanma : csChoices[Math.floor(Math.random() * csChoices.length)];
+      chosen = (zhuanma && gameRandom() < 0.15) ? zhuanma : csChoices[Math.floor(gameRandom() * csChoices.length)];
     } else if (currentEventId === 'zhuanma_background') {
       // 能力型转码:美本非CS(三条路全开)最灵活。
       chosen = validChoices.find(c => c.text.includes('美本非CS')) || validChoices[0];
@@ -123,7 +126,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       // 只要还能再战就不放弃(competent 玩家坚持);实在不行才止损 washout。
       chosen = validChoices.find(c => c.text.includes('再刷一年')) || validChoices[validChoices.length - 1];
     } else {
-      chosen = validChoices[Math.floor(Math.random() * validChoices.length)];
+      chosen = validChoices[Math.floor(gameRandom() * validChoices.length)];
     }
 
     const isHopGrind = currentEventId === 'sv_daily_life' && chosen.text.includes('刷题跳槽');
@@ -178,8 +181,10 @@ let totalHopsSucceeded = 0;
 const causes: Record<string, number> = {};
 
 for (let i = 0; i < TOTAL_RUNS; i++) {
+  // #1 种子复现:每局用确定性 seed=i,使整个门禁 100% 可复现(不再受运行间随机波动影响,
+  // FIRE/寿命/跳槽率变成代码的确定函数),且任意一局可用该 seed 单独回放调试。
   const strat = i % 3 === 0 ? 'balanced' : (i % 3 === 1 ? 'smart_tech_worker' : 'roll_king_healer');
-  const res = simulateGame(strat);
+  const res = simulateGame(strat, i);
   if (res.status === 'win') {
     wins++;
     winAges.push(res.age);

@@ -20,7 +20,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【看展看演出】去 SF MOMA 看展或看独立乐队演出',
         reqBadge: '需出众形象',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.charm >= 15,
-        effect: (s) => ({ relationship_status: 'matched', partner_type: 'artist', charm: Math.min(30, s.charm + 3), message: '【匹配成功】在昏暗的 Livehouse 里，你与一位在设计学院读书的文青对上了眼。你们聊了王家卫和坂本龙一，进入 Matched 状态！' }),
+        effect: (s) => ({ relationship_status: 'matched', partner_type: 'artist', charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '【匹配成功】在昏暗的 Livehouse 里，你与一位在设计学院读书的文青对上了眼。你们聊了王家卫和坂本龙一，进入 Matched 状态！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {

@@ -1820,6 +1820,63 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 33 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 34: Post-Green-Card Role Specialization & Title Formatting Guards
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 34] Post-Green Card Role Specialization & Title Integrity ---');
+  const ev = events['post_green_card'];
+  assert(Boolean(ev), 'post_green_card event exists');
+
+  const founderState: GameState = {
+    ...generateInitialState(),
+    visa: '绿卡',
+    job_type: 'startup_founder',
+    company: 'AI Startup',
+    level: 'CEO & Founder',
+    company_valuation: 1000
+  };
+
+  const traderState: GameState = {
+    ...generateInitialState(),
+    visa: '绿卡',
+    job_type: 'trader',
+    company: '全职 Day Trader',
+    level: '全职 Trader'
+  };
+
+  const employeeState: GameState = {
+    ...generateInitialState(),
+    visa: '绿卡',
+    job_type: 'big_tech',
+    company: 'Google',
+    level: 'L5 (Senior)'
+  };
+
+  // 1. Founder should have the founder expansion choice and NOT employee resignation
+  const founderChoices = ev.choices.filter(c => !c.condition || c.condition(founderState));
+  const founderHasExpansion = founderChoices.some(c => c.text.includes('全速扩张'));
+  const founderHasResign = founderChoices.some(c => c.text.includes('辞职！凭大厂'));
+  assert(founderHasExpansion, 'Founder has dedicated 全速扩张 choice in post_green_card');
+  assert(!founderHasResign, 'Founder does NOT see employee resignation choice in post_green_card');
+
+  // 2. Trader should have the trader choice and NOT employee office politics
+  const traderChoices = ev.choices.filter(c => !c.condition || c.condition(traderState));
+  const traderHasTrading = traderChoices.some(c => c.text.includes('深耕交易'));
+  const traderHasOfficePolitics = traderChoices.some(c => c.text.includes('不再唯唯诺诺'));
+  assert(traderHasTrading, 'Trader has dedicated 深耕交易 choice in post_green_card');
+  assert(!traderHasOfficePolitics, 'Trader does NOT see corporate office politics in post_green_card');
+
+  // 3. Employee sees standard corporate paths
+  const employeeChoices = ev.choices.filter(c => !c.condition || c.condition(employeeState));
+  const employeeHasStartup = employeeChoices.some(c => c.text.includes('全职创业'));
+  const employeeHasOfficePolitics = employeeChoices.some(c => c.text.includes('不再唯唯诺诺'));
+  assert(employeeHasStartup, 'Employee can choose to resign and found startup in post_green_card');
+  assert(employeeHasOfficePolitics, 'Employee can choose office politics in post_green_card');
+
+  console.log('✅ CUJ 34 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {
@@ -1828,3 +1885,4 @@ if (failedAssertions === 0) {
   console.error(`❌ ${failedAssertions} ASSERTIONS FAILED!`);
   process.exit(1);
 }
+

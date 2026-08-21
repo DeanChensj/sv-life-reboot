@@ -324,7 +324,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【辞职！凭多年大厂】辞职！凭多年大厂的技术积累直接搞 AI Startup',
+        text: '【全职创业】辞职！凭大厂技术积累全职创办 AI Startup',
+        condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         effect: (s) => {
           const success = s.leetcode >= 50 && gameRandom() < 0.3;
           return success
@@ -354,13 +355,40 @@ export const immigrationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【不再唯唯诺诺】不再唯唯诺诺，开始在职场上重拳出击',
+        condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
         nextEventId: 'office_politics',
       },
       {
         text: '【彻底摆烂】彻底摆烂，佛系上班',
+        condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
         nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【全速扩张】绿卡彻底解除身份顾虑，全力带领公司冲刺下轮融资与商业化',
+        condition: (s) => s.job_type === 'startup_founder',
+        effect: (s) => ({
+          visa: s.visa === '公民' ? '公民' : '绿卡',
+          gc_progress: 5,
+          gc_stage: 'approved',
+          company_valuation: (s.company_valuation || 800) + 200,
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          message: '绿卡获批彻底解除了你在美的身份枷锁，你可以 100% 专注于带领公司壮大，估值与业务再创新高！'
+        }),
+        nextEventId: 'founder_annual_strategy',
+      },
+      {
+        text: '【深耕交易】获得合法居民身份，心无旁骛专注于二级市场交易',
+        condition: (s) => s.job_type === 'trader',
+        effect: (s) => ({
+          visa: s.visa === '公民' ? '公民' : '绿卡',
+          gc_progress: 5,
+          gc_stage: 'approved',
+          cash: s.cash + 10,
+          message: '摆脱工签束缚，你以完全合法的居民身份专注于资本市场套利与策略研究！'
+        }),
+        nextEventId: 'trader_annual_strategy',
       }
     ]
   },
@@ -371,7 +399,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
     description: '你趁假期回国探亲顺便预约了美领馆 H1B 续签 Stamp。结果因为 CS/AI 敏感专业，签证官微笑着递给你一张黄单（221g Administrative Processing 行政审查）！',
     choices: [
       {
-        text: '【在国内远程克服时】在国内远程克服时差高强度打卡，每天刷 Ceac 查询状态',
+        text: '【远程办公】在国内远程克服时差高强度打卡，每天刷 CEAC 查询签证状态',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
           health: Math.max(0, s.health - 15),
@@ -380,7 +408,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【联系公司法务开具】联系公司法务开具紧急加急信 (Expedite Request)',
+        text: '【加急申诉】联系公司法务开具紧急加急信 (Expedite Request)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const pass = gameRandom() < 0.55;

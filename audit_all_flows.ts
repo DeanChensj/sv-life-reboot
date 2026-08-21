@@ -227,8 +227,14 @@ const eventsSource = [
   ...extraDataFiles.filter((f) => fs.existsSync(f)).map((f) => fs.readFileSync(f, 'utf8'))
 ].join('\n');
 
-// Extract all event IDs in router workEvents and lifeEvents arrays
-const routerEventRegex = /(?:workEvents|lifeEvents)\.push\(([^)]+)\)|const\s+(?:workEvents|lifeEvents)\s*=\s*\[([^\]]+)\]/g;
+// Extract all event IDs in router event-pool arrays. Besides the top-level
+// workEvents/lifeEvents arrays, the job-specific routers build local weighted
+// pools (quantPool / aiPool / startupPool …) with `const xxxPool = [...]` and
+// `xxxPool.push(...)`, then `return gamePick(pool)`. Those literals are just as
+// deterministically reachable as workEvents.push(...), so recognize any
+// `<name>Pool` array/push too — otherwise quant_stress / ai_research_crisis show
+// up as probabilistic false-positive orphans depending on gameRandom ordering.
+const routerEventRegex = /(?:workEvents|lifeEvents|\w*Pool)\.push\(([^)]+)\)|const\s+(?:workEvents|lifeEvents|\w*Pool)\s*=\s*\[([^\]]+)\]/g;
 let match: RegExpExecArray | null;
 while ((match = routerEventRegex.exec(eventsSource)) !== null) {
   const content = match[1] || match[2];
@@ -247,6 +253,22 @@ routerReturnedEventMatches.forEach(m => {
   if (match && events[match[1]]) {
     reachableEvents.add(match[1]);
   }
+});
+
+// Routers also branch via ternary returns, e.g.
+//   return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
+// The `return '<literal>'` scan above misses these (there's an expression between
+// `return` and the first quote), so the macro-economy news events could only be
+// caught by the probabilistic runtime router calls — flaky orphans. Any event id
+// appearing as a `? 'a' : 'b'` ternary branch in the router source is genuinely
+// reachable, so recognize both branches deterministically.
+const ternaryBranchMatches = eventsSource.match(/\?\s*['"`][a-zA-Z0-9_]+['"`]\s*:\s*['"`][a-zA-Z0-9_]+['"`]/g) || [];
+ternaryBranchMatches.forEach(m => {
+  const ids = m.match(/['"`]([a-zA-Z0-9_]+)['"`]/g) || [];
+  ids.forEach(rawId => {
+    const cleanId = rawId.replace(/['"`]/g, '');
+    if (events[cleanId]) reachableEvents.add(cleanId);
+  });
 });
 
 const signatureMatches = eventsSource.match(/signatureEvent:\s*['"`]([a-zA-Z0-9_]+)['"`]/g) || [];

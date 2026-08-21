@@ -419,6 +419,16 @@ export const settlementEvents: Record<string, GameEvent> = {
           }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') return 'post_green_card';
 
+          // 失业 + 临时工签(OPT 90 天 / H1B·L1·O1 60 天失业期)= 触发签证倒计时。持续失业者必须
+          // 进入签证危机自救(限期找工作 / 转 Day 1 CPT 学生身份 / EB-5 / 婚姻 / 或被遣返 game_over),
+          // 不能靠 gap year、躺平、慢生活「无业却长年持有工签」白嫖身份(随机游玩实测的沉浸/逻辑 bug)。
+          // layoff_hit 内含各签证对应的限期求职与逃生选项,是恰当的「失业签证危机」面板;失败即遣返,
+          // 因此不会无限循环。学生签(F1/Day 1 CPT,合法在读)与永久身份(绿卡/公民/无签证限制)不受影响。
+          const onTempWorkVisa = s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)';
+          if ((s.job_type === 'unemployed' || s.laid_off) && onTempWorkVisa) {
+            return 'layoff_hit';
+          }
+
           // Role-specific annual hub: founders/traders don't share the generic sv_daily_life
           // focus panel — their proper "pick your year" panel is their own strategy hub. Route
           // them straight there (literal, so audit_all_flows can statically see reachability),

@@ -19,18 +19,18 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【整租豪华 1B1B】泳池健身房全配，独立私密品质生活 (年租金 $4w)',
-        effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: HOUSING_NAMES.SAN_JOSE_LUXURY, message: '你租下了带有池高级公寓，生活质量极高，相亲市场竞争力上升。' }),
-        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : afterCareerAction(s)
+        effect: (s) => ({ rent: 4, charm: s.charm + 1, health: s.health + 10, has_housing: true, housing_name: HOUSING_NAMES.SAN_JOSE_LUXURY,         message: '你租下了带泳池的高级公寓，生活质量极高，相亲市场竞争力上升。' }),
+        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts && !s.laid_off && s.job_type !== 'unemployed' ? 'big_tech_work' : afterCareerAction(s)
       },
       {
         text: '【合租南湾 2B2B】与室友分摊开销，性价比之选 (年租金 $2w)',
         effect: (s) => ({ rent: 2, has_housing: true, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, message: '你和朋友合租，偶尔会因为抢厕所和洗碗吵架，但省下了不少钱。' }),
-        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : afterCareerAction(s)
+        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts && !s.laid_off && s.job_type !== 'unemployed' ? 'big_tech_work' : afterCareerAction(s)
       },
       {
         text: '【挂壁客厅隔间】极致压低开销狂攒首付，终极省钱 (年租金 $1w)',
         effect: (s) => ({ rent: 1, charm: s.charm - 2, health: s.health - 15, has_housing: true, housing_name: HOUSING_NAMES.LIVING_ROOM_SCREEN, message: '你睡在客厅，用帘子隔开。每天被室友做饭吵醒，毫无隐私，连相亲都不敢带人回家。' }),
-        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts ? 'big_tech_work' : afterCareerAction(s)
+        nextEventId: (s) => (s.visa === 'F1 (学生)' || s.visa === 'OPT (实习)') && !s.h1b_attempts && !s.laid_off && s.job_type !== 'unemployed' ? 'big_tech_work' : afterCareerAction(s)
       }
     ]
   },

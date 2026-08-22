@@ -335,6 +335,15 @@ export function applyStateTransition(
 
   newState.timeline = updatedTimeline;
 
+  // 求职即本年度动作:任何在 job_hunt 做出的选择都消耗当年 —— 强制置 mid_year/season_stage,使
+  // 「求职→(再)就业→选房」整条链纳入 resolveNextEventId 的年度季度事件机并走到年终结算,而非在
+  // 再就业后回落 sv_daily_life、于同一结算周期内再做一次年度动作(与 H1 注入叠加会造成 job_hop_market
+  // 同回合多次访问 → fuzz 同回合死循环,如 SEED=6979/990)。失业未上岸的求职年同样消耗当年。
+  if (context.eventId === 'job_hunt' && newState.status === 'playing') {
+    newState.mid_year = true;
+    if (!newState.season_stage) newState.season_stage = 'h1';
+  }
+
   // 7. Game State Termination & Target Event Resolution
   let targetEventId: string | undefined;
 

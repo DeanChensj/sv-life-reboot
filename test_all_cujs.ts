@@ -484,7 +484,7 @@ console.log('--- [CUJ 5] Domestic Undergrad to Overseas Tech Journey ---');
   assert(state.visa === '无', 'No US visa yet');
 
   const visaInfo = getVisaDisplayInfo(state);
-  assert(visaInfo.visaLabel === '暂无 (未赴美)', 'Displays 暂无 (未赴美)');
+  assert(visaInfo.visaLabel === '未赴美', 'Displays 未赴美');
 
   // 2. Actually WALK the undergrad chain instead of teleporting to cn_undergrad_grad.
   // Real route: cn_college_grad (百团大战) -> 随机校园事件 -> cn_college_year3 (大三抉择) -> cn_undergrad_grad.
@@ -516,7 +516,7 @@ console.log('--- [CUJ 5] Domestic Undergrad to Overseas Tech Journey ---');
   assert(jobInfo.levelLabel === '国内研发', 'Displays 国内研发');
 
   const visaInfo2 = getVisaDisplayInfo(state);
-  assert(visaInfo2.visaLabel === '暂无 (国内在职)', 'Displays 暂无 (国内在职)');
+  assert(visaInfo2.visaLabel === '国内在职', 'Displays 国内在职');
 
   // 4. Early career 996 work (anti-loop check: advances to cn_work_mid)
   let midRes = stepChoice(state, 'cn_work', 0);
@@ -1386,7 +1386,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Student HUD derivation
   let jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.companyHeaderLabel === '就读院校', 'HUD shows 就读院校');
-  assert(jobInfo.companyLabel === '大U (CS Top30)', 'HUD displays 大U (CS Top30)');
+  assert(jobInfo.companyLabel === '理工大U (Top 30)', 'HUD displays 理工大U (Top 30)');
   assert(jobInfo.levelHeaderLabel === '在读学位', 'HUD shows 在读学位');
   assert(jobInfo.levelLabel === '本科在读', 'HUD displays 本科在读');
 

@@ -17,9 +17,9 @@ const mkStudent = (over: Partial<GameState>): GameState =>
   ({ ...generateInitialState(), job_type: undefined, ...over } as unknown as GameState);
 
 // 1. Undergrad label checks (CS ranking ladder: Top4 / Top30 / Top100 / 国内)
-check('undergrad label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu' })).companyLabel, 'CMU (CS Top4)');
-check('undergrad label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb' })).companyLabel, '大U (CS Top30)');
-check('undergrad label state', getJobDisplayInfo(mkStudent({ school: 'state' })).companyLabel, 'SJSU (CS Top100)');
+check('undergrad label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu' })).companyLabel, 'CMU (Top 4)');
+check('undergrad label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb' })).companyLabel, '理工大U (Top 30)');
+check('undergrad label state', getJobDisplayInfo(mkStudent({ school: 'state' })).companyLabel, 'SJSU (州立)');
 check('undergrad label cn', getJobDisplayInfo(mkStudent({ school: 'cn' })).companyLabel, '国内 985/211');
 
 // 2. Master label checks

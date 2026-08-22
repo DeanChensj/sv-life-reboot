@@ -10,8 +10,10 @@ export const macroNewsEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【确认宏观趋势】了解宏观市场行情，调整个人策略 (Ack)',
-        effect: (s) => ({ macro_economy: 'bull', message: '宏观经济进入【狂暴大牛市】！现在大厂疯狂扩招，面试门槛大幅降低，年底 RSU 必定暴涨！' }),
-        nextEventId: 'sv_year_end_settlement'
+        // 纯播报当前行情 (经济由年终结算的周期驱动,此处不改 macro_economy);读到牛市→年底 RSU 暴涨、
+        // 招聘回暖,trader 宜做多。
+        effect: () => ({ message: '宏观经济正处【狂暴大牛市】！大厂疯狂扩招、面试门槛降低，年底 RSU 有望暴涨——做多正当时！' }),
+        nextEventId: (s: GameState) => h1ToH2Router(s)
       }
     ]
   },
@@ -23,8 +25,8 @@ export const macroNewsEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【确认宏观趋势】了解宏观市场行情，调整个人策略 (Ack)',
-        effect: (s) => ({ macro_economy: 'bear', message: '宏观经济进入【裁员大熊市】！现在求职面试将变成地狱难度 (需要刷海量 LeetCode)，年底 RSU 也会严重缩水！' }),
-        nextEventId: 'sv_year_end_settlement'
+        effect: () => ({ message: '宏观经济正处【裁员大熊市】！求职面试地狱难度、年底 RSU 严重缩水、裁员风声四起——现金为王,trader 宜做空避险。' }),
+        nextEventId: (s: GameState) => h1ToH2Router(s)
       }
     ]
   },
@@ -36,8 +38,8 @@ export const macroNewsEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【确认宏观趋势】了解宏观市场行情，调整个人策略 (Ack)',
-        effect: (s) => ({ macro_economy: 'neutral', message: '宏观经济回归【正常震荡期】。一切按部就班，靠实力说话。' }),
-        nextEventId: 'sv_year_end_settlement'
+        effect: () => ({ message: '宏观经济处于【正常震荡期】。一切按部就班，靠实力说话。' }),
+        nextEventId: (s: GameState) => h1ToH2Router(s)
       }
     ]
   },

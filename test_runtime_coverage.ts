@@ -33,22 +33,15 @@ const ALLOW_UI_OR_ASSET: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// (2) KNOWN DEAD — genuine runtime-unreachable BUGS this very audit uncovered, tracked for a
-//     follow-up fix (do NOT silently treat as fine). Root cause: the macro-economy never leaves
-//     'neutral' for non-traders — the ONLY non-trader setters of bull/bear are the news_* events
-//     (macroNews.ts), which are gated by `!s.season_stage` in midYearEventRouter, a condition
-//     that never holds at runtime (the router is always called with season_stage 'h1'/'h2').
-//     With economy neutral-locked, the corporate-only bear-gated events die too. Same bug class
-//     as the H1 deadness. Kept here so the ratchet still passes while the fix is pending — but
-//     named as dead, not hidden. TODO(step 3): revive economy cycles + re-measure balance.
+// (2) KNOWN DEAD — genuine runtime-unreachable BUGS this audit uncovered, tracked for a fix.
+//     (do NOT silently treat as fine.) Empty now: the economy-neutral-lock class it originally
+//     held (news_* / stock_crash / macro_liquidity_rate_cycle) was fixed in Step 3 — the macro
+//     economy is now a Markov cycle driven at year-end settlement (bull/bear actually happen),
+//     news_* fire as reachable regime telegraphs, and the bear-gated events fire once bear
+//     regimes occur. This audit's "stale listed entry now reachable" assertion is what forces
+//     this list to be emptied when the fix lands, instead of quietly masking it.
 // ---------------------------------------------------------------------------------------------
-const KNOWN_DEAD: Record<string, string> = {
-  news_bull_market_start: 'economy 切换广播,gated by !season_stage (运行时永不成立) → 死',
-  news_bear_market_crash: 'economy 切换广播,gated by !season_stage → 死',
-  news_neutral_market: 'economy 切换广播,gated by !season_stage → 死',
-  stock_crash: 'workEvents 中 bear-gated;非 trader 经济恒 neutral → 永不触发',
-  macro_liquidity_rate_cycle: 'H1 中 bear-gated;非 trader 经济恒 neutral → 永不触发',
-};
+const KNOWN_DEAD: Record<string, string> = {};
 
 // H1 work-event pool that MUST be reached now that Step 2 reconnected the H1 block — a positive
 // lock so the reconnection can't silently regress back to "layoffs never fire".

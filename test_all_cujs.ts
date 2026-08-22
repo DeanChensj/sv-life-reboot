@@ -2243,6 +2243,47 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 43 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 44: 宏观经济周期 (Markov 轮动) 已接回 —— 由年终结算驱动,不再恒锁 neutral。历史回归:经济
+// 只能靠 news_* 事件切换,而它们被 `!season_stage` 永久锁死 → 非 trader 玩家经济恒 neutral,牛熊
+// 机制(股票乘数/加薪/招聘/stock_crash/trader 读周期)全成摆设。锁三件事:① 结算会把经济轮动到
+// 牛/熊/横盘三态(有惯性也会回归);② news_* 为纯播报、不再驱动经济(驱动唯一在结算);③ 熊市
+// 可达(trader 做空、stock_crash 有触发土壤)。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 44] 宏观经济周期 Markov 轮动 (结算驱动,非恒 neutral) ---');
+  const settle = events['sv_year_end_settlement'].choices[0];
+  const distFrom = (from: 'neutral' | 'bull' | 'bear') => {
+    const d: Record<string, number> = { neutral: 0, bull: 0, bear: 0 };
+    for (let seed = 0; seed < 800; seed++) {
+      setGameSeed(seed);
+      const s = { ...generateInitialState(), macro_economy: from, job_type: 'big_tech', company: 'google',
+        level: 'L4', tc: 30, stocks: 20, health: 80, age: 30, status: 'playing' } as GameState;
+      const r = settle.effect(s);
+      d[(r.macro_economy as string) || 'neutral']++;
+    }
+    return d;
+  };
+  const fromNeutral = distFrom('neutral');
+  assert(fromNeutral.bull > 0 && fromNeutral.bear > 0 && fromNeutral.neutral > 0, '横盘年会轮动到 牛/熊/横盘 三态');
+  assert(fromNeutral.neutral < 800, '经济不再恒锁 neutral(死子系统已复活)');
+  const fromBull = distFrom('bull');
+  assert(fromBull.bull > 0, '牛市有惯性(可持续 >1 年)');
+  assert(fromBull.neutral > 0 || fromBull.bear > 0, '牛市会回归/反转(非永牛)');
+  const fromBear = distFrom('bear');
+  assert(fromBear.bear > 0 && (fromBear.neutral > 0 || fromBear.bull > 0), '熊市有惯性也会回归/反转');
+  assert(fromNeutral.bear > 0, '熊市可达 —— trader 做空/stock_crash 有触发土壤');
+
+  // news_* 现为可达的「行情播报」,且不再驱动经济(驱动唯一在结算,避免双驱动)。
+  for (const id of ['news_bull_market_start', 'news_bear_market_crash', 'news_neutral_market']) {
+    assert(!!events[id], `${id} 事件存在`);
+    const r = events[id].choices[0].effect({ ...generateInitialState(), macro_economy: 'bear' } as GameState);
+    assert(r.macro_economy === undefined, `${id} 为纯播报,不改写 macro_economy(经济驱动唯一在结算)`);
+  }
+
+  console.log('✅ CUJ 44 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

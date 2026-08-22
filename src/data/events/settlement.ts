@@ -41,15 +41,29 @@ export const settlementEvents: Record<string, GameEvent> = {
            const day1CptTuition = s.visa === 'Day 1 CPT' ? 1.2 : 0;
            const totalExpense = parseFloat(((housingExpense + carExpense + livingExpense + petExpense) * inflationFactor + day1CptTuition).toFixed(2));
 
-           let newEconomy = s.macro_economy || 'neutral';
+           // 宏观经济周期 (Markov 轮动) —— 单一驱动源。历史上经济只能靠 news_* 事件切换,而那些
+           // 事件被 `!season_stage` 永久锁死,导致非 trader 玩家的经济恒为 neutral,整套牛熊机制
+           // (股票乘数/加薪频率/招聘难度/stock_crash/流动性周期,以及 trader 读周期押注) 全成摆设。
+           // 改由年终结算按马尔可夫链推进:牛熊有惯性(可持续 1-3 年),也会反转/回归,形成真实可读的
+           // 周期——让 trader 读周期(牛做多/熊做空/横盘量化)真正有意义,也给所有人的资产与职业带来
+           // 周期性变量。牛/熊大致对称(避免永牛复利冲破 FIRE 门禁,也避免永熊劝退)。
+           const prevEconomy = s.macro_economy || 'neutral';
+           let newEconomy: 'bull' | 'bear' | 'neutral' = prevEconomy;
+           const er = gameRandom();
+           if (prevEconomy === 'bull') {
+             newEconomy = er < 0.50 ? 'bull' : er < 0.85 ? 'neutral' : 'bear';
+           } else if (prevEconomy === 'bear') {
+             newEconomy = er < 0.45 ? 'bear' : er < 0.85 ? 'neutral' : 'bull';
+           } else {
+             newEconomy = er < 0.62 ? 'neutral' : er < 0.82 ? 'bull' : 'bear';
+           }
            let economyMsg = '';
-
-           // Mean-reversion: a bull/bear market drifts back toward neutral (~40%/yr)
-           // so no single event can pin the economy to a perpetual bull that
-           // compounds the stock pile at +25%/yr past the FIRE gates.
-           if (newEconomy !== 'neutral' && gameRandom() < 0.4) {
-             newEconomy = 'neutral';
-             economyMsg = ' 宏观经济周期逐步回归常态。';
+           if (newEconomy !== prevEconomy) {
+             economyMsg = newEconomy === 'bull'
+               ? ' 宏观经济转入【科技牛市】：RSU 与股票组合水涨船高,招聘回暖。'
+               : newEconomy === 'bear'
+               ? ' 宏观经济转入【资本寒冬】：股票缩水、招聘冻结、裁员风声四起,现金为王。'
+               : ' 宏观经济回归【正常震荡期】：市场恢复理性,一切靠实力说话。';
            }
 
            // Stock market fluctuation

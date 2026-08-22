@@ -337,17 +337,13 @@ export const midYearEventRouter = (s: GameState): string => {
       return 'career_summer_intern_mentor';
     }
 
-    // Economy News Broadcasts
-    const shiftChance = (s.macro_economy === 'bull' || s.macro_economy === 'bear') ? 0.14 : 0.05;
-    if (gameRandom() < shiftChance && !s.season_stage) {
-      if (s.macro_economy === 'bull') {
-        return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bear_market_crash';
-      } else if (s.macro_economy === 'bear') {
-        return gameRandom() < 0.6 ? 'news_neutral_market' : 'news_bull_market_start';
-      } else {
-        return gameRandom() < 0.5 ? 'news_bull_market_start' : 'news_bear_market_crash';
-      }
-    }
+    // 宏观行情快讯 (telegraph)。经济周期现由年终结算的 Markov 链驱动 (settlement.ts);这里在 H1 以
+    // 完整事件「播报」当前 regime,让玩家——尤其 trader——在做年度决策前清晰读到牛/熊/横盘行情。
+    // 纯播报,不改经济 (驱动在结算)。牛/熊年高频、横盘年低频。旧实现被 `!season_stage` 永久锁死
+    // (H1 恒带 season_stage),且是「切换器」而非「播报器」——已随经济周期改由结算驱动而重写。
+    if (s.macro_economy === 'bull' && gameRandom() < 0.22) return 'news_bull_market_start';
+    if (s.macro_economy === 'bear' && gameRandom() < 0.22) return 'news_bear_market_crash';
+    if (s.macro_economy === 'neutral' && gameRandom() < 0.05) return 'news_neutral_market';
 
     if (s.job_type === 'trader') return 'trader_annual_strategy';
     if (s.job_type === 'startup_founder') {

@@ -60,7 +60,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     timelineName: 'Meta',
     pipTier: 'high',
     compSplit: { base: 0.40, rsu: 0.60 },
-    yearEndHealth: { drain: 4, msg: ' Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。' },
+    yearEndHealth: { drain: 4, msg: ' 【职场健康】Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。' },
     signatureEvent: 'meta_metaverse_pivot',
   },
   apple: {
@@ -75,7 +75,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     className: 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold',
     timelineName: 'Amazon',
     pipTier: 'high',
-    yearEndHealth: { drain: 3, msg: ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。' },
+    yearEndHealth: { drain: 3, msg: ' 【职场健康】亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。' },
   },
   nvidia: {
     label: 'Nvidia',
@@ -83,7 +83,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     timelineName: 'Nvidia',
     pipTier: 'low',
     compSplit: { base: 0.40, rsu: 0.60 },
-    yearEndHealth: { drain: 4, msg: ' 英伟达 AI 芯片军备竞赛节奏紧张，让你不敢松懈 (健康 -4)。' },
+    yearEndHealth: { drain: 4, msg: ' 【职场健康】英伟达 AI 芯片军备竞赛节奏紧张，让你不敢松懈 (健康 -4)。' },
     signatureEvent: 'nvidia_rsu_moonshot',
   },
   tiktok: {
@@ -92,7 +92,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     timelineName: 'TikTok',
     pipTier: 'medium',
     compSplit: { base: 0.70, rsu: 0.30 },
-    yearEndHealth: { drain: 8, msg: ' 字节的高强度对齐让你略感疲惫 (健康 -8)。' },
+    yearEndHealth: { drain: 8, msg: ' 【职场健康】字节的高强度对齐让你略感疲惫 (健康 -8)。' },
     signatureEvent: 'tiktok_us_ban_hearing',
   },
   microsoft: {
@@ -123,7 +123,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     timelineName: 'Robinhood',
     pipTier: 'medium',
     compSplit: { base: 0.60, rsu: 0.40 },
-    yearEndHealth: { drain: 5, msg: ' Robinhood 的牛熊生死时速与产品高压节奏消耗了体力 (健康 -5)。' },
+    yearEndHealth: { drain: 5, msg: ' 【职场健康】Robinhood 的牛熊生死时速与产品高压节奏消耗了体力 (健康 -5)。' },
     signatureEvent: 'robinhood_meme_stock_frenzy',
   },
 };

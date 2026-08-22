@@ -239,11 +239,11 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
   } else if (state.visa === 'OPT (实习)') {
     const attempts = state.h1b_attempts || 0;
     if (attempts === 0) {
-      visaLabel = 'OPT (首年 · 共3年)';
+      visaLabel = 'OPT (第1年)';
     } else if (attempts === 1) {
-      visaLabel = 'STEM OPT (第2年 · 剩2抽)';
+      visaLabel = 'STEM OPT (第2年)';
     } else if (attempts === 2) {
-      visaLabel = 'STEM OPT (第3年 · 终抽)';
+      visaLabel = 'STEM OPT (第3年)';
     } else {
       visaLabel = 'STEM OPT (延期)';
     }

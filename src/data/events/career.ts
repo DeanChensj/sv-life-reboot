@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion, resolveHopVisaTransition } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa, liquidateStocksToCover } from '../../constants/gameConstants';
 import { isTopTierCSSchool } from '../schoolProfiles';
@@ -364,16 +364,19 @@ export const careerEvents: Record<string, GameEvent> = {
           const baseBand = nextLvl === 'L8 (Principal)' ? 120 : nextLvl === 'L7 (Senior Staff)' ? 82 : nextLvl === 'L6 (Staff)' ? 58 : nextLvl === 'L5 (Senior)' ? 42 : nextLvl === 'L4' ? 30 : 22;
           const econMultiplier = s.macro_economy === 'bull' ? 1.15 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
+          const hopVisa = resolveHopVisaTransition(s);
 
           return {
             company: 'google',
             job_type: 'big_tech',
+            visa: hopVisa.visa,
+            cash: Math.max(0, s.cash + hopVisa.cashDelta),
             level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
             health: Math.min(100, s.health + 12),
             laid_off: false,
             is_new_job: true,
-            message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！`
+            message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！${hopVisa.note}`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
@@ -386,17 +389,19 @@ export const careerEvents: Record<string, GameEvent> = {
           const baseBand = nextLvl === 'L8 (Principal)' ? 135 : nextLvl === 'L7 (Senior Staff)' ? 92 : nextLvl === 'L6 (Staff)' ? 65 : nextLvl === 'L5 (Senior)' ? 46 : nextLvl === 'L4' ? 34 : 25;
           const econMultiplier = s.macro_economy === 'bull' ? 1.20 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 6, Math.floor(baseBand * econMultiplier));
+          const hopVisa = resolveHopVisaTransition(s);
 
           return {
             company: 'meta',
             job_type: 'big_tech',
+            visa: hopVisa.visa,
             level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
-            cash: s.cash + (s.macro_economy === 'bull' ? 8 : 4),
+            cash: Math.max(0, s.cash + (s.macro_economy === 'bull' ? 8 : 4) + hopVisa.cashDelta),
             health: Math.max(0, s.health - 15),
             laid_off: false,
             is_new_job: true,
-            message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -15)。`
+            message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -15)。${hopVisa.note}`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
@@ -410,18 +415,20 @@ export const careerEvents: Record<string, GameEvent> = {
           const baseBand = nextLvl === 'L8 (Principal)' ? 130 : nextLvl === 'L7 (Senior Staff)' ? 90 : nextLvl === 'L6 (Staff)' ? 64 : nextLvl === 'L5 (Senior)' ? 45 : nextLvl === 'L4' ? 33 : 24;
           const econMultiplier = isBull ? 1.25 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
           const newTC = Math.max(s.tc + 5, Math.floor(baseBand * econMultiplier));
+          const hopVisa = resolveHopVisaTransition(s);
 
           return {
             company: 'nvidia',
             job_type: 'big_tech',
+            visa: hopVisa.visa,
             level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
-            cash: s.cash + (isBull ? 4 : 2),
+            cash: Math.max(0, s.cash + (isBull ? 4 : 2) + hopVisa.cashDelta),
             laid_off: false,
             is_new_job: true,
-            message: isBull
+            message: (isBull
               ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到了高 RSU 占比的 Nvidia 芯片团队包裹，职级定为 ${nextLvl}，年薪总包跃升至 ${newTC}w！`
-              : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`
+              : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`) + hopVisa.note
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
@@ -434,17 +441,19 @@ export const careerEvents: Record<string, GameEvent> = {
           const baseBand = nextLvl === 'L8 (Principal)' ? 140 : nextLvl === 'L7 (Senior Staff)' ? 95 : nextLvl === 'L6 (Staff)' ? 68 : nextLvl === 'L5 (Senior)' ? 48 : nextLvl === 'L4' ? 33 : 24;
           const econMultiplier = s.macro_economy === 'bull' ? 1.18 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
           const newTC = Math.max(s.tc + 6, Math.floor(baseBand * econMultiplier));
+          const hopVisa = resolveHopVisaTransition(s);
 
           return {
             company: 'tiktok',
             job_type: 'big_tech',
+            visa: hopVisa.visa,
             level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
-            cash: s.cash + 10,
+            cash: Math.max(0, s.cash + 10 + hopVisa.cashDelta),
             health: Math.max(0, s.health - 15),
             laid_off: false,
             is_new_job: true,
-            message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -15)。`
+            message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -15)。${hopVisa.note}`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
@@ -457,17 +466,19 @@ export const careerEvents: Record<string, GameEvent> = {
           const baseBand = nextLvl === 'L8 (Principal)' ? 120 : nextLvl === 'L7 (Senior Staff)' ? 82 : nextLvl === 'L6 (Staff)' ? 58 : nextLvl === 'L5 (Senior)' ? 40 : nextLvl === 'L4' ? 30 : 22;
           const econMultiplier = s.macro_economy === 'bull' ? 1.15 : (s.macro_economy === 'bear' ? 0.90 : 1.0);
           const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
+          const hopVisa = resolveHopVisaTransition(s);
 
           return {
             company: 'amazon',
             job_type: 'big_tech',
+            visa: hopVisa.visa,
             level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
-            cash: s.cash + (s.macro_economy === 'bull' ? 5 : 3),
+            cash: Math.max(0, s.cash + (s.macro_economy === 'bull' ? 5 : 3) + hopVisa.cashDelta),
             health: Math.max(0, s.health - 12),
             laid_off: false,
             is_new_job: true,
-            message: `【入职 Amazon / AWS】你拿到了西雅图电商与云计算巨头的 Offer，职级定为 ${nextLvl}，总包 ${newTC}w（RSU 四年后置兑现占大头）！但著名的 PIP 高压文化与 Frugality 节俭作风让你时刻紧绷 (健康 -12)。`
+            message: `【入职 Amazon / AWS】你拿到了西雅图电商与云计算巨头的 Offer，职级定为 ${nextLvl}，总包 ${newTC}w（RSU 四年后置兑现占大头）！但著名的 PIP 高压文化与 Frugality 节俭作风让你时刻紧绷 (健康 -12)。${hopVisa.note}`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
@@ -475,32 +486,41 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【签约入职 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('openai') : s.company !== 'openai'),
-        effect: (s) => ({
-          company: 'openai',
-          job_type: 'ai_research',
-          level: 'MTS',
-          tc: Math.max(s.tc + 22, 68),
-          cash: s.cash + 8,
-          health: Math.max(0, s.health - 10),
-          laid_off: false,
-          is_new_job: true,
-          message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！`
-        }),
+        effect: (s) => {
+          const hopVisa = resolveHopVisaTransition(s);
+          return {
+            company: 'openai',
+            job_type: 'ai_research',
+            visa: hopVisa.visa,
+            level: 'MTS',
+            tc: Math.max(s.tc + 22, 68),
+            cash: Math.max(0, s.cash + 8 + hopVisa.cashDelta),
+            health: Math.max(0, s.health - 10),
+            laid_off: false,
+            is_new_job: true,
+            message: `【斩获 OpenAI MTS 天价大包】顶级行业光环！你以 Member of Technical Staff 身份加入前沿大模型团队，TC 跃升至 ${Math.max(s.tc + 22, 68)}w！${hopVisa.note}`
+          };
+        },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s)),
       },
       {
         text: '【签约入职 AI Startup 初创团队】降薪赌一把早期核心员工期权大饼 (高风险高回报)',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('startup') : s.job_type !== 'startup'),
-        effect: (s) => ({
-          company: 'startup',
-          job_type: 'startup',
-          stocks: (s.stocks || 0) + 18,
-          tc: Math.max(16, Math.floor((s.tc || 20) * 0.85)),
-          health: Math.max(0, s.health - 10),
-          laid_off: false,
-          is_new_job: true,
-          message: '【加入 AI Startup】你接受了一家顶级风投领投的早期初创团队 Offer！虽然现金略微下调，但分到了极其丰厚的早期期权股份！'
-        }),
+        effect: (s) => {
+          const hopVisa = resolveHopVisaTransition(s);
+          return {
+            company: 'startup',
+            job_type: 'startup',
+            visa: hopVisa.visa,
+            stocks: (s.stocks || 0) + 18,
+            tc: Math.max(16, Math.floor((s.tc || 20) * 0.85)),
+            cash: Math.max(0, s.cash + hopVisa.cashDelta),
+            health: Math.max(0, s.health - 10),
+            laid_off: false,
+            is_new_job: true,
+            message: `【加入 AI Startup】你接受了一家顶级风投领投的早期初创团队 Offer！虽然现金略微下调，但分到了极其丰厚的早期期权股份！${hopVisa.note}`
+          };
+        },
         // Route to the employee-at-startup episode (keeps startup_work reachable now
         // that the founder paths correctly go to founder_annual_strategy).
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'startup_work'),
@@ -513,16 +533,19 @@ export const careerEvents: Record<string, GameEvent> = {
           const baseBand = nextLvl === 'L8 (Principal)' ? 125 : nextLvl === 'L7 (Senior Staff)' ? 86 : nextLvl === 'L6 (Staff)' ? 60 : nextLvl === 'L5 (Senior)' ? 44 : nextLvl === 'L4' ? 32 : 24;
           const econMultiplier = s.macro_economy === 'bull' ? 1.15 : s.macro_economy === 'bear' ? 0.90 : 1.0;
           const newTC = Math.max(s.tc + 5, Math.floor(baseBand * econMultiplier));
+          const hopVisa = resolveHopVisaTransition(s);
 
           return {
             company: 'apple',
             job_type: 'big_tech',
+            visa: hopVisa.visa,
             level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
+            cash: Math.max(0, s.cash + hopVisa.cashDelta),
             health: Math.min(100, s.health + 10),
             laid_off: false,
             is_new_job: true,
-            message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！`
+            message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！${hopVisa.note}`
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
@@ -538,21 +561,23 @@ export const careerEvents: Record<string, GameEvent> = {
           const newTC = Math.max(s.tc + 4, Math.floor(baseBand * econMultiplier));
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
+          const hopVisa = resolveHopVisaTransition(s);
 
           return {
             company: 'robinhood',
             job_type: 'big_tech',
+            visa: hopVisa.visa,
             level: nextLvl, last_promo_age: hopIsPromotion(s) ? s.age : s.last_promo_age, // stamp/celebrate ONLY on a real level-up — a lateral hire (laid-off senior, impact-short hop) must not fire a promo celebration
             tc: newTC,
-            cash: s.cash + (isBull ? 10 : isBear ? 1 : 4),
+            cash: Math.max(0, s.cash + (isBull ? 10 : isBear ? 1 : 4) + hopVisa.cashDelta),
             health: Math.max(0, s.health - (isBull ? 8 : isBear ? 14 : 10)),
             laid_off: false,
             is_new_job: true,
-            message: isBull
+            message: (isBull
               ? `【牛市红利大爆发！】你踩着散户狂热的牛市浪尖入职 Robinhood！交易量暴涨带动 Bonus 与期权翻倍，职级定级 ${nextLvl}，总包冲上 ${newTC}w，还白拿一笔签字费！`
               : isBear
               ? `【熊市逆行入局】你在加密寒冬与交易量枯竭中加入 Robinhood，定级 ${nextLvl}、总包仅 ${newTC}w，且笼罩在下一轮裁员风暴的阴影下，节奏高压 (健康 -14)。`
-              : `【入职 Robinhood】你加入散户券商核心交易团队，定级 ${nextLvl}、锁定总包 ${newTC}w。fintech 的牛熊节奏让你既兴奋又紧绷。`
+              : `【入职 Robinhood】你加入散户券商核心交易团队，定级 ${nextLvl}、锁定总包 ${newTC}w。fintech 的牛熊节奏让你既兴奋又紧绷。`) + hopVisa.note
           };
         },
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),

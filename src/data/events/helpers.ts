@@ -86,6 +86,37 @@ export const hopTargetLevel = (s: GameState): string => {
 export const hopIsPromotion = (s: GameState): boolean =>
   LADDER.indexOf(hopTargetLevel(s)) > LADDER.indexOf(currentLadderRung(s));
 
+/**
+ * Handles visa resolution when joining a new company via job-hop.
+ * L-1 is strictly tied to the original petitioning employer. If hopping to a new company:
+ * - If on permanent status (Green Card / Citizen / i485_pending): retains permanent visa.
+ * - If holding L-1 (外派):
+ *   - If qualified for O-1 (PhD, impact >= 20, leetcode >= 85, or ai_research): new employer petitions O-1.
+ *   - Otherwise: bridges via Day 1 CPT to maintain work authorization.
+ */
+export const resolveHopVisaTransition = (s: GameState): { visa: string; cashDelta: number; note: string } => {
+  if (s.visa === '绿卡' || s.visa === '公民' || s.gc_stage === 'i485_pending' || s.gc_stage === 'approved') {
+    return { visa: s.visa, cashDelta: 0, note: '' };
+  }
+  if (s.visa === 'L1 (外派)') {
+    const o1Eligible = s.is_phd || (s.impact || 0) >= 20 || s.leetcode >= 85 || s.job_type === 'ai_research';
+    if (o1Eligible) {
+      return {
+        visa: 'O1 (杰出人才)',
+        cashDelta: 0,
+        note: '\n\n【工签解绑】新公司律所评估了你的硬核技术背景，成功为你加急办妥 O-1 杰出人才签证，顺利解绑原雇主 L-1 限制！'
+      };
+    } else {
+      return {
+        visa: 'Day 1 CPT',
+        cashDelta: -1.5,
+        note: '\n\n【工签过渡】因原 L-1 签证绑定原雇主无法直接跨公司 Transfer，新雇主协助你紧急挂靠 Day 1 CPT 学籍合法入职！'
+      };
+    }
+  }
+  return { visa: s.visa, cashDelta: 0, note: '' };
+};
+
 // impact 只对标准大厂/研究/量化阶梯有意义(founder/trader/unemployed 无此概念)。
 export const isImpactCareer = (s: GameState): boolean =>
   s.job_type === 'big_tech' || s.job_type === 'ai_research' ||

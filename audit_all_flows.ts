@@ -186,7 +186,10 @@ const reachableEvents = new Set<string>([
   'choose_year',
   'choose_school',
   'sv_daily_life',
+  // 商城 (ShopModal) 里通过 onTriggerEvent 触发的面板 —— 它们不经事件图的 nextEventId 到达,
+  // 而是常驻 HUD 商城弹窗随时可开,故与 manage_rental_properties 一样显式列为可达根。
   'manage_rental_properties',
+  'change_rental',
   'fire_milestone_choice',
   'choose_housing',
   'end',

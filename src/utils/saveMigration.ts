@@ -11,6 +11,7 @@ export interface RawSaveEnvelope {
   gameState?: Partial<GameState>;
   currentEventId?: string;
   hasUnlockedShopToast?: boolean;
+  hasSeenBuyHouseToast?: boolean;
   hasOpenedShop?: boolean;
   [key: string]: unknown;
 }
@@ -19,6 +20,7 @@ export interface MigratedSaveResult {
   gameState: GameState;
   currentEventId: string;
   hasUnlockedShopToast: boolean;
+  hasSeenBuyHouseToast: boolean;
   hasOpenedShop: boolean;
   migratedFromVersion?: number;
 }
@@ -65,6 +67,7 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
     gameState: fallbackState,
     currentEventId: 'choose_trait',
     hasUnlockedShopToast: false,
+    hasSeenBuyHouseToast: false,
     hasOpenedShop: false,
   };
 
@@ -151,6 +154,7 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
     gameState: migratedState,
     currentEventId,
     hasUnlockedShopToast: Boolean(envelope.hasUnlockedShopToast),
+    hasSeenBuyHouseToast: Boolean(envelope.hasSeenBuyHouseToast),
     hasOpenedShop: Boolean(envelope.hasOpenedShop),
     migratedFromVersion: saveVersion < CURRENT_SAVE_VERSION ? saveVersion : undefined,
   };

@@ -26,6 +26,7 @@ const loadInitialGameData = (): {
   gameState: GameState;
   currentEventId: string;
   hasUnlockedShopToast: boolean;
+  hasSeenBuyHouseToast: boolean;
   hasOpenedShop: boolean;
   loadError?: boolean;
 } => {
@@ -83,6 +84,7 @@ export default function App() {
   const [hasOpenedShop, setHasOpenedShop] = useState<boolean>(initialGameData.hasOpenedShop);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
   const [hasUnlockedShopToast, setHasUnlockedShopToast] = useState<boolean>(initialGameData.hasUnlockedShopToast);
+  const [hasSeenBuyHouseToast, setHasSeenBuyHouseToast] = useState<boolean>(initialGameData.hasSeenBuyHouseToast);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getIsMuted());
   const [isCoolingDown, setIsCoolingDown] = useState<boolean>(false);
   const [dopaminePills, setDopaminePills] = useState<DopaminePill[]>([]);
@@ -129,6 +131,7 @@ export default function App() {
         gameState: trimmedState,
         currentEventId,
         hasUnlockedShopToast,
+        hasSeenBuyHouseToast,
         hasOpenedShop,
       };
       safeStorage.setItem(STORAGE_KEYS.GAME_SAVE, JSON.stringify(saveData));
@@ -156,7 +159,7 @@ export default function App() {
       window.removeEventListener('pagehide', flush);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [gameState, currentEventId, hasUnlockedShopToast, hasOpenedShop]);
+  }, [gameState, currentEventId, hasUnlockedShopToast, hasSeenBuyHouseToast, hasOpenedShop]);
 
   // One-time notice if the previous save was corrupt: we backed it up to `.bak`
   // and recovered to a fresh game instead of silently discarding progress.
@@ -194,10 +197,23 @@ export default function App() {
     if (gameState.job_type !== undefined && !hasUnlockedShopToast) {
       setHasUnlockedShopToast(true);
       sound.play('achievement');
-      setAchievementToast('[商城解锁] 恭喜步入职场！资产与消费商城已解锁，可前往购买豪车与置业！');
-      setTimeout(() => setAchievementToast(null), 5500);
+      setAchievementToast('[商城解锁] 恭喜步入职场！点右上角 [S] 商城:买房 / 换租改善居住 / 理疗回血 / 买车都在这里，别忽略了！');
+      setTimeout(() => setAchievementToast(null), 6000);
     }
   }, [gameState.job_type, hasUnlockedShopToast]);
+
+  // 置业教育:总资产首次够首付($40w)且尚未买房时,提示一次去哪买房(避免"钱够了却找不到入口")。
+  useEffect(() => {
+    const totalAssets = (gameState.cash || 0) + (gameState.stocks || 0);
+    const isPlaying = gameState.status === 'playing';
+    const owned = isOwnedHousing(gameState.housing_name);
+    if (isPlaying && totalAssets >= 40 && !owned && !hasSeenBuyHouseToast) {
+      setHasSeenBuyHouseToast(true);
+      sound.play('achievement');
+      setAchievementToast('[置业提醒] 首付已够 ($40w+)！可在年度面板选『置业安家』，或点右上角 [S] 商城参与抢房大战上车！');
+      setTimeout(() => setAchievementToast(null), 6000);
+    }
+  }, [gameState.cash, gameState.stocks, gameState.housing_name, gameState.status, hasSeenBuyHouseToast]);
 
   useEffect(() => {
     const newlyUnlocked = checkAndUnlockAchievements(gameState);

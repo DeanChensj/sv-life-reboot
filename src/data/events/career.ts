@@ -1,7 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
-import { isPermanentVisa } from '../../constants/gameConstants';
+import { isPermanentVisa, liquidateStocksToCover } from '../../constants/gameConstants';
 import { isTopTierCSSchool } from '../schoolProfiles';
 import { meetsOrganicPromo, normalizeLevel } from '../levelProfiles';
 
@@ -3303,9 +3303,10 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const hit = gameRandom() < 0.60;
           const gain = hit ? 90 : 20;
+          const liq = liquidateStocksToCover(s.cash - 15, (s.stocks || 0) + gain);
           return {
-            cash: s.cash - 15,
-            stocks: (s.stocks || 0) + gain,
+            cash: liq.cash,
+            stocks: liq.stocks,
             story_flags: { ...(s.story_flags || {}), linda_deal_done: true },
             message: hit
               ? '【独角兽暴赚！】该公司迅速敲定下一轮融资，你的老股持仓估值暴涨至 $90w！'

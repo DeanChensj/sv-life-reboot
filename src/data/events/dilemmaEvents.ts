@@ -88,7 +88,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【独吞功劳抢下升职】独吞核心架构功劳，抢下升职名额 (背弃提携恩情)',
-        condition: employed,
+        condition: (s) => employed(s) && (s.level === 'L3' || s.level === 'L4' || !s.level),
         effect: (s): Partial<GameState> => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
           let nextLevel = cur;

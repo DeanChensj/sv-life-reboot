@@ -25,7 +25,7 @@ export const startupEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < 0.25;
           return win
-            ? { cash: s.cash + 60, tc: s.tc + 10, message: '你带资入组！公司靠你的资金撑到了 A 轮融资并估值大暴涨，你的 TC 与期权收益双双上涨！' }
+            ? { cash: s.cash + 60, tc: s.tc + 10, message: '你出资 $10w 带资入组！公司靠你的过桥资金撑到了 A 轮融资估值大暴涨，早期天使投资净赚 $60w 现金，TC 与期权双双调升！' }
             : { cash: s.cash - 10, tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 15, message: '砸进去的 $10w 没能挽救寒冬，公司还是倒闭了...你不仅没了工作还心痛不已。' };
         },
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),

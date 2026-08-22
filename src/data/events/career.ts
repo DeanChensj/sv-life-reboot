@@ -3,7 +3,7 @@ import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, 
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa, liquidateStocksToCover } from '../../constants/gameConstants';
 import { isTopTierCSSchool } from '../schoolProfiles';
-import { meetsOrganicPromo, normalizeLevel } from '../levelProfiles';
+import { meetsOrganicPromo, normalizeLevel, promoBlockerHint } from '../levelProfiles';
 
 export const careerEvents: Record<string, GameEvent> = {
   'job_hunt': {
@@ -1095,7 +1095,10 @@ export const careerEvents: Record<string, GameEvent> = {
             if (meetsOrganicPromo(s, 'L8 (Principal)') && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 35.0, level: 'L8 (Principal)', impact: addImpact(s, 15), last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
           }
           const meritBonus = gameRandom() < 0.35 ? 2.0 : 1.0;
-          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + meritBonus, impact: addImpact(s, 6), message: isKingOfRoll ? `【卷王日常高产】你高质高效交付了核心模块，拿到了项目奖金 (+${meritBonus}w TC)！` : `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！Manager：“今年部门升职 Quota 紧张，你的指标已入库，明年一定为你申请！”` };
+          // 升职受阻诊断:Staff+(L5→L6+)这段的隐形门槛(impact/人脉/leadership)在没升成时明确告知
+          // 玩家卡在哪,让他能主动补短板再冲(像读牛熊指标一样读升职信号)。L3/L4 返回空串,回退通用文案。
+          const blocker = promoBlockerHint(s);
+          return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + meritBonus, impact: addImpact(s, 6), message: isKingOfRoll ? `【卷王日常高产】你高质高效交付了核心模块，拿到了项目奖金 (+${meritBonus}w TC)！${blocker ? ' ' + blocker : ''}` : `你拼命熬夜写代码，拿到了项目奖金 (+${meritBonus}w TC)！${blocker || 'Manager：“今年部门升职 Quota 紧张，你的指标已入库，明年一定为你申请！”'}` };
         },
         nextEventId: (s) => {
           // Route on the ACTUAL promotion (last_promo_age is set to s.age ONLY on a

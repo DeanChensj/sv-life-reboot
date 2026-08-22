@@ -1961,6 +1961,33 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 37 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 38: 升职受阻诊断 (Career Radar on failed promotion)。L5+ 玩家内卷未升成时,
+// 失败反馈须明确点出隐形门槛的卡点(Impact / 人脉Leadership / 算法),让玩家能主动补短板,
+// 而非只给通用「Quota 紧张」。锁住"读升职信号→调整"的闭环。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 38] 升职受阻诊断 (缺 Impact/人脉 会明确告知) ---');
+  const grind = events['sv_daily_life'].choices.find((c) => c.text.includes('疯狂内卷'))!;
+  // L5、impact=0、network 低 → 冲 L6 必然受阻(impact<20 短路 meetsOrganicPromo)→ 落入底部诊断反馈。
+  const stuck = { ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
+    leetcode: 70, impact: 0, network: 10, charm: 12, tc: 60, health: 80, age: 40, last_promo_age: 35, status: 'playing' } as GameState;
+  let sawImpactDiag = false;
+  for (let i = 0; i < 20; i++) {
+    const r = grind.effect(stuck);
+    if (r.level === 'L6 (Staff)') { assert(false, 'impact=0 的 L5 不应升到 L6'); break; }
+    if ((r.message || '').includes('晋升诊断') && (r.message || '').includes('Impact')) sawImpactDiag = true;
+  }
+  assert(sawImpactDiag, 'L5 冲 L6 因 Impact 不足受阻时,失败反馈须点出「晋升诊断…Impact 不足」');
+
+  // L3 玩家不触发 Staff+ 诊断(其失败文案走既有的算法提示),promoBlockerHint 返回空。
+  const l3 = { ...stuck, level: 'L3', leetcode: 20, impact: 0 } as GameState;
+  const l3msg = (grind.effect(l3).message || '');
+  assert(!l3msg.includes('晋升诊断'), 'L3 不触发 Staff+ 晋升诊断(交给既有算法提示)');
+
+  console.log('✅ CUJ 38 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

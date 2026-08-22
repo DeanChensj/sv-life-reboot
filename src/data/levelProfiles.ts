@@ -155,3 +155,36 @@ export const meetsOrganicPromo = (
   if (opts?.sprint) return statBar;
   return statBar && s.tc >= r.tc && s.health >= r.health;
 };
+
+/**
+ * 升职受阻诊断:当一次晋升尝试没能兑现时,对比当前状态与下一职级的 organicPromoReq,
+ * 给出「卡在哪」的可行动反馈(跨组影响力 Impact / 算法深度 / 高层人脉与 Leadership 背书 /
+ * 向上管理与沟通)。让玩家像读牛熊指标一样,读懂升职信号后主动补短板。
+ * - 仅覆盖 Staff+ (L5→L6→L7→L8) 这段「隐形门槛」——L3/L4 的失败文案本就已明示算法门槛。
+ * - 硬指标全达标但仍未升,则说明是资历/名额(Quota)问题,给出对应提示。
+ * 返回空串表示当前职级不适用(交给调用方回退到通用文案)。
+ */
+export const promoBlockerHint = (s: GameState): string => {
+  const cur = normalizeLevel(s.level, s);
+  if (!cur) return '';
+  const nextMap: Partial<Record<CareerLevel, CareerLevel>> = {
+    'L5 (Senior)': 'L6 (Staff)',
+    'L6 (Staff)': 'L7 (Senior Staff)',
+    'L7 (Senior Staff)': 'L8 (Principal)',
+  };
+  const target = nextMap[cur];
+  if (!target) return '';
+  const r = getOrganicPromoReq(target);
+  if (!r) return '';
+  const gaps: string[] = [];
+  if ((s.impact || 0) < r.impact) gaps.push(`跨组影响力 Impact 不足 (${Math.round(s.impact || 0)}/${r.impact})`);
+  if ((s.leetcode || 0) < r.leetcode) gaps.push(`算法/技术深度不够 (${s.leetcode || 0}/${r.leetcode})`);
+  if ((s.network || 10) < r.network) gaps.push(`高层人脉与 Leadership 背书不足 (${s.network || 10}/${r.network})`);
+  if ((s.charm || 10) < r.charm) gaps.push(`向上管理与团队沟通欠佳 (${s.charm || 10}/${r.charm})`);
+  if (gaps.length > 0) {
+    return `【晋升诊断】冲击 ${target} 受阻 —— ${gaps.slice(0, 2).join('；')}。针对性补齐后再冲!`;
+  }
+  const yig = s.age - (s.last_promo_age ?? (s.age - 1));
+  if (yig < 2) return `【晋升诊断】冲击 ${target} 硬指标已达标,但本级资历尚浅 (需满 2 年),稳一稳明年冲!`;
+  return `【晋升诊断】冲击 ${target} 各项硬指标均已达标,惜败于本年度晋升名额 (Quota) 竞争,明年再冲!`;
+};

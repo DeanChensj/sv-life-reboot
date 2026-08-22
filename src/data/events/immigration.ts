@@ -292,12 +292,50 @@ export const immigrationEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 10),
           message: '你转到了温哥华分公司，举家搬迁折腾了一整年，凭 L1 签证曲线救国保住了工作！一年后顺利申请调回湾区 Headquarters！'
         }),
-        nextEventId: 'sv_year_end_settlement',
-      }
-    ]
-  },
+         nextEventId: 'sv_year_end_settlement',
+       }
+     ]
+   },
 
-  'post_green_card': {
+   'day1_cpt_compliance': {
+     id: 'day1_cpt_compliance',
+     title: '【身份抽检】Day 1 CPT 合规审查',
+     description: '移民局 SEVP 对你挂靠的 Day 1 CPT 院校发起了一轮合规抽检:核查学校的 E-Verify 资质、你的课程出勤与 CPT 工作授权是否名副其实。HR 与学校国际学生办公室同时发来问询,你必须妥善应对,证明自己的学生身份货真价实,否则合法工作身份将亮起红灯。',
+     choices: [
+       {
+         text: '【律师全面复核】聘请移民律师彻底梳理 I-20、课表与工作授权,确保万无一失 (花费 $0.8w)',
+         costBadge: '花费 $0.8w',
+         condition: (s) => s.cash >= 0.8,
+         effect: (s) => ({
+           cash: s.cash - 0.8,
+           message: '【合规无虞】移民律师逐项复核了你的 CPT 学校资质与工作授权材料,抽检顺利通过,身份稳如泰山。'
+         }),
+         nextEventId: 'sv_daily_life',
+       },
+       {
+         text: '【红眼航班赴校】自费飞回学校本部完成线下考勤与课程打卡 (花费 $0.3w · 舟车劳顿)',
+         costBadge: '花费 $0.3w',
+         effect: (s) => ({
+           cash: Math.max(0, s.cash - 0.3),
+           health: Math.max(0, s.health - 8),
+           message: '【亲赴过检】你连夜飞回学校本部补齐线下课程与考勤记录,舟车劳顿身心俱疲,但抽检有惊无险地过关了 (健康 -8)。'
+         }),
+         nextEventId: 'sv_daily_life',
+       },
+       {
+         text: '【自行申辩】不花钱,自己整理材料向 SEVIS 与学校申辩证明身份合规 (免费 · 耗神)',
+         effect: (s) => {
+           const pass = gameRandom() < 0.85;
+           return pass
+             ? { health: Math.max(0, s.health - 6), message: '【自证清白】你熬夜整理齐全了 I-20、课表与工作授权材料,成功向抽检自证学生身份合规 (健康 -6)。' }
+             : { health: Math.max(0, s.health - 6), cash: Math.max(0, s.cash - 1), message: '【补件过关】材料被要求追加补件,你额外花了些时间精力与 $1w 加急处理,最终仍有惊无险维持了合法身份 (健康 -6)。' };
+         },
+         nextEventId: 'sv_daily_life',
+       }
+     ]
+   },
+
+   'post_green_card': {
     id: 'post_green_card',
     title: '【绿卡上岸】硅谷新篇章与自由翱翔',
     description: '身份的枷锁解除后，你发现硅谷的烦恼并没有结束。现在的你面临着人生新的十字路口。',

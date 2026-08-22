@@ -1992,6 +1992,67 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 38 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 39: Day 1 CPT 不是「白嫖永动机」。锁三件事:①年终每年多缴 $1.2w 学费 + 健康 -4;
+// ②约 10% 概率触发 day1_cpt_compliance 合规抽检(settlement 路由可达);③抽检面板三条出路
+// 均化解、无 game_over、不回环(全部回 sv_daily_life),且破产玩家仍有可选项(不死胡同)。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 39] Day 1 CPT 年度学业成本 + 合规抽检 (非白嫖永动机) ---');
+  const settle = events['sv_year_end_settlement'].choices[0];
+
+  // ① 年度学费 + 健康代价:CPT 与绿卡失业玩家其余条件全同,唯一差异应是 +$1.2w 学费与 -4 健康。
+  // 二者失业(无 H1B 抽签)、stocks=0、经济中性 → effect 全程零随机,可精确断言。
+  const cptUnemp = { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'unemployed',
+    laid_off: false, tc: 0, cash: 30, stocks: 0, health: 50, is_married: false, has_pet: false,
+    macro_economy: 'neutral', rental_income: 0, status: 'playing' } as GameState;
+  const gcUnemp = { ...cptUnemp, visa: '绿卡' } as GameState;
+  setGameSeed(1);
+  const rC = settle.effect(cptUnemp);
+  setGameSeed(1);
+  const rG = settle.effect(gcUnemp);
+  assert(Math.abs(((rG.cash ?? 0) - (rC.cash ?? 0)) - 1.2) < 0.05, 'Day 1 CPT 每年多缴 $1.2w 学费');
+  assert(rC.health === 61 && rG.health === 65, 'CPT 失业年 health=50+15-4=61,绿卡=65 (CPT 多扣 4 健康)');
+  assert((rC.message ?? '').includes('Day 1 CPT 学业维持'), 'CPT 年终结算附带学业维持提示文案');
+  assert(!(rG.message ?? '').includes('Day 1 CPT 学业维持'), '非 CPT 玩家不出现 CPT 学费文案');
+
+  // ② settlement 路由:在职 CPT 玩家约 10% 进 day1_cpt_compliance,其余进 sv_daily_life,别无它路。
+  const cptEmp = { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'big_tech', company: 'google',
+    laid_off: false, gc_progress: 2, cash: 50, stocks: 50, win_threshold: 500, h1b_attempts: 0,
+    age: 40, status: 'playing' } as GameState;
+  const routeTargets = new Set<string>();
+  for (let seed = 0; seed < 300; seed++) {
+    setGameSeed(seed);
+    routeTargets.add((settle.nextEventId as (s: GameState) => string)(cptEmp));
+  }
+  assert(routeTargets.has('day1_cpt_compliance'), '在职 CPT 玩家会触发 day1_cpt_compliance 合规抽检 (可达)');
+  assert([...routeTargets].every((t) => t === 'day1_cpt_compliance' || t === 'sv_daily_life'),
+    'CPT settlement 只路由到 合规抽检 或 sv_daily_life,无其它出口');
+
+  // ③ 合规抽检面板:存在、三条出路全部回 sv_daily_life、任何随机下都不 game_over、破产也有活路。
+  const compliance = events['day1_cpt_compliance'];
+  assert(!!compliance, 'day1_cpt_compliance 事件已定义');
+  assert(compliance.choices.length >= 3, '合规抽检提供至少 3 条应对出路');
+  assert(compliance.choices.every((c) => c.nextEventId === 'sv_daily_life'),
+    '合规抽检所有出路回 sv_daily_life (不回环、不卡死)');
+  const broke = { ...generateInitialState(), visa: 'Day 1 CPT', cash: 0, stocks: 0, health: 40, status: 'playing' } as GameState;
+  const avail = compliance.choices.filter((c) => !c.condition || c.condition(broke));
+  assert(avail.length >= 1, '破产 (cash=0) CPT 玩家在合规抽检仍有可选出路 (非死胡同)');
+  let sawGameOver = false;
+  for (const c of compliance.choices) {
+    for (let seed = 0; seed < 40; seed++) {
+      setGameSeed(seed);
+      const solvent = { ...generateInitialState(), visa: 'Day 1 CPT', cash: 20, stocks: 0, health: 50, status: 'playing' } as GameState;
+      if (c.condition && !c.condition(solvent)) continue;
+      const r = c.effect(solvent);
+      if (r.status === 'game_over') sawGameOver = true;
+    }
+  }
+  assert(!sawGameOver, '合规抽检任何出路在任何随机下都不会 game_over (仅现金/健康代价)');
+
+  console.log('✅ CUJ 39 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

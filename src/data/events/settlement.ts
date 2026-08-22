@@ -34,7 +34,11 @@ export const settlementEvents: Record<string, GameEvent> = {
            // 躺平(TC 停滞)玩家被持续上涨的物价蚕食 —— 与 impact 机制协同，制造「趁早 FIRE、别拖」的压力。
            // 不影响 FIRE 目标与 TC 档,只作用于每年生活开销。
            const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (s.year || 2018) - 2018)));
-           const totalExpense = parseFloat(((housingExpense + carExpense + livingExpense + petExpense) * inflationFactor).toFixed(2));
+           // Day 1 CPT 不是「白嫖永动机」：维持合法学生身份要每年真金白银缴学费 ($1.2w)。计入
+           // 年度开销(走 liquidateStocksToCover 自动平仓兜底,和房租同源),让长期挂靠 CPT 躺着
+           // 白嫖工作身份的玩家持续失血 —— 与下方健康扣减 + ~10% 合规抽检共同施压尽早转正/上岸。
+           const day1CptTuition = s.visa === 'Day 1 CPT' ? 1.2 : 0;
+           const totalExpense = parseFloat(((housingExpense + carExpense + livingExpense + petExpense) * inflationFactor + day1CptTuition).toFixed(2));
 
            let newEconomy = s.macro_economy || 'neutral';
            let economyMsg = '';
@@ -112,7 +116,15 @@ export const settlementEvents: Record<string, GameEvent> = {
              petMsg = ` 【宠物陪伴】家里的${s.pet_name || '宠物'}每天治愈着你的心神 (健康 +2)。`;
            }
 
-           let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost));
+           // Day 1 CPT 学业负担:白天全职写代码、晚上/周末应付水硕课程与作业,精力被持续透支 (健康 -4)。
+           let day1CptHealthHit = 0;
+           let day1CptMsg = '';
+           if (s.visa === 'Day 1 CPT') {
+             day1CptHealthHit = 4;
+             day1CptMsg = ` 【Day 1 CPT 学业维持】为保住合法学生身份,你缴纳了 $1.2w 学费,并挤出精力应付课程与作业 (健康 -4)。`;
+           }
+
+           let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost - day1CptHealthHit));
            let gcMsg = '';
 
            if (s.visa === '绿卡' || s.visa === '公民' || s.gc_progress >= 5) {
@@ -430,6 +442,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                 gcMsg,
                 meritMsg,
                 petMsg,
+                day1CptMsg,
                 economyMsg,
                 founderMsg,
               ].map(m => (m ? m.trim() : '')).filter(Boolean).join('\n'),
@@ -467,6 +480,13 @@ export const settlementEvents: Record<string, GameEvent> = {
           // via the router would inject the ~40% annual founder-crisis and tank the FIRE rate.
           if (s.job_type === 'startup_founder') return 'founder_annual_strategy';
           if (s.job_type === 'trader') return 'trader_annual_strategy';
+
+          // Day 1 CPT 玩家每年约 10% 概率遭遇 SEVIS/移民局合规抽检 —— CPT 学籍并非「隐身白嫖」,
+          // 挂靠水硕的 E-Verify 与课程出勤合规始终悬在头顶。抽检面板三条出路均可化解 (无 game_over、
+          // 不回环),但都要付出现金/健康代价。visa 在 effect 中若已抽中 H1B 转正则不再触发 (已脱离 CPT)。
+          if (s.visa === 'Day 1 CPT') {
+            return gameRandom() < 0.1 ? 'day1_cpt_compliance' : 'sv_daily_life';
+          }
 
           return 'sv_daily_life';
         },

@@ -40,7 +40,10 @@ export const deductAssets = (s: GameState, cost: number): { cash: number; stocks
  * 综合评估：学校声誉、卷王天赋、学术成果 Impact、算法硬实力、实验室推荐信与 MS 曲线救国重申加成
  */
 export const calculatePhdAdmitProb = (s: GameState, isMaster: boolean = false): number => {
-  let prob = isMaster ? 0.25 : 0.20;
+  // 无投入地板压低:PhD 应奖励科研(impact)/算法(leetcode)投入,而非"零背景白嫖抽奖"。
+  // undergrad base 0.20→0.12;下方 clamp 下限 0.10→0.06。强背景加成与 0.92 顶配封顶不变。
+  // (master base 保持 0.25:MS 申博路径已有 leetcode>=50 || impact>=10 准入门槛把关,非无投入。)
+  let prob = isMaster ? 0.25 : 0.12;
   if (s.school === 'cmu') prob += 0.20;
   else if (s.school === 'ucb') prob += 0.15;
 
@@ -63,7 +66,7 @@ export const calculatePhdAdmitProb = (s: GameState, isMaster: boolean = false): 
   if (s.story_flags?.phd_ready) prob += 0.18;
   if (s.story_flags?.phd_reapply_ready) prob += 0.12;
 
-  return Math.min(0.92, Math.max(0.10, prob));
+  return Math.min(0.92, Math.max(0.06, prob));
 };
 
 // 跳槽与社招定级：

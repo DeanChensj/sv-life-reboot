@@ -2367,12 +2367,13 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // 1. calculatePhdAdmitProb 权重校验
   const plainStudent = { ...generateInitialState(), school: 'state', leetcode: 30, impact: 0, status: 'playing' } as GameState;
   const plainProb = calculatePhdAdmitProb(plainStudent, false);
-  assert(plainProb === 0.20, '普通美本基础录取率为 20%');
+  // 无投入地板收紧:普通美本(无科研/低算法)基础录取率 12%,PhD 奖励投入而非白嫖抽奖。
+  assert(plainProb === 0.12, '普通美本(零投入)基础录取率收紧至 12%');
 
   const juanwangStudent = { ...generateInitialState(), trait_title: '卷王之王', school: 'ucb', leetcode: 65, impact: 0, status: 'playing' } as GameState;
   const juanwangProb = calculatePhdAdmitProb(juanwangStudent, false);
-  // 0.20 + 0.15 (ucb) + 0.15 (卷王) + 0.12 (leetcode 65) = 0.62
-  assert(Math.abs(juanwangProb - 0.62) < 0.001, `卷王之王获得专属加成，录取率达 ${(juanwangProb * 100).toFixed(0)}%`);
+  // 0.12 + 0.15 (ucb) + 0.15 (卷王) + 0.12 (leetcode 65) = 0.54
+  assert(Math.abs(juanwangProb - 0.54) < 0.001, `卷王之王获得专属加成，录取率达 ${(juanwangProb * 100).toFixed(0)}%`);
 
   const researchJuanwang = { ...generateInitialState(), trait_title: '卷王之王', school: 'cmu', leetcode: 85, impact: 15, story_flags: { phd_ready: true }, status: 'playing' } as GameState;
   const researchProb = calculatePhdAdmitProb(researchJuanwang, false);

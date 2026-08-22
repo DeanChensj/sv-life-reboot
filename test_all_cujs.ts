@@ -2313,6 +2313,51 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 44 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 45: 美国天价急诊与 ICU 惊魂 (us_healthcare_icu_crisis)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 45] 美国急救车与 ICU 天价账单事件 ---');
+  const icuEvent = events['us_healthcare_icu_crisis'];
+  assert(!!icuEvent, 'us_healthcare_icu_crisis 事件已注册');
+  assert(icuEvent.choices.length === 4, 'icuEvent 拥有 4 个分支');
+
+  // Choice 1: 大厂 PPO 医保兜底 (自付 $0.3w)
+  const ppoChoice = icuEvent.choices[0];
+  const bigTechEmp = { ...generateInitialState(), job_type: 'big_tech', company: 'google', cash: 5, health: 30, status: 'playing' } as GameState;
+  const unemployed = { ...generateInitialState(), job_type: 'unemployed', laid_off: true, cash: 5, health: 30, status: 'playing' } as GameState;
+  assert(ppoChoice.condition ? ppoChoice.condition(bigTechEmp) : false, '大厂员工可使用 PPO 医保兜底');
+  assert(ppoChoice.condition ? !ppoChoice.condition(unemployed) : true, '失业玩家不可使用大厂 PPO 医保兜底');
+  const ppoRes = ppoChoice.effect(bigTechEmp);
+  assert(ppoRes.cash === 4.7, '大厂医保自付 $0.3w');
+  assert((ppoRes.health ?? 0) > 30, '医治后健康提升');
+  assert(ppoRes.story_flags?.icu_crisis_survived === true, '标记已度过 ICU 危机');
+
+  // Choice 2: Itemized Bill 硬核砍价 (自付 $0.6w)
+  const itemChoice = icuEvent.choices[1];
+  assert(itemChoice.condition ? itemChoice.condition(unemployed) : true, '失业玩家可使用 Itemized 砍价');
+  const itemRes = itemChoice.effect(unemployed);
+  assert(itemRes.cash === 4.4, 'Itemized 砍价自付 $0.6w');
+
+  // Choice 3: No Surprises Act 法律维权
+  const legalChoice = icuEvent.choices[2];
+  const lowCharm = { ...generateInitialState(), charm: 8, network: 5, cash: 5, status: 'playing' } as GameState;
+  const highCharm = { ...generateInitialState(), charm: 18, network: 5, cash: 5, status: 'playing' } as GameState;
+  assert(legalChoice.condition ? !legalChoice.condition(lowCharm) : true, '低魅力/人脉不可维权');
+  assert(legalChoice.condition ? legalChoice.condition(highCharm) : false, '高魅力/人脉可维权');
+  const legalRes = legalChoice.effect(highCharm);
+  assert(legalRes.cash === 4.8, '维权后仅自付 $0.2w');
+
+  // Choice 4: 裸奔大出血 (安全扣减股票，不产生负现金)
+  const uninsuredChoice = icuEvent.choices[3];
+  const brokePlayer = { ...generateInitialState(), cash: 0.5, stocks: 10, health: 25, status: 'playing' } as GameState;
+  const brokeRes = uninsuredChoice.effect(brokePlayer);
+  assert(brokeRes.cash === 0, '现金清零且不为负');
+  assert(brokeRes.stocks === 8, '股票平仓扣除剩余 $2.0w');
+
+  console.log('✅ CUJ 45 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

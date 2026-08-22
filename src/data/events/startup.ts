@@ -25,7 +25,7 @@ export const startupEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < 0.25;
           return win
-            ? { cash: s.cash + 60, tc: s.tc + 10, message: '你带资入组！公司靠你的资金撑到了 A 轮融资并估值大暴涨，你的 TC 与期权收益双双上涨！' }
+            ? { cash: s.cash + 60, tc: s.tc + 10, message: '你出资 $10w 带资入组！公司靠你的过桥资金撑到了 A 轮融资估值大暴涨，早期天使投资净赚 $60w 现金，TC 与期权双双调升！' }
             : { cash: s.cash - 10, tc: 0, laid_off: true, job_type: 'unemployed', health: s.health - 15, message: '砸进去的 $10w 没能挽救寒冬，公司还是倒闭了...你不仅没了工作还心痛不已。' };
         },
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
@@ -144,15 +144,17 @@ export const startupEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => {
           const onPoint = s.founder_situation === 'churn';
+          const gain = onPoint ? 700 : 350;
+          const newVal = (s.company_valuation || 180) + gain;
           return {
             mid_year: true, season_stage: 'h1',
             health: Math.max(0, s.health - 8),
             cash: parseFloat((s.cash + (onPoint ? 10 : 5)).toFixed(1)),
-            company_valuation: (s.company_valuation || 180) + (onPoint ? 700 : 350),
+            company_valuation: newVal,
             ...(onPoint ? { founder_situation: undefined } : {}),
             message: onPoint
-              ? '【对症下药·成功止血】正值客户流失当口,你带队死磕 PMF 与企业大单,续约率触底反弹、ARR 破 $80w,估值强劲修复!'
-              : '【ARR 稳步破 $50w 美元!】经过半年高强度产品迭代与上门攻坚,公司拿下多家科技企业采购合同,实现微利造血与创始人分红!'
+              ? `【对症下药·成功止血】正值客户流失当口，你带队死磕 PMF 与企业大单，续约率触底反弹、ARR 破 $80w！按 SaaS/AI 行业 ARR 估值倍数，公司总估值大幅修复 +$${gain}w (跃升至 $${newVal}w)！`
+              : `【ARR 稳步破 $50w 美元 · 估值大涨】经过半年高强度产品迭代与上门攻坚，公司拿下多家科技企业采购合同！按 SaaS/AI 行业 10x ARR 估值倍数，公司总估值增加 $${gain}w (跃升至 $${newVal}w)，实现微利造血与创始人分红！`
           };
         },
         nextEventId: h1ToH2Router,
@@ -162,16 +164,17 @@ export const startupEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => {
           const onPoint = s.founder_situation === 'valuation_stall';
+          const newVal = (s.company_valuation || 180) + (onPoint ? 500 : 200);
           return {
             mid_year: true, season_stage: 'h1',
             health: Math.max(0, s.health - 4),
             network: Math.min(100, (s.network || 0) + 3),
             charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-            company_valuation: (s.company_valuation || 180) + (onPoint ? 500 : 200),
+            company_valuation: newVal,
             ...(onPoint ? { founder_situation: undefined } : {}),
             message: onPoint
-              ? '【对症下药·重夺聚光灯】正值估值停滞期,你一场技惊四座的 Live Demo 登上 Hacker News 首页并引爆媒体热度,资本市场重新追捧,估值大幅跃升!'
-              : '【Live Demo 技惊全场!】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页,吸引了上千名早期极客用户注册体验!'
+              ? `【对症下药·重夺聚光灯】正值估值停滞期，你一场技惊四座的 Live Demo 登上 Hacker News 首页并引爆媒体热度，资本市场重新追捧，公司估值大幅跃升至 $${newVal}w！`
+              : `【Live Demo 技惊全场！】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页，吸引了上千名早期极客用户注册体验，公司估值提升至 $${newVal}w！`
           };
         },
         nextEventId: h1ToH2Router,
@@ -185,23 +188,25 @@ export const startupEvents: Record<string, GameEvent> = {
           // 对症(线上事故频发)时,资深架构师正中要害:必然稳住系统并大幅提升交付,估值强修复。
           const success = onPoint || gameRandom() < 0.65;
           if (success) {
+            const newVal = (s.company_valuation || 180) + (onPoint ? 550 : 300);
             return {
               mid_year: true, season_stage: 'h1',
               cash: parseFloat((s.cash - 8).toFixed(1)),
-              company_valuation: (s.company_valuation || 180) + (onPoint ? 550 : 300),
+              company_valuation: newVal,
               leetcode: Math.min(100, s.leetcode + 6),
               ...(onPoint ? { founder_situation: undefined } : {}),
               message: onPoint
-                ? '【对症下药·稳住系统】正值线上事故频发,你重金请来的大厂资深架构师重构了底层服务,故障率骤降、SLA 达标,交付提速带动估值强劲修复!'
-                : '【核心架构师加盟】大厂 Senior 大牛加盟后研发出高效的 AI 底层服务,产品交付速度明显提升!'
+                ? `【对症下药·稳住系统】正值线上事故频发，你重金请来的大厂资深架构师重构了底层服务，故障率骤降、SLA 达标，交付提速带动公司估值强劲修复至 $${newVal}w！`
+                : `【核心架构师加盟】大厂 Senior 大牛加盟后研发出高效的 AI 底层服务，产品交付速度明显提升，公司估值提升至 $${newVal}w！`
             };
           } else {
+            const newVal = (s.company_valuation || 180) + 100;
             return {
               mid_year: true, season_stage: 'h1',
               cash: parseFloat((s.cash - 8).toFixed(1)),
-              company_valuation: (s.company_valuation || 180) + 100,
+              company_valuation: newVal,
               health: Math.max(0, s.health - 8),
-              message: '【团队磨合阵痛】空降大牛与早期极客团队理念冲突,消耗了大笔安家费预算,公司估值增长有限。'
+              message: `【团队磨合阵痛】空降大牛与早期极客团队理念冲突，消耗了大笔安家费预算，公司估值仅微增至 $${newVal}w。`
             };
           }
         },
@@ -367,12 +372,15 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【引入 VC 仲裁调解】引入沙丘路 VC 投资人做仲裁调解，以专业治理架构稳定董事会',
         condition: (s) => Boolean(s.founder_stage === 'seed' || s.founder_stage === 'series_a' || s.founder_stage === 'series_b' || s.founder_stage === 'exit'),
         hideIfUnavailable: true,
-        effect: (s) => ({
-          network: Math.min(100, (s.network || 0) + 4),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-          company_valuation: (s.company_valuation || 180) + 80,
-          message: '【VC 出面平息】沙丘路领投合伙人亲自出面做利益平衡与期权重组，公司治理结构走向规范化！'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 80;
+          return {
+            network: Math.min(100, (s.network || 0) + 4),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+            company_valuation: newVal,
+            message: `【VC 出面平息】沙丘路领投合伙人亲自出面做利益平衡与期权重组，公司治理结构走向规范化（估值稳步提升至 $${newVal}w）！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -406,12 +414,15 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【沙丘路咖啡馆堵门】直接杀到 Sand Hill Road 咖啡馆堵门当面 Re-pitch，力挽狂澜',
         condition: (s) => (s.charm || 0) >= 14,
         hideIfUnavailable: true,
-        effect: (s) => ({
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
-          health: Math.max(0, s.health - 6),
-          company_valuation: (s.company_valuation || 180) + 150,
-          message: '【强大的 Founder 气场】你在咖啡馆用极具感染力的 Demo 与最新 ARR 增长数据彻底打消了合伙人的顾虑，促成对方重新盖章签字！'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 150;
+          return {
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+            health: Math.max(0, s.health - 6),
+            company_valuation: newVal,
+            message: `【强大的 Founder 气场】你在咖啡馆用极具感染力的 Demo 与最新 ARR 增长数据彻底打消了合伙人的顾虑，促成对方重新盖章签字（估值提升至 $${newVal}w）！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -437,31 +448,40 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【创始人自掏腰包垫资】创始人自掏腰包垫资 $4w，全力扛到下半年企业客户续约',
         costBadge: '垫资 $4w',
         condition: (s) => s.cash >= 4,
-        effect: (s) => ({
-          cash: parseFloat((s.cash - 4).toFixed(1)),
-          company_valuation: (s.company_valuation || 180) + 150,
-          health: Math.max(0, s.health - 8),
-          message: '【创始人担当】你垫付的资金撑过了最艰难的两个月，随后几笔大型企业采购款顺利到账，公司转危为安！'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 150;
+          return {
+            cash: parseFloat((s.cash - 4).toFixed(1)),
+            company_valuation: newVal,
+            health: Math.max(0, s.health - 8),
+            message: `【创始人担当】你垫付的资金撑过了最艰难的两个月，随后几笔大型企业采购款顺利到账，公司转危为安（估值提升至 $${newVal}w）！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【申请云厂商算力额度】申请云厂商（AWS/Azure/GCP）创业加速算力额度抵扣，死里逃生',
-        effect: (s) => ({
-          health: Math.min(100, s.health + 4),
-          company_valuation: (s.company_valuation || 180) + 80,
-          message: '【拿下十万美元算力 Grant】你的技术架构打动了云厂商评委会，成功斩获 $100,000 免费算力额度，瞬间解除了资金危机！'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 80;
+          return {
+            health: Math.min(100, s.health + 4),
+            company_valuation: newVal,
+            message: `【拿下十万美元算力 Grant】你的技术架构打动了云厂商评委会，成功斩获 $100,000 免费算力额度，瞬间解除了资金危机（估值提升至 $${newVal}w）！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【交付 MVP 补充现金流】带领全员极速交付 MVP 商业化功能，以预付订金补充现金流',
-        effect: (s) => ({
-          health: Math.max(0, s.health - 10),
-          cash: parseFloat((s.cash + 2.5).toFixed(1)),
-          company_valuation: (s.company_valuation || 180) + 100,
-          message: '【自造血成功】连续两周高强度上线付费功能，吸引了数百名付费企业客户，实现了正向现金流！'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 100;
+          return {
+            health: Math.max(0, s.health - 10),
+            cash: parseFloat((s.cash + 2.5).toFixed(1)),
+            company_valuation: newVal,
+            message: `【自造血成功】连续两周高强度上线付费功能，吸引了数百名付费企业客户，实现了正向现金流（估值提升至 $${newVal}w）！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -474,12 +494,15 @@ export const startupEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【通宵打磨冠军 Demo】带领团队通宵打磨杀手级 Feature，斩获全场冠军 Demo',
-        effect: (s) => ({
-          health: Math.max(0, s.health - 6),
-          leetcode: Math.min(100, s.leetcode + 5),
-          company_valuation: (s.company_valuation || 180) + 120,
-          message: '【黑客松夺冠】你们的 Live Demo 惊艳全场夺得第一！Product Hunt 首页推荐，收获了数千名早期极客种子用户！'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 120;
+          return {
+            health: Math.max(0, s.health - 6),
+            leetcode: Math.min(100, s.leetcode + 5),
+            company_valuation: newVal,
+            message: `【黑客松夺冠】你们的 Live Demo 惊艳全场夺得第一！Product Hunt 首页推荐，收获了数千名早期极客种子用户（估值提升至 $${newVal}w）！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -510,25 +533,31 @@ export const startupEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【接受 YC 孵化 Deal】接受 YC Deal：出让 7% 股权，加入 Batch 冲刺 Demo Day',
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          cash: parseFloat((s.cash + 6).toFixed(1)),
-          network: Math.min(100, (s.network || 0) + 10),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
-          company_valuation: (s.company_valuation || 180) + 400,
-          health: Math.max(0, s.health - 6),
-          message: '【YC 加持】你在 Demo Day 面对上千投资人路演，估值信誉暴涨！虽然稀释了 7% 股权，但拿到了顶级校友网络与后续融资的敲门砖！'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 400;
+          return {
+            mid_year: true, season_stage: 'h1',
+            cash: parseFloat((s.cash + 6).toFixed(1)),
+            network: Math.min(100, (s.network || 0) + 10),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+            company_valuation: newVal,
+            health: Math.max(0, s.health - 6),
+            message: `【YC 加持】你在 Demo Day 面对上千投资人路演，公司估值跃升至 $${newVal}w！虽然稀释了 7% 股权，但拿到了顶级校友网络与后续融资的敲门砖！`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【婉拒 YC 独立自筹】婉拒：不愿被稀释 7%，坚持独立自筹发展',
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          company_valuation: (s.company_valuation || 180) + 60,
-          health: Math.max(0, s.health - 2),
-          message: '【自力更生】你婉拒了 YC 的股权稀释，选择靠自有营收与团队硬实力独立成长，稳扎稳打推进产品。'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 60;
+          return {
+            mid_year: true, season_stage: 'h1',
+            company_valuation: newVal,
+            health: Math.max(0, s.health - 2),
+            message: `【自力更生】你婉拒了 YC 的股权稀释，选择靠自有营收与团队硬实力独立成长，公司估值微增至 $${newVal}w。`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -543,32 +572,38 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【全力接单赶工交付】全力接单：集中全员通宵赶工，3 个月啃下企业级版本 (高压高回报)',
         effect: (s) => {
           const win = gameRandom() < (0.55 + (s.leetcode >= 60 ? 0.15 : 0));
-          return win
-            ? {
-                mid_year: true, season_stage: 'h1',
-                cash: parseFloat((s.cash + 12).toFixed(1)),
-                company_valuation: (s.company_valuation || 180) + 600,
-                health: Math.max(0, s.health - 16),
-                message: '【拿下灯塔客户】你们如期交付了企业级私有化版本！$200w 大单落地成为标杆案例，ARR 与估值双双起飞！'
-              }
-            : {
-                mid_year: true, season_stage: 'h1',
-                company_valuation: (s.company_valuation || 180) + 80,
-                health: Math.max(0, s.health - 16),
-                message: '【交付延期】企业级合规与 SLA 远比预想复杂，团队累垮仍未如期交付，巨头改签了竞品，只留下宝贵的踩坑经验。'
-              };
+          if (win) {
+            const newVal = (s.company_valuation || 180) + 600;
+            return {
+              mid_year: true, season_stage: 'h1',
+              cash: parseFloat((s.cash + 12).toFixed(1)),
+              company_valuation: newVal,
+              health: Math.max(0, s.health - 16),
+              message: `【拿下灯塔客户】你们如期交付了企业级私有化版本！$200w 大单落地成为标杆案例，公司估值暴涨至 $${newVal}w！`
+            };
+          }
+          const newVal = (s.company_valuation || 180) + 80;
+          return {
+            mid_year: true, season_stage: 'h1',
+            company_valuation: newVal,
+            health: Math.max(0, s.health - 16),
+            message: `【交付延期】企业级合规与 SLA 远比预想复杂，团队累垮仍未如期交付，巨头改签了竞品，只留下宝贵的踩坑经验（估值微增至 $${newVal}w）。`
+          };
         },
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【稳健签署里程碑交付】稳健评估：分阶段签署里程碑交付，不透支团队健康',
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          cash: parseFloat((s.cash + 4).toFixed(1)),
-          company_valuation: (s.company_valuation || 180) + 220,
-          health: Math.max(0, s.health - 6),
-          message: '【稳健推进】你与巨头谈成分阶段里程碑付款，先交付核心模块。回款稳健，团队也没被拖垮。'
-        }),
+        effect: (s) => {
+          const newVal = (s.company_valuation || 180) + 220;
+          return {
+            mid_year: true, season_stage: 'h1',
+            cash: parseFloat((s.cash + 4).toFixed(1)),
+            company_valuation: newVal,
+            health: Math.max(0, s.health - 6),
+            message: `【稳健推进】你与巨头谈成分阶段里程碑付款，先交付核心模块。回款稳健（公司估值提升至 $${newVal}w），团队也没被拖垮。`
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       }
     ]

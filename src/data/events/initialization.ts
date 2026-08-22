@@ -1255,6 +1255,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           company_valuation: 2000,
           company: 'AI 独角兽 (国内)',
           level: 'CTO & Co-Founder',
+          last_promo_age: s.age + 1,
           health: Math.max(0, s.health - 15),
           age: s.age + 1,
           year: s.year + 1,

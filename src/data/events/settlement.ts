@@ -3,6 +3,7 @@ import { getLevelScaledTC, h1ToH2Router, isOpportunityActiveThisYear , gameRando
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing, liquidateStocksToCover } from '../../constants/gameConstants';
 import { getCompanyProfile } from '../companyProfiles';
+import { normalizeLevel } from '../levelProfiles';
 
 export const settlementEvents: Record<string, GameEvent> = {
   'sv_year_end_settlement': {
@@ -281,16 +282,13 @@ export const settlementEvents: Record<string, GameEvent> = {
                 'L3': 24,
                 'L4': 34,
                 'L5 (Senior)': 52,
-                'L5': 52,
                 'L6 (Staff)': 78,
-                'Staff': 78,
-                'MTS': 78,
                 'L7 (Senior Staff)': 120,
-                'Senior Staff': 120,
                 'L8 (Principal)': 220,
                 'Quant': 85
               };
-              const curLevelKey = s.level || (s.is_phd ? 'L4' : 'L3');
+              const norm = normalizeLevel(s.level, s);
+              const curLevelKey = norm || (s.job_type === 'quant' ? 'Quant' : s.is_phd ? 'L4' : 'L3');
               const levelCap = maxCapByLevel[curLevelKey] || 55;
               
               if (updatedTC < levelCap) {

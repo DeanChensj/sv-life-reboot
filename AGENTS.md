@@ -32,8 +32,11 @@
      # 3. test_all_cujs.ts (7 大核心用户旅程 CUJ 场景断言)
       # 4. fuzz_test.ts (10,000 局状态不变性 + 路由不变量 Fuzzing)
       # 5. test_monte_carlo_balance.ts (3,000 局蒙特卡洛数值平衡与寿命保障 CI 门禁)
-      # 6. test_routing_guards.ts (禁止基于文案子串的路由/判断，防回归)
-      ```
+       # 6. test_routing_guards.ts (禁止基于文案子串的路由/判断，防回归)
+       # 7. test_runtime_coverage.ts (运行时覆盖审计：跑真实统一路由统计实际访问到的事件，
+       #    未访问=死代码即红。区别于 audit_all_flows 的"源码正则扫可达"——那种静态 oracle
+       #    曾让整个 H1 职场板块死在运行时却全绿。新增死事件破测；已知死代码在 KNOWN_DEAD 登记)
+       ```
 
 4. **路由与分支判断规范 (防两类高频 Bug)**：
    - **禁止用文案子串做控制流/判定**：`nextEventId`、成就解锁、任何分支逻辑都**不得**依赖

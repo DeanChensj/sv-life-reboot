@@ -90,21 +90,37 @@ export const dilemmaEvents: Record<string, GameEvent> = {
         text: '【独吞功劳抢下升职】独吞核心架构功劳，抢下升职名额 (背弃提携恩情)',
         condition: employed,
         effect: (s): Partial<GameState> => {
+          const cur = s.level || (s.is_phd ? 'L4' : 'L3');
+          let nextLevel = cur;
+          let tcIncrease = 5;
+          if (cur === 'L3') {
+            nextLevel = 'L4';
+            tcIncrease = 4.5;
+          } else if (cur === 'L4') {
+            nextLevel = 'L5 (Senior)';
+            tcIncrease = 6.5;
+          }
+
+          const isPromo = nextLevel !== cur;
           const mentor: NPCState = s.npcs?.mentor
             ? { ...s.npcs.mentor, status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' }
             : { name: '老 Mentor', role: 'mentor', status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' };
           return {
-            tc: s.tc + 5,
+            tc: s.tc + tcIncrease,
+            level: nextLevel,
+            last_promo_age: isPromo ? s.age : s.last_promo_age,
             network: Math.max(0, (s.network || 10) - 6),
             charm: Math.max(0, (s.charm || 10) - 1),
             health: Math.max(0, s.health - 4),
             impact: addImpact(s, 10),
             npcs: { ...(s.npcs || {}), mentor },
             story_flags: { ...seen(s, 'dilemma_credit_grab_mentor'), credit_grabbed: true },
-            message: '你在评审会上把关键决策都包装成了自己的功劳，如愿拿下名额。但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。',
+            message: isPromo
+              ? `你在评审会上把关键决策都包装成了自己的功劳，如愿抢下升职名额晋升至 ${nextLevel}！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。`
+              : '你在评审会上把关键决策都包装成了自己的功劳，如愿抢下顶格绩效加薪 (+$5.0w TC)！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。',
           };
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【功劳让给恩师 Mentor】把主要功劳让给 Mentor，成全恩人 (放弃升职)',

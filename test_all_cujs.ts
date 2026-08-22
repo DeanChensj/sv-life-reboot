@@ -704,27 +704,19 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const promoted = { ...generateInitialState(), level: 'L7 (Senior Staff)' } as GameState;
   assert(route(promoted) === 'l7_senior_staff_celebration', 'L7 success routes to l7_senior_staff_celebration');
 
-  // Meta Wartime Sprint: verify fast-track promotion and message clarity
+  // 合并后的唯一晋升引擎【疯狂内卷】在卷厂(meta)享更高晋升赔率(原【大厂战时冲刺】已并入):
+  // 满 2 年在职 + 算法达标 → 确定性快车道晋升 L3→L4,验证晋升与文案。
   const dailyLife = events['sv_daily_life'];
-  const wartimeChoice = dailyLife.choices.find((c) => c.text.includes('大厂战时冲刺'))!;
+  const grindChoice = dailyLife.choices.find((c) => c.text.includes('疯狂内卷'))!;
   const metaStateL3: GameState = {
     ...generateInitialState(),
-    company: 'meta',
-    job_type: 'big_tech',
-    level: 'L3',
-    leetcode: 35,
-    age: 22,
-    last_promo_age: 22,
-    tc: 22,
+    company: 'meta', job_type: 'big_tech', level: 'L3',
+    leetcode: 35, age: 24, last_promo_age: 22, tc: 22,
   };
-  const wartimeRes = wartimeChoice.effect(metaStateL3);
-  if (wartimeRes.level === 'L4') {
-    assert(wartimeRes.last_promo_age === 22, 'Wartime sprint promotion must stamp last_promo_age');
-    assert(Boolean(wartimeRes.message?.includes('顺利晋升') || wartimeRes.message?.includes('破格晋升')), 'Promo message indicates promotion');
-  } else {
-    assert(Boolean(wartimeRes.message?.includes('未晋升') || wartimeRes.message?.includes('暂未晋升')), 'Non-promotion message must explicitly indicate 未晋升');
-    assert(Boolean(wartimeRes.message?.includes('L3')), 'Non-promotion message must indicate current level is maintained');
-  }
+  const grindRes = grindChoice.effect(metaStateL3);
+  assert(grindRes.level === 'L4', `卷厂内卷满 2 年 + 算法达标应确定性晋升 L4 (got ${grindRes.level})`);
+  assert(grindRes.last_promo_age === 24, '晋升必须打上 last_promo_age');
+  assert(Boolean(grindRes.message?.includes('晋升') || grindRes.message?.includes('L4')), 'Promo message indicates promotion');
   console.log('✅ CUJ 10 Passed\n');
 }
 
@@ -1060,13 +1052,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
     const r = grind.effect(l5NoImpact());
     assert(r.level !== 'L6 (Staff)', '内卷 grind cannot reach L6 with impact 0');
   }
-  // 2. Wartime sprint: impact 0 => never promotes to L6
-  const sprint = findChoice('sv_daily_life', '战时冲刺')!;
-  for (let i = 0; i < 20; i++) {
-    const r = sprint.effect(l5NoImpact());
-    assert(r.level !== 'L6 (Staff)', 'wartime sprint cannot reach L6 with impact 0');
-  }
-  // 3. meta_tlm: cannot skip from L3/L4 to L6, and L5 with impact 0 never wins
+  // 2. meta_tlm: cannot skip from L3/L4 to L6, and L5 with impact 0 never wins
   const tlm = findChoice('meta_tlm', '继续卷升职')!;
   for (let i = 0; i < 20; i++) {
     assert(tlm.effect(l5NoImpact({ level: 'L3' })).level !== 'L6 (Staff)', 'meta_tlm: L3 cannot skip to L6');
@@ -1099,25 +1085,22 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 
   // 6. Impact accumulation & annual settlement decay mechanics
   const l5Active = l5NoImpact();
-  const sprintRes = sprint.effect(l5Active);
-  assert((sprintRes.impact || 0) >= 2, 'Wartime sprint produces impact (>=2 even on struggle, >=8 on Top Perf)');
-
   const grindRes = grind.effect(l5Active);
   assert((grindRes.impact || 0) >= 5, 'Crazy grind produces impact (>=5 on promo/merit)');
 
-  // High-impact L5 CAN promote to L6 Staff on wartime sprint
+  // High-impact L5 CAN promote to L6 Staff via the merged 疯狂内卷 grind engine
   const l5WithHighImpact = l5NoImpact({ impact: 30, last_promo_age: 34, age: 40 });
   setGameSeed(42);
-  let sprintPromoted = false;
+  let grindPromoted = false;
   for (let i = 0; i < 100; i++) {
-    const res = sprint.effect(l5WithHighImpact);
+    const res = grind.effect(l5WithHighImpact);
     if (res.level === 'L6 (Staff)') {
-      sprintPromoted = true;
+      grindPromoted = true;
       assert((res.impact || 0) >= 40, 'L6 promo further awards +10 impact');
       break;
     }
   }
-  assert(sprintPromoted, 'High-impact L5 is capable of promoting to L6 Staff via wartime sprint');
+  assert(grindPromoted, 'High-impact L5 is capable of promoting to L6 Staff via 疯狂内卷');
 
   console.log('✅ CUJ 18 Passed\n');
 }
@@ -1162,7 +1145,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 // big-tech grinder can actually accumulate impact past the L6 gate through normal play.
 {
   console.log('--- [CUJ 20] Impact progression reachability (anti dead-gate) ---');
-  const sprint = events['sv_daily_life'].choices.find((c) => c.text.includes('战时冲刺'))!;
+  const sprint = events['sv_daily_life'].choices.find((c) => c.text.includes('疯狂内卷'))!;
   const rest20 = events['sv_daily_life'].choices.find((c) => c.text.includes('佛系躺平'))!;
   const settle = events['sv_year_end_settlement'].choices[0];
   const TRIALS = 100;
@@ -1944,6 +1927,34 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert((hireOn.company_valuation || 0) >= 1000 + 550, `招架构师对症必成功且增益达标 (got ${hireOn.company_valuation})`);
 
   console.log('✅ CUJ 36 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 37: WLB / AI 组养生路径的晋升封顶 L4,且 WLB 转岗为一次性。
+// 锁住"躺着养生升不到 Senior(L5)"的平衡保证:L5 及以上必须靠【疯狂内卷】耗血挣;
+// 防止有人把自然晋升上限改回 L5 让 WLB 重新变成无脑优选。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 37] WLB/AI 养生路径封顶 L4 + WLB 一次性 ---');
+  const wlb = events['sv_daily_life'].choices.find((c) => c.text.includes('转岗 AI 组'))!;
+  const ai = events['sv_daily_life'].choices.find((c) => c.text.includes('前沿 AI 团队攻坚'))!;
+  assert(!!wlb && !!ai, 'sv_daily_life 有【转岗 AI 组】与【前沿 AI 团队攻坚】');
+
+  // 一个满资历、算法极高的 L4 走 WLB 或 AI 攻坚,都不能自然升到 L5(必须内卷)。
+  const l4Ripe = (over: Partial<GameState>): GameState => ({
+    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
+    leetcode: 100, age: 40, last_promo_age: 30, health: 90, tc: 40, status: 'playing', ...over,
+  } as GameState);
+  for (let i = 0; i < 30; i++) {
+    assert(wlb.effect(l4Ripe({ transferred_to_ai: false })).level !== 'L5 (Senior)', 'WLB 养生不能自然把 L4 升到 L5');
+    assert(ai.effect(l4Ripe({ transferred_to_ai: true })).level !== 'L5 (Senior)', 'AI 攻坚不能自然把 L4 升到 L5');
+  }
+  // WLB 转岗保证成功 → 置 transferred_to_ai(此后 condition 因 !transferred_to_ai 隐藏,天然每局一次)
+  const wlbRes = wlb.effect(l4Ripe({ transferred_to_ai: false }));
+  assert(wlbRes.transferred_to_ai === true, 'WLB 转岗保证成功并置 transferred_to_ai(天然一次性)');
+  assert(!wlb.condition || !wlb.condition({ ...l4Ripe({}), transferred_to_ai: true } as GameState), '转岗后 WLB 选项不再出现(仅一次)');
+
+  console.log('✅ CUJ 37 Passed\n');
 }
 
 console.log(`\n======================================================`);

@@ -950,170 +950,30 @@ export const careerEvents: Record<string, GameEvent> = {
 
       // 2. 【情境定制动态专属】 (根据公司、婚姻、财富阶层动态生成)
       {
-        text: '【大厂战时冲刺】主动认领 S-Level 核心架构重构，硬抗高压冲刺顶格 Perf',
-        condition: (s) => (s.company === 'meta' || s.company === 'tiktok' || s.company === 'nvidia' || s.company === 'amazon') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
-        hideIfUnavailable: true,
-        effect: (s) => {
-          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          const lastPromoAge = s.last_promo_age ?? (s.age - 1);
-          const yearsInGrade = s.age - lastPromoAge;
-          const isKingOfRoll = s.trait_title === '卷王之王';
-          const drain = isKingOfRoll ? 8 : 14;
-          const winRate = 0.38 + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.15 : 0);
-          const pass = gameRandom() < Math.min(0.85, winRate);
-
-          if (pass) {
-            if (curLevel === 'L3') {
-              // L3 升 L4：只要战时冲刺评审通过 (pass === true) 且算法基础达标 (>= 25 或卷王或已满 1 年)，即可破格快车道 (Fast-track) 晋升至 L4
-              if ((s.leetcode >= 25 || yearsInGrade >= 1 || isKingOfRoll) && (gameRandom() < 0.90 || isKingOfRoll)) {
-                return {
-                  mid_year: true,
-                  season_stage: 'h1',
-                  health: Math.max(0, s.health - drain),
-                  tc: s.tc + 4.0,
-                  level: 'L4',
-                  impact: addImpact(s, 6),
-                  last_promo_age: s.age,
-                  message: isKingOfRoll
-                    ? '【战时冲刺大捷 · 破格晋升】卷王之王神功大成！你凭借硬核架构交付拿下 Top Perf 破格晋升至 L4 工程师！总包调升 +$4.0w！'
-                    : '【战时冲刺大捷 · 顺利晋升】你带领组员完成核心交付！拿下顶格 Top Perf 顺利晋升至 L4 工程师！总包调升 +$4.0w！'
-                };
-              }
-            }
-            if (curLevel === 'L4') {
-              // L4 升 L5 Senior 要求算法 >= 45 (若满 2 年或卷王门槛放宽至 40)
-              if ((yearsInGrade >= 1 || isKingOfRoll || s.leetcode >= 45) && (s.leetcode >= 40 || yearsInGrade >= 2 || isKingOfRoll) && (gameRandom() < 0.78 || isKingOfRoll)) {
-                return {
-                  mid_year: true,
-                  season_stage: 'h1',
-                  health: Math.max(0, s.health - Math.min(15, Math.max(12, drain + 2))),
-                  tc: s.tc + 6.5,
-                  level: 'L5 (Senior)',
-                  impact: addImpact(s, 8),
-                  last_promo_age: s.age,
-                  message: isKingOfRoll
-                    ? '【战时冲刺大捷 · 破格晋升】抗下千亿流量重构！卷王底蕴爆发，全票通过晋升委员会晋级 L5 Senior 资深工程师！总包调升 +$6.5w！'
-                    : '【战时冲刺大捷 · 顺利晋升】扛下千亿流量大促！顺利通过升职委员会，正式晋升为 L5 Senior 资深工程师！总包调升 +$6.5w！'
-                };
-              }
-            }
-            if (normalizeLevel(curLevel) === 'L5 (Senior)' && (yearsInGrade >= 1 || isKingOfRoll) && meetsOrganicPromo(s, 'L6 (Staff)', { sprint: true })) {
-              // L6 Staff 非常难 (最高 18% 胜率;须 impact≥20,与其它晋升路径一致)
-              const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
-              if (gameRandom() < Math.min(0.18, promoChance)) {
-                return {
-                  mid_year: true,
-                  season_stage: 'h1',
-                  health: Math.max(0, s.health - 15),
-                  tc: s.tc + 12.0,
-                  level: 'L6 (Staff)',
-                  impact: addImpact(s, 10),
-                  last_promo_age: s.age,
-                  message: isKingOfRoll
-                    ? '【战时冲刺大捷 · 破格晋升】打破硅谷天花板！凭借极硬核架构与强大人脉资源，破格晋升为万里挑一的 L6 Staff 架构师！总包大幅调升 +$12w！'
-                    : '【战时冲刺大捷 · 顺利晋升】你拉拢跨组部门资源并主导架构落地，奇迹晋升为 L6 Staff 架构师！总包大幅调升 +$12w！'
-                };
-              }
-            }
-            if (normalizeLevel(curLevel) === 'L6 (Staff)' && (yearsInGrade >= 1 || isKingOfRoll) && meetsOrganicPromo(s, 'L7 (Senior Staff)', { sprint: true })) {
-              const promoChance = 0.16 + ((s.charm || 10) * 0.005) + ((s.network || 10) * 0.004) + (isKingOfRoll ? 0.08 : 0);
-              if (gameRandom() < Math.min(0.33, promoChance)) {
-                return {
-                  mid_year: true,
-                  season_stage: 'h1',
-                  health: Math.max(0, s.health - 15),
-                  tc: s.tc + 20.0,
-                  level: 'L7 (Senior Staff)',
-                  impact: addImpact(s, 12),
-                  last_promo_age: s.age,
-                  message: isKingOfRoll
-                    ? '【战时冲刺大捷 · 破格晋升】统帅战略基建！在 VP 盟友背书与跨部门拉拢中，全票通过晋升为 L7 Senior Staff 资深架构师！总包调升 +$20w！'
-                    : '【战时冲刺大捷 · 顺利晋升】你凭借雄厚的高管人脉与战略领导力重塑公司架构，正式晋升为 L7 Senior Staff 资深架构师！总包调升 +$20w！'
-                };
-              }
-            }
-            if (normalizeLevel(curLevel) === 'L7 (Senior Staff)' && (yearsInGrade >= 1 || isKingOfRoll) && meetsOrganicPromo(s, 'L8 (Principal)', { sprint: true })) {
-              const promoChance = 0.10 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
-              if (gameRandom() < Math.min(0.20, promoChance)) {
-                return {
-                  mid_year: true,
-                  season_stage: 'h1',
-                  health: Math.max(0, s.health - 15),
-                  tc: s.tc + 35.0,
-                  level: 'L8 (Principal)',
-                  impact: addImpact(s, 15),
-                  last_promo_age: s.age,
-                  message: isKingOfRoll
-                    ? '【战时冲刺大捷 · 破格晋升】封神之路！获董事会联合推举与行业泰斗声望，破格登顶 L8 Principal 首席架构师/技术院士！总包暴涨 +$35w！'
-                    : '【战时冲刺大捷 · 顺利晋升】你在董事会闭门会议中赢得一致赞誉，登顶全公司屈指可数的 L8 Principal 首席架构师！总包暴涨 +$35w！'
-                };
-              }
-            }
-            return {
-              mid_year: true,
-              season_stage: 'h1',
-              health: Math.max(0, s.health - drain),
-              tc: s.tc + 3.0,
-              impact: addImpact(s, 8),
-              message: `【战时冲刺加薪 (暂未晋升)】虽然你完成了核心交付并斩获 Top Perf 顶格绩效加薪 (+$3.0w TC)，但由于今年部门 Headcount Quota 紧张，升职名额顺延至下一考核周期 (当前职级维持 ${curLevel})。`
-            };
-          }
-          return {
-            mid_year: true,
-            season_stage: 'h1',
-            health: Math.max(0, s.health - drain),
-            tc: s.tc + 1.0,
-            impact: addImpact(s, 2),
-            message: `【高压内卷苦战 (未晋升)】在高压 Oncall 与大厂组织架构调整中，产出未达晋升委员会破格标准，仅获得普通普调 (+$1.0w TC，当前职级维持 ${curLevel})。`
-          };
-        },
-        nextEventId: (s) => {
-          // Route on the ACTUAL promotion (last_promo_age is set to s.age ONLY on a
-          // successful promo), not message.includes('晋升'): the rejection message
-          // ('晋升委员会认为…') also contains 晋升 (→ celebrated a rejection), and the L8
-          // success copy ('登顶/获聘') does NOT contain 晋升 (→ L8 celebration was missed).
-          if (s.last_promo_age === s.age) {
-            if (s.level === 'L8 (Principal)') return 'l8_principal_celebration';
-            if (s.level === 'L7 (Senior Staff)') return 'l7_senior_staff_celebration';
-            if (s.level === 'L6 (Staff)') return 'l6_staff_celebration';
-            return 'promo_celebration';
-          }
-          return h1ToH2Router(s);
-        },
-      },
-      {
-        text: '【大厂 WLB 漫步】享受充裕生活平衡，申请内部 Transfer 探索前沿大模型组',
+        text: '【转岗 AI 组·养生】一次性内部转岗前沿大模型组,神仙 WLB (仅一次)',
         condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !s.transferred_to_ai,
         hideIfUnavailable: true,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
-          const pass = s.leetcode >= 25 || gameRandom() < 0.75;
-          
-          // L3 / L4 自然晋升机制：要求算法达到标准且有一定资历
+          // 一次性转岗前沿 AI 组(保证成功 → transferred_to_ai 置位后本选项永久隐藏,天然每局至多一次;
+          // 此后由【前沿 AI 攻坚】接手)。养生回血。自然晋升只到 L4(入门);L5 Senior 及以上不再靠
+          // 躺着自然给,必须回【疯狂内卷】耗血冲刺挣——杜绝"养生白嫖到 Senior"的无脑优选。
           if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
             return {
               mid_year: true, season_stage: 'h1', transferred_to_ai: true,
               level: 'L4', tc: s.tc + 3.5, last_promo_age: s.age,
               impact: addImpact(s, 4),
               health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4,
-              message: '【大厂自然晋升】在 Apple/Google 稳定的 WLB 节奏中，凭借扎实的算法与稳健的项目交付，你水到渠成顺利晋升为 L4 工程师！总包调升 +$3.5w！'
+              message: '【转岗 AI 组·顺带升 L4】你申请内部转岗前沿大模型组成功!既享神仙 WLB,又凭稳健交付水到渠成晋升 L4 工程师,总包 +$3.5w!'
             };
           }
-          if (curLevel === 'L4' && ((yearsInGrade >= 3 && s.leetcode >= 45) || (yearsInGrade >= 2 && s.leetcode >= 55))) {
-            return {
-              mid_year: true, season_stage: 'h1', transferred_to_ai: true,
-              level: 'L5 (Senior)', tc: s.tc + 6.0, last_promo_age: s.age,
-              impact: addImpact(s, 6),
-              health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4,
-              message: '【大厂稳健晋升】在大厂舒适的工作节奏中稳扎稳打，你凭借多年架构沉淀顺利通过评审晋升为 L5 Senior 工程师！总包调升 +$6.0w！'
-            };
-          }
-
-          return pass
-            ? { mid_year: true, season_stage: 'h1', transferred_to_ai: true, health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, impact: addImpact(s, 4), message: '【成功转岗】顺利 Transfer 到了前沿 AI 研发组！既拥有神仙级的 WLB 作息，又接触到了顶尖行业架构！' }
-            : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【安稳养老】原组 Manager 极力挽留，你继续享受着下午 5 点准时下班的惬意大厂时光。' };
+          return {
+            mid_year: true, season_stage: 'h1', transferred_to_ai: true,
+            health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, impact: addImpact(s, 4),
+            message: '【成功转岗 AI 组】你顺利 Transfer 到前沿大模型研发组,坐拥神仙 WLB 又接触顶尖架构!(想冲 L5 Senior 及以上,仍需回【疯狂内卷】耗血冲刺)'
+          };
         },
         nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
@@ -1127,6 +987,8 @@ export const careerEvents: Record<string, GameEvent> = {
           const yearsInGrade = s.age - lastPromoAge;
           const pass = s.leetcode >= 30 || gameRandom() < 0.75;
 
+          // 自然晋升只到 L4(入门);L5 Senior 及以上不再靠 AI 组养生自然给,必须回【疯狂内卷】
+          // 耗血冲刺挣 —— 与 WLB 一致,杜绝"神仙 WLB 白嫖到 Senior"。
           if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
             return {
               mid_year: true, season_stage: 'h1',
@@ -1136,18 +998,9 @@ export const careerEvents: Record<string, GameEvent> = {
               message: '【AI 组自然晋升】凭借扎实的算法与 AI 推理架构交付，你顺利在神仙 WLB 组晋升为 L4 工程师！总包调升 +$3.5w！'
             };
           }
-          if (curLevel === 'L4' && ((yearsInGrade >= 3 && s.leetcode >= 45) || (yearsInGrade >= 2 && s.leetcode >= 55))) {
-            return {
-              mid_year: true, season_stage: 'h1',
-              level: 'L5 (Senior)', tc: s.tc + 6.0, last_promo_age: s.age,
-              impact: addImpact(s, 8),
-              health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0,
-              message: '【AI 组稳健晋升】你在前沿 AI 大模型团队的主导产出获得全组认可，正式晋升为 L5 Senior 工程师！总包调升 +$6.0w！'
-            };
-          }
 
           return pass
-            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评，工作与生活达到完美平衡！' }
+            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评,工作与生活达到完美平衡!(冲 L5 Senior 及以上仍需回【疯狂内卷】)' }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【惬意养老】AI 组内节奏舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客。' };
         },
         nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
@@ -1180,7 +1033,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       // 【研究路径的高效 impact 行动】ai_research/MTS 缺一个高效可重复的年度 impact 来源
       // (内卷 -14 健康太贵、openai crunch 一生一次),否则冲 L7/L8 只能靠随机事件+硬卷。
-      // 本行动以适中健康代价稳定产出 impact,与大厂【战时冲刺】对齐,让研究路径也能自力更生地
+      // 本行动以适中健康代价稳定产出 impact,与大厂【疯狂内卷】对齐,让研究路径也能自力更生地
       // 积累影响力。晋升仍走 perf_review / 内卷(本行动只负责高效攒 impact)。
       {
         text: '【前沿研究 · 主导顶会 Paper / 开源影响力】主导大模型核心研究，冲刺顶会 Oral 与开源生态',
@@ -1203,22 +1056,26 @@ export const careerEvents: Record<string, GameEvent> = {
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           const isKingOfRoll = s.trait_title === '卷王之王';
-          const drain = isKingOfRoll ? 8 : 14;
+          // 卷厂(meta/tiktok/nvidia/amazon)高压高回报:更高晋升赔率 + 略高健康代价(合并自原【大厂战时冲刺】,
+          // 现在「疯狂内卷」是唯一晋升引擎,赔率按公司强度自适应;养老厂常规、卷厂更狠更快)。
+          const isHardCoreCo = ['meta', 'tiktok', 'nvidia', 'amazon'].includes(s.company || '');
+          const coBonus = isHardCoreCo ? 0.20 : 0;
+          const drain = (isKingOfRoll ? 8 : 14) + (isHardCoreCo ? 2 : 0);
           
-          const baseWinRate = 0.15 + (s.leetcode / 300) + ((s.charm || 10) * 0.015) + ((s.network || 10) * 0.01) + (isKingOfRoll ? 0.15 : 0);
+          const baseWinRate = 0.15 + coBonus + (s.leetcode / 300) + ((s.charm || 10) * 0.015) + ((s.network || 10) * 0.01) + (isKingOfRoll ? 0.15 : 0);
           const pass = gameRandom() < Math.min(0.78, baseWinRate);
 
           if (curLevel === 'L3') {
             // L3 升 L4 要求算法 >= 35 (达标且满 1 年晋升率极高，若满 2 年算法门槛可放宽至 30)
             if (s.leetcode < 30 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (建议算法>=35)，建议多提升技术硬实力。' };
-            const l3PassRate = 0.70 + (s.leetcode / 200) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
+            const l3PassRate = 0.70 + coBonus + (s.leetcode / 200) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (gameRandom() < Math.min(0.95, l3PassRate) || yearsInGrade >= 2 || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 3.5, level: 'L4', impact: addImpact(s, 5), last_promo_age: s.age, message: isKingOfRoll ? '【卷王破格晋升】做题家底蕴彻底释放，你的 Perf 拿下顶格 EE 绩效轻松晋升至 L4！' : '恭喜！凭借过硬的算法功底与稳定交付，你顺利晋升为 L4 工程师！总包调薪 +$3.5w！' };
             }
           } else if (curLevel === 'L4') {
             // L4 升 L5 (Senior) 要求算法 >= 50 (资深工程师是硅谷终身职级 Terminal Level，多数人在 2~3 年内达成)
             if (s.leetcode < 45 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别 (建议算法>=50)，独立项目主导深度需进一步沉淀。' };
-            const l4PassRate = 0.55 + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
+            const l4PassRate = 0.55 + coBonus + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 45 || yearsInGrade >= 3) && (gameRandom() < Math.min(0.90, l4PassRate) || (yearsInGrade >= 3 && s.leetcode >= 40) || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 6.0, level: 'L5 (Senior)', impact: addImpact(s, 7), last_promo_age: s.age, message: '轰动全组！你主导了核心子模块交付，顺利晋升为 L5 Senior 资深工程师！总包调薪 +$6.0w！' };
             }

@@ -52,7 +52,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
         chosen = grindChoice || validChoices[0];
       } else if (state.tc < 50 && gameRandom() < 0.6) {
         const hopChoice = validChoices.find(c => c.text.includes('刷题跳槽'));
-        const sprintChoice = validChoices.find(c => c.text.includes('战时冲刺') || c.text.includes('疯狂内卷'));
+        const sprintChoice = validChoices.find(c => c.text.includes('疯狂内卷'));
         chosen = hopChoice || sprintChoice || validChoices[0];
       } else {
         const hopChoice = validChoices.find(c => c.text.includes('刷题跳槽'));

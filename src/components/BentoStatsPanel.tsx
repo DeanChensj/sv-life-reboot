@@ -112,6 +112,11 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
               {gameState.macro_economy === 'bull' ? '狂暴大牛市' : gameState.macro_economy === 'bear' ? '裁员大熊市' : '正常震荡期'}
             </div>
           )}
+          {gameState.job_type === 'startup_founder' && gameState.founder_situation && (
+            <div className="px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-mono font-bold whitespace-nowrap flex items-center shadow-sm bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              {gameState.founder_situation === 'valuation_stall' ? '痛点:估值停滞' : gameState.founder_situation === 'churn' ? '痛点:客户流失' : '痛点:线上事故'}
+            </div>
+          )}
         </div>
         <p className="text-zinc-400 text-xs sm:text-sm font-mono tracking-tight">
           Silicon Valley Survival & Career Simulator

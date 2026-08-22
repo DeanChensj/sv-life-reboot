@@ -68,9 +68,19 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       const fund = validChoices.find(c => c.text.includes('沙丘路'));
       const exit = validChoices.find(c => c.text.includes('终局退场'));
       const pmf = validChoices.find(c => c.text.includes('死磕产品'));
+      const talk = validChoices.find(c => c.text.includes('TechCrunch'));
+      const hire = validChoices.find(c => c.text.includes('高举高打招聘'));
       const survive = validChoices.find(c => c.text.includes('苟活'));
+      // 能力型创始人先读仪表盘的「痛点」信号对症下药 (估值停滞→演讲 / 客户流失→死磕PMF /
+      // 线上事故→招架构师),把年度痛点化解掉拿对症加成;健康告急则苟活保命;后期冲刺退场;
+      // 无痛点信号时以融资推进轮次为主。(与 startup.ts 的 founder_situation 对症加成对齐。)
+      const remedy = state.founder_situation === 'valuation_stall' ? talk
+        : state.founder_situation === 'churn' ? pmf
+        : state.founder_situation === 'outage' ? hire
+        : undefined;
       if (state.health < 40 && survive) chosen = survive;
       else if ((state.founder_stage === 'series_b' || state.founder_stage === 'exit') && exit) chosen = exit;
+      else if (remedy) chosen = remedy;
       else chosen = fund || pmf || validChoices[Math.floor(gameRandom() * validChoices.length)];
     } else if (currentEventId === 'trader_annual_strategy') {
       // Competent trader: compound via the moderate-risk growth play, hedge when health is

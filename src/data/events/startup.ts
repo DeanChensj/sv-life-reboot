@@ -140,43 +140,60 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
       {
-        text: '【死磕产品 PMF 与企业大单】带领全员冲刺 ARR 经常性收入并拿下企业采购',
+        text: '【死磕产品 PMF 与企业大单】带领全员冲刺 ARR 经常性收入并拿下企业采购 (对症:客户流失)',
         condition: (s) => s.job_type === 'startup_founder',
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          health: Math.max(0, s.health - 8),
-          cash: parseFloat((s.cash + 5).toFixed(1)),
-          company_valuation: (s.company_valuation || 180) + 350,
-          message: '【ARR 稳步破 $50w 美元！】经过半年高强度产品迭代与上门攻坚，公司拿下多家科技企业采购合同，实现微利造血与创始人分红！'
-        }),
+        effect: (s) => {
+          const onPoint = s.founder_situation === 'churn';
+          return {
+            mid_year: true, season_stage: 'h1',
+            health: Math.max(0, s.health - 8),
+            cash: parseFloat((s.cash + (onPoint ? 10 : 5)).toFixed(1)),
+            company_valuation: (s.company_valuation || 180) + (onPoint ? 700 : 350),
+            ...(onPoint ? { founder_situation: undefined } : {}),
+            message: onPoint
+              ? '【对症下药·成功止血】正值客户流失当口,你带队死磕 PMF 与企业大单,续约率触底反弹、ARR 破 $80w,估值强劲修复!'
+              : '【ARR 稳步破 $50w 美元!】经过半年高强度产品迭代与上门攻坚,公司拿下多家科技企业采购合同,实现微利造血与创始人分红!'
+          };
+        },
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【TechCrunch 巅峰演讲与病毒式公关】登上顶级科技峰会做 Live Demo 引爆全球热度',
+        text: '【TechCrunch 巅峰演讲与病毒式公关】登上顶级科技峰会做 Live Demo 引爆全球热度 (对症:估值停滞)',
         condition: (s) => s.job_type === 'startup_founder',
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          health: Math.max(0, s.health - 4),
-          network: Math.min(100, (s.network || 0) + 3),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-          company_valuation: (s.company_valuation || 180) + 200,
-          message: '【Live Demo 技惊全场！】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页，吸引了上千名早期极客用户注册体验！'
-        }),
+        effect: (s) => {
+          const onPoint = s.founder_situation === 'valuation_stall';
+          return {
+            mid_year: true, season_stage: 'h1',
+            health: Math.max(0, s.health - 4),
+            network: Math.min(100, (s.network || 0) + 3),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+            company_valuation: (s.company_valuation || 180) + (onPoint ? 500 : 200),
+            ...(onPoint ? { founder_situation: undefined } : {}),
+            message: onPoint
+              ? '【对症下药·重夺聚光灯】正值估值停滞期,你一场技惊四座的 Live Demo 登上 Hacker News 首页并引爆媒体热度,资本市场重新追捧,估值大幅跃升!'
+              : '【Live Demo 技惊全场!】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页,吸引了上千名早期极客用户注册体验!'
+          };
+        },
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【高举高打招聘】重金从 Meta/Google 挖掘架构师补齐工程团队',
+        text: '【高举高打招聘】重金从 Meta/Google 挖掘架构师补齐工程团队 (对症:线上事故)',
         costBadge: '花费 $8w',
         condition: (s) => s.cash >= 8,
         effect: (s) => {
-          const success = gameRandom() < 0.65;
+          const onPoint = s.founder_situation === 'outage';
+          // 对症(线上事故频发)时,资深架构师正中要害:必然稳住系统并大幅提升交付,估值强修复。
+          const success = onPoint || gameRandom() < 0.65;
           if (success) {
             return {
               mid_year: true, season_stage: 'h1',
               cash: parseFloat((s.cash - 8).toFixed(1)),
-              company_valuation: (s.company_valuation || 180) + 300,
+              company_valuation: (s.company_valuation || 180) + (onPoint ? 550 : 300),
               leetcode: Math.min(100, s.leetcode + 6),
-              message: '【核心架构师加盟】大厂 Senior 大牛加盟后研发出高效的 AI 底层服务，产品交付速度明显提升！'
+              ...(onPoint ? { founder_situation: undefined } : {}),
+              message: onPoint
+                ? '【对症下药·稳住系统】正值线上事故频发,你重金请来的大厂资深架构师重构了底层服务,故障率骤降、SLA 达标,交付提速带动估值强劲修复!'
+                : '【核心架构师加盟】大厂 Senior 大牛加盟后研发出高效的 AI 底层服务,产品交付速度明显提升!'
             };
           } else {
             return {
@@ -184,7 +201,7 @@ export const startupEvents: Record<string, GameEvent> = {
               cash: parseFloat((s.cash - 8).toFixed(1)),
               company_valuation: (s.company_valuation || 180) + 100,
               health: Math.max(0, s.health - 8),
-              message: '【团队磨合阵痛】空降大牛与早期极客团队理念冲突，消耗了大笔安家费预算，公司估值增长有限。'
+              message: '【团队磨合阵痛】空降大牛与早期极客团队理念冲突,消耗了大笔安家费预算,公司估值增长有限。'
             };
           }
         },

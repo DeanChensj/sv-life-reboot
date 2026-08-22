@@ -1903,6 +1903,45 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 35 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 36: Founder read-signal→remedy — the on-point remedy for each 痛点 gives a
+// stronger valuation boost AND clears the founder_situation signal.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 36] Founder 痛点→对症 remedy (对症更强且清空信号) ---');
+  const ev = events['founder_annual_strategy'];
+  const talk = ev.choices.find(c => c.text.includes('TechCrunch'));
+  const pmf = ev.choices.find(c => c.text.includes('死磕产品'));
+  const hire = ev.choices.find(c => c.text.includes('高举高打招聘'));
+  assert(!!talk && !!pmf && !!hire, 'founder_annual_strategy has 演讲 / 死磕PMF / 招架构师 remedies');
+
+  const baseFounder = { ...generateInitialState(), job_type: 'startup_founder', level: 'CEO & Founder', founder_stage: 'seed', company_valuation: 1000, cash: 50, tc: 10 } as GameState;
+  const valOf = (choice: any, situation: any) => {
+    const st = { ...baseFounder, founder_situation: situation } as GameState;
+    return applyStateTransition(st, choice.effect(st), { eventId: 'founder_annual_strategy' }).nextState;
+  };
+
+  // 演讲 对症 (估值停滞) vs 无痛点:对症估值增量更大,且信号被清空
+  const talkOn = valOf(talk, 'valuation_stall');
+  const talkOff = valOf(talk, undefined);
+  assert((talkOn.company_valuation || 0) > (talkOff.company_valuation || 0), `演讲对症(估值停滞)估值增益更大 (${talkOff.company_valuation} -> ${talkOn.company_valuation})`);
+  assert(talkOn.founder_situation === undefined, '演讲对症后清空 founder_situation');
+
+  // 死磕PMF 对症 (客户流失)
+  const pmfOn = valOf(pmf, 'churn');
+  const pmfOff = valOf(pmf, undefined);
+  assert((pmfOn.company_valuation || 0) > (pmfOff.company_valuation || 0), `死磕PMF对症(客户流失)估值增益更大 (${pmfOff.company_valuation} -> ${pmfOn.company_valuation})`);
+  assert(pmfOn.founder_situation === undefined, '死磕PMF对症后清空 founder_situation');
+
+  // 招架构师 对症 (线上事故)
+  const hireOn = valOf(hire, 'outage');
+  assert(hireOn.founder_situation === undefined, '招架构师对症(线上事故)后清空 founder_situation');
+  // 对症时 valuation 至少达到成功档 (550 增益),不受 65% 概率影响
+  assert((hireOn.company_valuation || 0) >= 1000 + 550, `招架构师对症必成功且增益达标 (got ${hireOn.company_valuation})`);
+
+  console.log('✅ CUJ 36 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

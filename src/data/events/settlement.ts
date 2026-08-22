@@ -365,11 +365,40 @@ export const settlementEvents: Record<string, GameEvent> = {
               });
             }
 
+            // Founder 痛点信号 (Phase 2 读牌→对症):每年为下一年抛出一个核心痛点,玩家需在
+            // founder_annual_strategy 用对症 remedy 化解 (会清空 founder_situation)。若上一年痛点被
+            // 无视 (信号仍在),年终对估值施加温和拖累 (约 -8%,中等惩罚:读错明显更差但不致命)。
+            let nextFounderSituation = s.founder_situation;
+            let founderValuation = s.company_valuation;
+            let founderMsg = '';
+            if (s.job_type === 'startup_founder' && s.status === 'playing') {
+              if (s.founder_situation && (s.company_valuation || 0) > 0) {
+                founderValuation = Math.max(100, Math.round((s.company_valuation || 0) * 0.92));
+                founderMsg = '【上年痛点未化解】董事会对停滞不前的核心问题深表担忧,公司估值遭受折损。';
+              }
+              // 并非年年都有危机:约 45% 的年份抛出一个核心痛点(需对症化解),其余年份无痛点,
+              // 让创始人腾出手推进融资轮次(沙丘路)——否则年年疲于救火、公司永远长不大。
+              if (gameRandom() < 0.45) {
+                const painRoll = gameRandom();
+                nextFounderSituation = painRoll < 0.34 ? 'valuation_stall' : (painRoll < 0.67 ? 'churn' : 'outage');
+                const painLabel = nextFounderSituation === 'valuation_stall'
+                  ? '估值增长停滞、资本市场关注度下滑 —— 需要一场技惊四座的公关演讲重夺聚光灯'
+                  : nextFounderSituation === 'churn'
+                  ? '核心客户流失、续约率下降 —— 需要带队死磕产品 PMF 与企业大单'
+                  : '线上事故与技术债频发、系统稳定性告急 —— 需要重金招募大厂资深架构师补齐工程';
+                founderMsg = `${founderMsg} 【董事会警报】本年核心痛点:${painLabel}。`.trim();
+              } else {
+                nextFounderSituation = undefined;
+              }
+            }
+
             return { 
               mid_year: false,
               season_stage: undefined,
               age: s.age + 1, 
               year: s.year + 1,
+              founder_situation: nextFounderSituation,
+              company_valuation: founderValuation,
               visa: newVisa,
               h1b_attempts: newAttempts,
               startup_tenure: newStartupTenure,
@@ -402,6 +431,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                 meritMsg,
                 petMsg,
                 economyMsg,
+                founderMsg,
               ].map(m => (m ? m.trim() : '')).filter(Boolean).join(' '),
               // Natural-life ending: at the lifespan cap the game resolves even if the
               // player never hit FIRE and never died — enabling the "content" endings

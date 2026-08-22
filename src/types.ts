@@ -141,6 +141,9 @@ export interface GameState {
   startup_tenure?: number; // 初创公司入职年限 (前2年不办PERM)
   founder_stage?: 'pre_seed' | 'seed' | 'series_a' | 'series_b' | 'exit';
   company_valuation?: number; // 公司估值 (万美元)
+  // 创业者年度核心痛点信号 (Phase 2 读牌→对症):每年由年终结算抛出,需在 founder_annual_strategy
+  // 用对症 remedy 化解 (估值停滞→演讲 / 客户流失→死磕PMF / 线上事故→招架构师),否则年终估值受拖累。
+  founder_situation?: 'valuation_stall' | 'churn' | 'outage';
   macro_economy?: 'bull' | 'bear' | 'neutral'; // 宏观经济周期
   transferred_to_ai?: boolean; // 是否已内部转岗至前沿大模型组
   last_limited_opp_year?: number; // 记录上一次参与湾区限时机会的年份 (防同一年度重复点击)

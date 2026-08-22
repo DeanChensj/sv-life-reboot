@@ -1877,6 +1877,32 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 34 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 35: Trader regime reading — 做空避险 is regime-directional (熊市赚 / 牛市亏)
+// Locks the "read the macro regime → position accordingly" loop so a future edit
+// can't silently make the short/bonds play regime-agnostic.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 35] Trader 做空避险 is regime-directional (熊市赚/牛市亏) ---');
+  const ev = events['trader_annual_strategy'];
+  const shortChoice = ev.choices.find(c => c.text.includes('做空避险'));
+  assert(!!shortChoice, 'trader_annual_strategy has a 做空避险 (short/bonds) choice');
+  const growth = ev.choices.find(c => c.text.includes('重仓科技龙头'));
+  assert(!!growth, 'trader_annual_strategy still has the bull-favored 重仓科技龙头 choice');
+
+  const baseTrader: GameState = { ...generateInitialState(), job_type: 'trader', company: '全职 Day Trader', level: '全职 Trader', cash: 100, tc: 0 } as GameState;
+  const bearState = { ...baseTrader, macro_economy: 'bear' as const };
+  const bullState = { ...baseTrader, macro_economy: 'bull' as const };
+
+  const bear = applyStateTransition(bearState, shortChoice!.effect(bearState), { eventId: 'trader_annual_strategy' }).nextState;
+  assert(bear.cash > 100, `做空避险 profits in a bear market (cash 100 -> ${bear.cash})`);
+
+  const bull = applyStateTransition(bullState, shortChoice!.effect(bullState), { eventId: 'trader_annual_strategy' }).nextState;
+  assert(bull.cash < 100, `做空避险 loses in a bull market (cash 100 -> ${bull.cash})`);
+
+  console.log('✅ CUJ 35 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

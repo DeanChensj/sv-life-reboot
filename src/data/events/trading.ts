@@ -164,7 +164,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '作为全职 Trader，你不再依靠大厂发放的固定工资。今年的美股/加密货币市场波谲云诡，你打算采用哪种操盘策略？',
     choices: [
       {
-        text: '【稳健对冲股息策略】主要布局标普500/高股息 ETF 与跨期对冲期权 (低风险)',
+        text: '【稳健对冲股息策略】主要布局标普500/高股息 ETF 与跨期对冲期权 (低风险 · 全天候抗跌)',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBear = s.macro_economy === 'bear';
@@ -197,7 +197,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险)',
+        text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险 · 牛市利器,熊市易被砸盘)',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
@@ -227,7 +227,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险)',
+        text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险 · 牛市偏好,高波动)',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
@@ -260,6 +260,42 @@ export const tradingEvents: Record<string, GameEvent> = {
               cash: Math.max(2, parseFloat((s.cash - bust).toFixed(1))),
               health: Math.max(0, s.health - 15),
               message: ` 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
+            };
+          }
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        // 读牌博弈的另一极:唯一能在熊市主动赚钱的策略(反向 ETF + 长久期国债)。方向按宏观
+        // regime 确定 (熊市稳赚 / 牛市反噬 / 横盘小幅拖累),幅度带运气浮动,配合仪表盘的
+        // 牛熊指示形成「看盘下注」闭环。中等力度:读对明显更优、读错明显更差但不致命。
+        text: '【做空避险:反向 ETF + 长债】押注大盘下行,买入反向 ETF 与长久期国债 (熊市利器,牛市反噬)',
+        condition: (s) => s.job_type === 'trader',
+        effect: (s) => {
+          const luck = ((s.luck || 20) / 1000);
+          if (s.macro_economy === 'bear') {
+            const gain = Math.min(40, s.cash * (0.26 + luck));
+            return {
+              mid_year: true, season_stage: 'h1', tc: 0,
+              cash: parseFloat((s.cash + gain).toFixed(1)),
+              health: Math.max(0, s.health - 5),
+              message: ` 逆势封神！熊市中反向 ETF 与避险长债齐飞,你在别人割肉时反手做空大赚 +$${gain.toFixed(1)}w 美元!`
+            };
+          } else if (s.macro_economy === 'bull') {
+            const loss = Math.min(30, s.cash * 0.22);
+            return {
+              mid_year: true, season_stage: 'h1', tc: 0,
+              cash: Math.max(5, parseFloat((s.cash - loss).toFixed(1))),
+              health: Math.max(0, s.health - 8),
+              message: ` 逆势踏空!牛市一路轧空,你的空头仓位与长债被反复碾压,倒亏 -$${loss.toFixed(1)}w 美元。`
+            };
+          } else {
+            const drag = Math.min(10, s.cash * 0.05);
+            return {
+              mid_year: true, season_stage: 'h1', tc: 0,
+              cash: Math.max(5, parseFloat((s.cash - drag).toFixed(1))),
+              health: Math.max(0, s.health - 5),
+              message: ` 横盘磨人:震荡期没有明确方向,做空与长债的持有成本(Decay/负 Carry)小幅拖累了本金 -$${drag.toFixed(1)}w。`
             };
           }
         },

@@ -75,10 +75,17 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     } else if (currentEventId === 'trader_annual_strategy') {
       // Competent trader: compound via the moderate-risk growth play, hedge when health is
       // critical. (Was played fully at random once routed off sv_daily_life.)
+      // 能力型 trader 会读仪表盘的牛熊 regime 顺势下注:牛市重仓科技龙头、熊市做空/买债、
+      // 横盘走量化套利;健康告急则退守稳健对冲。(与 trading.ts 的 regime 化收益对齐,否则一直
+      // 梭哈龙头会在熊市持续挨打、拉低 trader 路径 FIRE。)
       const hedge = validChoices.find(c => c.text.includes('对冲股息'));
       const growth = validChoices.find(c => c.text.includes('重仓科技龙头'));
+      const short = validChoices.find(c => c.text.includes('做空避险'));
+      const quant = validChoices.find(c => c.text.includes('量化自动套利'));
       if (state.health < 40 && hedge) chosen = hedge;
-      else chosen = growth || validChoices[Math.floor(gameRandom() * validChoices.length)];
+      else if (state.macro_economy === 'bull' && growth) chosen = growth;
+      else if (state.macro_economy === 'bear' && short) chosen = short;
+      else chosen = quant || hedge || growth || validChoices[Math.floor(gameRandom() * validChoices.length)];
     } else if (currentEventId === 'side_hustle_hub') {
       // 副业子菜单:玩家仍是全职,来这里挑一条第二曲线。模型一个「有能力的」副业玩家——
       // 按自身强项选最优赛道,而不是随机乱点(否则测出的胜率是「乱点」水平,系统性低估真实平衡)。

@@ -148,15 +148,15 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     companyLabel = state.company === 'citadel' ? 'Citadel' : state.company === 'jane_street' ? 'Jane Street' : state.company === 'two_sigma' ? 'Two Sigma' : 'Top Quant';
     companyClassName = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 font-bold';
   } else if (state.job_type === 'ai_research' || state.company === 'openai' || state.company === 'anthropic') {
-    companyLabel = state.company === 'anthropic' ? 'Anthropic' : 'OpenAI';
+    companyLabel = state.company === 'anthropic' ? 'Anthropic' : state.company === 'openai' ? 'OpenAI' : '前沿 AI 实验室';
     companyClassName = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold';
   } else if (getCompanyProfile(state.company)) {
     // Standard big-tech employers (google/meta/…/oracle/robinhood) — single lookup.
     const profile = getCompanyProfile(state.company)!;
     companyLabel = profile.label;
     companyClassName = profile.className;
-  } else if (state.job_type === 'startup') {
-    companyLabel = 'AI 独角兽 (SaaS)';
+  } else if (state.job_type === 'startup' || state.company === 'startup') {
+    companyLabel = 'AI 初创公司';
     companyClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold';
   } else if (state.job_type === 'big_tech') {
     companyLabel = '硅谷科技大厂';

@@ -1,4 +1,4 @@
-import type { GameState, StoryFlags } from '../../types';
+import type { GameState, StoryFlags, Choice } from '../../types';
 import { safeStorage } from '../../utils/safeStorage';
 import { STORAGE_KEYS, isOwnedHousing, VISA_STATUS, isPermanentVisa } from '../../constants/gameConstants';
 import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '../../utils/random';
@@ -720,6 +720,43 @@ export const h1ToH2Router = (s: GameState): string => {
 // 仅在开局「首次入职」(season_stage 尚未置位) 时才回 sv_daily_life,开启人生第一年的日常规划。
 export const afterCareerAction = (s: GameState): string =>
   s.season_stage === 'h1' ? h1ToH2Router(s) : 'sv_daily_life';
+
+// SINGLE SOURCE OF TRUTH for post-choice routing. Both the live app (App.tsx) and the
+// balance/fuzz harnesses MUST route through this, so the simulated path == the shipped path.
+// Historically the season/mid-year intercept lived ONLY in App.tsx's handleChoice, so the
+// monte-carlo & fuzz harnesses (which just followed choice.nextEventId) exercised a DIFFERENT
+// graph than players actually played — they never honored the FIRE/game-over targetEventId
+// override nor the H1→H2→settlement season advance, which is why their balance numbers were
+// measured on a game nobody ships. Given the post-effect state (newState = transition.nextState)
+// and the transition's targetEventId, resolve the next event id + any season-stage mutation.
+// Behavior is byte-for-byte what App.tsx did inline (UI side effects like sound stay in App.tsx).
+export function resolveNextEventId(
+  choice: Pick<Choice, 'nextEventId'>,
+  newState: GameState,
+  targetEventId?: string,
+): { finalState: GameState; nextEventId: string | undefined } {
+  // 1. Centralized termination / FIRE routing wins (death/bankruptcy/win/retired → 'end',
+  //    crossing the FIRE threshold mid-turn → 'fire_milestone_choice') always override the
+  //    event's own nextEventId, exactly as App.tsx does.
+  if (targetEventId) {
+    return { finalState: newState, nextEventId: targetEventId };
+  }
+  let nextId: string | undefined =
+    typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
+
+  // 2. Mid-year season advance: a career action returning to sv_daily_life while mid_year is
+  //    set does NOT bounce back to the annual hub — it advances H1→H2 (inject a life event via
+  //    midYearEventRouter) then H2→year-end settlement, consuming the year.
+  if (nextId === 'sv_daily_life' && newState.mid_year) {
+    if (newState.season_stage === 'h1' || !newState.season_stage) {
+      const finalState: GameState = { ...newState, season_stage: 'h2' };
+      return { finalState, nextEventId: midYearEventRouter(finalState) };
+    }
+    const finalState: GameState = { ...newState, season_stage: undefined };
+    return { finalState, nextEventId: 'sv_year_end_settlement' };
+  }
+  return { finalState: newState, nextEventId: nextId };
+}
 
 // Dynamic Annual Opportunities Pool & Rotation System
 export const ANNUAL_OPPORTUNITY_KEYS = [

@@ -1,4 +1,4 @@
-import { events, generateInitialState } from './src/data/events';
+import { events, generateInitialState, resolveNextEventId } from './src/data/events';
 import { GameState } from './src/types';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { gameRandom } from './src/utils/random';
@@ -203,7 +203,11 @@ function runFuzzTest(iterations: number, baseSeed: number, singleSeed?: number) 
           break;
         }
 
-        const nextId = transition.targetEventId || (typeof randomChoice.nextEventId === 'function' ? randomChoice.nextEventId(currentState) : randomChoice.nextEventId);
+        // Route through the SAME shared resolver the live app uses (targetEventId override +
+        // H1→H2→settlement season advance), so the fuzzer traverses the shipped event graph.
+        const routed = resolveNextEventId(randomChoice, currentState, transition.targetEventId);
+        currentState = routed.finalState;
+        const nextId = routed.nextEventId;
 
         // 路由不变量：只有本回合真正晋升 (last_promo_age === age) 才允许进入「晋升庆祝」事件。
         // 这道防线专治反复出现的 message.includes('晋升') 误路由 (被拒/无关文案含"晋升" → 误弹喜报)。
@@ -212,6 +216,7 @@ function runFuzzTest(iterations: number, baseSeed: number, singleSeed?: number) 
           break;
         }
 
+        if (!nextId) break;
         currentEventId = nextId;
 
       } catch (e: any) {

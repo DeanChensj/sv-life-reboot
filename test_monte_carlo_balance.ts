@@ -1,4 +1,4 @@
-import { events, generateInitialState } from './src/data/events';
+import { events, generateInitialState, resolveNextEventId } from './src/data/events';
 import { GameState, Choice } from './src/types';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { gameRandom } from './src/utils/random';
@@ -150,7 +150,10 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     const prevCompany = state.company;
     const eff = chosen.effect(state);
     const transition = applyStateTransition(state, eff, { eventId: currentEventId });
-    state = transition.nextState;
+    // Route through the SAME resolver the live app uses (honors targetEventId + H1→H2→settlement
+    // season advance), so the measured balance reflects the shipped game, not a divergent graph.
+    const routed = resolveNextEventId(chosen, transition.nextState, transition.targetEventId);
+    state = routed.finalState;
 
     if (isHopGrind) {
       hopsAttempted += state.hop_applied_count || 3;
@@ -158,14 +161,8 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     }
 
     if (state.status !== 'playing') break;
-
-    if (typeof chosen.nextEventId === 'string') {
-      currentEventId = chosen.nextEventId;
-    } else if (typeof chosen.nextEventId === 'function') {
-      currentEventId = chosen.nextEventId(state);
-    } else {
-      break;
-    }
+    if (!routed.nextEventId) break;
+    currentEventId = routed.nextEventId;
 
     if (currentEventId === 'end') break;
   }

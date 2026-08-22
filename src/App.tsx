@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import type { GameState, Choice } from './types';
-import { generateInitialState, events, midYearEventRouter, impactTier } from './data/events';
+import { generateInitialState, events, resolveNextEventId, impactTier } from './data/events';
 import { BentoStatsPanel } from './components/BentoStatsPanel';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
@@ -547,28 +547,12 @@ export default function App() {
     // 2. Determine the next event id and any final (immutable) state changes.
     //    IMPORTANT: never mutate `newState` after it is handed to setGameState —
     //    compute the season transition into a fresh object and commit state once.
-    let finalState = newState;
-    let nextId: string | undefined;
-
-    if (transition.targetEventId) {
-      if (transition.targetEventId === 'fire_milestone_choice') {
-        sound.play('win');
-      }
-      nextId = transition.targetEventId;
-    } else {
-      nextId = typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
-
-      // Intercept return to daily life if we are in mid-year (H1 -> H2 -> Year End Settlement)
-      if (nextId === 'sv_daily_life' && newState.mid_year) {
-        if (newState.season_stage === 'h1' || !newState.season_stage) {
-          finalState = { ...newState, season_stage: 'h2' };
-          nextId = midYearEventRouter(finalState);
-        } else {
-          finalState = { ...newState, season_stage: undefined };
-          nextId = 'sv_year_end_settlement';
-        }
-      }
+    if (transition.targetEventId === 'fire_milestone_choice') {
+      sound.play('win');
     }
+    // Post-choice routing (targetEventId override + H1→H2→settlement season advance) lives in
+    // ONE shared resolver so the balance/fuzz harnesses route through the exact same graph.
+    const { finalState, nextEventId: nextId } = resolveNextEventId(choice, newState, transition.targetEventId);
 
     // 3. Commit state exactly once with the final immutable object.
     setGameState(finalState);

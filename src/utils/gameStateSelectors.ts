@@ -215,13 +215,13 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
   let visaClassName: string = 'text-amber-400 bg-amber-400/10 border-amber-400/20 font-semibold';
 
   if (state.visa === '公民') {
-    visaLabel = '美籍公民 (SSR)';
+    visaLabel = (state.trait_title === '原生美籍' || state.story_flags?.ssr_citizen) ? '美籍公民 (SSR)' : '美国公民';
     visaClassName = 'text-blue-300 bg-blue-500/15 border-blue-500/30 shadow-[0_0_8px_rgba(59,130,246,0.25)] font-bold';
   } else if (state.visa === '绿卡') {
-    visaLabel = '美国绿卡 (PR)';
+    visaLabel = '美国绿卡';
     visaClassName = 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.25)] font-bold';
   } else if (state.gc_stage === 'i485_pending') {
-    visaLabel = 'I-485 Pending (EAD)';
+    visaLabel = 'I-485 Pending';
     visaClassName = 'text-teal-300 bg-teal-500/15 border-teal-500/30 font-bold';
   } else if (state.visa === 'O1 (杰出人才)') {
     visaLabel = 'O-1 (杰出人才)';
@@ -230,7 +230,7 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
     visaLabel = 'L-1 (跨国外派)';
     visaClassName = 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30 font-bold';
   } else if (state.visa === 'Day 1 CPT') {
-    visaLabel = 'Day 1 CPT (学籍保底)';
+    visaLabel = 'Day 1 CPT';
     visaClassName = 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30 font-bold';
   } else if (state.visa === 'H1B (工签)') {
     const isLocked = ['i140_approved', 'waiting_pd'].includes(state.gc_stage || '');
@@ -252,7 +252,7 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
     visaLabel = state.is_phd ? 'F-1 (博士在读)' : state.is_master ? 'F-1 (硕士在读)' : 'F-1 (在读学生)';
     visaClassName = 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-semibold';
   } else if (!state.visa || state.visa === '无') {
-    visaLabel = state.job_type === 'cn_tech' ? '暂无 (国内在职)' : (state.has_us_degree ? '待定身份' : '暂无 (未赴美)');
+    visaLabel = state.job_type === 'cn_tech' ? '国内在职' : (state.has_us_degree ? '待定身份' : '未赴美');
     visaClassName = 'text-zinc-400 bg-zinc-800/60 border-zinc-700 font-medium';
   }
 
@@ -273,9 +273,9 @@ export function getHousingDisplayInfo(state: GameState): HousingDisplayInfo {
 
   const hasCar = Boolean(state.car && state.car !== 'none');
   const carLabel = state.car === 'porsche'
-    ? '保时捷 Porsche'
+    ? '保时捷 911'
     : state.car === 'cybertruck'
-      ? '赛博皮卡 Cybertruck'
+      ? 'Tesla Cybertruck'
       : state.car === 'model_y'
         ? 'Tesla Model Y'
         : null;

@@ -217,7 +217,7 @@ const avgWinAgeNum = winAges.length > 0 ? (winAges.reduce((a, b) => a + b, 0) / 
 const hopSuccessRateNum = totalHopsAttempted > 0 ? (totalHopsSucceeded / totalHopsAttempted) * 100 : 0;
 
 console.log(`📊 蒙特卡洛测试样本数: ${TOTAL_RUNS} 局`);
-  console.log(`  - 全局 FIRE 胜率: ${winRateNum.toFixed(1)}% (基准范围: 20.0% ~ 43.0%)`);
+  console.log(`  - 全局 FIRE 胜率: ${winRateNum.toFixed(1)}% (基准范围: 20.0% ~ 39.0%)`);
 console.log(`  - 玩家平均寿命: ${avgAgeNum.toFixed(1)} 岁 (基准范围: 35.0 ~ 55.0 岁)`);
 console.log(`  - FIRE 通关平均年龄: ${avgWinAgeNum.toFixed(1)} 岁 (基准范围: 33.0 ~ 45.0 岁)`);
 console.log(`  - 跳槽面试通过率: ${hopSuccessRateNum.toFixed(1)}% (基准范围: 50.0% ~ 75.0%)`);
@@ -231,14 +231,11 @@ if (avgAgeNum < 35.0 || avgAgeNum > 55.0) {
   hasError = true;
 }
 
-// 2. Invariant Assertion: Win Rate to FIRE (20.0% ~ 43.0%)
-// 上限从 40% 上调到 43%(PR #100):#100 修复了大量事件从年中错误跳回 sv_daily_life 造成的
-// 「同回合死循环」——那种循环会跳过年终结算(不回血、不加岁数)却持续叠加扣血事件,人为制造
-// 了 ~550/3000 局的 burnout 假死亡,把旧的 35% FIRE 基线压了出来。修复后「有能力玩家」的
-// 真实 FIRE 率稳定在 ~41%(蒙卡 3000 局波动 39-42)。这是对基线的校正,而非放水;43% 给
-// 概率波动留出余量,同时仍能拦住真正的失衡回归。详见 h1ToH2Router / career.ts 的路由修复。
-if (winRateNum < 20.0 || winRateNum > 43.0) {
-  console.error(`❌ [胜率平衡违规] 全局 FIRE 胜率为 ${winRateNum.toFixed(1)}%，未在 20.0% ~ 43.0% 预设耐玩区间！`);
+// 2. Invariant Assertion: Win Rate to FIRE (20.0% ~ 39.0%)
+// 引入房产持有维护成本(加州地税/HOA/大修储备金)与真实宏观牛熊周期波动后，
+// 全局 FIRE 胜率从偏高的 ~42% 精准回落至 ~33% - 36% 黄金平衡区间。
+if (winRateNum < 20.0 || winRateNum > 39.0) {
+  console.error(`❌ [胜率平衡违规] 全局 FIRE 胜率为 ${winRateNum.toFixed(1)}%，未在 20.0% ~ 39.0% 预设耐玩区间！`);
   hasError = true;
 }
 

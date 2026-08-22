@@ -244,7 +244,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
             };
           }
         },
-        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_final_crisis'),
+        nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
       },
       {
         text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 $1.5w)',
@@ -268,7 +268,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
             ? { cash: s.cash - 8, visa: 'O1 (杰出人才)', message: '律师极其硬核！通过挖掘你在论文和核心架构中的亮点，成功压线批准了 O1 签证！绝地求生！' }
             : { cash: s.cash - 8, health: Math.max(0, s.health - 15), story_flags: { ...(s.story_flags || {}), o1_denied_this_year: true }, message: '移民局严肃驳回了 O1 申请，$8w 律师费彻底打了水漂...请选择其他备选方案！' };
         },
-        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_year_end_settlement' : 'h1b_final_crisis',
+        nextEventId: (s: GameState) => s.visa === 'O1 (杰出人才)' ? 'sv_year_end_settlement' : 'h1b_fallback_options',
       },
       {
         text: '【钞能力自救】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w 总资产)',

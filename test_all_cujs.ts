@@ -1941,8 +1941,8 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 {
   console.log('--- [CUJ 37] WLB/AI 养生路径封顶 L4 + WLB 一次性 ---');
   const wlb = events['sv_daily_life'].choices.find((c) => c.text.includes('转岗 AI 组'))!;
-  const ai = events['sv_daily_life'].choices.find((c) => c.text.includes('前沿 AI 团队攻坚'))!;
-  assert(!!wlb && !!ai, 'sv_daily_life 有【转岗 AI 组】与【前沿 AI 团队攻坚】');
+  const ai = events['sv_daily_life'].choices.find((c) => c.text.includes('在神仙 AI 组保持工作生活平衡'))!;
+  assert(!!wlb && !!ai, 'sv_daily_life 有【转岗 AI 组】与【神仙 AI 组 WLB 漫步】');
 
   // 一个满资历、算法极高的 L4 走 WLB 或 AI 攻坚,都不能自然升到 L5(必须内卷)。
   const l4Ripe = (over: Partial<GameState>): GameState => ({

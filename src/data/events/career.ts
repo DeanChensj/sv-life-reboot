@@ -950,7 +950,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
       // 2. 【情境定制动态专属】 (根据公司、婚姻、财富阶层动态生成)
       {
-        text: '【转岗 AI 组·养生】一次性内部转岗前沿大模型组,神仙 WLB (仅一次)',
+        text: '【转岗 AI 组·养生】一次性内部转岗前沿大模型组，神仙 WLB (仅一次)',
         condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !s.transferred_to_ai,
         hideIfUnavailable: true,
         effect: (s) => {
@@ -958,7 +958,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           // 一次性转岗前沿 AI 组(保证成功 → transferred_to_ai 置位后本选项永久隐藏,天然每局至多一次;
-          // 此后由【前沿 AI 攻坚】接手)。养生回血。自然晋升只到 L4(入门);L5 Senior 及以上不再靠
+          // 此后由【大厂 WLB 漫步】接手)。养生回血。自然晋升只到 L4(入门);L5 Senior 及以上不再靠
           // 躺着自然给,必须回【疯狂内卷】耗血冲刺挣——杜绝"养生白嫖到 Senior"的无脑优选。
           if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
             return {
@@ -966,19 +966,19 @@ export const careerEvents: Record<string, GameEvent> = {
               level: 'L4', tc: s.tc + 3.5, last_promo_age: s.age,
               impact: addImpact(s, 4),
               health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4,
-              message: '【转岗 AI 组·顺带升 L4】你申请内部转岗前沿大模型组成功!既享神仙 WLB,又凭稳健交付水到渠成晋升 L4 工程师,总包 +$3.5w!'
+              message: '【转岗 AI 组·顺带升 L4】你申请内部转岗前沿大模型组成功！既享神仙 WLB，又凭稳健交付水到渠成晋升 L4 工程师，总包 +$3.5w！'
             };
           }
           return {
             mid_year: true, season_stage: 'h1', transferred_to_ai: true,
             health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, impact: addImpact(s, 4),
-            message: '【成功转岗 AI 组】你顺利 Transfer 到前沿大模型研发组,坐拥神仙 WLB 又接触顶尖架构!(想冲 L5 Senior 及以上,仍需回【疯狂内卷】耗血冲刺)'
+            message: '【成功转岗 AI 组】你顺利 Transfer 到前沿大模型研发组，坐拥神仙 WLB 的同时又能接触行业顶尖架构！'
           };
         },
         nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
-        text: '【前沿 AI 团队攻坚】主导大模型低延迟推理架构落地，兼顾神仙级 WLB',
+        text: '【大厂 WLB 漫步】在神仙 AI 组保持工作生活平衡，稳健研发与养生沉淀',
         condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !!s.transferred_to_ai,
         hideIfUnavailable: true,
         effect: (s) => {
@@ -999,9 +999,23 @@ export const careerEvents: Record<string, GameEvent> = {
             };
           }
 
+          const wlbSuccessMessages = [
+            '【AI 架构落地】你优化了大模型低延迟推理架构，吞吐性能提升 40%，组内一致好评，工作与生活达到完美平衡！',
+            '【技术分享与沉淀】你在大模型团队内部主持了高质量的技术架构分享，既接触到顶尖技术又享受每天准时下班的惬意！',
+            '【开源社区贡献】利用充裕的业余时间给前沿 AI 开源项目提交了核心 PR，在不伤身体的前提下悄悄积累了行业影响力！',
+            '【安稳平稳迭代】大模型生产集群运行丝滑无事故，你在优雅完成 Sprint 需求的同时，每天下午在园区草坪喝咖啡散步，体能完全回满！',
+          ];
+          const chosenMsg = wlbSuccessMessages[Math.floor(gameRandom() * wlbSuccessMessages.length)];
+
+          const wlbChillMessages = [
+            '【惬意养老】AI 组内节奏极其舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客，身心焕然一新。',
+            '【拒绝内耗】面对复杂的跨组扯皮你果断按时下班，把精力留给健身与生活，身心恢复到最佳状态。',
+          ];
+          const chillMsg = wlbChillMessages[Math.floor(gameRandom() * wlbChillMessages.length)];
+
           return pass
-            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评,工作与生活达到完美平衡!(冲 L5 Senior 及以上仍需回【疯狂内卷】)' }
-            : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【惬意养老】AI 组内节奏舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客。' };
+            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: chosenMsg }
+            : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: chillMsg };
         },
         nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
       },

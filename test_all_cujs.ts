@@ -1962,28 +1962,32 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 // -----------------------------------------------------------------------------
-// CUJ 38: 升职受阻诊断 (Career Radar on failed promotion)。L5+ 玩家内卷未升成时,
-// 失败反馈须明确点出隐形门槛的卡点(Impact / 人脉Leadership / 算法),让玩家能主动补短板,
-// 而非只给通用「Quota 紧张」。锁住"读升职信号→调整"的闭环。
+// CUJ 38: 升职受阻·定性复盘 (Promo is a blackbox)。L5+ 内卷未升成时给一句定性方向反馈,
+// 但【绝不暴露任何真实数值/门槛】(保持晋升黑箱)。锁两件事:①有定性复盘;②不泄露数字/阈值。
 // -----------------------------------------------------------------------------
 {
-  console.log('--- [CUJ 38] 升职受阻诊断 (缺 Impact/人脉 会明确告知) ---');
+  console.log('--- [CUJ 38] 升职受阻·定性复盘 (黑箱,不泄露数值) ---');
   const grind = events['sv_daily_life'].choices.find((c) => c.text.includes('疯狂内卷'))!;
-  // L5、impact=0、network 低 → 冲 L6 必然受阻(impact<20 短路 meetsOrganicPromo)→ 落入底部诊断反馈。
+  // L5、impact=0、network 低 → 冲 L6 必然受阻(impact<20 短路 meetsOrganicPromo)→ 落入底部定性复盘。
   const stuck = { ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
     leetcode: 70, impact: 0, network: 10, charm: 12, tc: 60, health: 80, age: 40, last_promo_age: 35, status: 'playing' } as GameState;
-  let sawImpactDiag = false;
+  let sawDiag = false, leakedNumber = false;
   for (let i = 0; i < 20; i++) {
     const r = grind.effect(stuck);
     if (r.level === 'L6 (Staff)') { assert(false, 'impact=0 的 L5 不应升到 L6'); break; }
-    if ((r.message || '').includes('晋升诊断') && (r.message || '').includes('Impact')) sawImpactDiag = true;
+    const m = r.message || '';
+    if (m.includes('晋升复盘')) sawDiag = true;
+    // 黑箱:复盘句里不得出现门槛数字(如 8/20、>=20、或裸阈值数字)。先剔除职级 token(L6/L5…)
+    // 再查——职级名里的数字不算泄露指标。
+    const diagPart = (m.split('【晋升复盘】')[1] || '').replace(/L\d/g, '');
+    if (/\d/.test(diagPart)) leakedNumber = true;
   }
-  assert(sawImpactDiag, 'L5 冲 L6 因 Impact 不足受阻时,失败反馈须点出「晋升诊断…Impact 不足」');
+  assert(sawDiag, 'L5 冲 L6 受阻时给出【晋升复盘】定性方向反馈');
+  assert(!leakedNumber, '晋升复盘为黑箱:不得泄露任何真实数值/门槛数字');
 
-  // L3 玩家不触发 Staff+ 诊断(其失败文案走既有的算法提示),promoBlockerHint 返回空。
+  // L3 玩家不触发 Staff+ 复盘(其失败文案走既有的算法提示),promoBlockerHint 返回空。
   const l3 = { ...stuck, level: 'L3', leetcode: 20, impact: 0 } as GameState;
-  const l3msg = (grind.effect(l3).message || '');
-  assert(!l3msg.includes('晋升诊断'), 'L3 不触发 Staff+ 晋升诊断(交给既有算法提示)');
+  assert(!(grind.effect(l3).message || '').includes('晋升复盘'), 'L3 不触发 Staff+ 晋升复盘');
 
   console.log('✅ CUJ 38 Passed\n');
 }

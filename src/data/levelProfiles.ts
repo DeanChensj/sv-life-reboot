@@ -157,12 +157,11 @@ export const meetsOrganicPromo = (
 };
 
 /**
- * 升职受阻诊断:当一次晋升尝试没能兑现时,对比当前状态与下一职级的 organicPromoReq,
- * 给出「卡在哪」的可行动反馈(跨组影响力 Impact / 算法深度 / 高层人脉与 Leadership 背书 /
- * 向上管理与沟通)。让玩家像读牛熊指标一样,读懂升职信号后主动补短板。
- * - 仅覆盖 Staff+ (L5→L6→L7→L8) 这段「隐形门槛」——L3/L4 的失败文案本就已明示算法门槛。
- * - 硬指标全达标但仍未升,则说明是资历/名额(Quota)问题,给出对应提示。
- * 返回空串表示当前职级不适用(交给调用方回退到通用文案)。
+ * 升职受阻·定性复盘:晋升是个黑箱——刻意【不暴露任何真实数值/门槛】,只像真实 perf review 那样
+ * 给一句 Committee 的定性顾虑方向(影响力 / 技术深度 / 高层背书 / 向上管理),让玩家隐约感到该往
+ * 哪使劲,但不会拿到"差几点 Impact"这种精确读数。
+ * - 仅覆盖 Staff+ (L5→L6→L7→L8) 这段隐形门槛;L3/L4 的失败文案本就已给方向,此处返回空串回退。
+ * - 用最短板(相对各自门槛的缺口比例)决定 Committee 点评哪一项,但对玩家只呈现定性描述。
  */
 export const promoBlockerHint = (s: GameState): string => {
   const cur = normalizeLevel(s.level, s);
@@ -176,15 +175,17 @@ export const promoBlockerHint = (s: GameState): string => {
   if (!target) return '';
   const r = getOrganicPromoReq(target);
   if (!r) return '';
-  const gaps: string[] = [];
-  if ((s.impact || 0) < r.impact) gaps.push(`跨组影响力 Impact 不足 (${Math.round(s.impact || 0)}/${r.impact})`);
-  if ((s.leetcode || 0) < r.leetcode) gaps.push(`算法/技术深度不够 (${s.leetcode || 0}/${r.leetcode})`);
-  if ((s.network || 10) < r.network) gaps.push(`高层人脉与 Leadership 背书不足 (${s.network || 10}/${r.network})`);
-  if ((s.charm || 10) < r.charm) gaps.push(`向上管理与团队沟通欠佳 (${s.charm || 10}/${r.charm})`);
+  // 计算各维度「缺口比例」(越负缺得越多),取最短板作为 Committee 的定性顾虑;只输出定性描述,不带数字。
+  const gaps: { ratio: number; note: string }[] = [];
+  if ((s.impact || 0) < r.impact) gaps.push({ ratio: (s.impact || 0) / r.impact, note: 'Committee 觉得你的跨组影响力与项目声量还差点火候,尚未在更大范围留下不可替代的战果' });
+  if ((s.leetcode || 0) < r.leetcode) gaps.push({ ratio: (s.leetcode || 0) / r.leetcode, note: '评审认为你的技术深度与系统设计硬实力仍需再沉淀' });
+  if ((s.network || 10) < r.network) gaps.push({ ratio: (s.network || 10) / r.network, note: '你缺乏足够的高层 Sponsor 与跨部门 Leadership 背书,关键人没为你站台' });
+  if ((s.charm || 10) < r.charm) gaps.push({ ratio: (s.charm || 10) / r.charm, note: '你的向上管理与团队协作口碑还没打出来,汇报叙事不够有说服力' });
   if (gaps.length > 0) {
-    return `【晋升诊断】冲击 ${target} 受阻 —— ${gaps.slice(0, 2).join('；')}。针对性补齐后再冲!`;
+    gaps.sort((a, b) => a.ratio - b.ratio);
+    return `【晋升复盘】冲击 ${target} 未果 —— ${gaps[0].note}。回去针对性补强,明年再冲!`;
   }
   const yig = s.age - (s.last_promo_age ?? (s.age - 1));
-  if (yig < 2) return `【晋升诊断】冲击 ${target} 硬指标已达标,但本级资历尚浅 (需满 2 年),稳一稳明年冲!`;
-  return `【晋升诊断】冲击 ${target} 各项硬指标均已达标,惜败于本年度晋升名额 (Quota) 竞争,明年再冲!`;
+  if (yig < 2) return `【晋升复盘】冲击 ${target} 未果 —— 你已获得广泛认可,但本级资历尚浅、火候未到,稳一稳明年再冲!`;
+  return `【晋升复盘】冲击 ${target} 未果 —— 你已具备实力,惜败于本年度晋升名额 (Quota) 的激烈竞争,明年卷土重来!`;
 };

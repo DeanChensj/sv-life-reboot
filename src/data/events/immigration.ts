@@ -73,8 +73,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
         costBadge: '花费 $5w',
-        reqBadge: '需 PhD 或硬核算法背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && (s.cash + (s.stocks || 0)) >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
+        reqBadge: '需 PhD、高 Impact 或硬核算法背景',
+        condition: (s) => (s.is_phd || (s.impact || 0) >= 20 || s.leetcode >= 85 || s.job_type === 'ai_research') && (s.cash + (s.stocks || 0)) >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
         effect: (s) => {
           const win = gameRandom() < o1PassProb(s); // shared, consistent O1 odds across all events
           return win
@@ -260,8 +260,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【砸重金急办 O-1 签证】找顶级律所加急办理 O-1 杰出人才签证 (需现金 >= $8w，限 PhD 或硬核背景)',
         costBadge: '花费 $8w',
-        reqBadge: '需 PhD 或硬核背景',
-        condition: (s) => (s.is_phd || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
+        reqBadge: '需 PhD、高 Impact 或硬核背景',
+        condition: (s) => (s.is_phd || (s.impact || 0) >= 20 || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,
         effect: (s) => {
           const pass = gameRandom() < o1PassProb(s); // shared, consistent O1 odds
           return pass

@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom, addImpact } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 
 export const startupEvents: Record<string, GameEvent> = {
@@ -326,10 +326,10 @@ export const startupEvents: Record<string, GameEvent> = {
       {
         text: '【抢占先机写 Paper】抢占先机，连夜写 Paper 冲击顶会！',
         effect: (s) => {
-          const win = gameRandom() < (0.55 + s.leetcode / 300);
+          const win = gameRandom() < (0.55 + ((s.impact || 0) / 250) + s.leetcode / 400);
           return win 
-            ? { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4), health: s.health - 15, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' }
-            : { health: s.health - 15, cash: s.cash, message: '熬了半个月，结果撞车了别人的工作被直接 Reject，心态炸裂。' };
+            ? { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, impact: addImpact(s, 15), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4), health: s.health - 15, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界，行业影响力飙升 (Impact +15)！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' }
+            : { health: s.health - 15, cash: s.cash, impact: addImpact(s, 4), message: '熬了半个月，结果撞车了别人的工作被直接 Reject，但实验沉淀与代码库仍为你积累了前沿影响力 (Impact +4)。' };
         },
         nextEventId: h1ToH2Router,
       },

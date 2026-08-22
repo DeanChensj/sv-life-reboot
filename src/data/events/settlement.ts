@@ -252,6 +252,20 @@ export const settlementEvents: Record<string, GameEvent> = {
               }
             }
 
+            let newH1bTenure = s.h1b_tenure || 0;
+            if (newVisa === 'H1B (工签)') {
+              newH1bTenure += 1;
+              if (newH1bTenure === 6) {
+                if (nextStage === 'i140_approved' || nextStage === 'i485_pending' || nextStage === 'approved' || nextGc >= 3) {
+                  h1bMsg = `${h1bMsg ? h1bMsg + '\n' : ''}【H-1B 6年大限豁免】你的 H-1B 已满 6 年！好在你的 I-140 移民申请已获批锁定 PD，成功依据 AC21 法案获得无上限 3 年延期！`.trim();
+                } else {
+                  h1bMsg = `${h1bMsg ? h1bMsg + '\n' : ''}【H-1B 6年大限警报】你的 H-1B 达到法定 6 年上限且 I-140 尚未获批！无法继续常规续签，面临工签到期危机！`.trim();
+                }
+              }
+            } else if (newVisa === 'L1 (外派)' && s.l1_relocated) {
+              newH1bTenure = 0;
+            }
+
             // Merit raise / RSU refresh check (45% chance) for corporate tech employees
             let updatedTC = s.tc;
             let meritMsg = '';
@@ -401,6 +415,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               company_valuation: founderValuation,
               visa: newVisa,
               h1b_attempts: newAttempts,
+              h1b_tenure: newH1bTenure,
               startup_tenure: newStartupTenure,
               gc_progress: nextGc,
               gc_stage: nextStage,
@@ -446,6 +461,9 @@ export const settlementEvents: Record<string, GameEvent> = {
           }
           if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
             return 'h1b_final_crisis';
+          }
+          if (s.visa === 'H1B (工签)' && (s.h1b_tenure || 0) >= 6 && s.gc_stage !== 'i140_approved' && s.gc_stage !== 'i485_pending' && s.gc_stage !== 'approved' && (s.gc_progress || 0) < 3) {
+            return 'h1b_six_year_crisis';
           }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') return 'post_green_card';
 

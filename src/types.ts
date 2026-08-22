@@ -124,6 +124,7 @@ export interface GameState {
   job_start_age?: number;
   last_promo_age?: number;
   h1b_attempts?: number;
+  h1b_tenure?: number; // H1B 签证累计已使用年数 (上限 6 年, 需 I-140 获批方可无限延期)
   imageUrl?: string;
   has_housing: boolean;
   parents_helped_house?: boolean;

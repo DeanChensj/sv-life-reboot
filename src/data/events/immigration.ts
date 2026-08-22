@@ -429,5 +429,95 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+
+  'h1b_six_year_crisis': {
+    id: 'h1b_six_year_crisis',
+    title: '【工签大限】H-1B 满 6 年与 I-140 审批赛跑',
+    description: '你的 H-1B 签证累计已达到法定 6 年上限！移民法规定：若无获批的 I-140 移民申请，H-1B 无法继续延期。公司法务与 HR 发来紧急通知，你必须立即采取行动：',
+    choices: [
+      {
+        text: '【自费 PP 加急 I-140 压线自救】自费 $0.3w 申请 15 天加急审理 (需已提交 PERM / I-140)',
+        costBadge: '花费 $0.3w',
+        condition: (s) => s.cash >= 0.3 && (s.gc_stage === 'perm_processing' || s.gc_stage === 'perm_audit' || s.gc_stage === 'i140_processing' || s.gc_stage === 'i140_rfe'),
+        effect: (s) => ({
+          cash: s.cash - 0.3,
+          gc_stage: 'i140_approved',
+          gc_progress: 3,
+          h1b_tenure: 6,
+          message: '【加急获批锁定 PD】USCIS 在 15 天内火速批复了你的 I-140！依据 AC21 法案，公司为你成功申请到了无上限的 3 年 H-1B 延期！工签危机彻底解除！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【外派海外 1 年重置钟表】调往海外分公司驻外工作 1 年 (Reset 6 年工签钟表)',
+        costBadge: '花费 $2w 搬迁费',
+        condition: (s) => s.cash >= 2 && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
+        effect: (s) => ({
+          cash: s.cash - 2,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'L1 (外派)',
+          h1b_tenure: 0,
+          l1_relocated: true,
+          health: Math.max(0, s.health - 8),
+          message: '【海外驻外重置】你申请调往加拿大温哥华办公室工作满 1 年，成功重置了 6 年 H-1B 钟表并转为 L-1 签证！一年后以全新状态调回湾区总部！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【紧急挂靠 Day 1 CPT 水硕】转入学生身份维持合法全职工作 (消耗 $1.5w)',
+        costBadge: '花费 $1.5w',
+        condition: (s) => s.cash >= 1.5,
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'Day 1 CPT',
+          cash: s.cash - 1.5,
+          message: '【无缝转 Day 1 CPT】面对 6 年工签大限，你果断注册了 Day 1 CPT 大学维持合法学生在读身份，白天继续上班，等待公司把 PERM/I-140 流程办妥！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交婚姻绿卡',
+        condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
+        effect: (s) => {
+          const partnerIsCitizen = gameRandom() < 0.40;
+          if (partnerIsCitizen) {
+            return {
+              visa: (s.visa === '公民') ? s.visa : '绿卡',
+              gc_progress: 5,
+              gc_stage: 'approved',
+              is_married: true,
+              relationship_status: 'married',
+              message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决在美身份危机！'
+            };
+          }
+          return {
+            is_married: true,
+            relationship_status: 'married',
+            gc_progress: Math.max(3, s.gc_progress || 0),
+            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+            visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'Day 1 CPT',
+            message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！你转入 Day 1 CPT 维持合法工作身份，双方结为双职工家庭互相绑定绿卡排期，静待排期推进！'
+          };
+        },
+        nextEventId: (s: GameState) => s.visa === '绿卡' ? 'post_green_card' : 'sv_year_end_settlement',
+      },
+      {
+        text: '【钞能力 EB-5 投资移民】全额出资办理新法 EB-5 投资移民绿卡 (花费 $80w 总资产)',
+        costBadge: '花费 $80w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 80,
+        effect: (s) => {
+          const fromStocks = Math.max(0, 80 - s.cash);
+          return { visa: (s.visa === '公民') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash - Math.min(s.cash, 80), stocks: Math.max(0, (s.stocks || 0) - fromStocks), message: '在绝境中你果断出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁！' };
+        },
+        nextEventId: 'post_green_card',
+      },
+      {
+        text: '【体面告别 · 回国发展】工签到期且不想继续折腾，打包行李回国开启新篇章',
+        effect: (s) => ({
+          status: 'retired',
+          message: `你在硅谷奋斗了整整 6 年，在 H-1B 达到法定上限之际，你从容打包行李告别加州阳光。手握 $${(s.cash + (s.stocks || 0)).toFixed(1)}w 美金积蓄与顶级大厂架构履历，你回国开启了广阔的新生活。`
+        }),
+        nextEventId: 'end',
+      }
+    ]
   }
 };

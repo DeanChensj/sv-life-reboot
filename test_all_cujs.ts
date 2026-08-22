@@ -1992,6 +1992,123 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 38 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 39: L-1 跨国外派跳槽限制与转换机制 (L-1 Job Hopping Constraint)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 39] L-1 跨国外派跳槽限制与转换机制 ---');
+  const hopMarket = events['job_hop_market'];
+  assert(!!hopMarket, 'job_hop_market event exists');
+  const googleChoice = hopMarket.choices.find(c => c.text.includes('Google'))!;
+  assert(!!googleChoice, 'Google choice exists in job_hop_market');
+
+  // Case 1: L-1 持有者具备 O-1 资质 (如 PhD) -> 自动 Transfer 至 O-1 签证
+  const l1Phd: GameState = {
+    ...generateInitialState(),
+    visa: 'L1 (外派)',
+    is_phd: true,
+    company: 'amazon',
+    job_type: 'big_tech',
+    level: 'L5 (Senior)',
+    cash: 20,
+    hop_offers: ['google']
+  } as GameState;
+  const resPhd = googleChoice.effect(l1Phd) as Partial<GameState>;
+  assert(resPhd.visa === 'O1 (杰出人才)', 'L-1 具备 O-1 资质跳槽转为 O-1 签证');
+  assert((resPhd.message || '').includes('O-1'), '跳槽文案包含 O-1 解绑提示');
+
+  // Case 2: L-1 普通员工无 O-1/绿卡资质 -> 紧急挂靠 Day 1 CPT 过渡入职
+  const l1Normal: GameState = {
+    ...generateInitialState(),
+    visa: 'L1 (外派)',
+    is_phd: false,
+    impact: 5,
+    leetcode: 40,
+    company: 'amazon',
+    job_type: 'big_tech',
+    level: 'L4',
+    cash: 20,
+    hop_offers: ['google']
+  } as GameState;
+  const resNormal = googleChoice.effect(l1Normal) as Partial<GameState>;
+  assert(resNormal.visa === 'Day 1 CPT', 'L-1 无 O-1 资质跳槽转为 Day 1 CPT');
+  assert((resNormal.message || '').includes('Day 1 CPT'), '跳槽文案包含 Day 1 CPT 过渡提示');
+
+  // Case 3: 绿卡/公民跳槽 -> 保留绿卡/公民身份不变
+  const gcPlayer: GameState = {
+    ...generateInitialState(),
+    visa: '绿卡',
+    company: 'amazon',
+    job_type: 'big_tech',
+    level: 'L5 (Senior)',
+    cash: 20,
+    hop_offers: ['google']
+  } as GameState;
+  const resGc = googleChoice.effect(gcPlayer) as Partial<GameState>;
+  assert(resGc.visa === '绿卡', '绿卡持有者跳槽保留绿卡身份');
+  console.log('✅ CUJ 39 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 40: H-1B 6-Year Cap & I-140 Protection (H-1B 6年大限与 I-140 保护机制)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 40] H-1B 6年大限与 I-140 保护机制 ---');
+  const settlementEv = events['sv_year_end_settlement'];
+  assert(!!settlementEv, 'sv_year_end_settlement event exists');
+  const yearEndChoice = settlementEv.choices[0];
+
+  // Case 1: H-1B 满 6 年但 I-140 仍未获批 (PERM 进行中) -> 触发 6 年大限危机
+  const h1bNearCap: GameState = {
+    ...generateInitialState(),
+    age: 32,
+    year: 2026,
+    visa: 'H1B (工签)',
+    h1b_tenure: 5,
+    h1b_attempts: 1,
+    gc_progress: 1,
+    gc_stage: 'perm_processing',
+    job_type: 'big_tech',
+    company: 'google',
+    cash: 20,
+    stocks: 10,
+    tc: 35,
+    win_threshold: 400,
+    story_flags: { last_h1b_lottery_year: 2026 }
+  } as GameState;
+
+  const nextStateUnprotected = applyStateTransition(h1bNearCap, yearEndChoice.effect(h1bNearCap), { eventId: 'sv_year_end_settlement' }).nextState;
+  assert(nextStateUnprotected.h1b_tenure === 6, 'H-1B 累计使用年数增长至 6 年');
+  const nextEvId = typeof yearEndChoice.nextEventId === 'function' ? yearEndChoice.nextEventId(nextStateUnprotected) : yearEndChoice.nextEventId;
+  assert(nextEvId === 'h1b_six_year_crisis', 'H-1B 满 6 年且无 I-140 时路由至 h1b_six_year_crisis');
+
+  // Case 2: H-1B 满 6 年且 I-140 已获批 -> 触发 AC21 延期保护，不触发危机
+  const h1bProtected: GameState = {
+    ...h1bNearCap,
+    gc_progress: 3,
+    gc_stage: 'i140_approved'
+  } as GameState;
+  const nextStateProtected = applyStateTransition(h1bProtected, yearEndChoice.effect(h1bProtected), { eventId: 'sv_year_end_settlement' }).nextState;
+  const protectedEvId = typeof yearEndChoice.nextEventId === 'function' ? yearEndChoice.nextEventId(nextStateProtected) : yearEndChoice.nextEventId;
+  assert(protectedEvId !== 'h1b_six_year_crisis', 'I-140 获批受 AC21 保护，不触发 h1b_six_year_crisis');
+  assert(nextStateProtected.message.includes('AC21') || nextStateProtected.message.includes('豁免'), '年终结算播报包含 AC21 豁免延期提示');
+
+  // Case 3: h1b_six_year_crisis 自救选择验证
+  const crisisEv = events['h1b_six_year_crisis'];
+  assert(!!crisisEv, 'h1b_six_year_crisis event is defined');
+  const ppChoice = crisisEv.choices.find(c => c.text.includes('PP 加急'))!;
+  assert(!!ppChoice, 'PP 加急自救选项存在');
+  const ppRes = ppChoice.effect(nextStateUnprotected) as Partial<GameState>;
+  assert(ppRes.gc_stage === 'i140_approved' && ppRes.gc_progress === 3, 'PP 加急自救成功获批 I-140');
+
+  const l1Choice = crisisEv.choices.find(c => c.text.includes('外派海外'))!;
+  assert(!!l1Choice, '外派海外重置选项存在');
+  const l1Res = l1Choice.effect(nextStateUnprotected) as Partial<GameState>;
+  assert(l1Res.visa === 'L1 (外派)' && l1Res.h1b_tenure === 0, '外派海外成功重置 H-1B 6年钟表');
+
+  console.log('✅ CUJ 40 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

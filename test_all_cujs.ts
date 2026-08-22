@@ -1307,11 +1307,15 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const afterGtc2Years: GameState = { ...afterGtc, year: 2028 }; // 2 years later
   assert(isOpportunityInCooldown(afterGtc2Years, 'opp_gtc_nvidia') === false, 'GTC cooldown expires after 2 years');
 
-  // 3. TreeHacks age limit: unavailable after age 36
-  const treehacksChoice = events['sv_daily_life'].choices.find((c) => c.text.includes('TreeHacks'))!;
-  assert(!!treehacksChoice, 'TreeHacks opportunity exists');
-  assert(treehacksChoice.condition!({ ...basePilot, age: 25, year: 2026 } as GameState) === isOpportunityActiveThisYear({ ...basePilot, age: 25, year: 2026 } as GameState, 'opp_treehacks'), 'TreeHacks available at age 25 if active');
-  assert(treehacksChoice.condition!({ ...basePilot, age: 40, year: 2026 } as GameState) === false, 'TreeHacks strictly unavailable at age 40');
+  // 4. Strict Single-Opportunity Invariant: at most 1 opportunity active in any given year
+  for (let yr = 2026; yr <= 2045; yr++) {
+    const testState = { ...basePilot, year: yr, age: 22 + (yr - 2026) } as GameState;
+    const oppChoices = events['sv_daily_life'].choices.filter((c) => {
+      if (!c.text.includes('【限时机遇：')) return false;
+      return c.condition ? c.condition(testState) : true;
+    });
+    assert(oppChoices.length <= 1, `At most 1 limited opportunity active in year ${yr} (found ${oppChoices.length})`);
+  }
 
   console.log('✅ CUJ 21 Passed\n');
 }

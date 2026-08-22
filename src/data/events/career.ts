@@ -972,7 +972,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             mid_year: true, season_stage: 'h1', transferred_to_ai: true,
             health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, impact: addImpact(s, 4),
-            message: '【成功转岗 AI 组】你顺利 Transfer 到前沿大模型研发组,坐拥神仙 WLB 又接触顶尖架构!(想冲 L5 Senior 及以上,仍需回【疯狂内卷】耗血冲刺)'
+            message: '【成功转岗 AI 组】你顺利 Transfer 到前沿大模型研发组，坐拥神仙 WLB 的同时又能接触行业顶尖架构！'
           };
         },
         nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
@@ -1000,7 +1000,7 @@ export const careerEvents: Record<string, GameEvent> = {
           }
 
           return pass
-            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评,工作与生活达到完美平衡!(冲 L5 Senior 及以上仍需回【疯狂内卷】)' }
+            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: '【AI 架构落地】你负责的低延迟推理架构性能翻倍，获得组内一致好评，工作与生活达到完美平衡！' }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: '【惬意养老】AI 组内节奏舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客。' };
         },
         nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),

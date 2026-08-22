@@ -2381,7 +2381,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // 2. 本科申 PhD 被拒后路由至 us_undergrad_phd_rejection (非强制 job_hunt)
   const undergradGrad = events['us_undergrad_grad'];
   const phdChoice = undergradGrad.choices[0];
-  const rejectNextId = phdChoice.nextEventId({ ...plainStudent, is_phd: false });
+  const rejectNextId = typeof phdChoice.nextEventId === 'function' ? phdChoice.nextEventId({ ...plainStudent, is_phd: false } as GameState) : phdChoice.nextEventId;
   assert(rejectNextId === 'us_undergrad_phd_rejection', '美本申博被拒路由至 us_undergrad_phd_rejection');
 
   const rejectEvent = events['us_undergrad_phd_rejection'];

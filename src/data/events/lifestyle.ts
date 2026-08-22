@@ -1674,5 +1674,89 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
+  },
+  'us_healthcare_icu_crisis': {
+    id: 'us_healthcare_icu_crisis',
+    title: '【急诊惊魂】呼叫 911 救护车与 ICU 天价账单',
+    description: '长期熬夜写代码与高压 Oncall 导致你深夜突发剧烈胸闷心绞痛。室友/伴侣慌乱中拨打了 911，救护车闪着警笛将你疾驰送入 Stanford Hospital 急诊与 ICU 重症监护室。吸氧与全面排查抢救后你终于脱离了危险，但两周后，信箱里寄来了一封让人倒吸凉气的 **$48,500 美元** 天价医疗账单！面对美国医疗体系的“终极大考”，你决定：',
+    imageUrl: 'images/burnout.jpg',
+    choices: [
+      {
+        text: '【大厂顶级 PPO 医保兜底】触发年度 Out-of-Pocket Max 自付上限 (自付 $0.3w)',
+        condition: (s) => (s.job_type === 'big_tech' || s.job_type === 'ai_research' || s.job_type === 'quant' || ['google', 'meta', 'apple', 'amazon', 'nvidia', 'tiktok', 'microsoft', 'cisco', 'oracle', 'robinhood'].includes(s.company || '')) && !s.laid_off,
+        reqBadge: '需大厂/量化/AI实验室在职',
+        effect: (s) => {
+          const assets = deductAssets(s, 0.3);
+          return {
+            ...assets,
+            health: Math.min(100, s.health + 25),
+            story_flags: {
+              ...(s.story_flags || {}),
+              icu_crisis_survived: true,
+              icu_insurance_saved: true,
+            },
+            message: '【神仙福利保平安】凭借大厂顶级 PPO 医保，年度自付上限 (Out-of-Pocket Maximum) 自动生效！你只需自付 $0.3w 门槛费，剩余 $45,000+ 巨额费用全由保险公司结清！经过系统化药物调养与全面检查，你的身心大复活 (健康 +25)。'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【硬核砍价：索要 Itemized Bill】要求提供逐笔明细并申请 Financial Hardship (自付 $0.6w)',
+        reqBadge: '通用智慧',
+        condition: (_s) => true,
+        effect: (s) => {
+          const assets = deductAssets(s, 0.6);
+          return {
+            ...assets,
+            health: Math.min(100, s.health + 20),
+            story_flags: {
+              ...(s.story_flags || {}),
+              icu_crisis_survived: true,
+              icu_itemized_negotiated: true,
+            },
+            message: '【美式生存智慧】你给医院 Billing 部门打了三个小时电话，强硬要求出具“按项目逐笔明细单 (Itemized Bill)”，并声明全额自费困难申请现金折扣。医院当场把 $80 一粒的泰诺和虚高耗材费砍掉 85%，账单直降至 $0.6w 搞定！身体也顺利恢复 (健康 +20)。'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【搬出《No Surprises Act》法案维权】向加州保险局投诉网络外幽灵医生违规 (自付 $0.2w)',
+        reqBadge: '需高情商 Charm >= 15 或 Network >= 15',
+        condition: (s) => (s.charm || 10) >= 15 || (s.network || 10) >= 15,
+        effect: (s) => {
+          const assets = deductAssets(s, 0.2);
+          return {
+            ...assets,
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+            health: Math.min(100, s.health + 22),
+            story_flags: {
+              ...(s.story_flags || {}),
+              icu_crisis_survived: true,
+              icu_legal_win: true,
+            },
+            message: '【法律维权大胜】你敏锐抓住了急诊救治中医院未经同意指派 Out-of-Network 网络外救护车与麻醉师的漏洞，引用联邦《No Surprises Act》反意外账单法案向监管机构投诉。医院法务部火速服软，仅象征性收取 $0.2w 即结案！(健康 +22，魅力 +2)'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【失业/初创裸奔大出血】无大厂全额医保兜底，被迫全款缴清天价账单 (资产消耗 $2.5w)',
+        condition: (_s) => true,
+        effect: (s) => {
+          const assets = deductAssets(s, 2.5);
+          return {
+            ...assets,
+            health: Math.min(100, s.health + 18),
+            story_flags: {
+              ...(s.story_flags || {}),
+              icu_crisis_survived: true,
+              icu_uninsured_hit: true,
+            },
+            message: '【美国医疗刺客痛击】失业断保或初创期自购的高免赔保险几乎没帮上忙，你只能忍痛掏空现金积蓄并平仓部分股票缴清医疗账单 (-$2.5w)！好在命保住了，你暗自发誓一定要尽快重返有神仙医保的大厂。(健康 +18)'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement'
+      }
+    ]
   }
 };

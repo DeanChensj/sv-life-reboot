@@ -207,9 +207,7 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('nvidia_nasdaq_god')) newlyUnlocked.push('nvidia_nasdaq_god');
   }
 
-  // Won while still in poor health. State-based only — the old msg.includes('猝死')
-  // false-fired on the health-positive「养生防猝死储备」message (carried over into a win).
-  if (state.health < 30 && state.status === 'win') {
+  if ((state.health < 30 || state.story_flags?.icu_crisis_survived) && state.status === 'win') {
     if (unlockAchievement('icu_resurrection')) newlyUnlocked.push('icu_resurrection');
   }
 

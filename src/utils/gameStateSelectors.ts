@@ -2,6 +2,7 @@ import type { GameState } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { getSchoolProfile } from '../data/schoolProfiles';
+import { LEVEL_PROFILES, normalizeLevel } from '../data/levelProfiles';
 
 export interface JobDisplayInfo {
   companyHeaderLabel: string;
@@ -116,12 +117,9 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   }
 
   if (!isUnemployed && !isStudent && !isTrader && !isFounder) {
-    if (levelLabel.includes('L8') || levelLabel.includes('Principal') || levelLabel.includes('Fellow')) {
-      levelClassName = 'text-amber-300 bg-amber-500/15 border-amber-500/30 shadow-[0_0_8px_rgba(251,191,36,0.3)]';
-    } else if (levelLabel.includes('L7') || levelLabel.includes('Senior Staff')) {
-      levelClassName = 'text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_8px_rgba(217,70,239,0.25)]';
-    } else if (levelLabel.includes('L6') || levelLabel.includes('Staff') || levelLabel.includes('MTS')) {
-      levelClassName = 'text-purple-300 bg-purple-500/15 border-purple-500/30';
+    const norm = normalizeLevel(levelLabel, state);
+    if (norm && LEVEL_PROFILES[norm]?.className) {
+      levelClassName = LEVEL_PROFILES[norm].className;
     } else {
       levelClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20';
     }

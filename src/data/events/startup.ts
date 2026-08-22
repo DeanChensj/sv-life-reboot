@@ -273,6 +273,7 @@ export const startupEvents: Record<string, GameEvent> = {
             job_type: 'big_tech',
             company: 'google',
             level: newLevel,
+            last_promo_age: s.age,
             tc: newTc,
             laid_off: false,
             founder_stage: undefined,

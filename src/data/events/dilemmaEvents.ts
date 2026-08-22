@@ -1,5 +1,6 @@
 import type { GameEvent, GameState, StoryFlags, NPCState } from '../../types';
 import { h1ToH2Router, addImpact } from './helpers';
+import { normalizeLevel } from '../levelProfiles';
 
 // 有牙的两难抉择 — Dilemma events where BOTH options genuinely hurt, binding
 // emotion / ethics / money together so there is no "always-optimal" answer. These
@@ -88,20 +89,23 @@ export const dilemmaEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【独吞功劳抢下升职】独吞核心架构功劳，抢下升职名额 (背弃提携恩情)',
-        condition: (s) => employed(s) && (s.level === 'L3' || s.level === 'L4' || !s.level),
+        condition: (s) => {
+          const norm = normalizeLevel(s.level, s);
+          return employed(s) && (norm === 'L3' || norm === 'L4' || !s.level);
+        },
         effect: (s): Partial<GameState> => {
-          const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          let nextLevel = cur;
+          const norm = normalizeLevel(s.level, s) || (s.is_phd ? 'L4' : 'L3');
+          let nextLevel: string = norm;
           let tcIncrease = 5;
-          if (cur === 'L3') {
+          if (norm === 'L3') {
             nextLevel = 'L4';
             tcIncrease = 4.5;
-          } else if (cur === 'L4') {
+          } else if (norm === 'L4') {
             nextLevel = 'L5 (Senior)';
             tcIncrease = 6.5;
           }
 
-          const isPromo = nextLevel !== cur;
+          const isPromo = nextLevel !== norm;
           const mentor: NPCState = s.npcs?.mentor
             ? { ...s.npcs.mentor, status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' }
             : { name: '老 Mentor', role: 'mentor', status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' };

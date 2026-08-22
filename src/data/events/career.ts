@@ -1092,6 +1092,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const normLvl = normalizeLevel(curLevel, s) || (s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           const isKingOfRoll = s.trait_title === '卷王之王';
@@ -1104,21 +1105,21 @@ export const careerEvents: Record<string, GameEvent> = {
           const baseWinRate = 0.15 + coBonus + (s.leetcode / 300) + ((s.charm || 10) * 0.015) + ((s.network || 10) * 0.01) + (isKingOfRoll ? 0.15 : 0);
           const pass = gameRandom() < Math.min(0.78, baseWinRate);
 
-          if (curLevel === 'L3') {
+          if (normLvl === 'L3') {
             // L3 升 L4 要求算法 >= 35 (达标且满 1 年晋升率极高，若满 2 年算法门槛可放宽至 30)
             if (s.leetcode < 30 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (建议算法>=35)，建议多提升技术硬实力。' };
             const l3PassRate = 0.70 + coBonus + (s.leetcode / 200) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (gameRandom() < Math.min(0.95, l3PassRate) || yearsInGrade >= 2 || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 3.5, level: 'L4', impact: addImpact(s, 5), last_promo_age: s.age, message: isKingOfRoll ? '【卷王破格晋升】做题家底蕴彻底释放，你的 Perf 拿下顶格 EE 绩效轻松晋升至 L4！' : '恭喜！凭借过硬的算法功底与稳定交付，你顺利晋升为 L4 工程师！总包调薪 +$3.5w！' };
             }
-          } else if (curLevel === 'L4') {
+          } else if (normLvl === 'L4') {
             // L4 升 L5 (Senior) 要求算法 >= 50 (资深工程师是硅谷终身职级 Terminal Level，多数人在 2~3 年内达成)
             if (s.leetcode < 45 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别 (建议算法>=50)，独立项目主导深度需进一步沉淀。' };
             const l4PassRate = 0.55 + coBonus + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 45 || yearsInGrade >= 3) && (gameRandom() < Math.min(0.90, l4PassRate) || (yearsInGrade >= 3 && s.leetcode >= 40) || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 6.0, level: 'L5 (Senior)', impact: addImpact(s, 7), last_promo_age: s.age, message: '轰动全组！你主导了核心子模块交付，顺利晋升为 L5 Senior 资深工程师！总包调薪 +$6.0w！' };
             }
-          } else if (curLevel === 'L5 (Senior)' || curLevel === 'L5') {
+          } else if (normLvl === 'L5 (Senior)') {
             // L5 升 L6 (Staff) 非常难 (天花板天堑，要求极高架构力、跨组影响力与 VP Sponsor)
             const promoChance = 0.05 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
             // L5→L6 也要 impact≥20 (与 perf_review / hopTargetLevel 的门槛一致,否则纯靠内卷
@@ -1126,10 +1127,10 @@ export const careerEvents: Record<string, GameEvent> = {
             if (meetsOrganicPromo(s, 'L6 (Staff)') && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.18, promoChance)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 12.0, level: 'L6 (Staff)', impact: addImpact(s, 10), last_promo_age: s.age, message: '奇迹登顶！你打破硅谷天花板，结合顶层架构产出与全公司影响力，成功晋升为万里挑一的 L6 Staff 架构师！总包调升 +$12w！' };
             }
-          } else if (curLevel === 'L6 (Staff)' || curLevel === 'Staff' || curLevel === 'MTS') {
+          } else if (normLvl === 'L6 (Staff)') {
             const promoChance = 0.10 + ((s.charm || 10) * 0.003) + ((s.network || 10) * 0.003) + (isKingOfRoll ? 0.05 : 0);
             if (meetsOrganicPromo(s, 'L7 (Senior Staff)') && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.20, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 20.0, level: 'L7 (Senior Staff)', impact: addImpact(s, 12), last_promo_age: s.age, message: '战略突围！凭借高层 VP Sponsor 与跨部门整合能力，全票通过晋升为 L7 Senior Staff 资深架构师！总包狂飙 +$20w！' };
-          } else if (curLevel === 'L7 (Senior Staff)' || curLevel === 'Senior Staff' || curLevel === 'L7') {
+          } else if (normLvl === 'L7 (Senior Staff)') {
             const promoChance = 0.08 + ((s.charm || 10) * 0.002) + ((s.network || 10) * 0.002) + (isKingOfRoll ? 0.04 : 0);
             if (meetsOrganicPromo(s, 'L8 (Principal)') && yearsInGrade >= 2 && pass && gameRandom() < Math.min(0.15, promoChance)) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 15), tc: s.tc + 35.0, level: 'L8 (Principal)', impact: addImpact(s, 15), last_promo_age: s.age, message: '硅谷封神！凭借全公司顶级声望与董事会强力支持，获聘为全公司屈指可数的 L8 Principal 首席架构师！总包调升 +$35w！' };
           }
@@ -1574,11 +1575,13 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => {
           const isWorking = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
           const cur = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          return isWorking && (cur === 'L3' || cur === 'L4');
+          const norm = normalizeLevel(cur, s) || (s.is_phd ? 'L4' : 'L3');
+          return isWorking && (norm === 'L3' || norm === 'L4');
         },
         effect: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          const isL3 = cur === 'L3';
+          const norm = normalizeLevel(cur, s) || (s.is_phd ? 'L4' : 'L3');
+          const isL3 = norm === 'L3';
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           const isKingOfRoll = s.trait_title === '卷王之王';

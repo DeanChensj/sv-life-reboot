@@ -1265,7 +1265,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
 
-      // --- 生活与资产：置业 / 租房调整 ---
+      // --- 生活与资产：置业安家 (首付达标时可见，完成后返回工作重心) ---
       {
         text: '【置业安家】进军湾区加价抢房大乱斗 (Sunnyvale老破小/San Jose联排/Fremont学区房)',
         // 置业是资产配置,不占用当年职场主行动(买完回到本面板继续选工作重心);每年至多进入一次。
@@ -1273,13 +1273,6 @@ export const careerEvents: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: () => ({ message: '你准备好了首付款支票，踏入了火热的湾区 Open House 抢房战场！' }),
         nextEventId: 'buy_house',
-      },
-      {
-        text: '【改善居住】重新选择湾区租房标准或退租挂壁睡车顶',
-        condition: (s) => (!s.has_housing || s.rent > 0) && s.last_housing_action_year !== s.year,
-        hideIfUnavailable: true,
-        effect: () => ({ message: '你打开了 Zillow 与租房中介微信群，准备调整住房开销。' }),
-        nextEventId: 'change_rental',
       },
 
       // --- 职业转型：离职去全职操盘 / 创业 (需身份/资金门槛) ---

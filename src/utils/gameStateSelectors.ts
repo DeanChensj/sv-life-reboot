@@ -147,10 +147,10 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     companyLabel = 'ICC 外包 (挂靠)';
     companyClassName = 'text-amber-400 bg-amber-950/40 border-amber-600/30 font-bold';
   } else if (state.job_type === 'quant' || state.company === 'two_sigma' || state.company === 'citadel' || state.company === 'jane_street') {
-    companyLabel = state.company === 'citadel' ? 'Citadel (城堡)' : state.company === 'jane_street' ? 'Jane Street' : state.company === 'two_sigma' ? 'Two Sigma' : 'Top Quant (量化)';
+    companyLabel = state.company === 'citadel' ? 'Citadel' : state.company === 'jane_street' ? 'Jane Street' : state.company === 'two_sigma' ? 'Two Sigma' : 'Top Quant';
     companyClassName = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 font-bold';
   } else if (state.job_type === 'ai_research' || state.company === 'openai' || state.company === 'anthropic') {
-    companyLabel = state.company === 'anthropic' ? 'Anthropic (Claude)' : 'OpenAI / MTS';
+    companyLabel = state.company === 'anthropic' ? 'Anthropic' : 'OpenAI';
     companyClassName = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold';
   } else if (getCompanyProfile(state.company)) {
     // Standard big-tech employers (google/meta/…/oracle/robinhood) — single lookup.

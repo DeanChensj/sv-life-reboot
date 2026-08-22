@@ -379,7 +379,7 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   assert(state.visa === 'O1 (杰出人才)', 'Visa is O1');
 
   const jobInfo2 = getJobDisplayInfo(state);
-  assert(jobInfo2.companyLabel === 'OpenAI / MTS', 'Company displays OpenAI / MTS');
+  assert(jobInfo2.companyLabel === 'OpenAI', 'Company displays OpenAI');
   assert(jobInfo2.levelLabel === 'MTS', 'Level displays MTS');
 
   console.log('✅ CUJ 3 Passed\n');

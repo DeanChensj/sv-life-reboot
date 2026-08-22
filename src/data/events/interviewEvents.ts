@@ -14,7 +14,7 @@ import { gameRandom } from './helpers';
 // always-available choice (no dead-ends).
 
 const OFFER_NAMES: Record<string, string> = {
-  google: 'Google', meta: 'Meta', nvidia: 'NVIDIA', tiktok: 'TikTok', apple: 'Apple', startup: 'AI Startup',
+  google: 'Google', meta: 'Meta', nvidia: 'Nvidia', tiktok: 'TikTok', apple: 'Apple', startup: 'AI Startup',
 };
 
 // Final resolution shared by all round-3 choices: map the accumulated score to Offers.

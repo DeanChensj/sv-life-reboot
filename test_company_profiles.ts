@@ -20,9 +20,9 @@ const mk = (over: Partial<GameState>): GameState =>
 
 // Expected labels (from pre-refactor gameStateSelectors ladder) + Oracle FIX.
 const labels: Record<string, string> = {
-  google: 'Google (谷歌)', meta: 'Meta (卷王)', nvidia: 'NVIDIA (英伟达)', tiktok: 'TikTok (字节)',
-  apple: 'Apple (苹果)', amazon: 'Amazon (亚麻)', microsoft: 'Microsoft (微软)',
-  cisco: 'Cisco (养老厂)', oracle: 'Oracle (甲骨文)', robinhood: 'Robinhood (散户券商)',
+  google: 'Google', meta: 'Meta', nvidia: 'Nvidia', tiktok: 'TikTok',
+  apple: 'Apple', amazon: 'Amazon', microsoft: 'Microsoft',
+  cisco: 'Cisco', oracle: 'Oracle', robinhood: 'Robinhood',
 };
 for (const [co, want] of Object.entries(labels)) {
   check(`label ${co}`, getJobDisplayInfo(mk({ company: co })).companyLabel, want);

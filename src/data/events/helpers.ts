@@ -138,7 +138,7 @@ export const pickCollegeEvent = (s: GameState): string => {
 // inconsistent: 0.30/0.35 non-PhD and 0.70/0.75 PhD across different events, and
 // ai_research applicants got the low rate in some events but the high rate in others).
 export const o1PassProb = (s: GameState): number =>
-  (s.is_phd || s.job_type === 'ai_research' || s.leetcode >= 85) ? 0.72 : 0.32;
+  (s.is_phd || (s.impact || 0) >= 20 || s.job_type === 'ai_research' || s.leetcode >= 85) ? 0.72 : 0.32;
 
 // Helper to scale job hunt TC based on candidate's existing engineering level (benchmarked to levels.fyi)
 export const getLevelScaledTC = (baseL3TC: number, level?: string): number => {

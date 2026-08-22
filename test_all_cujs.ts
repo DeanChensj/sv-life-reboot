@@ -351,6 +351,7 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   assert(intern!.nextState.is_phd === true, 'PhD degree maintained after research internship');
   assert(intern!.effect.cash === vacationRes.nextState.cash + 6, 'Real internship pays a +$6w stipend');
   assert(intern!.nextState.cash > vacationRes.nextState.cash, 'Earned stipend from research internship');
+  assert((intern!.nextState.impact || 0) >= 20, 'AI research internship builds high research impact (>=20)');
 
   // 5. PhD Direct Paper Success -> phd_conference -> phd_job_hunt -> OpenAI MTS Offer.
   //    Drive the REAL paper RNG (was a story_flags.hawaii_conf override): on a top-conf
@@ -359,12 +360,14 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   assert(!!paper, 'PhD paper can be accepted to a top conference (real effect)');
   assert(paper!.nextEventId === 'phd_conference', 'Accepted paper routes to phd_conference');
   assert(paper!.nextState.is_phd === true, 'PhD retained on paper success');
+  assert((paper!.nextState.impact || 0) >= 20, 'Top conference paper awards significant impact (>=20)');
   state = paper!.nextState;
 
   const confRes = stepChoice(state, 'phd_conference', 0);
   assert(confRes.nextEventId === 'phd_job_hunt', 'Conference networking routes to phd_job_hunt');
   state = confRes.nextState;
   assert(state.is_phd === true, 'PhD degree awarded after conference defense');
+  assert((state.impact || 0) >= 35, 'Conference networking elevates cumulative impact to >=35');
 
   // 6. Apply to OpenAI MTS — drive the REAL offer RNG (was a fabricated override whose tc:45
   //    even contradicted the real win branch, which pays tc:80 L6-band comp).
@@ -377,6 +380,7 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   state = openai!.nextState;
   assert(state.job_type === 'ai_research', 'Job type is ai_research');
   assert(state.visa === 'O1 (杰出人才)', 'Visa is O1');
+  assert((state.impact || 0) >= 50, 'Winning OpenAI MTS brings total cumulative impact to >=50');
 
   const jobInfo2 = getJobDisplayInfo(state);
   assert(jobInfo2.companyLabel === 'OpenAI', 'Company displays OpenAI');

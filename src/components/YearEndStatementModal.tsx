@@ -75,7 +75,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
               <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               <span>最新行动 / 事件反馈结果</span>
             </div>
-            <div className="text-zinc-200 font-medium leading-relaxed">
+            <div className="text-zinc-200 font-medium leading-relaxed whitespace-pre-line">
               {gameState.message}
             </div>
           </div>

@@ -153,7 +153,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                          nextGc = Math.max(1, nextGc);
                          gcMsg = ' 【绿卡进度】公司律师正式为你启动了 PERM 打广告和 PWD 流程，漫长的绿卡长征开始了。';
                        } else {
-                         gcMsg = ' ⏳ 【绿卡进度】HR 还在拖延你的绿卡流程，尚未正式启动 PERM...';
+                         gcMsg = ' 【绿卡进度】HR 还在拖延你的绿卡流程，尚未正式启动 PERM...';
                        }
                     }
                  } else if (nextStage === 'perm_processing') {
@@ -432,7 +432,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                 petMsg,
                 economyMsg,
                 founderMsg,
-              ].map(m => (m ? m.trim() : '')).filter(Boolean).join(' '),
+              ].map(m => (m ? m.trim() : '')).filter(Boolean).join('\n'),
               // Natural-life ending: at the lifespan cap the game resolves even if the
               // player never hit FIRE and never died — enabling the "content" endings
               // (中产退休/海归/上岸/佛系). The `message`/`status` spread overrides above.

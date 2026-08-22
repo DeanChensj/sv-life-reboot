@@ -1000,7 +1000,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: '【成功转岗 AI 组】你顺利 Transfer 到前沿大模型研发组，坐拥神仙 WLB 的同时又能接触行业顶尖架构！'
           };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【大厂 WLB 漫步】在神仙 AI 组保持工作生活平衡，稳健研发与养生沉淀',
@@ -1042,7 +1042,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: chosenMsg }
             : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: chillMsg };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
@@ -1148,7 +1148,7 @@ export const careerEvents: Record<string, GameEvent> = {
             if (s.level === 'L8 (Principal)') return 'l8_principal_celebration';
             if (s.level === 'L7 (Senior Staff)') return 'l7_senior_staff_celebration';
             if (s.level === 'L6 (Staff)') return 'l6_staff_celebration';
-            return 'promo_celebration';
+            if (s.level === 'L5 (Senior)' || s.level === 'L4') return 'promo_celebration';
           }
           return h1ToH2Router(s);
         },
@@ -1611,7 +1611,7 @@ export const careerEvents: Record<string, GameEvent> = {
         // branch), NOT message.includes('晋升') — mirrors the L6 fix below and the fuzz
         // invariant「进入 *_celebration ⇒ last_promo_age===age」. The Dave-loss branch
         // never stamps last_promo_age, so it correctly routes on to h1ToH2Router.
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L5 升 L6 专属高门槛)',
@@ -2422,7 +2422,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【欢呼庆祝】请团队喝 Boba 奶茶 & 继续奋斗',
-        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
+        condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off && (s.level === 'L4' || s.level === 'L5 (Senior)'),
         effect: (s) => ({ health: Math.min(100, s.health + 5), charm: s.charm + 1, message: `在全组同事的喝彩中，你正式挂上了 ${s.level || '崭新'} 的职级头衔，包裹与职场地位同步跃升！` }),
         nextEventId: h1ToH2Router,
       }
@@ -2767,7 +2767,7 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         // Only celebrate when the showdown actually produced a level-up (L3→L4 / L4→L5);
         // an L5+ player who merely defeats Dave gets no promotion → no celebration screen.
-        nextEventId: (s) => s.last_promo_age === s.age ? 'promo_celebration' : 'sv_year_end_settlement'
+        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : 'sv_year_end_settlement')
       },
       {
         text: '【实力跳槽降维打击】手握扎实代码，连夜接下 Meta/Nvidia 的 L5 Senior Offer',
@@ -3114,7 +3114,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 12), impact: addImpact(s, 8), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【晋升通过！】Raj 在闭门会议上拍桌力挺：“This engineer is the cornerstone of our org!” 结合你扎实的影响力，你顺利晋升为 L7 Senior Staff (TC +$20w)！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 8), impact: addImpact(s, 5), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【惜败一票】即便有 Raj 力挺，委员会仍认为你的跨组影响力再沉淀一年会更稳，本轮 L7 评审惜败延期。' };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'l7_senior_staff_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【硬核技术折服】(凭借绝对过硬的 Impact 与代码能力征服评审会)',
@@ -3126,7 +3126,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), impact: addImpact(s, 10), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【实力过会！】委员会翻阅了你主导的核心底层系统指标，数据无懈可击，一致通过晋升至 L7 Senior Staff！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 10), impact: addImpact(s, 6), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【名额有限】你的材料很硬，但今年 L7 名额被更资深的候选人占了，委员会建议明年再战。' };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age ? 'l7_senior_staff_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【继续积累】本次暂缓，多沉淀一年跨组影响力',

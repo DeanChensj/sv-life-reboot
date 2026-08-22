@@ -120,7 +120,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
               : '你在评审会上把关键决策都包装成了自己的功劳，如愿抢下顶格绩效加薪 (+$5.0w TC)！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。',
           };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【功劳让给恩师 Mentor】把主要功劳让给 Mentor，成全恩人 (放弃升职)',

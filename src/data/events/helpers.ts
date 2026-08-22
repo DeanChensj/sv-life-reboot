@@ -81,10 +81,13 @@ export const hopTargetLevel = (s: GameState): string => {
 // True iff hopTargetLevel is a real level-UP vs the player's current standing. The job-hop
 // join choices use this to stamp last_promo_age / fire a promo celebration ONLY on an actual
 // promotion — a lateral hire (laid-off senior re-hired at grade, an impact-short hop, or an
-// already-L8 hop) must not trigger a "PROMOTION UNLOCKED" screen or its stat rewards.
-// (A true new grad joining their first job — rung '' → L3/L4 — still counts, as before.)
-export const hopIsPromotion = (s: GameState): boolean =>
-  LADDER.indexOf(hopTargetLevel(s)) > LADDER.indexOf(currentLadderRung(s));
+// already-L8 hop) or an initial onboarding hire (rung '') must not trigger a promotion
+// celebration or false timestamp.
+export const hopIsPromotion = (s: GameState): boolean => {
+  const curRung = currentLadderRung(s);
+  if (!curRung) return false;
+  return LADDER.indexOf(hopTargetLevel(s)) > LADDER.indexOf(curRung);
+};
 
 /**
  * Handles visa resolution when joining a new company via job-hop.

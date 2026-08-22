@@ -2246,7 +2246,7 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < Math.min(0.7, 0.15 + (s.charm || 10) * 0.03);
           return win
-            ? { tc: (s.tc || 0) + 6, cash: s.cash + 4, charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功升职加薪！' }
+            ? { tc: (s.tc || 0) + 6, cash: s.cash + 4, charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你顿悟了硅谷“向上管理”的精髓，精美 PPT 加上社交手腕打动了 VP，成功争取到了一笔可观的加薪与绩效奖金！' }
             : { health: Math.max(0, s.health - 12), charm: Math.max(0, s.charm - 2), message: '缺乏火候，你的汇报被对手当场挑出破绽，功劳全被同事占了，还搭上了信誉。' };
         },
         nextEventId: 'sv_year_end_settlement',

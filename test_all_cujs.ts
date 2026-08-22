@@ -2209,6 +2209,40 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 42 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 43: H1「职场大事件」板块已接回主循环。一个在职年度的年度重心(sv_daily_life)决策完成后,
+// 必须先经历一个 H1 职场事件(裁员/PIP/绩效/公司标志/两难/中年危机…),而不是直接跳到 H2 生活
+// 事件。历史回归:h1ToH2Router 曾强制 season_stage='h2',使整个 H1 板块(尤其裁员池)运行时永不
+// 触发。锁两件事:① 在职年度决策会路由到 H1-only 事件(裁员池可达);② 未在职则不注入 H1。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 43] H1 职场事件板块接回主循环 (裁员池运行时可达) ---');
+  const grind = events['sv_daily_life'].choices.find((c) => c.text.includes('疯狂内卷'))!;
+  // H1-only 事件:只存在于 midYearEventRouter 的 H1「职场」块,H2 生活块绝不会产出它们。
+  const H1_ONLY = new Set(['layoff_rumor', 'friday_pip', 'perf_review', 'meta_reorg_manager_left',
+    'all_hands_corporate_bs', 'snack_perks_downgrade', 'empty_promotion_promise', 'multi_timezone_calendar_hell']);
+  // 低 leetcode / 年限浅 → 疯狂内卷多为"未晋升"(不弹庆祝),稳定走 H1 注入路径。
+  const worker = { ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
+    leetcode: 30, impact: 2, tc: 30, health: 80, age: 30, last_promo_age: 29, status: 'playing' } as GameState;
+  const seen = new Set<string>();
+  for (let seed = 0; seed < 400; seed++) {
+    setGameSeed(seed);
+    const eff = grind.effect(worker);
+    const st = applyStateTransition(worker, eff, { eventId: 'sv_daily_life' });
+    const routed = resolveNextEventId(grind, st.nextState, st.targetEventId, 'sv_daily_life');
+    if (routed.nextEventId) seen.add(routed.nextEventId);
+  }
+  const hitH1Only = [...seen].some((id) => H1_ONLY.has(id));
+  assert(hitH1Only, '在职年度决策后会路由到 H1-only 职场事件(裁员/PIP/绩效池运行时可达)');
+
+  // ② 失业玩家不注入 H1(resolver 的在职门槛):即便 source=sv_daily_life + mid_year + h1。
+  const jobless = { ...worker, job_type: 'unemployed', tc: 0, mid_year: true, season_stage: 'h1' as const } as GameState;
+  const joblessRouted = resolveNextEventId({ nextEventId: 'sv_daily_life' }, jobless, undefined, 'sv_daily_life');
+  assert(!H1_ONLY.has(joblessRouted.nextEventId as string), '失业玩家不被注入 H1 职场事件');
+
+  console.log('✅ CUJ 43 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

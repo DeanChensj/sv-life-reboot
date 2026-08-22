@@ -734,6 +734,7 @@ export function resolveNextEventId(
   choice: Pick<Choice, 'nextEventId'>,
   newState: GameState,
   targetEventId?: string,
+  sourceEventId?: string,
 ): { finalState: GameState; nextEventId: string | undefined } {
   // 1. Centralized termination / FIRE routing wins (death/bankruptcy/win/retired → 'end',
   //    crossing the FIRE threshold mid-turn → 'fire_milestone_choice') always override the
@@ -744,7 +745,32 @@ export function resolveNextEventId(
   let nextId: string | undefined =
     typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
 
-  // 2. Mid-year season advance: a career action returning to sv_daily_life while mid_year is
+  // 2. H1「职场大事件」注入:一个在职年度的决策(sv_daily_life 的年度重心,置 season_stage='h1' +
+  //    mid_year)完成后,先经历一个 H1 职场/职业事件(裁员风波/PIP/绩效/中年危机/公司标志/两难/
+  //    导师剧情…),再由该事件自身的 h1ToH2Router 推进到 H2 生活事件→年终结算。构成完整的
+  //    「决策→H1→H2→结算」年度节律。历史上 sv_daily_life 的年度选择直接 h1ToH2Router 跳到 H2,
+  //    使整个 H1 板块(尤其裁员池)在常规玩法里永不触发——这里把它接回主循环。
+  //    仅对在职、非破产、当前源自 sv_daily_life 的年度动作生效,且不覆盖晋升庆祝/终局路由;H1
+  //    事件本身(sourceEventId 不再是 sv_daily_life)不会再次注入,故每年至多一次、不会成环。
+  if (
+    sourceEventId === 'sv_daily_life' &&
+    newState.mid_year &&
+    newState.season_stage === 'h1' &&
+    !!newState.job_type &&
+    newState.job_type !== 'unemployed' &&
+    !newState.laid_off &&
+    typeof nextId === 'string' &&
+    !nextId.endsWith('_celebration') &&
+    nextId !== 'fire_milestone_choice' &&
+    nextId !== 'end'
+  ) {
+    const h1 = midYearEventRouter(newState); // season_stage==='h1' → H1 「职场大事件」块
+    if (h1 && h1 !== nextId && h1 !== 'sv_daily_life') {
+      return { finalState: newState, nextEventId: h1 };
+    }
+  }
+
+  // 3. Mid-year season advance: a career action returning to sv_daily_life while mid_year is
   //    set does NOT bounce back to the annual hub — it advances H1→H2 (inject a life event via
   //    midYearEventRouter) then H2→year-end settlement, consuming the year.
   if (nextId === 'sv_daily_life' && newState.mid_year) {

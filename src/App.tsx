@@ -552,7 +552,7 @@ export default function App() {
     }
     // Post-choice routing (targetEventId override + H1→H2→settlement season advance) lives in
     // ONE shared resolver so the balance/fuzz harnesses route through the exact same graph.
-    const { finalState, nextEventId: nextId } = resolveNextEventId(choice, newState, transition.targetEventId);
+    const { finalState, nextEventId: nextId } = resolveNextEventId(choice, newState, transition.targetEventId, currentEventId);
 
     // 3. Commit state exactly once with the final immutable object.
     setGameState(finalState);

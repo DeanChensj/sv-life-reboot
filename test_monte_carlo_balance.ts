@@ -152,7 +152,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     const transition = applyStateTransition(state, eff, { eventId: currentEventId });
     // Route through the SAME resolver the live app uses (honors targetEventId + H1→H2→settlement
     // season advance), so the measured balance reflects the shipped game, not a divergent graph.
-    const routed = resolveNextEventId(chosen, transition.nextState, transition.targetEventId);
+    const routed = resolveNextEventId(chosen, transition.nextState, transition.targetEventId, currentEventId);
     state = routed.finalState;
 
     if (isHopGrind) {

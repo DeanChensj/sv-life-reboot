@@ -205,7 +205,7 @@ function runFuzzTest(iterations: number, baseSeed: number, singleSeed?: number) 
 
         // Route through the SAME shared resolver the live app uses (targetEventId override +
         // H1→H2→settlement season advance), so the fuzzer traverses the shipped event graph.
-        const routed = resolveNextEventId(randomChoice, currentState, transition.targetEventId);
+        const routed = resolveNextEventId(randomChoice, currentState, transition.targetEventId, currentEventId);
         currentState = routed.finalState;
         const nextId = routed.nextEventId;
 

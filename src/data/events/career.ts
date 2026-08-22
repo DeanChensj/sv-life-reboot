@@ -611,8 +611,8 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【砸钱申办 O-1 签证】找顶级律所申办 O-1 杰出人才签证 (需现金 >= $8w)',
-        reqBadge: '需现金 >= $8w + 超凡背景',
-        condition: (s) => (s.is_phd || s.job_type === 'ai_research' || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        reqBadge: '需现金 >= $8w + 超凡背景/高Impact',
+        condition: (s) => (s.is_phd || s.job_type === 'ai_research' || (s.impact || 0) >= 20 || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const passProb = o1PassProb(s);
           const win = gameRandom() < passProb;
@@ -1040,7 +1040,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'ai_research' && !s.laid_off,
         hideIfUnavailable: true,
         effect: (s) => {
-          const win = gameRandom() < Math.min(0.85, 0.6 + (s.leetcode / 300) + ((s.luck || 20) / 400));
+          const win = gameRandom() < Math.min(0.88, 0.55 + ((s.impact || 0) / 250) + (s.leetcode / 350) + ((s.luck || 20) / 400));
           return win
             ? { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 3), tc: s.tc + 1.0, impact: addImpact(s, 10), message: '【顶会 Oral / 开源爆款】你主导的研究被顶会 Oral 收录、开源项目冲上 GitHub Trending，行业影响力 (Impact) 大增！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 5), impact: addImpact(s, 5), message: '【拒稿但沉淀】论文惨遭 Reviewer 2 拒稿，但你摸清了前沿方向、积累了扎实的研究影响力，稳步提升。' };

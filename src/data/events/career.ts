@@ -23,7 +23,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const allPool: Array<{ id: string; name: string; minLeet: number; weight: number }> = [
             { id: 'google', name: 'Google', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 45), weight: 0.95 },
             { id: 'meta', name: 'Meta', minLeet: s.macro_economy === 'bear' ? 65 : (s.macro_economy === 'bull' ? 45 : 55), weight: 0.90 },
-            { id: 'nvidia', name: 'NVIDIA', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
+            { id: 'nvidia', name: 'Nvidia', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
             { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
             { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
             // Amazon: high-volume hirer (high weight), moderate bar, but brutal PIP culture (health drain in settlement).
@@ -82,7 +82,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const nameMap: Record<string, string> = {
             google: 'Google',
             meta: 'Meta',
-            nvidia: 'NVIDIA',
+            nvidia: 'Nvidia',
             tiktok: 'TikTok',
             apple: 'Apple',
             amazon: 'Amazon',
@@ -402,7 +402,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
-        text: '【签约入职 NVIDIA】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
+        text: '【签约入职 Nvidia】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
         condition: (s) => (s.hop_offers ? s.hop_offers.includes('nvidia') : s.company !== 'nvidia'),
         effect: (s) => {
           const isBull = s.macro_economy === 'bull' || s.year >= 2023;
@@ -420,7 +420,7 @@ export const careerEvents: Record<string, GameEvent> = {
             laid_off: false,
             is_new_job: true,
             message: isBull
-              ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到了高 RSU 占比的 NVIDIA 芯片团队包裹，职级定为 ${nextLvl}，年薪总包跃升至 ${newTC}w！`
+              ? `【赶上 AI 芯片大风口】皮衣黄显卡霸权！你拿到了高 RSU 占比的 Nvidia 芯片团队包裹，职级定为 ${nextLvl}，年薪总包跃升至 ${newTC}w！`
               : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`
           };
         },
@@ -813,7 +813,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：硅谷朝圣】抢购 NVIDIA GTC 大会 VIP 门票进场见黄仁勋 ($1.5w)',
+        text: '【限时机遇：硅谷朝圣】抢购 Nvidia GTC 大会 VIP 门票进场见黄仁勋 ($1.5w)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_gtc_nvidia') && s.cash >= 1.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -1267,7 +1267,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const allPool: Array<{ id: string; name: string; minLeet: number; weight: number }> = [
             { id: 'google', name: 'Google', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 45), weight: 0.95 },
             { id: 'meta', name: 'Meta', minLeet: s.macro_economy === 'bear' ? 65 : (s.macro_economy === 'bull' ? 45 : 55), weight: 0.90 },
-            { id: 'nvidia', name: 'NVIDIA', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
+            { id: 'nvidia', name: 'Nvidia', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
             { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
             { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
             // Amazon: high-volume hirer (high weight), moderate bar, but brutal PIP culture (health drain in settlement).
@@ -1334,7 +1334,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const nameMap: Record<string, string> = {
             google: 'Google',
             meta: 'Meta',
-            nvidia: 'NVIDIA',
+            nvidia: 'Nvidia',
             tiktok: 'TikTok',
             apple: 'Apple',
             amazon: 'Amazon',

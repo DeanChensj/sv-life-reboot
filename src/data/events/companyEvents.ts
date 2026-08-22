@@ -76,10 +76,10 @@ export const companyEvents: Record<string, GameEvent> = {
     ],
   },
 
-  // ---------------- NVIDIA: 皮衣黄股价狂飙 ----------------
+  // ---------------- Nvidia: 皮衣黄股价狂飙 ----------------
   'nvidia_rsu_moonshot': {
     id: 'nvidia_rsu_moonshot',
-    title: '【黄氏狂欢】NVIDIA 算力暴涨与 RSU 封神',
+    title: '【黄氏狂欢】Nvidia 算力暴涨与 RSU 封神',
     description: 'AI 算力军备竞赛下，英伟达股价一年翻了几倍，你的 RSU 账户肉眼可见地膨胀。茶水间里同事都在争论：是套现落袋买房，还是钻石手继续持有？',
     choices: [
       {

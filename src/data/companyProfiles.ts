@@ -48,81 +48,79 @@ export interface CompanyProfile {
 
 export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
   google: {
-    label: 'Google (谷歌)',
+    label: 'Google',
     className: 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold',
-    timelineName: 'Google (谷歌)',
+    timelineName: 'Google',
     pipTier: 'low',
     signatureEvent: 'google_reorg_limbo',
   },
   meta: {
-    label: 'Meta (卷王)',
+    label: 'Meta',
     className: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 font-bold',
-    timelineName: 'Meta (卷王)',
+    timelineName: 'Meta',
     pipTier: 'high',
     compSplit: { base: 0.40, rsu: 0.60 },
     yearEndHealth: { drain: 4, msg: ' Meta 的 PSC 绩效考评让你小有压力 (健康 -4)。' },
     signatureEvent: 'meta_metaverse_pivot',
   },
   apple: {
-    label: 'Apple (苹果)',
+    label: 'Apple',
     className: 'text-zinc-300 bg-zinc-700/30 border-zinc-600/40 font-bold',
-    timelineName: 'Apple (苹果)',
+    timelineName: 'Apple',
     pipTier: 'low',
     signatureEvent: 'apple_secrecy_crackdown',
   },
   amazon: {
-    label: 'Amazon (亚麻)',
+    label: 'Amazon',
     className: 'text-amber-400 bg-amber-500/10 border-amber-500/20 font-bold',
-    timelineName: 'Amazon (亚麻)',
+    timelineName: 'Amazon',
     pipTier: 'high',
     yearEndHealth: { drain: 3, msg: ' 亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。' },
   },
   nvidia: {
-    label: 'NVIDIA (英伟达)',
+    label: 'Nvidia',
     className: 'text-lime-400 bg-lime-500/10 border-lime-500/20 font-bold',
-    timelineName: 'NVIDIA (英伟达)',
+    timelineName: 'Nvidia',
     pipTier: 'low',
     compSplit: { base: 0.40, rsu: 0.60 },
     yearEndHealth: { drain: 4, msg: ' 英伟达 AI 芯片军备竞赛节奏紧张，让你不敢松懈 (健康 -4)。' },
     signatureEvent: 'nvidia_rsu_moonshot',
   },
   tiktok: {
-    label: 'TikTok (字节)',
+    label: 'TikTok',
     className: 'text-rose-400 bg-rose-500/10 border-rose-500/20 font-bold',
-    timelineName: 'TikTok (字节)',
+    timelineName: 'TikTok',
     pipTier: 'medium',
     compSplit: { base: 0.70, rsu: 0.30 },
     yearEndHealth: { drain: 8, msg: ' 字节的高强度对齐让你略感疲惫 (健康 -8)。' },
     signatureEvent: 'tiktok_us_ban_hearing',
   },
   microsoft: {
-    label: 'Microsoft (微软)',
+    label: 'Microsoft',
     className: 'text-blue-400 bg-blue-500/10 border-blue-500/20 font-bold',
-    timelineName: 'Microsoft (微软)',
+    timelineName: 'Microsoft',
     pipTier: 'medium',
   },
   cisco: {
-    label: 'Cisco (养老厂)',
+    label: 'Cisco',
     className: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20 font-bold',
-    timelineName: 'Cisco (思科)',
+    timelineName: 'Cisco',
     pipTier: 'medium',
   },
   oracle: {
-    // Previously had NO label/timeline branch — rendered as generic '硅谷科技大厂'
-    // in the HUD and 'ORACLE' in the timeline. As a 养老厂 its +10 WLB health and
-    // 55/45 comp were already correct defaults; only the display was broken.
-    label: 'Oracle (甲骨文)',
+    // As a 养老厂 its +10 WLB health and 55/45 comp are standard defaults.
+    label: 'Oracle',
     className: 'text-red-300 bg-red-950/40 border-red-600/30 font-bold',
-    timelineName: 'Oracle (甲骨文)',
+    timelineName: 'Oracle',
     pipTier: 'medium',
   },
   robinhood: {
     // Fintech / retail-brokerage — the boom-bust archetype. Its total comp is
     // violently macro-bound (see the job_hop_market choice: fat in a bull, gutted
     // in a bear); a bonus-heavy split and mid-high year-end stress reinforce that.
-    label: 'Robinhood (散户券商)',
+    label: 'Robinhood',
     className: 'text-green-400 bg-green-500/10 border-green-500/20 font-bold',
-    timelineName: 'Robinhood (散户券商)',
+    timelineName: 'Robinhood',
     pipTier: 'medium',
     compSplit: { base: 0.60, rsu: 0.40 },
     yearEndHealth: { drain: 5, msg: ' Robinhood 的牛熊生死时速与产品高压节奏消耗了体力 (健康 -5)。' },

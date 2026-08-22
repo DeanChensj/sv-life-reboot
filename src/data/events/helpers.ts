@@ -803,7 +803,7 @@ export const ANNUAL_OPPORTUNITY_KEYS = [
 // Checks if a one-in-a-lifetime opportunity has been permanently completed
 export function isOpportunityCompleted(s: GameState, oppKey: string): boolean {
   if (oppKey === 'opp_pilot_license') return Boolean(s.story_flags?.has_pilot_license);
-  if (oppKey === 'opp_cursor_hunt') return Boolean(s.story_flags?.cursor_hunt_joined || (s.company === 'openai' && s.level === 'MTS'));
+  if (oppKey === 'opp_cursor_hunt') return Boolean(s.story_flags?.cursor_hunt_joined);
   if (oppKey === 'opp_foreclosure_deal') return Boolean(s.story_flags?.bought_foreclosure_house || s.investment_properties?.includes('东湾法拍翻新独立屋'));
   return false;
 }

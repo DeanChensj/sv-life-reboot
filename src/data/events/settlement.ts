@@ -433,6 +433,7 @@ export const settlementEvents: Record<string, GameEvent> = {
             return { 
               mid_year: false,
               season_stage: undefined,
+              year_seg: undefined, // 清零季度事件机相位,确保下一年从 H1 重新开始 (防跨年残留导致跳过 H1/H2)
               age: s.age + 1, 
               year: s.year + 1,
               founder_situation: nextFounderSituation,

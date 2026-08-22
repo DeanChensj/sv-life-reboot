@@ -1084,7 +1084,9 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 3), tc: s.tc + 1.0, impact: addImpact(s, 10), message: '【顶会 Oral / 开源爆款】你主导的研究被顶会 Oral 收录、开源项目冲上 GitHub Trending，行业影响力 (Impact) 大增！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 7), leetcode: Math.min(100, s.leetcode + 5), impact: addImpact(s, 5), message: '【拒稿但沉淀】论文惨遭 Reviewer 2 拒稿，但你摸清了前沿方向、积累了扎实的研究影响力，稳步提升。' };
         },
-        nextEventId: (s) => midYearEventRouter(s),
+        // 发出推进信号,由 resolveNextEventId 季度状态机统一插入 H1→H2→结算(与其它年度动作一致,
+        // 避免旧写法 midYearEventRouter(s) 直接产出 H1 事件后状态机再插一个 → 双 H1)。
+        nextEventId: (s) => h1ToH2Router(s),
       },
       // 3. 【常规年度重心】 (点击后进入年中/年底结算)
       {
@@ -1398,7 +1400,12 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【结束 Gap Year：重返职场】满血状态启动简历海投，备战大厂面试',
         condition: (s) => Boolean(s.laid_off || s.job_type === 'unemployed' || !s.job_type),
         hideIfUnavailable: true,
+        // 求职即本年度动作:必须置 mid_year/season_stage,让整条「求职→再就业→选房」链纳入年度季度
+        // 事件机、走到年终结算,而非再就业后回落 sv_daily_life 在同一结算周期内再做一次年度动作
+        // (会与 H1 注入叠加成 job_hop_market 同回合三连 → fuzz SEED=990 死循环)。
         effect: (s) => ({
+          mid_year: true,
+          season_stage: 'h1',
           story_flags: {
             ...(s.story_flags || {}),
             in_gap_year: false

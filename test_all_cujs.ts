@@ -2171,40 +2171,51 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 // -----------------------------------------------------------------------------
-// CUJ 42: 路由「单一真相源」契约 (resolveNextEventId)。App.tsx 与蒙卡/fuzz harness 必须都经此
-// 解析下一事件,否则模拟路径 != 线上路径 (历史上年中换季拦截只写在 App.tsx,harness 测的是另一个
-// 游戏)。锁四件事:① targetEventId 覆盖 choice.nextEventId;② mid_year+H1 → 推进 H2(season_stage
-// 置 h2 + 注入生活事件);③ mid_year+H2 → 年终结算(season_stage 清空);④ 非 mid_year 直通。
+// CUJ 42: 路由「单一真相源」+ 年度季度事件机 (resolveNextEventId)。App.tsx 与蒙卡/fuzz harness 必须
+// 都经此解析,否则模拟路径 != 线上路径。年度节律 = 年度动作 → H1 职场事件 → H2 生活事件 → 结算,由
+// year_seg(0→1→2)驱动、单调递增保证必定终结。锁六件事:① targetEventId 覆盖;② 只在「推进信号」
+// (settlement / mid_year 的 sv_daily_life)动作,【绝不覆盖子枢纽如 job_hop_market】(用户实测 bug:
+// 跳槽拿到 offer 却被 H1 事件顶掉);③ seg0+在职 → 注入 H1、seg=1;④ seg1 → 注入 H2、seg=2(H2 不
+// 再被吞);⑤ seg2 → 结算;⑥ 非 mid_year 直通。
 // -----------------------------------------------------------------------------
 {
-  console.log('--- [CUJ 42] 路由单一真相源 resolveNextEventId 契约 ---');
-  const base = { ...generateInitialState(), status: 'playing' } as GameState;
+  console.log('--- [CUJ 42] 路由单一真相源 + 年度季度事件机 (year_seg) ---');
+  const base = { ...generateInitialState(), status: 'playing', job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', age: 30 } as GameState;
 
   // ① 中央终局/FIRE 路由 (targetEventId) 永远压过事件自身的 nextEventId。
   const over = resolveNextEventId({ nextEventId: 'sv_daily_life' }, base, 'fire_milestone_choice');
   assert(over.nextEventId === 'fire_milestone_choice', 'targetEventId 覆盖 choice.nextEventId');
-  const overEnd = resolveNextEventId({ nextEventId: 'sv_daily_life' }, base, 'end');
-  assert(overEnd.nextEventId === 'end', 'targetEventId=end (死亡/破产/胜利) 覆盖路由');
+  assert(resolveNextEventId({ nextEventId: 'sv_daily_life' }, base, 'end').nextEventId === 'end', 'targetEventId=end 覆盖路由');
 
-  // ② mid_year + H1(或未分段) → 推进到 H2:season_stage 置 'h2' 且落到一个合法生活事件。
-  const h1 = { ...base, mid_year: true, season_stage: 'h1' as const, job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', age: 30 } as GameState;
-  const advH2 = resolveNextEventId({ nextEventId: 'sv_daily_life' }, h1, undefined);
-  assert(advH2.finalState.season_stage === 'h2', 'mid_year+H1 推进后 season_stage=h2');
-  assert(advH2.nextEventId !== 'sv_daily_life' && !!events[advH2.nextEventId as string],
-    'mid_year+H1 不回落 sv_daily_life,而是注入一个合法生活事件');
+  // ② 【关键回归】子枢纽事件(非推进信号)绝不被季度事件机覆盖 —— 跳槽必须能进 job_hop_market 选 offer。
+  const midYear = { ...base, mid_year: true, year_seg: 0 } as GameState;
+  const hop = resolveNextEventId({ nextEventId: 'job_hop_market' }, midYear, undefined, 'sv_daily_life');
+  assert(hop.nextEventId === 'job_hop_market', '年度动作后的子枢纽 job_hop_market 原样透传(不被 H1 顶掉)');
+  const invest = resolveNextEventId({ nextEventId: 'stock_market_annual_gamble' }, midYear, undefined, 'sv_daily_life');
+  assert(invest.nextEventId === 'stock_market_annual_gamble', '投资子枢纽 stock_market_annual_gamble 原样透传');
 
-  // ③ mid_year + H2 → 年终结算,season_stage 清空。
-  const h2 = { ...base, mid_year: true, season_stage: 'h2' as const } as GameState;
-  const toSettle = resolveNextEventId({ nextEventId: 'sv_daily_life' }, h2, undefined);
-  assert(toSettle.nextEventId === 'sv_year_end_settlement', 'mid_year+H2 → 年终结算');
-  assert(toSettle.finalState.season_stage === undefined, '进入结算前 season_stage 清空');
+  // ③ seg0 + 在职 + 推进信号 → 注入 H1 职场事件,year_seg=1。
+  const advH1 = resolveNextEventId({ nextEventId: 'sv_year_end_settlement' }, midYear, undefined);
+  assert(advH1.finalState.year_seg === 1, 'seg0 推进后 year_seg=1');
+  assert(advH1.nextEventId !== 'sv_year_end_settlement' && !!events[advH1.nextEventId as string], 'seg0 在职 → 注入合法 H1 事件(不直接进结算)');
 
-  // ④ 非 mid_year:原样直通 choice.nextEventId,不改 season_stage。
+  // ④ seg1 + 推进信号 → 注入 H2 生活事件,year_seg=2 (H2 不再被吞)。
+  const seg1 = { ...base, mid_year: true, year_seg: 1 } as GameState;
+  const advH2 = resolveNextEventId({ nextEventId: 'sv_year_end_settlement' }, seg1, undefined);
+  assert(advH2.finalState.year_seg === 2, 'seg1 推进后 year_seg=2');
+  assert(advH2.nextEventId !== 'sv_year_end_settlement' && !!events[advH2.nextEventId as string], 'seg1 → 注入合法 H2 生活事件(H2 不被吞)');
+
+  // ⑤ seg2 + 推进信号 → 年终结算 (清空 year_seg)。
+  const seg2 = { ...base, mid_year: true, year_seg: 2 } as GameState;
+  const toSettle = resolveNextEventId({ nextEventId: 'sv_year_end_settlement' }, seg2, undefined);
+  assert(toSettle.nextEventId === 'sv_year_end_settlement' && toSettle.finalState.year_seg === undefined, 'seg2 → 结算且清空 year_seg');
+  // 再入 sv_daily_life(mid_year)在 seg2 也强制进结算 → 杜绝同一结算周期内二次年度动作。
+  assert(resolveNextEventId({ nextEventId: 'sv_daily_life' }, seg2, undefined).nextEventId === 'sv_year_end_settlement', 'seg2 再入 sv_daily_life 被拦截进结算(防同年二次动作)');
+
+  // ⑥ 非 mid_year:原样直通。
   const plain = { ...base, mid_year: false } as GameState;
-  const passthru = resolveNextEventId({ nextEventId: 'sv_daily_life' }, plain, undefined);
-  assert(passthru.nextEventId === 'sv_daily_life' && passthru.finalState === plain, '非 mid_year 原样直通');
-  const fnChoice = resolveNextEventId({ nextEventId: () => 'job_hunt' }, plain, undefined);
-  assert(fnChoice.nextEventId === 'job_hunt', '函数式 nextEventId 被正确求值');
+  assert(resolveNextEventId({ nextEventId: 'sv_daily_life' }, plain, undefined).nextEventId === 'sv_daily_life', '非 mid_year 原样直通');
+  assert(resolveNextEventId({ nextEventId: () => 'job_hunt' }, plain, undefined).nextEventId === 'job_hunt', '函数式 nextEventId 被正确求值');
 
   console.log('✅ CUJ 42 Passed\n');
 }

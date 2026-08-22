@@ -98,6 +98,11 @@ export interface GameState {
   is_master?: boolean;
   last_beauty_year?: number;
   season_stage?: 'h1' | 'h2';
+  // 年度季度事件机的相位计数器 (resolveNextEventId 专用,与 season_stage 解耦):0/undefined=年初,
+  // 1=H1 职场事件已放, 2=H2 生活事件已放 → 进结算。必须与 season_stage 分开,因为大量职场/再就业
+  // 事件会把 season_stage 重置回 'h1'(afterCareerAction 依赖它),若复用会导致相位被反复重置→同年
+  // 死循环(fuzz SEED=990 job_hop 反复重入)。由年终结算清零。
+  year_seg?: number;
   has_pet: boolean;
   has_cat?: boolean;
   has_dog?: boolean;

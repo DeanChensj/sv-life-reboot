@@ -702,11 +702,15 @@ export const midYearEventRouter = (s: GameState): string => {
 };
 
 // H1 to H2 Event Router: called after resolving an H1 career/work event to transition to an H2 life/social event
+// "此 H1 事件结束,推进年度进程"。被裁则进入失业危机;否则只发出「推进」信号 (→ 年终结算),
+// 由 resolveNextEventId 的季度状态机在推进途中依次插入 H1 职场事件 + H2 生活事件。历史上这里直接
+// midYearEventRouter({...,'h2'}) 计算 H2,但 season_stage 未被持久化,导致状态机无法分辨「H2 前/后」;
+// 改为返回推进信号、由状态机统一编排,彻底修掉「注入 H1 却吞掉 H2 / 覆盖 job_hop_market 等子枢纽」。
 export const h1ToH2Router = (s: GameState): string => {
   if (s.laid_off) {
     return (!isPermanentVisa(s.visa) && s.visa !== '无') ? 'layoff_hit' : 'job_hunt';
   }
-  return midYearEventRouter({ ...s, season_stage: 'h2' });
+  return 'sv_year_end_settlement';
 };
 
 // 年中职场动作(跳槽入职 / H1B 抽签 / 签证自救)完成后的统一落点。
@@ -741,42 +745,42 @@ export function resolveNextEventId(
   let nextId: string | undefined =
     typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
 
-  // 2. H1「职场大事件」注入:一个在职年度的决策(sv_daily_life 的年度重心,置 season_stage='h1' +
-  //    mid_year)完成后,先经历一个 H1 职场/职业事件(裁员风波/PIP/绩效/中年危机/公司标志/两难/
-  //    导师剧情…),再由该事件自身的 h1ToH2Router 推进到 H2 生活事件→年终结算。构成完整的
-  //    「决策→H1→H2→结算」年度节律。历史上 sv_daily_life 的年度选择直接 h1ToH2Router 跳到 H2,
-  //    使整个 H1 板块(尤其裁员池)在常规玩法里永不触发——这里把它接回主循环。
-  //    仅对在职、非破产、当前源自 sv_daily_life 的年度动作生效,且不覆盖晋升庆祝/终局路由;H1
-  //    事件本身(sourceEventId 不再是 sv_daily_life)不会再次注入,故每年至多一次、不会成环。
-  if (
-    sourceEventId === 'sv_daily_life' &&
-    newState.mid_year &&
-    newState.season_stage === 'h1' &&
-    !!newState.job_type &&
-    newState.job_type !== 'unemployed' &&
-    !newState.laid_off &&
-    typeof nextId === 'string' &&
-    !nextId.endsWith('_celebration') &&
-    nextId !== 'fire_milestone_choice' &&
-    nextId !== 'end'
-  ) {
-    const h1 = midYearEventRouter(newState); // season_stage==='h1' → H1 「职场大事件」块
-    if (h1 && h1 !== nextId && h1 !== 'sv_daily_life') {
-      return { finalState: newState, nextEventId: h1 };
+  // 2. 年度季度事件机 (single source of truth for the H1→H2→settlement rhythm).
+  //    一个在职年度应为:年度动作(sv_daily_life 的重心选择,可能带子枢纽 job_hop_market /
+  //    stock_market_annual_gamble / side_hustle_hub) → 一个 H1 职场大事件(裁员/PIP/绩效/中年危机/
+  //    公司标志/两难/导师剧情) → 一个 H2 生活事件 → 年终结算。
+  //    只在收到「推进信号」时动作(nextId=sv_year_end_settlement,或带 mid_year 的 sv_daily_life——
+  //    由 h1ToH2Router / afterCareerAction / 年度动作发出);因此【绝不覆盖】job_hop_market / stock
+  //    赌盘 / side hustle / 晋升庆祝 / 裁员危机链等子事件(它们不是推进信号,原样透传,待其自身走到
+  //    推进信号再入机)。相位用【year_seg】计数(0→1→2),而非 season_stage:后者被大量职场事件重置
+  //    回 'h1',复用会导致同年死循环(fuzz SEED=990)。每年至多注入 2 个季度事件即强制进结算——
+  //    year_seg 单调递增,保证【必定终结、无同回合死循环】,即便再就业事件把 season_stage 重置。
+  //    再入 sv_daily_life(mid_year)也被拦截进结算,杜绝「同年再做一次年度动作」。
+  const isAdvanceSignal =
+    nextId === 'sv_year_end_settlement' || (nextId === 'sv_daily_life' && !!newState.mid_year);
+  if (newState.mid_year && isAdvanceSignal) {
+    const seg = newState.year_seg || 0;
+    const working = !!newState.job_type && newState.job_type !== 'unemployed' && !newState.laid_off;
+    const regularEmployee = working && newState.job_type !== 'startup_founder' && newState.job_type !== 'trader';
+
+    // 阶段一:H1 职场大事件 (仅常规在职雇员;founder/trader 有各自枢纽,失业者跳过 → 直接进阶段二)。
+    if (seg < 1 && regularEmployee) {
+      const h1 = midYearEventRouter({ ...newState, season_stage: 'h1' });
+      if (h1 && h1 !== 'sv_daily_life' && h1 !== 'sv_year_end_settlement') {
+        return { finalState: { ...newState, year_seg: 1 }, nextEventId: h1 };
+      }
     }
+    // 阶段二:H2 生活事件 (人人有份)。
+    if (seg < 2) {
+      const h2 = midYearEventRouter({ ...newState, season_stage: 'h2' });
+      if (h2 && h2 !== 'sv_daily_life' && h2 !== 'sv_year_end_settlement') {
+        return { finalState: { ...newState, year_seg: 2 }, nextEventId: h2 };
+      }
+    }
+    // 阶段三:季度事件已放完 → 年终结算 (year_seg 由结算清零)。
+    return { finalState: { ...newState, year_seg: undefined }, nextEventId: 'sv_year_end_settlement' };
   }
 
-  // 3. Mid-year season advance: a career action returning to sv_daily_life while mid_year is
-  //    set does NOT bounce back to the annual hub — it advances H1→H2 (inject a life event via
-  //    midYearEventRouter) then H2→year-end settlement, consuming the year.
-  if (nextId === 'sv_daily_life' && newState.mid_year) {
-    if (newState.season_stage === 'h1' || !newState.season_stage) {
-      const finalState: GameState = { ...newState, season_stage: 'h2' };
-      return { finalState, nextEventId: midYearEventRouter(finalState) };
-    }
-    const finalState: GameState = { ...newState, season_stage: undefined };
-    return { finalState, nextEventId: 'sv_year_end_settlement' };
-  }
   return { finalState: newState, nextEventId: nextId };
 }
 

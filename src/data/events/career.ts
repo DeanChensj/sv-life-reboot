@@ -721,27 +721,29 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       // 1. 【每年专属动态轮替机遇池】 (每年动态激活 1~2 个专属限时奇遇)
       {
-        text: '【限时机遇：独角兽挖角】收到前沿 AI 独角兽 VP 亲自发来的免初筛直通终面邀请 (终身仅 1 次)',
+        text: '【限时机遇：AI 初创团队挖角】收到前沿 AI 初创公司合伙人发来的直通终面邀请 (终身仅 1 次)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_cursor_hunt') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
           const pass = s.leetcode >= 45 && gameRandom() < 0.65;
           if (pass) {
+            const newTC = Math.max(s.tc + 6.0, 32.0);
             return {
               mid_year: true, season_stage: 'h1',
               last_limited_opp_year: s.year,
-              tc: s.tc + 12.0,
+              tc: newTC,
               stocks: (s.stocks || 0) + 15.0,
               health: Math.max(0, s.health - 12),
-              impact: addImpact(s, 10),
+              impact: addImpact(s, 8),
               is_new_job: true,
-              company: 'openai',
-              level: 'MTS',
+              company: 'startup',
+              job_type: 'startup',
+              level: '早期核心成员',
               story_flags: {
                 ...(s.story_flags || {}),
                 cursor_hunt_joined: true
               },
-              message: '【斩获独角兽核心 Offer】你在终面架构评审中征服了创始人！职级定级为 MTS，总包大涨 +$12.0w TC 并配发 $15.0w 早期流动性期权！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
+              message: `【斩获 AI 初创核心 Offer】你在终面架构评审中征服了创始人团队！以早期核心员工身份加入 AI 初创公司，总包调升至 $${newTC.toFixed(1)}w 并配发 $15.0w 早期期权股权！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：`
             };
           }
           return {
@@ -749,7 +751,7 @@ export const careerEvents: Record<string, GameEvent> = {
             last_limited_opp_year: s.year,
             health: Math.max(0, s.health - 10),
             leetcode: s.leetcode + 4,
-            message: '【独角兽面试折戟】独角兽终面对于底层系统优化要求极高，虽然遗憾未能拿下 Offer，但硬核技术视野收获颇丰。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
+            message: '【初创面试折戟】初创团队对于全栈与底层系统架构要求极高，虽然遗憾未能拿下 Offer，但对前沿技术落地的理解收获颇丰。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
           };
         },
         // A unicorn VP final-round IS your career move for the year (a real job change on

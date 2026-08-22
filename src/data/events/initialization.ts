@@ -1316,7 +1316,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.40 + ((s.impact || 0) >= 10 ? 0.15 : 0) + (s.leetcode >= 65 ? 0.10 : 0) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass 
-            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 15), impact: addImpact(s, 20), story_flags: { ...(s.story_flags || {}), hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，学术影响力大涨 (Impact +20)！老板决定带你去夏威夷参加顶级学术会议！' }
+            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 15), impact: addImpact(s, 15), story_flags: { ...(s.story_flags || {}), hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，学术影响力大涨 (Impact +15)！老板决定带你去夏威夷参加顶级学术会议！' }
             : { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), impact: addImpact(s, 6), leetcode: Math.min(100, s.leetcode + 12), message: '首篇顶会审稿激烈惨遭拒稿，但你搭建了完备的实验基准并积累了扎实的前期产出 (Impact +6)。进入博三博四攻坚！' };
         },
         nextEventId: (s) => (s.story_flags?.hawaii_conf ? 'phd_conference' : 'phd_mid_stage')
@@ -1370,7 +1370,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.35 + ((s.impact || 0) >= 20 ? 0.35 : (s.impact || 0) >= 10 ? 0.20 : 0) + (s.leetcode >= 70 ? 0.10 : 0) + (s.school === 'cmu' ? 0.10 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass
-            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, impact: addImpact(s, 25), leetcode: Math.min(100, s.leetcode + 15), message: '奇迹！两年的厚积薄发终于开花结果，你的大模型推理架构论文被顶会 Oral 接收，学术影响力飙升 (Impact +25)！老板大喜，带你去夏威夷顶会！' }
+            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, impact: addImpact(s, 15), leetcode: Math.min(100, s.leetcode + 15), message: '奇迹！两年的厚积薄发终于开花结果，你的大模型推理架构论文被顶会 Oral 接收，学术影响力飙升 (Impact +15)！老板大喜，带你去夏威夷顶会！' }
             : { age: s.age + 2, year: s.year + 2, is_phd: false, is_master: true, health: Math.max(0, s.health - 15), leetcode: Math.min(100, s.leetcode + 15), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)', message: '顶会再次惨遭拒稿！导师 Funding 彻底耗尽，系里评估认为学术成果 (Impact) 严重不足，建议你 Master Out 毕业找工作。' };
         },
         nextEventId: (s) => (s.is_phd ? 'phd_conference' : 'job_hunt')
@@ -1383,7 +1383,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.35 + ((s.impact || 0) >= 15 ? 0.30 : (s.impact || 0) >= 8 ? 0.15 : 0) + (s.leetcode >= 70 ? 0.15 : 0) + (s.school === 'cmu' ? 0.10 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass
-            ? { cash: s.cash + 6, health: Math.max(0, s.health - 6), age: s.age + 1, year: s.year + 1, is_phd: true, impact: addImpact(s, 20), network: Math.min(100, (s.network || 10) + 15), leetcode: Math.min(100, s.leetcode + 10), message: '在顶尖 AI 工业界实验室 (FAIR/DeepMind) 实习收获满满！以第一作者发表了重磅 Demo 与论文 (Impact +20)，攒下了 $6w 实习薪水并顺利通过博士答辩 Defense，取得 PhD 学位！' }
+            ? { cash: s.cash + 6, health: Math.max(0, s.health - 6), age: s.age + 1, year: s.year + 1, is_phd: true, impact: addImpact(s, 15), network: Math.min(100, (s.network || 10) + 15), leetcode: Math.min(100, s.leetcode + 10), message: '在顶尖 AI 工业界实验室 (FAIR/DeepMind) 实习收获满满！以第一作者发表了重磅 Demo 与论文 (Impact +15)，攒下了 $6w 实习薪水并顺利通过博士答辩 Defense，取得 PhD 学位！' }
             : { health: Math.max(0, s.health - 10), age: s.age + 1, year: s.year + 1, impact: addImpact(s, 4), leetcode: Math.min(100, s.leetcode + 8), message: '顶尖 Lab 实习申请竞争太激烈被刷，博士论文指标仍需打磨，你只能回校继续给导师搬砖。' };
         },
         nextEventId: (s) => s.is_phd ? 'phd_job_hunt' : 'phd_mid_stage'
@@ -1424,7 +1424,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【疯狂 Network】疯狂 Network，结识学术大牛与顶尖 Lab 负责人 (耗时 1 年顺利毕业答辩)',
-        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5), age: s.age + 1, year: s.year + 1, health: Math.max(0, s.health - 8), is_phd: true, impact: addImpact(s, 15), network: Math.min(100, (s.network || 10) + 20), leetcode: Math.min(100, s.leetcode + 12), message: '你成功给几位学术大佬与 OpenAI/Google 研究员留下了深刻印象，论文引用量迅速攀升 (Impact +15)！回到学校后顺利完成 Defense，拿到了沉甸甸的 PhD 学位！' }),
+        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5), age: s.age + 1, year: s.year + 1, health: Math.max(0, s.health - 8), is_phd: true, impact: addImpact(s, 8), network: Math.min(100, (s.network || 10) + 20), leetcode: Math.min(100, s.leetcode + 12), message: '你成功给几位学术大佬与 OpenAI/Google 研究员留下了深刻印象，论文引用量稳步攀升 (Impact +8)！回到学校后顺利完成 Defense，拿到了沉甸甸的 PhD 学位！' }),
         nextEventId: 'phd_job_hunt'
       },
       {

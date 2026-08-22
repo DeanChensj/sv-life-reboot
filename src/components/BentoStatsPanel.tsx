@@ -331,7 +331,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
                     : 'text-zinc-400 bg-zinc-800/50 border-zinc-700/50'
             }`}>
               {gameState.relationship_status === 'married' || gameState.is_married
-                ? (gameState.is_dual_income ? '已婚 (双职工)' : '已婚')
+                ? '已婚'
                 : gameState.relationship_status === 'dating'
                   ? '热恋中'
                   : gameState.relationship_status === 'matched'

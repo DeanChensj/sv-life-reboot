@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage, addImpact, deductAssets } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage, addImpact, deductAssets, calculatePhdAdmitProb } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 import { SCHOOL_PROFILES } from '../schoolProfiles';
 
@@ -473,12 +473,12 @@ export const initializationEvents: Record<string, GameEvent> = {
         reqBadge: '全奖直博 / 需 LeetCode >= 50',
         condition: (s) => s.leetcode >= 50 || (s.impact || 0) >= 10,
         effect: (s) => {
-          const pass = s.is_phd || (gameRandom() < (0.20 + (s.school === 'cmu' ? 0.20 : 0) + ((s.impact || 0) >= 10 ? 0.15 : 0) + (s.leetcode >= 80 ? 0.15 : 0) + (s.story_flags?.phd_ready ? 0.15 : 0)));
+          const pass = s.is_phd || (gameRandom() < calculatePhdAdmitProb(s, false));
           return pass 
             ? { cash: s.cash + 2, age: s.age + 1, year: s.year + 1, is_phd: true, housing_name: '美国 博士实验室', message: '大喜讯！凭借扎实的科研积淀与过硬的算法功底，你战胜了数千名申请者，斩获北美顶级 CS 全奖 PhD Offer！' }
-            : { health: Math.max(0, s.health - 15), age: s.age + 1, year: s.year + 1, is_phd: false, message: '今年 CS 顶校 PhD 全奖录取率极低，你的推荐信与论文被审稿人刷了，惨遭拒信。' };
+            : { health: Math.max(0, s.health - 12), age: s.age + 1, year: s.year + 1, is_phd: false, message: '今年 CS 顶校 PhD 全奖录取率极低，你的推荐信与论文被审稿人刷了，惨遭拒信。' };
         },
-        nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'job_hunt',
+        nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'us_undergrad_phd_rejection',
       },
 
       {
@@ -511,6 +511,57 @@ export const initializationEvents: Record<string, GameEvent> = {
     ]
   },
 
+  'us_undergrad_phd_rejection': {
+    id: 'us_undergrad_phd_rejection',
+    title: '【申博失利】全美顶尖 PhD 拒信后的抉择',
+    description: '今年北美顶校 CS PhD 全奖录取率极低，竞争过于惨烈，你的申请全墨被拒。在收到最后一封拒信后，你整理了心情，决定接下来的路线：',
+    imageUrl: 'images/visa_denied.jpg',
+    choices: [
+      {
+        text: '【转申美国 CS 硕士】去大U读 MS 曲线救国，进实验室积累科研成果再战 PhD！(消耗 $10w)',
+        costBadge: '学费 $10w',
+        condition: (s) => s.cash >= 10,
+        effect: (s) => ({
+          cash: s.cash - 10,
+          is_master: true,
+          has_us_degree: true,
+          housing_name: '美硕 校外公寓',
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
+          health: Math.min(100, s.health + 5),
+          message: '【破茧重生】你收拾行囊前往顶级名校攻读 CS 硕士！你暗自发誓一定要在硕士期间进组跟大佬做 Research 发顶会，毕业时再次冲击 PhD！'
+        }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【申请 CS 硕士 + TA 助教贷款】资金不足借贷读硕，边打工做科研边备战重申 (消耗 $3w)',
+        costBadge: '自付 $3w',
+        condition: (s) => s.cash >= 3,
+        effect: (s) => ({
+          cash: s.cash - 3,
+          is_master: true,
+          has_us_degree: true,
+          housing_name: '美硕 校外公寓',
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
+          health: Math.max(0, s.health - 5),
+          leetcode: s.leetcode + 5,
+          message: '【自立自强】凭借本科过硬的算法能力，你成功申到了硕士院系 TA 助教职位与助学贷款，踏上边代课边做科研的硕士进阶之路！'
+        }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【彻底放弃学术，投身硅谷大厂秋招】激活 OPT 开启 SDE 搞钱之路！',
+        reqBadge: '激活 OPT 实习期',
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
+          leetcode: s.leetcode + 10,
+          health: Math.min(100, s.health + 5),
+          message: '【告别学术】学术道路太艰辛，你决定挥别实验室，激活 OPT 全身心投入硅谷大厂秋招求职季，目标 $20w+ 年薪大包！'
+        }),
+        nextEventId: 'job_hunt',
+      }
+    ]
+  },
+
   'cn_undergrad_grad': {
     id: 'cn_undergrad_grad',
     title: '【国内毕业】走出象牙塔与赴美抉择',
@@ -521,14 +572,13 @@ export const initializationEvents: Record<string, GameEvent> = {
         reqBadge: '全奖直博 / 需 LeetCode >= 50',
         condition: (s) => s.leetcode >= 50 || (s.impact || 0) >= 10,
         effect: (s) => {
-          const pass = gameRandom() < (0.18 + ((s.impact || 0) >= 10 ? 0.15 : 0) + (s.leetcode >= 80 ? 0.20 : 0));
+          const pass = gameRandom() < calculatePhdAdmitProb(s, false);
           return pass
             ? { cash: s.cash + 2, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', age: s.age + 1, year: s.year + 1, is_phd: true, housing_name: '美国 博士实验室', message: '奇迹！凭着陆本顶尖学术成果与算法功底，你跨海斩获了美国 CS 全奖直博 Offer！' }
-            : { health: Math.max(0, s.health - 15), age: s.age + 1, year: s.year + 1, is_phd: false, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，只能转投国内大厂或申请水硕。' };
+            : { health: Math.max(0, s.health - 12), age: s.age + 1, year: s.year + 1, is_phd: false, message: '美国顶尖博士项目全墨！因为没有美本强推被卡，面临人生分水岭。' };
         },
-        nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'cn_work',
+        nextEventId: (s: GameState) => s.is_phd ? 'phd_life' : 'cn_undergrad_phd_rejection',
       },
-
       {
         text: '【自筹申请美国 CS 硕士】自筹资金读正统美硕 (积蓄 $5w 即可申请)',
         costBadge: '花费 $5w',
@@ -588,6 +638,61 @@ export const initializationEvents: Record<string, GameEvent> = {
           year: s.year + 1,
           housing_name: '国内 厂区单间',
           message: '你入职了国内一线互联网大厂，开启了打工攒钱与积累硬核算法经验的职场生涯。'
+        }),
+        nextEventId: 'cn_work',
+      }
+    ]
+  },
+
+  'cn_undergrad_phd_rejection': {
+    id: 'cn_undergrad_phd_rejection',
+    title: '【直博受阻】美国博士全墨后的抉择',
+    description: '由于缺乏美本大牛强推与顶级顶会一作，你的跨海全奖直博申请遗憾落选。面对求学分水岭，你决定：',
+    imageUrl: 'images/visa_denied.jpg',
+    choices: [
+      {
+        text: '【转申美国 CS 硕士】自筹资金赴美读正统美硕，毕业再战 PhD！(消耗 $5w)',
+        costBadge: '花费 $5w',
+        condition: (s) => s.cash >= 5,
+        effect: (s) => ({
+          cash: s.cash - 5,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          school: 'state',
+          has_us_degree: true,
+          age: s.age,
+          is_master: true,
+          housing_name: '美硕 校外公寓',
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
+          message: '【赴美读硕】你成功转投美国 CS 硕士项目，拿到 F1 签证顺利赴美，开启读硕攒论文的学术逆袭之旅！'
+        }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【申请留学贷款赴美读硕】凭算法与 GPA 申请无抵押留学贷款 (首期 $2w)',
+        costBadge: '首期 $2w',
+        condition: (s) => s.cash >= 2,
+        effect: (s) => ({
+          cash: s.cash - 2,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          school: 'state',
+          has_us_degree: true,
+          age: s.age,
+          is_master: true,
+          housing_name: '美硕 校外公寓',
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
+          message: '【贷款逆袭】你成功拿下留学贷款与 F1 签证，飞抵美国开启硕士学业！'
+        }),
+        nextEventId: 'us_master_year1',
+      },
+      {
+        text: '【投身国内互联网大厂】先在国内顶级大厂打拼研发 (转入国内大厂线)',
+        effect: (s) => ({
+          company: 'cn_big_tech',
+          job_type: 'cn_tech',
+          level: '国内研发',
+          tc: 4,
+          cash: s.cash + 1,
+          message: '【国内入职】你接受了国内顶级互联网大厂的核心研发 Offer，开启国内职场生涯！'
         }),
         nextEventId: 'cn_work',
       }
@@ -976,6 +1081,19 @@ export const initializationEvents: Record<string, GameEvent> = {
           message: '你加了 50 个大厂学长学姐的 LinkedIn，攒下了一大批内推人脉与直通面试机会，2年美硕顺利毕业！'
         }),
         nextEventId: pickCollegeEvent,
+      },
+      {
+        text: '【进顶尖实验室做 Research】选择 2 年学术型项目，跟教授冲顶会论文 (为申博积累 Impact +12)',
+        effect: (s) => ({
+          leetcode: s.leetcode + 8,
+          health: Math.max(0, s.health - 10),
+          impact: addImpact(s, 12),
+          age: s.age + 2,
+          is_master: true,
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_ready: true },
+          message: '你在实验室疯狂肝论文，成功发表了一作顶会文章并拿到大牛教授强推信 (Impact +12)！2年学术型硕士顺利毕业！'
+        }),
+        nextEventId: pickCollegeEvent,
       }
     ]
   },
@@ -1002,7 +1120,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         reqBadge: '全奖直博 / 需 LeetCode >= 50',
         condition: (s) => s.leetcode >= 50 || (s.impact || 0) >= 10,
         effect: (s) => {
-          const pass = s.is_phd || (gameRandom() < (0.25 + (s.school === 'cmu' ? 0.20 : 0) + ((s.impact || 0) >= 10 ? 0.15 : 0) + (s.leetcode >= 80 ? 0.15 : 0) + (s.story_flags?.phd_ready ? 0.15 : 0)));
+          const pass = s.is_phd || (gameRandom() < calculatePhdAdmitProb(s, true));
           return pass 
             ? { cash: s.cash + 2, age: s.age + 1, year: s.year + 1, is_phd: true, housing_name: '美国 博士实验室', message: '大喜讯！凭借出色的硕士科研成果与算法沉淀，你战胜了数千名申请者，斩获北美顶级 CS 全奖 PhD Offer！' }
             : { health: Math.max(0, s.health - 12), age: s.age + 1, year: s.year + 1, is_phd: false, message: '今年顶校 PhD 竞争白热化，你的申请未能入选。你收起行囊，投身硅谷大厂秋招求职。' };

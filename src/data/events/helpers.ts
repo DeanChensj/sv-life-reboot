@@ -35,6 +35,37 @@ export const deductAssets = (s: GameState, cost: number): { cash: number; stocks
   };
 };
 
+/**
+ * 计算北美顶尖 CS 全奖 PhD 录取概率
+ * 综合评估：学校声誉、卷王天赋、学术成果 Impact、算法硬实力、实验室推荐信与 MS 曲线救国重申加成
+ */
+export const calculatePhdAdmitProb = (s: GameState, isMaster: boolean = false): number => {
+  let prob = isMaster ? 0.25 : 0.20;
+  if (s.school === 'cmu') prob += 0.20;
+  else if (s.school === 'ucb') prob += 0.15;
+
+  // 卷王之王天生做题家与抗压科研爆发力加成
+  if (s.trait_title === '卷王之王') prob += 0.15;
+  if (s.trait_title === '天选之子') prob += 0.10;
+
+  // 学术成果与论文影响力 (Impact)
+  const impact = s.impact || 0;
+  if (impact >= 20) prob += 0.25;
+  else if (impact >= 10) prob += 0.15;
+  else if (impact >= 5) prob += 0.08;
+
+  // 算法硬实力与 GPA 梯队
+  if (s.leetcode >= 80) prob += 0.18;
+  else if (s.leetcode >= 60) prob += 0.12;
+  else if (s.leetcode >= 45) prob += 0.06;
+
+  // 实验室强推与 MS 二战 PhD 加成
+  if (s.story_flags?.phd_ready) prob += 0.18;
+  if (s.story_flags?.phd_reapply_ready) prob += 0.12;
+
+  return Math.min(0.92, Math.max(0.10, prob));
+};
+
 // 跳槽与社招定级：
 // 1. 无职级萌新/应届生按学历定级 (本科/硕士 L3, PhD L4)；
 // 2. 非标准职级映射 (OpenAI MTS 对应 L6 Staff/L5 Senior, Quant 对应 L6/L5, Founder 对应 L7/L6/L5)；

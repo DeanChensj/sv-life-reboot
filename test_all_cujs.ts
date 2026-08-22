@@ -1,4 +1,4 @@
-import { events, generateInitialState, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown } from './src/data/events';
+import { events, generateInitialState, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb } from './src/data/events';
 import { GameState, Choice } from './src/types';
 import { HOUSING_NAMES } from './src/constants/gameConstants';
 import { applyStateTransition } from './src/utils/stateTransitions';
@@ -2356,6 +2356,55 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(brokeRes.stocks === 8, '股票平仓扣除剩余 $2.0w');
 
   console.log('✅ CUJ 45 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 46: 卷王之王 PhD 录取加成与直博被拒转读 MS 曲线救国
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 46] 卷王之王 PhD 录取加成与直博被拒转读 MS 曲线救国 ---');
+  
+  // 1. calculatePhdAdmitProb 权重校验
+  const plainStudent = { ...generateInitialState(), school: 'state', leetcode: 30, impact: 0, status: 'playing' } as GameState;
+  const plainProb = calculatePhdAdmitProb(plainStudent, false);
+  assert(plainProb === 0.20, '普通美本基础录取率为 20%');
+
+  const juanwangStudent = { ...generateInitialState(), trait_title: '卷王之王', school: 'ucb', leetcode: 65, impact: 0, status: 'playing' } as GameState;
+  const juanwangProb = calculatePhdAdmitProb(juanwangStudent, false);
+  // 0.20 + 0.15 (ucb) + 0.15 (卷王) + 0.12 (leetcode 65) = 0.62
+  assert(Math.abs(juanwangProb - 0.62) < 0.001, `卷王之王获得专属加成，录取率达 ${(juanwangProb * 100).toFixed(0)}%`);
+
+  const researchJuanwang = { ...generateInitialState(), trait_title: '卷王之王', school: 'cmu', leetcode: 85, impact: 15, story_flags: { phd_ready: true }, status: 'playing' } as GameState;
+  const researchProb = calculatePhdAdmitProb(researchJuanwang, false);
+  assert(researchProb >= 0.90, '顶配科研卷王录取率达 90%+');
+
+  // 2. 本科申 PhD 被拒后路由至 us_undergrad_phd_rejection (非强制 job_hunt)
+  const undergradGrad = events['us_undergrad_grad'];
+  const phdChoice = undergradGrad.choices[0];
+  const rejectNextId = typeof phdChoice.nextEventId === 'function' ? phdChoice.nextEventId({ ...plainStudent, is_phd: false } as GameState) : phdChoice.nextEventId;
+  assert(rejectNextId === 'us_undergrad_phd_rejection', '美本申博被拒路由至 us_undergrad_phd_rejection');
+
+  const rejectEvent = events['us_undergrad_phd_rejection'];
+  assert(!!rejectEvent, 'us_undergrad_phd_rejection 事件存在');
+  assert(rejectEvent.choices.length === 3, '申博失利提供 3 大出路');
+
+  // Choice 1: 转读 MS
+  const msPivotChoice = rejectEvent.choices[0];
+  const richStudent = { ...plainStudent, cash: 12 };
+  assert(msPivotChoice.condition ? msPivotChoice.condition(richStudent) : false, '有学费可转读 MS');
+  const msRes = msPivotChoice.effect(richStudent);
+  assert(msRes.cash === 2, '自费 $10w 读硕');
+  assert(msRes.is_master === true, '转为硕士身份');
+  assert(msRes.story_flags?.phd_reapply_ready === true, '打上硕士毕业二战 PhD 标记');
+  assert(msPivotChoice.nextEventId === 'us_master_year1', '进入硕士第一年');
+
+  // 3. 硕士毕业二战 PhD 享受 phd_reapply_ready 加成
+  const msGrad = { ...generateInitialState(), is_master: true, school: 'ucb', leetcode: 70, story_flags: { phd_reapply_ready: true }, status: 'playing' } as GameState;
+  const reapplyProb = calculatePhdAdmitProb(msGrad, true);
+  // 0.25 (master base) + 0.15 (ucb) + 0.12 (leetcode 70) + 0.12 (reapply bonus) = 0.64
+  assert(reapplyProb >= 0.60, '二战申博享受硕士再战加成');
+
+  console.log('✅ CUJ 46 Passed\n');
 }
 
 console.log(`\n======================================================`);

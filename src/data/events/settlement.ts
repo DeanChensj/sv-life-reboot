@@ -48,7 +48,7 @@ export const settlementEvents: Record<string, GameEvent> = {
            // compounds the stock pile at +25%/yr past the FIRE gates.
            if (newEconomy !== 'neutral' && gameRandom() < 0.4) {
              newEconomy = 'neutral';
-             economyMsg = ' 宏观经济周期逐步回归常态。';
+             economyMsg = ' 【宏观周期】宏观经济周期逐步回归常态。';
            }
 
            // Stock market fluctuation
@@ -90,23 +90,23 @@ export const settlementEvents: Record<string, GameEvent> = {
               // fall through to the big_tech +10 default, which is correct for them.
               const companyProfile = getCompanyProfile(s.company);
               if (companyProfile?.yearEndHealth) { healthDrain = companyProfile.yearEndHealth.drain; companyMsg = companyProfile.yearEndHealth.msg; }
-              else if (s.job_type === 'quant') { healthDrain = 6; companyMsg = ' 高频交易的紧绷节奏消耗了体力 (健康 -6)。'; }
+              else if (s.job_type === 'quant') { healthDrain = 6; companyMsg = ' 【职场健康】高频交易的紧绷节奏消耗了体力 (健康 -6)。'; }
               // 全职 Day Trader 是自雇操盘手：没有带薪年假、盯盘精神高压。若无此分支会落入下方
               // 通用「带薪年假 健康+6」兜底（既文案错乱、又白送健康），属 job_type 分支缺失 bug。
-              else if (s.job_type === 'trader') { healthDrain = 3; companyMsg = ' 全职操盘盯盘的精神高压与不规律作息消耗了体力 (健康 -3)。'; }
-              else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
-              else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
+              else if (s.job_type === 'trader') { healthDrain = 3; companyMsg = ' 【职场健康】全职操盘盯盘的精神高压与不规律作息消耗了体力 (健康 -3)。'; }
+              else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 【职场健康】创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
+              else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 【职场健康】创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
              // AI labs (OpenAI/Anthropic MTS) are prestigious but intense — not a 养老大厂.
-             else if (s.job_type === 'ai_research') { healthDrain = 3; companyMsg = ' 前沿 AI 实验室的 AGI 军备竞赛节奏紧绷，但你站在技术浪潮之巅 (健康 -3)。'; }
+             else if (s.job_type === 'ai_research') { healthDrain = 3; companyMsg = ' 【职场健康】前沿 AI 实验室的 AGI 军备竞赛节奏紧绷，但你站在技术浪潮之巅 (健康 -3)。'; }
              // Internal transfer to a big-tech 前沿 AI 大模型组: still WLB, but AI-flavored (was
              // wrongly showing the generic "养老大厂" message since job_type stays 'big_tech').
-             else if (s.transferred_to_ai) { healthDrain = -8; companyMsg = ' 大厂前沿 AI 大模型组：既享受神仙 WLB，又能接触顶尖架构，收获满满 (健康 +8)。'; }
-             else if (s.job_type === 'big_tech') { healthDrain = -10; companyMsg = ' 养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
-             else if (s.job_type === 'cn_tech' || s.company === 'cn_big_tech') { healthDrain = 6; companyMsg = ' 国内大厂的高强度业务开发消耗了精力 (健康 -6)。'; }
-             else { healthDrain = -6; companyMsg = ' 充沛的带薪年假与规律作息让你的体力得到恢复 (健康 +6)。'; }
+             else if (s.transferred_to_ai) { healthDrain = -8; companyMsg = ' 【职场健康】大厂前沿 AI 大模型组：既享受神仙 WLB，又能接触顶尖架构，收获满满 (健康 +8)。'; }
+             else if (s.job_type === 'big_tech') { healthDrain = -10; companyMsg = ' 【职场健康】养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
+             else if (s.job_type === 'cn_tech' || s.company === 'cn_big_tech') { healthDrain = 6; companyMsg = ' 【职场健康】国内大厂的高强度业务开发消耗了精力 (健康 -6)。'; }
+             else { healthDrain = -6; companyMsg = ' 【职场健康】充沛的带薪年假与规律作息让你的体力得到恢复 (健康 +6)。'; }
            } else {
              healthDrain = -15;
-             companyMsg = ' 充沛的休息与离职休假让你的身心彻底康复大复活 (健康 +15)。';
+             companyMsg = ' 【休假恢复】充沛的休息与离职休假让你的身心彻底康复大复活 (健康 +15)。';
            }
            
            let petHealthBoost = 0;
@@ -121,7 +121,7 @@ export const settlementEvents: Record<string, GameEvent> = {
            let day1CptMsg = '';
            if (s.visa === 'Day 1 CPT') {
              day1CptHealthHit = 4;
-             day1CptMsg = ` 【Day 1 CPT 学业维持】为保住合法学生身份,你缴纳了 $1.2w 学费,并挤出精力应付课程与作业 (健康 -4)。`;
+             day1CptMsg = ` 【Day 1 CPT 学业维持】为保住合法学生身份，你缴纳了 $1.2w 学费，并挤出精力应付课程与作业 (健康 -4)。`;
            }
 
            let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost - day1CptHealthHit));
@@ -152,7 +152,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               } else if (s.difficulty_title === '困难难度' && s.job_type === 'startup') {
                  gcMsg = ' 【困难模式】在当前 AI 寒冬下，初创公司 Startup 拒绝为你递交 PERM 绿卡申请！只能跳槽大厂或办 O1 签证。';
               } else if (s.job_type === 'startup' && newStartupTenure <= 2) {
-                 gcMsg = ` Startup 政策：入职前 2 年不予办理绿卡（当前第 ${newStartupTenure} 年，排期暂未推进）。`;
+                 gcMsg = ` 【绿卡政策】Startup 政策：入职前 2 年不予办理绿卡（当前第 ${newStartupTenure} 年，排期暂未推进）。`;
               } else {
                  if (nextStage === 'not_started') {
                     if (isO1 || isPhd) {
@@ -242,7 +242,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               const win = gameRandom() < winRate;
               if (win) {
                 newVisa = 'H1B (工签)';
-                h1bMsg = s.visa === 'L1 (外派)' ? `  外派/L1 转换中签！在第 ${newAttempts} 次 H1B 抽签中成功中签，顺利获得 H1B 工签！` : `  人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
+                h1bMsg = s.visa === 'L1 (外派)' ? ` 【H1B中签】外派/L1 转换中签！在第 ${newAttempts} 次 H1B 抽签中成功中签，顺利获得 H1B 工签！` : ` 【H1B中签】人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
               } else {
                 if (s.visa === 'L1 (外派)') {
                   h1bMsg = ` 【L-1 抽签未中】第 ${newAttempts} 次 H1B 抽签未能中签！但凭借你的 L-1 跨国外派签证，你在湾区合法工作完全不受影响，公司将为你继续递交后续抽签或启动 EB-1C 绿卡！`;
@@ -309,13 +309,13 @@ export const settlementEvents: Record<string, GameEvent> = {
                 const baseRefresh = gameRandom() < 0.3 ? (newEconomy === 'bull' ? 2.5 : 1.5) : (newEconomy === 'bear' ? 0.5 : 1.0);
                 const refreshAmt = parseFloat((baseRefresh * impactAmtMult).toFixed(1));
                 updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
-                meritMsg = ` 凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+                meritMsg = ` 【调薪与激励】凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
               }
             } else if (s.job_type === 'startup_founder' && !s.laid_off) {
               if (newEconomy === 'bull') {
-                meritMsg = ' 初创团队业务在牛市大环境中健康增长，公司产品顺利推进！';
+                meritMsg = ' 【初创运营】初创团队业务在牛市大环境中健康增长，公司产品顺利推进！';
               } else if (newEconomy === 'bear') {
-                meritMsg = ' 宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬！';
+                meritMsg = ' 【初创运营】宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬！';
               }
             }
 
@@ -451,13 +451,13 @@ export const settlementEvents: Record<string, GameEvent> = {
               timeline: newTimeline,
               history_net_worth: newHistory,
               message: [
-                autoStockSellMsg,
                 companyMsg,
+                meritMsg,
                 h1bMsg,
                 gcMsg,
-                meritMsg,
-                petMsg,
                 day1CptMsg,
+                petMsg,
+                autoStockSellMsg,
                 economyMsg,
                 founderMsg,
               ].map(m => (m ? m.trim() : '')).filter(Boolean).join('\n'),

@@ -28,6 +28,23 @@ export const settlementEvents: Record<string, GameEvent> = {
            const housingExpense = s.rent !== undefined 
              ? s.rent 
              : (isHomeowner ? (s.housing_name === HOUSING_NAMES.ATHERTON ? 5.0 : 2.0) : 4.0);
+
+           // 自有住房维护、HOA 与地税储备金 (Property Maintenance, HOA & Property Tax Reserves)
+           let propertyMaintenanceExpense = 0;
+           let propertyMaintenanceMsg = '';
+           if (isHomeowner) {
+             if (s.housing_name === HOUSING_NAMES.ATHERTON) {
+               propertyMaintenanceExpense = 2.5;
+             } else if (s.housing_name === HOUSING_NAMES.FREMONT || s.housing_name === HOUSING_NAMES.FREMONT_10_DISTRICT) {
+               propertyMaintenanceExpense = 1.2;
+             } else if (s.housing_name === HOUSING_NAMES.NORTH_SAN_JOSE) {
+               propertyMaintenanceExpense = 0.8;
+             } else {
+               propertyMaintenanceExpense = 0.8;
+             }
+             propertyMaintenanceMsg = ` 【房产维护与HOA】自有房产维护、HOA及地税储备金支出: -$${propertyMaintenanceExpense.toFixed(1)}w。`;
+           }
+
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
            const livingExpense = 3.0;
            const petExpense = s.has_pet ? 0.3 : 0;
@@ -38,8 +55,9 @@ export const settlementEvents: Record<string, GameEvent> = {
            // Day 1 CPT 不是「白嫖永动机」：维持合法学生身份要每年真金白银缴学费 ($1.2w)。计入
            // 年度开销(走 liquidateStocksToCover 自动平仓兜底,和房租同源),让长期挂靠 CPT 躺着
            // 白嫖工作身份的玩家持续失血 —— 与下方健康扣减 + ~10% 合规抽检共同施压尽早转正/上岸。
+           // (#101) 自有住房维护/HOA/地税储备金 propertyMaintenanceExpense 也计入年度开销。
            const day1CptTuition = s.visa === 'Day 1 CPT' ? 1.2 : 0;
-           const totalExpense = parseFloat(((housingExpense + carExpense + livingExpense + petExpense) * inflationFactor + day1CptTuition).toFixed(2));
+           const totalExpense = parseFloat(((housingExpense + propertyMaintenanceExpense + carExpense + livingExpense + petExpense) * inflationFactor + day1CptTuition).toFixed(2));
 
            // 宏观经济周期 (Markov 轮动) —— 单一驱动源。历史上经济只能靠 news_* 事件切换,而那些
            // 事件被 `!season_stage` 永久锁死,导致非 trader 玩家的经济恒为 neutral,整套牛熊机制
@@ -59,7 +77,8 @@ export const settlementEvents: Record<string, GameEvent> = {
            }
            let economyMsg = '';
            // 统一采用 #113 的【前置标签】文案规范(与下方 companyMsg/meritMsg/gcMsg 等一致,便于
-           // join('\n') 后逐行扫读)。
+           // join('\n') 后逐行扫读)。经济轮动沿用 Step 3 的 Markov 链(上方),不采用 #101 的
+           // 按日历年硬编码脚本(与「year 为抽象时代时钟、不代表真实日历年」的设计相悖)。
            if (newEconomy !== prevEconomy) {
              economyMsg = newEconomy === 'bull'
                ? ' 【宏观周期】经济转入科技牛市：RSU 与股票组合水涨船高，招聘回暖。'
@@ -68,11 +87,26 @@ export const settlementEvents: Record<string, GameEvent> = {
                : ' 【宏观周期】经济回归正常震荡期：市场恢复理性，一切靠实力说话。';
            }
 
-           // Stock market fluctuation
+           // 股票资产真实波动 (Stock Market Fluctuation with Realistic Volatility)
            let currentStocks = s.stocks || 0;
+           let stockReturnPct = 0;
+           let stockFluctuationMsg = '';
            if (currentStocks > 0) {
-             const stockMultiplier = newEconomy === 'bull' ? 1.25 : newEconomy === 'bear' ? 0.75 : 1.05;
+             let stockMultiplier = 1.0;
+             if (newEconomy === 'bull') {
+               stockMultiplier = 1.12 + gameRandom() * 0.16; // +12% ~ +28% (平均 +20%)
+             } else if (newEconomy === 'bear') {
+               stockMultiplier = 0.84 - gameRandom() * 0.12; // -16% ~ -28% (平均 -22%)
+             } else {
+               stockMultiplier = 0.94 + gameRandom() * 0.14; // -6% ~ +8% (平均 +1.0% 震荡)
+             }
+             stockReturnPct = parseFloat(((stockMultiplier - 1) * 100).toFixed(1));
              currentStocks = currentStocks * stockMultiplier;
+             if (stockReturnPct >= 0) {
+               stockFluctuationMsg = ` 【股票持仓收益】股市回报率 +${stockReturnPct}%。`;
+             } else {
+               stockFluctuationMsg = ` 【股票持仓波动】股市回报率 ${stockReturnPct}%。`;
+             }
            }
            
            // Standardized compensation split (Cash & RSU)
@@ -468,6 +502,8 @@ export const settlementEvents: Record<string, GameEvent> = {
               message: [
                 companyMsg,
                 meritMsg,
+                propertyMaintenanceMsg,
+                stockFluctuationMsg,
                 h1bMsg,
                 gcMsg,
                 day1CptMsg,

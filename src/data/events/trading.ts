@@ -377,7 +377,8 @@ export const tradingEvents: Record<string, GameEvent> = {
         // 改为随宏观周期与运气小幅波动的「小额 Bonus」，可正可负、上限低，符合「求稳退守」定位。
         effect: (s) => {
           const base = s.macro_economy === 'bull' ? 5 : s.macro_economy === 'bear' ? -5 : 1;
-          const luckAdj = Math.floor((Math.min(60, s.luck) - 30) / 12); // 约 -2 ~ +2
+          const currentLuck = s.luck ?? 20;
+          const luckAdj = Math.floor((Math.min(60, currentLuck) - 30) / 12); // 约 -2 ~ +2
           const pnl = Math.max(-6, Math.min(8, base + luckAdj));
           return {
             health: Math.max(0, s.health - 8),

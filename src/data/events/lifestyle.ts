@@ -1499,7 +1499,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【领离职大礼包】伴侣拿了 6 个月 Severance 离职补偿金，转入理财账户',
-        costBadge: '入账 +$8w 补偿金',
+        reqBadge: '入账 +$8w 补偿金',
         condition: (s) => s.is_married || s.relationship_status === 'married',
         effect: (s) => ({
           cash: s.cash + 8,

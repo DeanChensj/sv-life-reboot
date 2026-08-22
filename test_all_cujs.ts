@@ -1064,7 +1064,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   }
   assert(hopTargetLevel(l5NoImpact({ impact: 25, laid_off: false, job_type: 'big_tech' })) === 'L6 (Staff)', 'in-job L5 with impact>=20 CAN target L6 on hop');
 
-  // 4. No false promo-celebration on a lateral hire: laid-off L6 re-hired stays L6 and is NOT stamped
+  // 4. No false promo-celebration on a lateral hire or fresh onboarding hire
   const laidOffL6: GameState = { ...generateInitialState(), level: 'L6 (Staff)', job_type: 'unemployed', laid_off: true, job_start_age: 24, age: 40, last_promo_age: 34, impact: 10, hop_offers: ['google'], status: 'playing' } as GameState;
   assert(hopTargetLevel(laidOffL6) === 'L6 (Staff)', 'laid-off L6 re-hire preserves L6 (lateral, not demoted)');
   assert(hopIsPromotion(laidOffL6) === false, 'laid-off same-level re-hire is NOT a promotion');
@@ -1072,8 +1072,26 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const joinEff = googleJoin.effect(laidOffL6);
   assert(joinEff.level === 'L6 (Staff)', 'lateral re-hire lands at L6');
   assert(joinEff.last_promo_age !== 40, 'lateral re-hire does NOT stamp last_promo_age (no false celebration)');
+
+  // Fresh grad joining at L3 is onboarding, NOT a promotion
+  const freshGrad: GameState = { ...generateInitialState(), level: undefined, job_type: undefined, age: 24, hop_offers: ['google'], status: 'playing' } as GameState;
+  assert(hopTargetLevel(freshGrad) === 'L3', 'fresh grad hop target is L3');
+  assert(hopIsPromotion(freshGrad) === false, 'fresh grad initial onboarding hire is NOT a promotion');
+  const freshEff = googleJoin.effect(freshGrad);
+  assert(freshEff.level === 'L3', 'fresh grad lands at L3');
+  assert(freshEff.last_promo_age !== 24, 'fresh grad does NOT stamp last_promo_age on L3 entry');
+
   // In-job real level-up IS a promotion
   assert(hopIsPromotion({ ...l5NoImpact({ impact: 30 }) }) === true, 'in-job L5->L6 with impact IS a promotion');
+
+  // 4b. promo_celebration requires at least L4 (never celebrates L3)
+  const promoCelebration = events['promo_celebration'];
+  assert(!!promoCelebration, 'promo_celebration exists');
+  const celebChoice = promoCelebration.choices[0];
+  const l3State: GameState = { ...generateInitialState(), level: 'L3', job_type: 'big_tech', status: 'playing' } as GameState;
+  const l4State: GameState = { ...generateInitialState(), level: 'L4', job_type: 'big_tech', status: 'playing' } as GameState;
+  assert(celebChoice.condition ? !celebChoice.condition(l3State) : false, 'promo_celebration rejects L3');
+  assert(celebChoice.condition ? celebChoice.condition(l4State) : true, 'promo_celebration accepts L4');
 
   // 5. dave_retaliation_showdown choice-1: an L6 player (no level change) does not falsely celebrate
   const daveWin = findChoice('dave_retaliation_showdown', '雷霆出击')!;

@@ -947,7 +947,7 @@ export default function App() {
             <div id="event-container" className="scroll-mt-24 lg:scroll-mt-12">
               {/* Message Banner */}
               {gameState.message && (
-                <div aria-live="polite" role="status" className="border-l-2 border-emerald-500 bg-emerald-500/10 text-emerald-300 px-4 py-3 md:px-5 md:py-4 rounded-r-lg mb-4 md:mb-8 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+                <div aria-live="polite" role="status" className="border-l-2 border-emerald-500 bg-emerald-500/10 text-emerald-300 px-4 py-3 md:px-5 md:py-4 rounded-r-lg mb-4 md:mb-8 text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300 whitespace-pre-line leading-relaxed">
                   {gameState.message}
                 </div>
               )}

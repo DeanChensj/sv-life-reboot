@@ -749,24 +749,15 @@ export function isOpportunityActiveThisYear(s: GameState, oppKey: string): boole
   const total = ANNUAL_OPPORTUNITY_KEYS.length;
   const baseSeed = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2));
 
-  // Find primary opportunity (smart-skips completed/in-cooldown)
-  let primaryIdx = baseSeed % total;
+  // Find the single active opportunity for this year (smart-skips completed/in-cooldown)
+  let activeIdx = baseSeed % total;
   let attempts = 0;
-  while ((isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[primaryIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[primaryIdx])) && attempts < total) {
-    primaryIdx = (primaryIdx + 1) % total;
+  while ((isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[activeIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[activeIdx])) && attempts < total) {
+    activeIdx = (activeIdx + 1) % total;
     attempts++;
   }
 
-  // Find secondary opportunity (distinct from primary, smart-skips completed/in-cooldown)
-  let secondaryIdx = (primaryIdx + 5) % total;
-  attempts = 0;
-  while ((secondaryIdx === primaryIdx || isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[secondaryIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[secondaryIdx])) && attempts < total) {
-    secondaryIdx = (secondaryIdx + 1) % total;
-    attempts++;
-  }
-
-  return oppKey === ANNUAL_OPPORTUNITY_KEYS[primaryIdx] ||
-         oppKey === ANNUAL_OPPORTUNITY_KEYS[secondaryIdx];
+  return oppKey === ANNUAL_OPPORTUNITY_KEYS[activeIdx];
 }
 
 // Checks if the player is still living in a temporary student dorm, lab, overseas home, or ICC bunk

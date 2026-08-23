@@ -603,12 +603,14 @@ export const midYearEventRouter = (s: GameState): string => {
     'credit_card_churning', 'napa_wine_tasting', 'costco_gold_bar_frenzy', 'palo_alto_stanford_lecture', 'mac_mini_open_claw_server', 'multi_agent_side_hustle', 'fashion_disaster_hoodie', 'linkedin_cold_outreach_spam',
     'hair_loss_and_slouch', 'social_withdrawal_burnout', 'parents_us_visit', 'boba_opening_frenzy',
     'brentwood_cherry_picking', 'cancun_all_inclusive', 'patagonia_vest_hoodie_uniform', 'costco_weekend_pilgrimage',
-    'wildfire_smoke_pge_blackout', 'us_healthcare_icu_crisis'
+    'wildfire_smoke_pge_blackout'
   ];
 
-  // 低健康状态更容易触发突发医疗/ICU危机
-  if (s.health <= 50) {
+  // 突发 911/ICU 健康危机:一辈子一次的健康警钟(!icu_crisis_survived 门禁),而非每年可复发的
+  // 付费回血引擎;熬夜内卷透支更易诱发(health<=50 双倍权重),但只此一遭。
+  if (!s.story_flags?.icu_crisis_survived) {
     lifeEvents.push('us_healthcare_icu_crisis');
+    if (s.health <= 50) lifeEvents.push('us_healthcare_icu_crisis');
   }
 
   // 双职工家庭专属生活事件池

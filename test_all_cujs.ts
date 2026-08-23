@@ -2458,6 +2458,40 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 47 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 48: ICU 911 事件复审加固 —— 不再是"越虚弱越易触发的可复发付费回血永动机"。锁两件事:
+// ① 一生一次门禁:midYearEventRouter 的 H2 生活池仅在 !icu_crisis_survived 时纳入该事件(度过后
+// 不再复发);② 裸奔(无保险)分支有真实下行:约 45% 概率后遗症、恢复不全(健康仅 +4,而非稳 +18)。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 48] ICU 事件:一生一次门禁 + 裸奔下行分支 ---');
+  // ① 一生一次:已度过 ICU 的玩家,H2 生活池 N 次采样都不会再出现该事件。
+  const survivedIcu = { ...generateInitialState(), job_type: 'big_tech', company: 'google', laid_off: false,
+    health: 20, car: 'none', is_married: false, status: 'playing',
+    story_flags: { icu_crisis_survived: true } } as GameState;
+  let recurred = false;
+  for (let i = 0; i < 5000; i++) {
+    setGameSeed(i * 3 + 1);
+    if (midYearEventRouter({ ...survivedIcu, season_stage: 'h2' }) === 'us_healthcare_icu_crisis') { recurred = true; break; }
+  }
+  assert(!recurred, '度过 ICU 后不再复发(一生一次门禁,消除可复发回血永动机)');
+  // 未度过者仍可触发(尤其低血)——确认门禁不是把事件彻底关掉。
+  const freshLow = { ...survivedIcu, story_flags: {} } as GameState;
+  let fired = false;
+  for (let i = 0; i < 5000; i++) { setGameSeed(i * 3 + 1); if (midYearEventRouter({ ...freshLow, season_stage: 'h2' }) === 'us_healthcare_icu_crisis') { fired = true; break; } }
+  assert(fired, '未度过 ICU 的玩家仍会触发该健康危机');
+
+  // ② 裸奔分支有真实下行:多次采样中既有勉强恢复(+18)也有后遗症(+4),证明存在下行支。
+  const uninsured = events['us_healthcare_icu_crisis'].choices[3];
+  const patient = { ...generateInitialState(), cash: 30, stocks: 0, health: 25, status: 'playing' } as GameState;
+  const heals = new Set<number>();
+  for (let i = 0; i < 200; i++) { setGameSeed(i); const r = uninsured.effect(patient); heals.add((r.health ?? 25) - 25); }
+  assert(heals.has(4) && heals.has(18), '裸奔分支存在下行(后遗症 +4)与常规恢复(+18)两种结局');
+  assert(Math.max(...heals) <= 18, '裸奔分支不再是稳定大回血(封顶 +18,且有 +4 后遗症风险)');
+
+  console.log('✅ CUJ 48 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

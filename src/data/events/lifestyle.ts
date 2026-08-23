@@ -1740,20 +1740,27 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【失业/初创裸奔大出血】无大厂全额医保兜底，被迫全款缴清天价账单 (资产消耗 $2.5w)',
+        text: '【失业/初创裸奔大出血】无大厂全额医保兜底，被迫全款缴清天价账单 (资产消耗 $2.5w · 恢复看运气)',
+        reqBadge: '高风险·恢复不全',
         condition: (_s) => true,
         effect: (s) => {
           const assets = deductAssets(s, 2.5);
-          return {
-            ...assets,
-            health: Math.min(100, s.health + 18),
-            story_flags: {
-              ...(s.story_flags || {}),
-              icu_crisis_survived: true,
-              icu_uninsured_hit: true,
-            },
-            message: '【美国医疗刺客痛击】失业断保或初创期自购的高免赔保险几乎没帮上忙，你只能忍痛掏空现金积蓄并平仓部分股票缴清医疗账单 (-$2.5w)！好在命保住了，你暗自发誓一定要尽快重返有神仙医保的大厂。(健康 +18)'
-          };
+          // 裸奔没有规范随访:约 45% 概率为省钱提前出院/漏诊,落下后遗症、恢复不全(健康仅 +4);
+          // 否则勉强恢复 (+18)。这是本事件真正的下行分支——无保险的现实代价,而非稳赚回血。
+          const complication = gameRandom() < 0.45;
+          return complication
+            ? {
+                ...assets,
+                health: Math.min(100, s.health + 4),
+                story_flags: { ...(s.story_flags || {}), icu_crisis_survived: true, icu_uninsured_hit: true, icu_complication: true },
+                message: '【裸奔后遗症】掏空 $2.5w 现金/平仓缴清账单后，你为省钱提前出院、放弃了规范复查与随访，落下心悸与失眠后遗症，身体只勉强缓过来一点 (健康 +4)。血泪教训：务必尽快回到有神仙医保的大厂！'
+              }
+            : {
+                ...assets,
+                health: Math.min(100, s.health + 18),
+                story_flags: { ...(s.story_flags || {}), icu_crisis_survived: true, icu_uninsured_hit: true },
+                message: '【美国医疗刺客痛击】失业断保或初创期自购的高免赔保险几乎没帮上忙，你只能忍痛掏空现金积蓄并平仓部分股票缴清医疗账单 (-$2.5w)！所幸这次身体底子还行、恢复尚可 (健康 +18)。你暗自发誓一定要尽快重返有神仙医保的大厂。'
+              };
         },
         nextEventId: 'sv_year_end_settlement'
       }

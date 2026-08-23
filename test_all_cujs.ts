@@ -1977,29 +1977,47 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 // -----------------------------------------------------------------------------
-// CUJ 37: WLB / AI 组养生路径的晋升封顶 L4,且 WLB 转岗为一次性。
-// 锁住"躺着养生升不到 Senior(L5)"的平衡保证:L5 及以上必须靠【疯狂内卷】耗血挣;
-// 防止有人把自然晋升上限改回 L5 让 WLB 重新变成无脑优选。
+// -----------------------------------------------------------------------------
+// CUJ 37: 稳健 WLB (Coasting / Meets Bar) 封顶 L4 + 内部转组 (Internal Team Transfer)
 // -----------------------------------------------------------------------------
 {
-  console.log('--- [CUJ 37] WLB/AI 养生路径封顶 L4 + WLB 一次性 ---');
-  const wlb = events['sv_daily_life'].choices.find((c) => c.text.includes('转岗 AI 组'))!;
-  const ai = events['sv_daily_life'].choices.find((c) => c.text.includes('在神仙 AI 组保持工作生活平衡'))!;
-  assert(!!wlb && !!ai, 'sv_daily_life 有【转岗 AI 组】与【神仙 AI 组 WLB 漫步】');
+  console.log('--- [CUJ 37] 稳健 WLB 封顶 L4 + 内部转组体系 ---');
+  const wlb = events['sv_daily_life'].choices.find((c) => c.text.includes('按部就班 · 稳健 WLB'))!;
+  const transfer = events['sv_daily_life'].choices.find((c) => c.text.includes('申请内部转组'))!;
+  assert(!!wlb && !!transfer, 'sv_daily_life 有【按部就班 · 稳健 WLB】与【申请内部转组】');
 
-  // 一个满资历、算法极高的 L4 走 WLB 或 AI 攻坚,都不能自然升到 L5(必须内卷)。
+  // 1. 稳健 WLB (60分及格) 自然晋升封顶 L4 (Senior 必须靠内卷)
   const l4Ripe = (over: Partial<GameState>): GameState => ({
     ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
     leetcode: 100, age: 40, last_promo_age: 30, health: 90, tc: 40, status: 'playing', ...over,
   } as GameState);
   for (let i = 0; i < 30; i++) {
-    assert(wlb.effect(l4Ripe({ transferred_to_ai: false })).level !== 'L5 (Senior)', 'WLB 养生不能自然把 L4 升到 L5');
-    assert(ai.effect(l4Ripe({ transferred_to_ai: true })).level !== 'L5 (Senior)', 'AI 攻坚不能自然把 L4 升到 L5');
+    assert(wlb.effect(l4Ripe({})).level !== 'L5 (Senior)', '稳健 WLB 养生不能自然把 L4 升到 L5');
   }
-  // WLB 转岗保证成功 → 置 transferred_to_ai(此后 condition 因 !transferred_to_ai 隐藏,天然每局一次)
-  const wlbRes = wlb.effect(l4Ripe({ transferred_to_ai: false }));
-  assert(wlbRes.transferred_to_ai === true, 'WLB 转岗保证成功并置 transferred_to_ai(天然一次性)');
-  assert(!wlb.condition || !wlb.condition({ ...l4Ripe({}), transferred_to_ai: true } as GameState), '转岗后 WLB 选项不再出现(仅一次)');
+
+  // 2. 内部转组路由连通与 3 大去向验证
+  assert(transfer.nextEventId === 'internal_team_transfer', '转组选项路由至 internal_team_transfer');
+  const transferEv = events['internal_team_transfer'];
+  assert(!!transferEv && transferEv.choices.length === 3, 'internal_team_transfer 提供 AI 组、养老工具组、TPM 3 条路线');
+
+  const toAi = transferEv.choices.find((c) => c.text.includes('前沿 AI'))!;
+  const toTools = transferEv.choices.find((c) => c.text.includes('内部工具'))!;
+  const toTpm = transferEv.choices.find((c) => c.text.includes('TPM'))!;
+  assert(!!toAi && !!toTools && !!toTpm, '所有转组去向选项均已定义');
+
+  const aiRes = toAi.effect(l4Ripe({ leetcode: 50 }));
+  assert(aiRes.story_flags?.team_focus === 'ai_core', '转入 AI 组设置 team_focus ai_core');
+  const toolsRes = toTools.effect(l4Ripe({}));
+  assert(toolsRes.story_flags?.team_focus === 'wlb_tools' && toolsRes.health! > 90, '转入养老组回血');
+
+  // 3. 年终绩效考评体系 (Perf Review: EE / ME / NI)
+  const sprintState = { ...l4Ripe({}), story_flags: { annual_action: 'sprint' }, impact: 20 } as GameState;
+  const sprintSettle = events['sv_year_end_settlement'].choices[0].effect(sprintState);
+  assert(sprintSettle.story_flags?.last_perf_rating === 'EE', '冲刺高产员工获评 EE 卓越');
+
+  const wlbState = { ...l4Ripe({}), story_flags: { annual_action: 'wlb' } } as GameState;
+  const wlbSettle = events['sv_year_end_settlement'].choices[0].effect(wlbState);
+  assert(wlbSettle.story_flags?.last_perf_rating === 'ME', '按部就班员工获评 ME 符合预期');
 
   console.log('✅ CUJ 37 Passed\n');
 }

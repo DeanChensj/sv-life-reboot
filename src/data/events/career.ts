@@ -974,76 +974,55 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
 
-      // 2. 【情境定制动态专属】 (根据公司、婚姻、财富阶层动态生成)
+      // 2. 【按部就班 · 稳健 WLB (60分及格线)】 与 【内部转组 · 换道破局】
       {
-        text: '【转岗 AI 组·养生】一次性内部转岗前沿大模型组，神仙 WLB (仅一次)',
-        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !s.transferred_to_ai,
+        text: '【按部就班 · 稳健 WLB】完成本职需求及格线 (Meets Bar)，准时打卡下班、养生回血',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         hideIfUnavailable: true,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
-          // 一次性转岗前沿 AI 组(保证成功 → transferred_to_ai 置位后本选项永久隐藏,天然每局至多一次;
-          // 此后由【大厂 WLB 漫步】接手)。养生回血。自然晋升只到 L4(入门);L5 Senior 及以上不再靠
-          // 躺着自然给,必须回【疯狂内卷】耗血冲刺挣——杜绝"养生白嫖到 Senior"的无脑优选。
-          if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
-            return {
-              mid_year: true, season_stage: 'h1', transferred_to_ai: true,
-              level: 'L4', tc: s.tc + 3.5, last_promo_age: s.age,
-              impact: addImpact(s, 4),
-              health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4,
-              message: '【转岗 AI 组·顺带升 L4】你申请内部转岗前沿大模型组成功！既享神仙 WLB，又凭稳健交付水到渠成晋升 L4 工程师，总包 +$3.5w！'
-            };
-          }
-          return {
-            mid_year: true, season_stage: 'h1', transferred_to_ai: true,
-            health: Math.min(100, s.health + 10), leetcode: s.leetcode + 4, tc: s.tc + 1.5, impact: addImpact(s, 4),
-            message: '【成功转岗 AI 组】你顺利 Transfer 到前沿大模型研发组，坐拥神仙 WLB 的同时又能接触行业顶尖架构！'
-          };
-        },
-        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : h1ToH2Router(s)),
-      },
-      {
-        text: '【大厂 WLB 漫步】在神仙 AI 组保持工作生活平衡，稳健研发与养生沉淀',
-        condition: (s) => (s.company === 'google' || s.company === 'apple' || s.job_type === 'big_tech') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && !!s.transferred_to_ai,
-        hideIfUnavailable: true,
-        effect: (s) => {
-          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          const lastPromoAge = s.last_promo_age ?? (s.age - 1);
-          const yearsInGrade = s.age - lastPromoAge;
-          const pass = s.leetcode >= 30 || gameRandom() < 0.75;
 
-          // 自然晋升只到 L4(入门);L5 Senior 及以上不再靠 AI 组养生自然给,必须回【疯狂内卷】
-          // 耗血冲刺挣 —— 与 WLB 一致,杜绝"神仙 WLB 白嫖到 Senior"。
+          // 自然晋升只到 L4 (及格线内成熟); L5 Senior 及以上不再靠按部就班自然给, 必须通过【疯狂内卷】冲刺
           if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
             return {
               mid_year: true, season_stage: 'h1',
               level: 'L4', tc: s.tc + 3.5, last_promo_age: s.age,
-              impact: addImpact(s, 6),
-              health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0,
-              message: '【AI 组自然晋升】凭借扎实的算法与 AI 推理架构交付，你顺利在神仙 WLB 组晋升为 L4 工程师！总包调升 +$3.5w！'
+              impact: addImpact(s, 4),
+              health: Math.min(100, s.health + 12), leetcode: Math.min(100, s.leetcode + 2),
+              story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
+              message: '【稳健及格·水到渠成升 L4】在按部就班完成本职需求的同时，凭借扎实的日常工程交付水到渠成晋升 L4 工程师！总包调升 +$3.5w！',
             };
           }
 
-          const wlbSuccessMessages = [
-            '【AI 架构落地】你优化了大模型低延迟推理架构，吞吐性能提升 40%，组内一致好评，工作与生活达到完美平衡！',
-            '【技术分享与沉淀】你在大模型团队内部主持了高质量的技术架构分享，既接触到顶尖技术又享受每天准时下班的惬意！',
-            '【开源社区贡献】利用充裕的业余时间给前沿 AI 开源项目提交了核心 PR，在不伤身体的前提下悄悄积累了行业影响力！',
-            '【安稳平稳迭代】大模型生产集群运行丝滑无事故，你在优雅完成 Sprint 需求的同时，每天下午在园区草坪喝咖啡散步，体能完全回满！',
-          ];
-          const chosenMsg = wlbSuccessMessages[Math.floor(gameRandom() * wlbSuccessMessages.length)];
-
           const wlbChillMessages = [
-            '【惬意养老】AI 组内节奏极其舒适，你在按部就班维护系统的同时，每天喝下午茶写技术博客，身心焕然一新。',
-            '【拒绝内耗】面对复杂的跨组扯皮你果断按时下班，把精力留给健身与生活，身心恢复到最佳状态。',
+            '【按部就班 · 稳健及格】你准时打卡下班、拒绝内耗，高质量完成了 Sprint 范围内的既定需求 (Meets Bar 60分及格)。体能与精神完全恢复满格！',
+            '【拒绝内卷 · 惬意生活】面对复杂的跨组撕逼你果断按时下班，把精力留给健身与生活，身心恢复到最佳状态，平稳拿到本年度目标考评。',
+            '【平稳交付 · 零事故】线上服务集群平稳运行，你在优雅完成日常任务的同时，每天下午在园区草坪散步，体能完全回满！',
           ];
           const chillMsg = wlbChillMessages[Math.floor(gameRandom() * wlbChillMessages.length)];
 
-          return pass
-            ? { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 8), leetcode: s.leetcode + 3, cash: s.cash + 1.0, impact: addImpact(s, 7), message: chosenMsg }
-            : { mid_year: true, season_stage: 'h1', health: Math.min(100, s.health + 10), message: chillMsg };
+          return {
+            mid_year: true, season_stage: 'h1',
+            health: Math.min(100, s.health + 14),
+            leetcode: Math.min(100, s.leetcode + 2),
+            impact: addImpact(s, 2),
+            story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
+            message: chillMsg,
+          };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age && s.level === 'L4' ? 'promo_celebration' : h1ToH2Router(s)),
+      },
+      {
+        text: '【申请内部转组 · 换道破局】逃离 Toxic 组 / 投奔前沿 AI / 换养老支持组',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), annual_action: 'transfer' },
+          message: '你提交了内部转组申请，HR 与 Internal Mobility 系统向你展示了当前开放的转组去向：',
+        }),
+        nextEventId: 'internal_team_transfer',
       },
       {
         text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
@@ -3589,6 +3568,50 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       }
     ]
-  }
+  },
+
+  'internal_team_transfer': {
+    id: 'internal_team_transfer',
+    title: '【内部转组】换道破局与赛道抉择',
+    description: '厌倦了当前组的无休内耗、遭遇了 Toxic 老板，或者想换个赛道重新出发？公司内部的 Internal Transfer 系统向你开放，选择你未来的团队方向：',
+    choices: [
+      {
+        text: '【转入前沿 AI / 核心大模型组】冲刺高业务能见度与核心 Refresher (高强度/高上限)',
+        reqBadge: '算法 ≥ 35',
+        condition: (s) => s.leetcode >= 35,
+        effect: (s) => ({
+          health: Math.max(0, s.health - 6),
+          impact: addImpact(s, 8),
+          tc: s.tc + 2.0,
+          story_flags: { ...(s.story_flags || {}), team_focus: 'ai_core', pip_warning: false },
+          message: '【成功加入前沿 AI 组】你顺利 Transfer 到了公司最核心的大模型与分布式系统研发团队！坐拥顶级业务能见度与高额 Refresher 潜力，但节奏明显变紧！(清空一切考评预警)',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【转入内部工具 / 养老合规支持组】神仙 WLB 准时打卡，远离线上 P0 警报 (养生回血)',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 15),
+          leetcode: Math.min(100, s.leetcode + 3),
+          story_flags: { ...(s.story_flags || {}), team_focus: 'wlb_tools', pip_warning: false },
+          message: '【成功转入养老支持组】你转到了节奏极佳的内部工具与合规支持组，每天下午四点半准时下班，代码没有深夜 P0 警报，身心彻底满血复活！(清空一切考评预警)',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【技术跨界转岗 TPM / 技术产品经理】告别单纯写代码，开启跨部门协调与领导力路线',
+        reqBadge: '情商 ≥ 15',
+        condition: (s) => (s.charm || 10) >= 15 && (s.network || 10) >= 15,
+        effect: (s) => ({
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          network: Math.min(100, (s.network || 10) + 6),
+          impact: addImpact(s, 6),
+          story_flags: { ...(s.story_flags || {}), team_focus: 'tpm', role_specialization: 'tpm', pip_warning: false },
+          message: '【成功转岗 TPM】你告别了单纯的写代码修 Bug，转为跨部门沟通协调各组技术架构推进！开启了更广阔的领导力与产品管理通道！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
+  },
 };
 

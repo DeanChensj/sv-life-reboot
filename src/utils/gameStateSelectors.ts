@@ -123,6 +123,14 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     } else {
       levelClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20';
     }
+
+    if (state.story_flags?.role_specialization === 'tpm') {
+      levelLabel = `${levelLabel} · TPM`;
+    } else if (state.story_flags?.team_focus === 'ai_core') {
+      levelLabel = `${levelLabel} (AI核心)`;
+    } else if (state.story_flags?.team_focus === 'wlb_tools') {
+      levelLabel = `${levelLabel} (WLB工具)`;
+    }
   }
 
   // 2. Company Resolution

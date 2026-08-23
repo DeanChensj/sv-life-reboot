@@ -72,6 +72,11 @@ export interface StoryFlags {
   zhuanma_attempts?: number; // 转码首战失败次数(控制 washout 阈值)
   zhuanma_landed?: boolean; // 已上岸(用于后期事件门控 + recap)
   zhuanma_washout?: boolean; // 转码劝退退出 → 触发 washout 结局
+  // 职场考评与转组体系 (Perf Review & Team Focus)
+  annual_action?: 'sprint' | 'wlb' | 'transfer' | 'hop';
+  team_focus?: 'ai_core' | 'wlb_tools' | 'tpm';
+  last_perf_rating?: 'EE' | 'ME' | 'NI';
+  pip_warning?: boolean;
   [key: string]: unknown;
 }
 

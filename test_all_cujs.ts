@@ -272,7 +272,7 @@ console.log('--- [CUJ 2] Native US Citizen SSR Journey ---');
   let res = stepChoice(state, 'choose_trait', 0);
   state = res.nextState;
   assert(state.visa === '公民', 'Visa is US Citizen');
-  assert(state.win_threshold === 400, 'Lower win threshold for citizen');
+  assert(state.win_threshold === 500, 'Citizen trait uses harmonized $500w FIRE baseline');
   assert(res.nextEventId === 'choose_year', 'choose_trait -> choose_year');
 
   const visaInfo = getVisaDisplayInfo(state);
@@ -988,7 +988,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 }
 
 // CUJ 16: Voluntary early retirement (permanent visa + assets >= $150w/1.5M)
-// Late-game agency: step off the treadmill before hitting the $400w FIRE bar.
+// Late-game agency: step off the treadmill before hitting the $500w FIRE bar.
 // Gated on permanent status + wealth floor; below FIRE → content ending, above → triumph.
 {
   console.log('--- [CUJ 16] Voluntary early retirement gate & ending ---');
@@ -2177,7 +2177,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
     cash: 20,
     stocks: 10,
     tc: 35,
-    win_threshold: 400,
+    win_threshold: 500,
     story_flags: { last_h1b_lottery_year: 2026 }
   } as GameState;
 

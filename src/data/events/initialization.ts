@@ -22,37 +22,37 @@ export const initializationEvents: Record<string, GameEvent> = {
           cash: Math.max(15, (s.cash || 0)),
           network: 25,
           charm: Math.min((s.max_charm || 25), s.charm + 6),
-          win_threshold: 400,
+          win_threshold: 500,
           housing_name: '加州湾区老宅'
         }),
         nextEventId: 'choose_year',
       },
       {
         text: '【卷王之王】天生做题家，算法天赋极高，拥有极强的抗压耐受力，大厂内卷与跳槽如鱼得水。',
-        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 35, health: Math.max(90, s.health - 8), network: 15, win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 35, health: Math.max(90, s.health - 8), network: 15, win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【湾区海王】精通高端局社交，人脉广且极善拿捏人心，但社交开销高昂且不善算法。',
-        effect: (s) => ({ trait_title: '湾区海王', max_charm: (s.max_charm || 25) + 5, charm: Math.min((s.max_charm || 25) + 5, s.charm + 8), network: 20, cash: Math.max(0.5, s.cash - 1.5), leetcode: Math.max(0, s.leetcode - 10), win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '湾区海王', max_charm: (s.max_charm || 25) + 5, charm: Math.min((s.max_charm || 25) + 5, s.charm + 8), network: 20, cash: Math.max(0.5, s.cash - 1.5), leetcode: Math.max(0, s.leetcode - 10), win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，人脉背景深厚。',
         // Trimmed the outlier +70 cash head-start to +50 (still the biggest by far).
-        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 50, network: 25, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 50, network: 25, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
         // Drawback added: pure-luck build, no coding-skill edge (was leetcode +8, strictly upside).
-        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), network: 15, leetcode: Math.max(0, s.leetcode - 5), charm: s.charm + 5, win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), network: 15, leetcode: Math.max(0, s.leetcode - 5), charm: s.charm + 5, win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
         // Was strictly dominated (no bonuses at all). Now a genuine skill-focused build.
-        effect: (s) => ({ trait_title: '小镇做题家', leetcode: s.leetcode + 10, luck: Math.min(99, s.luck + 3), network: 12, win_threshold: 400 }),
+        effect: (s) => ({ trait_title: '小镇做题家', leetcode: s.leetcode + 10, luck: Math.min(99, s.luck + 3), network: 12, win_threshold: 500 }),
         nextEventId: 'choose_year',
       }
     ]

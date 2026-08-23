@@ -72,6 +72,10 @@ export interface StoryFlags {
   zhuanma_attempts?: number; // 转码首战失败次数(控制 washout 阈值)
   zhuanma_landed?: boolean; // 已上岸(用于后期事件门控 + recap)
   zhuanma_washout?: boolean; // 转码劝退退出 → 触发 washout 结局
+  // 年度考评体系 (Perf Review / PSC)
+  annual_action?: 'sprint' | 'wlb' | 'transfer' | 'hop'; // 本年度职场重心选择 (每年结算后重置)
+  last_perf_rating?: 'EE' | 'ME' | 'NI'; // 最近一次年度考评评级
+  pip_warning?: boolean; // NI 考评触发的 PIP 预警红灯 (次年更易 NI，EE/ME 恢复则清除)
   [key: string]: unknown;
 }
 

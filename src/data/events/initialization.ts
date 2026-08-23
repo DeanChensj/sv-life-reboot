@@ -1026,64 +1026,49 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'us_master_year1': {
     id: 'us_master_year1',
-    title: '【美硕生活】内卷倒计时与加急学制',
-    description: '时间紧迫！美硕只有短短一年半到两年。你一边要应付繁重的课业，一边又要准备残酷的秋招。',
+    title: '【美硕生活】学制规划与人生抉择',
+    description: '时间紧迫！美硕生活节奏飞快，你一边要应付高强度的课业，一边要为未来的职业生涯规划重心。',
     choices: [
       {
-        text: '【加急刷题进厂】选择 1.5 年加急项目，翘课刷题 (23岁毕业)',
+        text: '【极限加急进厂】选择 1 年加急项目，疯狂翘课刷穿题库 (提前毕业，省1年学费)',
         effect: (s) => ({
-          leetcode: s.leetcode + 15,
-          health: s.health - 12,
+          leetcode: s.leetcode + 16,
+          health: Math.max(0, s.health - 15),
           age: s.age + 1,
           is_master: true,
           story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
-          message: 'GPA 擦边过，但你闭着眼睛都能手撕红黑树与动态规划，1.5年顺利美硕毕业！'
+          message: 'GPA 擦边过，你日夜颠倒刷穿了经典题库，顶着黑眼圈用 1 年极限加急从美硕毕业！'
         }),
         nextEventId: pickCollegeEvent,
       },
       {
-        text: '【主攻量化金融】选择 2 年标准项目，准备 Quant/风控与投资面试 (24岁毕业)',
+        text: '【标准稳扎稳打】选择 2 年标准学制，平衡课业绩点与算法基础 (生活规律，24岁毕业)',
         effect: (s) => ({
-          cash: s.cash + 2.5,
-          leetcode: s.leetcode + 8,
+          leetcode: s.leetcode + 14,
+          health: Math.max(0, s.health - 3),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
+          age: s.age + 2,
+          is_master: true,
+          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
+          message: '你稳扎稳打修完核心课程，GPA 保持优异且算法扎实，作息规律健康，2年标准学制顺利毕业！'
+        }),
+        nextEventId: pickCollegeEvent,
+      },
+      {
+        text: '【积极社交与校友联谊】跑遍硅谷 Tech Meetup 与校友酒会，积累内推人脉 (24岁毕业)',
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 10) + 14),
           charm: Math.min(s.max_charm ?? 25, s.charm + 4),
-          age: s.age + 2,
-          is_master: true,
-          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
-          message: '在 Quant 笔试与数学思维面试中顺利过关，2年学制美硕顺利毕业！'
-        }),
-        nextEventId: pickCollegeEvent,
-      },
-      {
-        text: '【完美学术绩点】选择 1.5 年加急项目，疯狂赶 Due 保 4.0 GPA (23岁毕业)',
-        effect: (s) => ({
           leetcode: s.leetcode + 6,
-          health: s.health - 8,
-          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
-          age: s.age + 1,
-          is_master: true,
-          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
-          message: '你拿到了 4.0 的完美绩点！展现了极其严谨的学业能力，1.5年美硕顺利毕业！'
-        }),
-        nextEventId: pickCollegeEvent,
-      },
-      {
-        text: '【校友人脉内推】选择 2 年标准项目，去硅谷大厂活动混脸熟积累内推 (24岁毕业)',
-        costBadge: '花费 $1w',
-        condition: (s) => s.cash >= 1,
-        effect: (s) => ({
-          cash: s.cash - 1,
-          network: Math.min(100, (s.network || 10) + 12),
-          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           age: s.age + 2,
           is_master: true,
           story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad' },
-          message: '你加了 50 个大厂学长学姐的 LinkedIn，攒下了一大批内推人脉与直通面试机会，2年美硕顺利毕业！'
+          message: '你加遍了湾区各大厂学长学姐的微信与 LinkedIn，攒下了一大批内推人脉与直通面试机会，2年美硕顺利毕业！'
         }),
         nextEventId: pickCollegeEvent,
       },
       {
-        text: '【进顶尖实验室做 Research】选择 2 年学术型项目，跟教授冲顶会论文 (为申博积累 Impact +12)',
+        text: '【进顶尖实验室做 Research】选择 2 年学术型项目，跟教授冲顶会论文与强推 (24岁毕业)',
         effect: (s) => ({
           leetcode: s.leetcode + 8,
           health: Math.max(0, s.health - 10),
@@ -1091,7 +1076,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           age: s.age + 2,
           is_master: true,
           story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_ready: true },
-          message: '你在实验室疯狂肝论文，成功发表了一作顶会文章并拿到大牛教授强推信 (Impact +12)！2年学术型硕士顺利毕业！'
+          message: '你在实验室疯狂做实验赶论文，成功发表了一作顶会文章并拿到大牛教授强推信！2年学术型硕士顺利毕业！'
         }),
         nextEventId: pickCollegeEvent,
       }

@@ -66,7 +66,8 @@ function play(seed: number, policy: 'random' | 'grind') {
     if (!valid.length) break;
     let chosen: Choice;
     if (policy === 'grind' && currentEventId === 'sv_daily_life') {
-      chosen = (state.health < 55 ? valid.find(c => /躺平|WLB|火人节|养生/.test(c.text)) : undefined)
+      chosen = (seed % 3 === 0 ? valid.find(c => /置业安家/.test(c.text)) : undefined)
+        || (state.health < 55 ? valid.find(c => /躺平|WLB|火人节|养生/.test(c.text)) : undefined)
         || valid.find(c => /疯狂内卷|刷题跳槽|顶会 Paper/.test(c.text)) || valid[0];
     } else if (policy === 'grind' && state.health < 40) {
       chosen = valid.find(c => /休息|养生|求医|恢复|稳健|苟|婉拒|妥协/.test(c.text)) || valid[Math.floor(gameRandom() * valid.length)];

@@ -382,6 +382,19 @@ export const midYearEventRouter = (s: GameState): string => {
       return 'career_summer_intern_mentor';
     }
 
+    // 9) 非科班转码职场成长线 (Non-CS Career Switcher Arc, 一生一次)
+    if (s.story_flags?.non_cs_background && isWorking) {
+      if (!hasSeen(s, 'zhuanma_imposter_syndrome') && s.age >= 24 && s.age <= 34 && gameRandom() < 0.30) {
+        return 'zhuanma_imposter_syndrome';
+      }
+      if (!hasSeen(s, 'zhuanma_domain_crossover') && s.age >= 26 && s.year >= 2021 && gameRandom() < 0.28) {
+        return 'zhuanma_domain_crossover';
+      }
+      if (!hasSeen(s, 'zhuanma_mentor_community') && (s.level === 'L5 (Senior)' || s.level === 'L5' || s.level === 'L6 (Staff)' || s.level === 'L6') && gameRandom() < 0.30) {
+        return 'zhuanma_mentor_community';
+      }
+    }
+
     // 宏观行情快讯 (telegraph)。经济周期现由年终结算的 Markov 链驱动 (settlement.ts);这里在 H1 以
     // 完整事件「播报」当前 regime,让玩家——尤其 trader——在做年度决策前清晰读到牛/熊/横盘行情。
     // 纯播报,不改经济 (驱动在结算)。牛/熊年高频、横盘年低频。旧实现被 `!season_stage` 永久锁死

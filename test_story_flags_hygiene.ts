@@ -50,7 +50,6 @@ const KNOWN_UNREAD: Record<string, string> = {
   linda_advisor: '顶层字段:Linda 投资顾问加成,留作未来消费',
   linda_fast_track: '顶层字段:Linda pre-IPO 快车道,留作未来消费',
   omniagent_advisor: '顶层字段:OmniAgent 顾问加成,留作未来消费',
-  non_cs_background: '顶层字段:转码非CS背景标记,留作未来消费',
 };
 
 const written = [...writes.keys()].sort();

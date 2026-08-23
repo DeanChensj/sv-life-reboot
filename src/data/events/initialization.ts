@@ -248,20 +248,20 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '编程基础已经初步建立，但面对挑剔的硅谷 HR 和大厂 Hiring Committee，你必须拿出亮眼的项目作品集和过硬的面试准备！',
     choices: [
       {
-        text: '【从零手搓全栈开源项目】手写 Full-Stack 项目，代码扎实无死角 (死磕算法与底层)',
+        text: '【从零手搓全栈开源项目】手写 Full-Stack 项目，代码扎实无死角 (死磕算法与底层，上岸率最高)',
         effect: (s) => ({
-          leetcode: Math.min(100, s.leetcode + 10),
-          impact: addImpact(s, 6),
-          health: Math.max(0, s.health - 6),
+          leetcode: Math.min(100, s.leetcode + 12),
+          health: Math.max(0, s.health - 8),
           story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'solid_project' },
           message: '你花数月从零手写了一套高并发协作平台，每一行代码与架构细节都烂熟于心，面试官追问底层原理对答如流！',
         }),
         nextEventId: 'zhuanma_apply',
       },
       {
-        text: '【网课高并发微服务包装】简历写满千万级秒杀、Redis 缓存与 Kafka (提高初筛率)',
+        text: '【网课高并发微服务包装】简历写满千万级秒杀、Redis 缓存与 Kafka (省心零内卷，但上岸率最低)',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 6),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 2),
           story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'packaged_resume' },
           message: '简历上写满了 Redis 缓存击穿、Kafka 削峰与分布式事务，HR 初筛通过率暴涨，但遇到大厂老油条深挖时需谨慎应对！',
         }),
@@ -273,6 +273,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           leetcode: Math.min(100, s.leetcode + 8),
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
           impact: addImpact(s, 8),
+          health: Math.max(0, s.health - 5),
           story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'crossover_project' },
           message: '你结合非科班本科专业背景，开发了一个垂直领域的自动化分析看板，独特的跨界背景让面试官眼前一亮！',
         }),
@@ -281,9 +282,10 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【转码微信群抱团 + 1v1 Mock】与战友互相模拟面试与 BQ (提升临场心态与表达)',
         effect: (s) => ({
-          leetcode: Math.min(100, s.leetcode + 12),
-          network: Math.min(100, (s.network || 10) + 8),
+          leetcode: Math.min(100, s.leetcode + 8),
+          network: Math.min(100, (s.network || 10) + 10),
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
+          health: Math.max(0, s.health - 5),
           story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'mock_buddy' },
           message: '你找到了几位志同道合的转码伙伴，每天互相 1v1 模拟面试手撕代码与 BQ 行为面，面试临场表达大幅提升！',
         }),
@@ -306,9 +308,10 @@ export const initializationEvents: Record<string, GameEvent> = {
           // 玩家累计上岸 ~60-75%(即 washout 25-40%),让"逆袭"有真实翻车风险。
           const methodBonus = s.story_flags?.zhuanma_method === 'self' ? 0.03 : 0;
           const ageMalus = s.age >= 35 ? Math.min(0.18, (s.age - 35) * 0.015) : 0;
-          const prepBonus = s.story_flags?.zhuanma_prep_style === 'solid_project' ? 0.04
+          // solid_project 死磕路线上岸率最高(对价:最大扣血);mock/crossover 次之;packaged 包装最低。
+          const prepBonus = s.story_flags?.zhuanma_prep_style === 'solid_project' ? 0.06
             : (s.story_flags?.zhuanma_prep_style === 'mock_buddy' ? 0.05
-            : (s.story_flags?.zhuanma_prep_style === 'crossover_project' ? 0.04
+            : (s.story_flags?.zhuanma_prep_style === 'crossover_project' ? 0.05
             : (s.story_flags?.zhuanma_prep_style === 'packaged_resume' ? 0.03 : 0)));
           const majorBonus = s.story_flags?.zhuanma_major === 'hard_engineering' ? 0.03 : 0;
           const prob = Math.max(0.08, Math.min(0.65, 0.12 + (s.leetcode / 320) + ((s.luck || 20) / 500) + methodBonus + prepBonus + majorBonus - ageMalus));

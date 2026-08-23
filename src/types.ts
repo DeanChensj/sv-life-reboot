@@ -179,6 +179,9 @@ export interface GameEvent {
   description: string;
   imageUrl?: string;
   choices: Choice[];
+  // 一生一次:置 true 后,applyStateTransition 会在该事件被解析后自动标记 story_flags[`${id}_seen`]=true
+  // (作者无需手写置位);路由/池注入侧用 helpers.hasSeen(s, id) 门禁即可。统一机制,防"漏检→复发"。
+  oncePerLife?: boolean;
 }
 
 export interface Achievement {

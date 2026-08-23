@@ -1,4 +1,4 @@
-import { events, generateInitialState, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb } from './src/data/events';
+import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb } from './src/data/events';
 import { GameState, Choice } from './src/types';
 import { HOUSING_NAMES } from './src/constants/gameConstants';
 import { applyStateTransition } from './src/utils/stateTransitions';
@@ -2490,6 +2490,33 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(Math.max(...heals) <= 18, '裸奔分支不再是稳定大回血(封顶 +18,且有 +4 后遗症风险)');
 
   console.log('✅ CUJ 48 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 49: 一生一次统一基座 (GameEvent.oncePerLife + hasSeen/markSeen 自动置位)。取代此前散落 6 份
+// 复制的 seen() 助手 + "触发检查/效果置位"两处手写(漏一处即 ICU 类复发 bug)。锁三件事:
+// ① hasSeen/markSeen 语义正确;② oncePerLife 事件的 effect 无需手写置位——applyStateTransition
+// 自动标记 `${id}_seen`;③ 标记后 hasSeen 为真(路由据此门禁,不再复发)。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 49] 一生一次统一基座 oncePerLife + hasSeen/markSeen ---');
+  const s0 = { ...generateInitialState(), status: 'playing' } as GameState;
+  assert(hasSeen(s0, 'foo_evt') === false, 'hasSeen 初始为 false');
+  const flags = markSeen(s0, 'foo_evt');
+  assert(flags['foo_evt_seen'] === true, 'markSeen 置位 ${id}_seen');
+  assert(hasSeen({ ...s0, story_flags: flags } as GameState, 'foo_evt') === true, 'markSeen 后 hasSeen 为真');
+
+  const ev = events['level_entry_grunt_work'];
+  assert(ev.oncePerLife === true, 'level_entry_grunt_work 已声明 oncePerLife');
+  const eff = ev.choices[0].effect(s0);
+  assert(!('story_flags' in eff), 'oncePerLife 事件 effect 无需手写 story_flags 置位');
+  const after = applyStateTransition(s0, eff, { eventId: 'level_entry_grunt_work' }).nextState;
+  assert(hasSeen(after, 'level_entry_grunt_work') === true, '解析后由中间件自动标记 _seen(消除漏置)');
+
+  const plainAfter = applyStateTransition(s0, { health: s0.health - 1 }, { eventId: 'sv_daily_life' }).nextState;
+  assert(!hasSeen(plainAfter, 'sv_daily_life'), '非 oncePerLife 事件不被自动标记');
+
+  console.log('✅ CUJ 49 Passed\n');
 }
 
 console.log(`\n======================================================`);

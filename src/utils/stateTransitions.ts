@@ -2,6 +2,7 @@ import type { GameState, TimelineRecord } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { getSchoolProfile } from '../data/schoolProfiles';
+import { events as eventRegistry } from '../data/events';
 
 export interface TransitionContext {
   eventId?: string;
@@ -334,6 +335,12 @@ export function applyStateTransition(
   }
 
   newState.timeline = updatedTimeline;
+
+  // 一生一次事件的统一自动置位:凡 GameEvent.oncePerLife=true 的事件被解析后,自动标记
+  // story_flags[`${id}_seen`]=true,作者无需在每个 effect 手写置位(消除"漏置→复发"这类 bug)。
+  if (context.eventId && eventRegistry[context.eventId]?.oncePerLife) {
+    newState.story_flags = { ...(newState.story_flags || {}), [`${context.eventId}_seen`]: true };
+  }
 
   // 求职即本年度动作:任何在 job_hunt 做出的选择都消耗当年 —— 强制置 mid_year/season_stage,使
   // 「求职→(再)就业→选房」整条链纳入 resolveNextEventId 的年度季度事件机并走到年终结算,而非在

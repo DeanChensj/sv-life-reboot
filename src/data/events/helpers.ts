@@ -159,12 +159,20 @@ export const isImpactCareer = (s: GameState): boolean =>
   s.job_type === 'big_tech' || s.job_type === 'ai_research' ||
   s.job_type === 'quant' || s.job_type === 'cn_tech';
 
+// ── 一生一次 (once-per-life) 事件的统一基座 ───────────────────────────────────────────────
+// 约定:事件 <id> 触发过一次 ⇔ story_flags[`${id}_seen`] === true。以下是唯一权威实现,取代此前
+// 散落在 6 个事件文件里各自复制的 `const seen = ...`(去重),也是新事件应统一使用的机制。
+// 配合 GameEvent.oncePerLife=true:applyStateTransition 会在该事件被解析后【自动置位】_seen
+// (作者无需手写置位),路由/池注入侧用 hasSeen(s,id) 门禁(无需手写 !sig.xxx_seen)——
+// 从机制上消除"漏检/漏置 → 该一次却复发"这类 bug(ICU 事件即此类)。
+export const hasSeen = (s: GameState, id: string): boolean => Boolean(s.story_flags?.[`${id}_seen`]);
+export const markSeen = (s: GameState, id: string): StoryFlags => ({ ...(s.story_flags || {}), [`${id}_seen`]: true });
+
 // Stamp a once-per-life「seen」flag AND (optionally) accrue partner_strain — but only
 // when the player actually has a partner to neglect. Used by "career over family" crunch
-// choices so the family-neglect → breakup_crisis causal loop is real, not random. Merges
-// into story_flags without clobbering other flags.
+// choices so the family-neglect → breakup_crisis causal loop is real, not random.
 export const stampSeen = (s: GameState, id: string, strainDelta = 0): StoryFlags => {
-  const flags: StoryFlags = { ...(s.story_flags || {}), [`${id}_seen`]: true };
+  const flags: StoryFlags = markSeen(s, id);
   if (strainDelta > 0 && hasPartner(s)) {
     flags.partner_strain = (s.story_flags?.partner_strain || 0) + strainDelta;
   }

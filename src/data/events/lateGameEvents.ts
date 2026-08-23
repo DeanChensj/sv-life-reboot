@@ -1,5 +1,5 @@
-import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, addImpact } from './helpers';
+import type { GameEvent, GameState } from '../../types';
+import { h1ToH2Router, addImpact , markSeen} from './helpers';
 
 // 中后期 engagement 事件 — Late-game texture events (T2, NON-destructive first pass).
 // Purpose: kill the 32+「自动驾驶挂机」mid-game fatigue by giving the 33-55 window (and
@@ -10,7 +10,7 @@ import { h1ToH2Router, addImpact } from './helpers';
 // Rules kept: single-choice health loss <= 15; charm capped at max_charm; no money
 // printers; state-based routing; every event has an unconditional safe choice; each
 // choice stamps story_flags.<id>_seen so the router won't repeat it.
-const seen = (s: GameState, id: string): StoryFlags => ({ ...(s.story_flags || {}), [`${id}_seen`]: true });
+const seen = markSeen; // 统一一生一次基座(替代复制的本地实现)
 
 export const lateGameEvents: Record<string, GameEvent> = {
   // ---------------- 中年身份抉择：IC vs 管理 (H1, 在职, age>=34) ----------------

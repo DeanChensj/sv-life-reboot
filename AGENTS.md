@@ -36,6 +36,10 @@
        # 7. test_runtime_coverage.ts (运行时覆盖审计：跑真实统一路由统计实际访问到的事件，
        #    未访问=死代码即红。区别于 audit_all_flows 的"源码正则扫可达"——那种静态 oracle
        #    曾让整个 H1 职场板块死在运行时却全绿。新增死事件破测；已知死代码在 KNOWN_DEAD 登记)
+       # 8. test_story_flags_hygiene.ts (story_flags 卫生：交叉比对每个 flag 的写入 vs 读取，
+       #    "写了但从不读"即红——拦截 ICU 那类"一生一次 flag 漏检→复发"bug。有意 breadcrumb 登记
+       #    在 KNOWN_UNREAD)。一生一次事件请统一用 GameEvent.oncePerLife + helpers.hasSeen/markSeen:
+       #    oncePerLife=true 时 applyStateTransition 自动置 `${id}_seen`,路由用 hasSeen 门禁,免手写两处。
        ```
 
 4. **路由与分支判断规范 (防两类高频 Bug)**：

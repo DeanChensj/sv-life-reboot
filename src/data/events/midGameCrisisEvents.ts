@@ -1,5 +1,5 @@
-import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, gameRandom, addImpact } from './helpers';
+import type { GameEvent, GameState } from '../../types';
+import { h1ToH2Router, gameRandom, addImpact , markSeen} from './helpers';
 
 // 中后期「有牙的」系统性危机 — Destructive late-game crises (T2 part 2).
 // Purpose: break the post-GC/L5「躺赢」autopilot by injecting shocks that can actually
@@ -10,7 +10,7 @@ import { h1ToH2Router, gameRandom, addImpact } from './helpers';
 // Rules kept: single-choice health loss <= 15; charm capped; unemployment forces tc=0
 // (also enforced centrally); every event has an available choice; once-per-life via seen.
 const employed = (s: GameState): boolean => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
-const seen = (s: GameState, id: string): StoryFlags => ({ ...(s.story_flags || {}), [`${id}_seen`]: true });
+const seen = markSeen; // 统一一生一次基座(替代复制的本地实现)
 
 export const midGameCrisisEvents: Record<string, GameEvent> = {
   // ---------------- 中年 ageism：性价比之殇 (H1, 在职, age>=42, 一局一次) ----------------

@@ -1,5 +1,5 @@
-import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, gameRandom, stampSeen, addImpact } from './helpers';
+import type { GameEvent, GameState } from '../../types';
+import { h1ToH2Router, gameRandom, stampSeen, addImpact , markSeen} from './helpers';
 
 // 职级 (level) 阶段专属随机事件 — Career-level signature events.
 // One once-per-life SIGNATURE beat per ladder band (entry / senior / staff+),
@@ -14,12 +14,13 @@ import { h1ToH2Router, gameRandom, stampSeen, addImpact } from './helpers';
 const employed = (s: GameState): boolean => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
 
 // Merge-in the once-only "seen" flag without clobbering other story_flags.
-const seen = (s: GameState, id: string): StoryFlags => ({ ...(s.story_flags || {}), [`${id}_seen`]: true });
+const seen = markSeen; // 统一一生一次基座(替代复制的本地实现)
 
 export const levelEvents: Record<string, GameEvent> = {
   // ---------------- 入门 (L3 / L4 / 初级研发): 杂活与 oncall 地狱 ----------------
   'level_entry_grunt_work': {
     id: 'level_entry_grunt_work',
+    oncePerLife: true, // 统一一生一次机制:_seen 由 applyStateTransition 自动置位(effect 无需手写 seen())
     title: '【初级萌新】杂活与 On-call 连环地狱',
     description: '作为组里最 junior 的人，你被塞满了没人愿意接的 oncall 值班、线上 bug 修复和文档杂活，离「有影响力的核心项目」似乎遥遥无期。',
     choices: [
@@ -29,7 +30,6 @@ export const levelEvents: Record<string, GameEvent> = {
           leetcode: Math.min(100, s.leetcode + 8),
           network: Math.min(100, (s.network || 10) + 4),
           health: Math.max(0, s.health - 8),
-          story_flags: seen(s, 'level_entry_grunt_work'),
           message: '你把每一次 oncall 和每一个小 bug 都处理得干净利落，逐渐成了组里「靠谱」的代名词。老板开始把更重要的活交给你。',
         }),
         nextEventId: h1ToH2Router,
@@ -43,7 +43,6 @@ export const levelEvents: Record<string, GameEvent> = {
           leetcode: Math.min(100, s.leetcode + 3),
           health: Math.max(0, s.health - 5),
           impact: addImpact(s, 6),
-          story_flags: seen(s, 'level_entry_grunt_work'),
           message: '你鼓起勇气在 1:1 上表达了想承担更大责任的意愿。老板欣赏你的主动，划给你一块虽小但可见的模块，你的成长曲线陡然上扬。',
         }),
         nextEventId: h1ToH2Router,
@@ -53,7 +52,6 @@ export const levelEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.min(100, s.health + 8),
           leetcode: Math.min(100, s.leetcode + 3),
-          story_flags: seen(s, 'level_entry_grunt_work'),
           message: '你告诉自己职业生涯是场马拉松。你不急不躁地打好基础、养好身体，为后面的冲刺蓄力。',
         }),
         nextEventId: h1ToH2Router,

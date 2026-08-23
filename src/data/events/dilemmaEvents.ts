@@ -1,5 +1,5 @@
-import type { GameEvent, GameState, StoryFlags, NPCState } from '../../types';
-import { h1ToH2Router, addImpact } from './helpers';
+import type { GameEvent, GameState, NPCState } from '../../types';
+import { h1ToH2Router, addImpact , markSeen} from './helpers';
 import { normalizeLevel } from '../levelProfiles';
 
 // 有牙的两难抉择 — Dilemma events where BOTH options genuinely hurt, binding
@@ -10,7 +10,7 @@ import { normalizeLevel } from '../levelProfiles';
 // Rules: single-choice health loss <= 15; charm capped; no money printers; route on
 // STATE via h1ToH2Router; every event has an available choice (no dead-ends).
 const employed = (s: GameState): boolean => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
-const seen = (s: GameState, id: string): StoryFlags => ({ ...(s.story_flags || {}), [`${id}_seen`]: true });
+const seen = markSeen; // 统一一生一次基座(替代复制的本地实现)
 
 export const dilemmaEvents: Record<string, GameEvent> = {
   // ---------------- 有毒老板 vs 绿卡人质 ----------------

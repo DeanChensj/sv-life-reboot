@@ -1,5 +1,5 @@
-import type { GameEvent, GameState, StoryFlags } from '../../types';
-import { h1ToH2Router, gameRandom, stampSeen, addImpact } from './helpers';
+import type { GameEvent, GameState } from '../../types';
+import { h1ToH2Router, gameRandom, stampSeen, addImpact , markSeen} from './helpers';
 
 // 人设 (天赋 trait_title) 专属随机事件 — Persona-specific flavor events.
 // Each is a once-per-life SIGNATURE beat for its persona, injected from
@@ -12,7 +12,7 @@ import { h1ToH2Router, gameRandom, stampSeen, addImpact } from './helpers';
 const employed = (s: GameState): boolean => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
 
 // Merge-in the once-only "seen" flag without clobbering other story_flags.
-const seen = (s: GameState, id: string): StoryFlags => ({ ...(s.story_flags || {}), [`${id}_seen`]: true });
+const seen = markSeen; // 统一一生一次基座(替代复制的本地实现)
 
 export const personaEvents: Record<string, GameEvent> = {
   // ---------------- 卷王之王: 极限 deadline 爆肝 (H1, 在职) ----------------

@@ -1977,29 +1977,60 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 // -----------------------------------------------------------------------------
-// CUJ 37: WLB / AI 组养生路径的晋升封顶 L4,且 WLB 转岗为一次性。
-// 锁住"躺着养生升不到 Senior(L5)"的平衡保证:L5 及以上必须靠【疯狂内卷】耗血挣;
-// 防止有人把自然晋升上限改回 L5 让 WLB 重新变成无脑优选。
+// CUJ 37: Coasting WLB (按部就班) 封顶 L4 + 年度考评 (Perf Review EE/ME/NI)。
+// 锁两件事:①"按部就班养生"自然晋升封顶 L4(L5+ 必须【疯狂内卷】耗血挣,防养生变无脑优选);
+// ②年度考评评级正确 —— 晋升/高impact冲刺=EE,健康养生=ME(有调薪,非惩罚),摆烂=可NI+PIP,
+// 且 annual_action 每年结算后重置(防上一年动作误判后续考评)。
 // -----------------------------------------------------------------------------
 {
-  console.log('--- [CUJ 37] WLB/AI 养生路径封顶 L4 + WLB 一次性 ---');
-  const wlb = events['sv_daily_life'].choices.find((c) => c.text.includes('转岗 AI 组'))!;
-  const ai = events['sv_daily_life'].choices.find((c) => c.text.includes('在神仙 AI 组保持工作生活平衡'))!;
-  assert(!!wlb && !!ai, 'sv_daily_life 有【转岗 AI 组】与【神仙 AI 组 WLB 漫步】');
+  console.log('--- [CUJ 37] Coasting WLB 封顶 L4 + 年度考评 EE/ME/NI ---');
+  const coast = events['sv_daily_life'].choices.find((c) => c.text.includes('按部就班'))!;
+  assert(!!coast, 'sv_daily_life 有【按部就班 · 稳健 WLB】选项');
 
-  // 一个满资历、算法极高的 L4 走 WLB 或 AI 攻坚,都不能自然升到 L5(必须内卷)。
+  // 满资历高算法 L4 走按部就班,不能自然升到 L5(必须内卷);且设 annual_action=wlb。
   const l4Ripe = (over: Partial<GameState>): GameState => ({
     ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
     leetcode: 100, age: 40, last_promo_age: 30, health: 90, tc: 40, status: 'playing', ...over,
   } as GameState);
   for (let i = 0; i < 30; i++) {
-    assert(wlb.effect(l4Ripe({ transferred_to_ai: false })).level !== 'L5 (Senior)', 'WLB 养生不能自然把 L4 升到 L5');
-    assert(ai.effect(l4Ripe({ transferred_to_ai: true })).level !== 'L5 (Senior)', 'AI 攻坚不能自然把 L4 升到 L5');
+    assert(coast.effect(l4Ripe({})).level !== 'L5 (Senior)', '按部就班不能自然把 L4 升到 L5');
   }
-  // WLB 转岗保证成功 → 置 transferred_to_ai(此后 condition 因 !transferred_to_ai 隐藏,天然每局一次)
-  const wlbRes = wlb.effect(l4Ripe({ transferred_to_ai: false }));
-  assert(wlbRes.transferred_to_ai === true, 'WLB 转岗保证成功并置 transferred_to_ai(天然一次性)');
-  assert(!wlb.condition || !wlb.condition({ ...l4Ripe({}), transferred_to_ai: true } as GameState), '转岗后 WLB 选项不再出现(仅一次)');
+  assert((coast.effect(l4Ripe({})).story_flags as Record<string, unknown> | undefined)?.annual_action === 'wlb', '按部就班设 annual_action=wlb');
+
+  // 年度考评 (settlement.sv_year_end_settlement)
+  const settle = events['sv_year_end_settlement'].choices[0];
+  const emp = (over: Partial<GameState>): GameState => ({
+    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
+    visa: '公民', age: 35, last_promo_age: 25, health: 80, tc: 40, status: 'playing',
+    story_flags: {}, ...over,
+  } as GameState);
+  const rating = (r: Partial<GameState>) => (r.story_flags as Record<string, unknown> | undefined)?.last_perf_rating;
+
+  // 健康养生玩家 (annual_action=wlb) → ME (符合预期,拿到调薪,非 NI)
+  const meRes = settle.effect(emp({ story_flags: { annual_action: 'wlb' } }));
+  assert(rating(meRes) === 'ME', '健康养生玩家考评为 ME');
+  assert((meRes.tc || 0) >= 40, 'ME 拿到常规调薪 (TC 不降)');
+
+  // 当年晋升 → EE
+  assert(rating(settle.effect(emp({ last_promo_age: 35 }))) === 'EE', '当年晋升考评为 EE');
+  // 高 impact 冲刺 (非养生,未升) → EE
+  assert(rating(settle.effect(emp({ impact: 20 }))) === 'EE', '高 impact 冲刺考评为 EE');
+
+  // annual_action 每年结算后重置为 undefined
+  const resetRes = settle.effect(emp({ story_flags: { annual_action: 'wlb' } }));
+  assert((resetRes.story_flags as Record<string, unknown> | undefined)?.annual_action === undefined, 'annual_action 结算后重置');
+
+  // 摆烂 (低血低 impact) 可触发 NI,并亮起 PIP 预警
+  let sawNI = false;
+  for (let i = 0; i < 80; i++) {
+    const r = settle.effect(emp({ health: 15, impact: 2 }));
+    if (rating(r) === 'NI') {
+      sawNI = true;
+      assert((r.story_flags as Record<string, unknown> | undefined)?.pip_warning === true, 'NI 考评亮起 PIP 预警');
+      break;
+    }
+  }
+  assert(sawNI, '摆烂(低血低impact)可触发 NI 考评');
 
   console.log('✅ CUJ 37 Passed\n');
 }
@@ -2617,10 +2648,57 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 // -----------------------------------------------------------------------------
-// CUJ 51: 硅谷防破产与财务梗事件 (我是学生砍价 / 前任独角兽暴富 / 房贷断供危机)
+// CUJ 51: 内部转组 (internal_team_transfer) 改变后续赛道。锁三件事:
+// ①sv_daily_life 有转组入口且路由到 internal_team_transfer + 设 annual_action=transfer;
+// ②AI 核心组置 team_focus=ai_core + transferred_to_ai + 清 PIP;养老组置 wlb_tools + 清 PIP;
+// ③team_focus 真正影响 H1 事件池:wlb_tools 绝不出 PIP/裁员/危机,ai_core 能卷入 AI 攻坚。
 // -----------------------------------------------------------------------------
 {
-  console.log('--- [CUJ 51] 硅谷防破产与财务梗事件 (我是学生 / 前任暴富 / 房贷断供) ---');
+  console.log('--- [CUJ 51] 内部转组改变后续 H1 赛道 (team_focus → midYearEventRouter) ---');
+  const entry = events['sv_daily_life'].choices.find((c) => c.text.includes('申请内部转组'))!;
+  assert(!!entry, 'sv_daily_life 有【申请内部转组】入口');
+  const emp: GameState = { ...generateInitialState(), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)', leetcode: 60, health: 70, status: 'playing' } as GameState;
+  const entryRes = entry.effect(emp);
+  assert((typeof entry.nextEventId === 'function' ? entry.nextEventId(emp) : entry.nextEventId) === 'internal_team_transfer', '转组入口路由到 internal_team_transfer');
+  assert((entryRes.story_flags as Record<string, unknown>)?.annual_action === 'transfer', '转组入口设 annual_action=transfer');
+
+  const transfer = events['internal_team_transfer'];
+  const aiChoice = transfer.choices.find((c) => c.text.includes('前沿 AI'))!;
+  const wlbChoice = transfer.choices.find((c) => c.text.includes('养老'))!;
+  assert(transfer.choices.length === 2, 'TPM 已移除,转组只剩 AI核心 / 养老支持 两个去向');
+
+  const aiRes = aiChoice.effect({ ...emp, story_flags: { pip_warning: true } } as GameState);
+  assert((aiRes.story_flags as Record<string, unknown>)?.team_focus === 'ai_core', 'AI 组置 team_focus=ai_core');
+  assert(aiRes.transferred_to_ai === true, 'AI 组接上 transferred_to_ai (启用既有 AI 机制)');
+  assert((aiRes.story_flags as Record<string, unknown>)?.pip_warning === false, 'AI 组清空 PIP 预警');
+
+  const wlbRes = wlbChoice.effect({ ...emp, story_flags: { pip_warning: true }, health: 40 } as GameState);
+  assert((wlbRes.story_flags as Record<string, unknown>)?.team_focus === 'wlb_tools', '养老组置 team_focus=wlb_tools');
+  assert((wlbRes.health || 0) > 40, '养老组回血');
+  assert((wlbRes.story_flags as Record<string, unknown>)?.pip_warning === false, '养老组清空 PIP 预警');
+
+  // team_focus 真正影响 H1 池:养老组多次抽样绝不返回 PIP/裁员/危机
+  const banned = ['friday_pip', 'layoff_rumor', 'stock_crash', 'ai_disruption_existential', 'friday_p0_outage_crisis', 'agent_hallucination_prod_disaster'];
+  const wlbState: GameState = { ...emp, year: 2025, story_flags: { team_focus: 'wlb_tools' }, season_stage: 'h1' } as GameState;
+  for (let i = 0; i < 120; i++) {
+    const ev = midYearEventRouter(wlbState);
+    assert(!banned.includes(ev), `养老组 H1 不应出现高压事件 (got ${ev})`);
+  }
+  // AI 核心组能卷入前沿 AI 攻坚 (多次抽样至少命中一次 AI/影响力事件)
+  const aiState: GameState = { ...emp, year: 2025, company: 'google', story_flags: { team_focus: 'ai_core' }, season_stage: 'h1' } as GameState;
+  const aiPool = new Set<string>();
+  for (let i = 0; i < 200; i++) aiPool.add(midYearEventRouter(aiState));
+  const aiFrontier = ['llm_datacenter_power_outage', 'ai_disruption_existential', 'open_source_breakout', 'internal_tech_talk_viral'];
+  assert(aiFrontier.some((e) => aiPool.has(e)), 'AI 核心组 H1 能卷入前沿 AI / 影响力事件');
+
+  console.log('✅ CUJ 51 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 52: 硅谷防破产与财务梗事件 (我是学生砍价 / 前任独角兽暴富 / 房贷断供危机)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 52] 硅谷防破产与财务梗事件 (我是学生 / 前任暴富 / 房贷断供) ---');
 
   // 1. 【我是学生，可以少算点吗？】
   const changeRental = events['change_rental'];
@@ -2665,9 +2743,12 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(!!mortgageCrisis && mortgageCrisis.choices.length === 3, 'mortgage_default_crisis 存在且有 3 个选项');
   const shortSale = mortgageCrisis.choices.find((c) => c.text.includes('Short Sale'))!;
   const saleRes = shortSale.effect({ ...divorcedState, has_housing: true, housing_name: 'Sunnyvale 老破小' } as GameState);
-  assert(saleRes.has_housing === false && saleRes.cash! > 20, 'Short Sale 卖房止损拿回流动资金退回租房');
+  assert(saleRes.has_housing === false && saleRes.cash! > 20, 'Short Sale 卖房止损拿回流动资金退回租房 (自购房)');
+  // 父母出资的房 Short Sale 不返还权益 (与 house_slave 断供一致,防白拿)
+  const parentSale = shortSale.effect({ ...divorcedState, has_housing: true, parents_helped_house: true, housing_name: 'Sunnyvale 老破小' } as GameState);
+  assert(parentSale.cash === 20, '父母出资房 Short Sale 不返还权益 (cash 不变)');
 
-  console.log('✅ CUJ 51 Passed\n');
+  console.log('✅ CUJ 52 Passed\n');
 }
 
 console.log(`\n======================================================`);

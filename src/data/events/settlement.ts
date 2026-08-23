@@ -348,17 +348,29 @@ export const settlementEvents: Record<string, GameEvent> = {
               newH1bTenure = 0;
             }
 
-            // Merit raise / RSU refresh check (45% chance) for corporate tech employees
+            // Silicon Valley Performance Review (年度考评 / PSC 体系): EE (Exceeds) / ME (Meets,
+            // 60分及格基准) / NI (Needs Improvement → PIP 预警). Rating reads THIS year's annual_action
+            // (set by the sv_daily_life 重心 choice; undefined/非养生 = 冲刺态). annual_action is reset
+            // to undefined each settlement (below) so a stale prior action never mis-rates a later year.
             let updatedTC = s.tc;
             let meritMsg = '';
+            let perfRating: 'EE' | 'ME' | 'NI' | undefined = undefined;
             const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && s.company !== 'icc';
-            // Merit / RSU refresh 与 impact(项目影响力)挂钩：高 impact → 加薪又频又大；躺平低 impact →
-            // 又稀又小，即使不追求升职、留在原级别，收入也会停滞被通胀/开销蚕食(躺平的隐性代价)。
-            const impactChanceMult = 0.4 + Math.min(1.0, (s.impact || 0) / 50);   // impact 0→0.4x, 50+→1.4x
-            const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60);      // impact 0→0.5x, 60+→1.5x
-            const refreshChance = (newEconomy === 'bull' ? 0.50 : newEconomy === 'bear' ? 0.15 : 0.35) * impactChanceMult;
-            
-            if (isEmployee && gameRandom() < refreshChance) {
+
+            if (isEmployee) {
+              const action = s.story_flags?.annual_action;
+              const coasting = action === 'wlb' || action === 'transfer';
+              const justPromoted = s.last_promo_age === s.age;
+              const isKingOfRoll = s.trait_title === '卷王之王';
+
+              if (justPromoted || (!coasting && ((s.impact || 0) >= 12 || isKingOfRoll))) {
+                perfRating = 'EE'; // Exceeds Expectations (卓越)
+              } else if ((s.story_flags?.pip_warning && gameRandom() < 0.5) || (s.health < 25 && (s.impact || 0) < 6 && gameRandom() < 0.35)) {
+                perfRating = 'NI'; // Needs Improvement (待改进 → PIP)
+              } else {
+                perfRating = 'ME'; // Meets Expectations (符合预期 / 60分及格)
+              }
+
               const maxCapByLevel: Record<string, number> = {
                 'L3': 24,
                 'L4': 34,
@@ -371,18 +383,26 @@ export const settlementEvents: Record<string, GameEvent> = {
               const norm = normalizeLevel(s.level, s);
               const curLevelKey = norm || (s.job_type === 'quant' ? 'Quant' : s.is_phd ? 'L4' : 'L3');
               const levelCap = maxCapByLevel[curLevelKey] || 55;
-              
-              if (updatedTC < levelCap) {
-                const baseRefresh = gameRandom() < 0.3 ? (newEconomy === 'bull' ? 2.5 : 1.5) : (newEconomy === 'bear' ? 0.5 : 1.0);
+              const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60); // impact 0→0.5x, 60+→1.5x
+
+              if (perfRating === 'EE') {
+                const baseRefresh = newEconomy === 'bull' ? 3.0 : newEconomy === 'bear' ? 1.0 : 2.0;
                 const refreshAmt = parseFloat((baseRefresh * impactAmtMult).toFixed(1));
                 updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
-                meritMsg = ` 【调薪与激励】凭本年度表现获得了公司 Merit Raise 调薪与 RSU 股票 Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+                meritMsg = `【年度考评 · EE 卓越】年度 PSC 考评斩获 Exceeds Expectations！凭借卓越交付拿到 Merit 调薪与大额 RSU Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+              } else if (perfRating === 'ME') {
+                const baseRefresh = newEconomy === 'bull' ? 1.5 : newEconomy === 'bear' ? 0.5 : 1.0;
+                const refreshAmt = parseFloat((baseRefresh * Math.min(1.0, impactAmtMult)).toFixed(1));
+                updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
+                meritMsg = `【年度考评 · ME 符合预期】稳定达成 Meets Expectations (60分及格线)，完成本职的同时守住了身心，拿到常规调薪 (+${refreshAmt.toFixed(1)}w TC)！`;
+              } else {
+                meritMsg = `【年度考评 · NI 待改进】Manager 约谈指出你本年度交付不足、明显掉队 (Needs Improvement)，团队亮起 PIP 预警红灯，无奖金调薪，建议尽快内部转组或跳槽自救！`;
               }
             } else if (s.job_type === 'startup_founder' && !s.laid_off) {
               if (newEconomy === 'bull') {
-                meritMsg = ' 【初创运营】初创团队业务在牛市大环境中健康增长，公司产品顺利推进！';
+                meritMsg = '【初创运营】初创团队业务在牛市大环境中健康增长，公司产品顺利推进！';
               } else if (newEconomy === 'bear') {
-                meritMsg = ' 【初创运营】宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬！';
+                meritMsg = '【初创运营】宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬！';
               }
             }
 
@@ -411,6 +431,10 @@ export const settlementEvents: Record<string, GameEvent> = {
               exit_deliberated: false,
               scam_marriage_failed: false,
               side_hustle_canceled: false,
+              // Annual Perf Review outcome + reset this year's action so it can't carry over.
+              last_perf_rating: perfRating,
+              annual_action: undefined,
+              ...(perfRating ? { pip_warning: perfRating === 'NI' } : {}),
             };
 
             if (newNetWorth >= 100 && !newStoryFlags.milestone_100w) {

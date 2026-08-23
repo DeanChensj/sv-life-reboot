@@ -558,9 +558,11 @@ export const midYearEventRouter = (s: GameState): string => {
        workEvents.push('apple_vision_pro_demo');
      }
      
-     // 公司专属 PIP 概率区分（来自 company 表）：亚麻/Meta 高强度末位淘汰 (high)，
-     // 皮衣黄 Nvidia 及 Google/Apple 概率极低 (low)，其余大厂中等 (medium 兜底)。
-     const pipTier = getCompanyProfile(s.company)?.pipTier ?? 'medium';
+      // 转组赛道 (team_focus) 覆盖 H1 走向:养老支持组 → 极低 PIP。
+      const teamFocus = s.story_flags?.team_focus;
+      // 公司专属 PIP 概率区分（来自 company 表）：亚麻/Meta 高强度末位淘汰 (high)，
+      // 皮衣黄 Nvidia 及 Google/Apple 概率极低 (low)，其余大厂中等 (medium 兜底)。
+      const pipTier = teamFocus === 'wlb_tools' ? 'low' : (getCompanyProfile(s.company)?.pipTier ?? 'medium');
      if (pipTier === 'high') {
        workEvents.push('friday_pip', 'friday_pip', 'friday_pip', 'layoff_rumor');
      } else if (pipTier === 'low') {
@@ -595,11 +597,25 @@ export const midYearEventRouter = (s: GameState): string => {
      if (isCorporate && (s.level === 'L6 (Staff)' || s.level === 'Staff' || s.level === 'L7 (Senior Staff)' || s.level === 'Senior Staff' || s.level === 'L8 (Principal)' || s.level === 'MTS') && gameRandom() < 0.35) {
        workEvents.push('career_org_tech_lead_campaign');
      }
-     if (isCorporate && (s.level === 'L7 (Senior Staff)' || s.level === 'Senior Staff' || s.level === 'L8 (Principal)') && (s.impact || 0) >= 30 && gameRandom() < 0.35) {
-       workEvents.push('career_executive_tech_steering');
-     }
+      if (isCorporate && (s.level === 'L7 (Senior Staff)' || s.level === 'Senior Staff' || s.level === 'L8 (Principal)') && (s.impact || 0) >= 30 && gameRandom() < 0.35) {
+        workEvents.push('career_executive_tech_steering');
+      }
 
-     return gamePick(workEvents);
+      // ── 转组赛道 (team_focus) 塑造 H1 事件走向 ──
+      // 前沿 AI 核心组:高业务能见度 → 更频繁卷入大模型攻坚与影响力机遇 (高强度高上限)。
+      if (teamFocus === 'ai_core' && isCorporate) {
+        if (s.year >= 2023) workEvents.push('llm_datacenter_power_outage');
+        if (s.year >= 2024) workEvents.push('ai_disruption_existential');
+        if (!s.story_flags?.open_source_breakout_seen) workEvents.push('open_source_breakout');
+        if (!s.story_flags?.internal_tech_talk_viral_seen) workEvents.push('internal_tech_talk_viral');
+      }
+      // 养老支持组:远离 PIP / 裁员 / 线上危机,回归平稳日常 (低压低上限)。
+      if (teamFocus === 'wlb_tools') {
+        const chill = workEvents.filter((e) => !['friday_pip', 'layoff_rumor', 'stock_crash', 'ai_disruption_existential', 'friday_p0_outage_crisis', 'agent_hallucination_prod_disaster'].includes(e));
+        return gamePick(chill.length ? chill : ['snack_perks_downgrade']);
+      }
+
+      return gamePick(workEvents);
   }
 
   // Stage H2 (Autumn/Winter: Life, Social, Travel & Lifestyle Events)

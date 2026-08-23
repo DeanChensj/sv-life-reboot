@@ -423,13 +423,17 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【紧急 Short Sale 降价卖房】止损割肉，保住剩余本金退回租房',
+        // Recover buyer equity only — nothing if parents funded the house (same guard as the
+        // house_slave 断供 branch; closes the parents-buy → default-sell free-cash exploit).
         effect: (s) => ({
           has_housing: false,
           housing_name: HOUSING_NAMES.NORMAL_SHARED,
           rent: 2.0,
-          cash: s.cash + 25,
+          cash: s.cash + (s.parents_helped_house ? 0 : 25),
           health: Math.min(100, s.health + 8),
-          message: '你果断以市价 85 折挂牌急售。虽然亏掉了部分前期本金，但成功拿回 $25w 宝贵流动资金，卸下了沉重的房贷包袱！',
+          message: s.parents_helped_house
+            ? '你以市价 85 折挂牌急售。房子当年是父母全款买的、你并无本金投入，割肉后仅卸下沉重房贷包袱退回租房。'
+            : '你果断以市价 85 折挂牌急售。虽然亏掉了部分前期本金，但成功拿回 $25w 宝贵流动资金，卸下了沉重的房贷包袱！',
         }),
         nextEventId: returnToAnnualPanel,
       },

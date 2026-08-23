@@ -87,7 +87,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
   const peakNetWorth = chartHistory.length ? Math.max(...chartHistory.map(h => h.netWorth)) : currentNetWorth;
   const initialNetWorth = chartHistory[0]?.netWorth || 1;
   const growthMultiplier = initialNetWorth > 0 ? (currentNetWorth / initialNetWorth).toFixed(1) : '1.0';
-  const yearsPlayed = Math.max(1, chartHistory.length);
+  const totalYearsSimulated = Math.max(1, (gameState.age || 18) - 18);
 
   // SVG Line Chart Coordinate Mapping
   const svgWidth = 640;
@@ -264,7 +264,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
                 <polyline points="17 6 23 6 23 12" />
               </svg>
-              <span>资产走势图 ({chartHistory.length})</span>
+              <span>资产走势图</span>
             </button>
             <button
               onClick={() => setActiveTab('timeline')}
@@ -309,8 +309,8 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
               <span className="font-bold text-sky-400">${gameState.tc.toFixed(1)}w</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-zinc-500">年限:</span>
-              <span className="font-bold text-amber-400">{yearsPlayed} 年</span>
+              <span className="text-zinc-500">模拟历程:</span>
+              <span className="font-bold text-amber-400">{totalYearsSimulated} 年</span>
             </div>
           </div>
         </div>
@@ -664,7 +664,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
               <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3.5 sm:p-5">
                 <h4 className="text-xs sm:text-sm font-bold text-zinc-200 mb-3 flex items-center justify-between">
                   <span>历年资产明细清单</span>
-                  <span className="text-xs font-mono text-zinc-500">共 {chartHistory.length} 年记录</span>
+                  <span className="text-xs font-mono text-zinc-500">共 {chartHistory.length} 个历史节点</span>
                 </h4>
                 <div className="overflow-x-auto max-h-48 overflow-y-auto custom-scrollbar">
                   <table className="w-full min-w-[360px] text-left text-xs font-mono">
@@ -863,19 +863,17 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
 
               <div className="bg-zinc-900/80 border border-zinc-800 p-4 sm:p-5 rounded-2xl flex flex-col gap-1.5 sm:gap-2">
                 <div className="text-xs font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                    <polyline points="17 6 23 6 23 12" />
                   </svg>
-                  <span>核心羁绊网络</span>
+                  <span>财富自由进程</span>
                 </div>
-                <div className="text-lg sm:text-xl font-bold text-purple-400">
-                  已结识 {Object.keys(gameState.npcs || {}).length} 位关键人物
+                <div className="text-lg sm:text-xl font-bold text-emerald-400 font-mono">
+                  ${currentNetWorth.toFixed(1)}w <span className="text-xs font-normal text-zinc-400 font-sans">/ 目标 ${gameState.win_threshold}w ({Math.min(100, Math.floor((currentNetWorth / gameState.win_threshold) * 100))}%)</span>
                 </div>
                 <div className="text-xs text-zinc-400">
-                  {Object.values(gameState.npcs || {}).map(n => n.name).join('、') || '暂无深度 NPC 羁绊'}
+                  流动现金 ${gameState.cash.toFixed(1)}w · 证券股票 ${(gameState.stocks || 0).toFixed(1)}w · 历史峰值 ${peakNetWorth.toFixed(1)}w
                 </div>
               </div>
             </div>

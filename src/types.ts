@@ -66,7 +66,9 @@ export interface StoryFlags {
   // 转码 on-ramp (非科班逆袭)
   non_cs_background?: boolean;
   zhuanma_origin?: 'us' | 'cn'; // 美本非CS / 陆本非CS
+  zhuanma_major?: 'bio_chem' | 'business_humanities' | 'hard_engineering' | 'general_cn'; // 本科非CS专业背景
   zhuanma_method?: 'bootcamp' | 'ms' | 'self' | 'cn_defer';
+  zhuanma_prep_style?: 'solid_project' | 'packaged_resume' | 'crossover_project' | 'mock_buddy'; // 备战打磨策略
   zhuanma_attempts?: number; // 转码首战失败次数(控制 washout 阈值)
   zhuanma_landed?: boolean; // 已上岸(用于后期事件门控 + recap)
   zhuanma_washout?: boolean; // 转码劝退退出 → 触发 washout 结局

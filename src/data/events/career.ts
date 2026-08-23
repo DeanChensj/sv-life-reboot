@@ -3494,6 +3494,99 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       }
     ]
+  },
+
+  // ============================ 非科班转码职场成长线 ============================
+  'zhuanma_imposter_syndrome': {
+    id: 'zhuanma_imposter_syndrome',
+    title: '【转码阵痛】非科班冒名顶替综合征',
+    description: '入职科技公司后，组内同事清一色是名校 CS 硕博。架构评审会上大家热烈讨论 Paxos 状态机、Linux 内核页锁与 B+ 树分裂，而你面对底层细节有些心虚，冒名顶替综合征 (Imposter Syndrome) 悄然而至……',
+    oncePerLife: true,
+    choices: [
+      {
+        text: '【熬夜爆肝 CS 基础四大件】恶补操作系统、计算机网络与数据库原理 (脱胎换骨)',
+        condition: (_s) => true,
+        effect: (s) => ({
+          health: Math.max(0, s.health - 8),
+          leetcode: Math.min(100, s.leetcode + 14),
+          impact: addImpact(s, 8),
+          message: '连续数月深夜死磕 CS 经典教材与 Linux 内核源码，你彻底补齐了非科班的理论短板，设计方案有理有据，组内技术大牛对你刮目相看！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【扬长避短 · 发挥跨界沟通与业务交付优势】做团队不可替代的 Team Glue',
+        condition: (_s) => true,
+        effect: (s) => ({
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
+          network: Math.min(100, (s.network || 10) + 8),
+          impact: addImpact(s, 6),
+          message: '你把精力聚焦在跨部门业务协同与产品需求落地，用通俗易懂的人话向 PM 与业务方沟通，成为团队不可或缺的粘合剂！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'zhuanma_domain_crossover': {
+    id: 'zhuanma_domain_crossover',
+    title: '【跨界爆发】非科班专业复合优势降维打击',
+    description: '公司技术委员会宣布开辟全新业务线（AI 医疗/计算生物/智能金融风控/工业自动化）。其他纯 CS 工程师对着专业论文和领域指标一筹莫展，而你的非 CS 本科背景让你一眼看穿痛点！',
+    oncePerLife: true,
+    choices: [
+      {
+        text: '【主动请缨担当跨界 Tech Lead】主导核心跨界系统架构，一鸣惊人！',
+        condition: (_s) => true,
+        effect: (s) => ({
+          impact: addImpact(s, 16),
+          cash: s.cash + 6,
+          leetcode: Math.min(100, s.leetcode + 6),
+          message: '凭借非科班的独特专业洞察与过硬代码，你提出的跨界架构方案直接解决了业务卡点，被破格指定为专项 Tech Lead 并获得高额专项奖金！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【开源跨界工具链与撰写技术博客】打造技术影响力，成为领域红人',
+        condition: (_s) => true,
+        effect: (s) => ({
+          impact: addImpact(s, 12),
+          network: Math.min(100, (s.network || 10) + 12),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
+          message: '你在 GitHub 上开源了该领域的垂直工具库，并在 Substack/Medium 发表深度架构解析，斩获数千 Star，成为湾区跨界转码的技术标杆！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
+  },
+
+  'zhuanma_mentor_community': {
+    id: 'zhuanma_mentor_community',
+    title: '【同舟共济】硅谷转码互助圈与薪火相传',
+    description: '你在硅谷职场站稳脚跟后，周末受邀参加湾区华人科技沙龙。一群同样来自生化环材与文商社科的转码留学生围着你请教经验，你仿佛看见了当年那个迷茫却坚毅的自己。',
+    oncePerLife: true,
+    choices: [
+      {
+        text: '【发起非科班转码公益 Mentorship】传道受业，广结善缘与人脉',
+        condition: (_s) => true,
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 10) + 14),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 6),
+          health: Math.min(100, s.health + 4),
+          message: '你创办了硅谷非科班码农互助联盟，指导了数十名转码学弟学妹成功上岸，在湾区技术圈树立了极佳的口碑与人脉网络！'
+        }),
+        nextEventId: h1ToH2Router
+      },
+      {
+        text: '【开设求职辅导与 1v1 Mock 课时】知识变现，拓展副业现金流',
+        condition: (_s) => true,
+        effect: (s) => ({
+          cash: s.cash + 5,
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          message: '你利用业余时间提供专业的简历修改与 1v1 Mock 面试指导，扎实的经验广受学员好评，为你带来了 +$5w 丰厚的副业课时收入！'
+        }),
+        nextEventId: h1ToH2Router
+      }
+    ]
   }
 };
 

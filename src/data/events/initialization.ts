@@ -1415,48 +1415,51 @@ export const initializationEvents: Record<string, GameEvent> = {
     description: '你拿着每年 3 万美元的 stipend，看着去湾区大厂打工的同学已经换了保时捷。你的导师极度 push，凌晨两点还在群里圈你改实验。',
     choices: [
       {
-        text: '【全力冲刺顶会】昼夜攻坚大模型架构与分布式算子，硬冲 NeurIPS/ICML (耗时 2 年)',
+        text: '【一作硬冲顶会 Oral】昼夜攻坚大模型推理与分布式架构，硬冲 NeurIPS/ICML (高风险高回报，耗时 2 年)',
         effect: (s) => {
           const passProb = 0.40 + ((s.impact || 0) >= 10 ? 0.15 : 0) + (s.leetcode >= 65 ? 0.10 : 0) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass 
-            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), is_phd: true, leetcode: Math.min(100, s.leetcode + 15), impact: addImpact(s, 15), story_flags: { ...(s.story_flags || {}), hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，学术影响力大涨 (Impact +15)！老板决定带你去夏威夷参加顶级学术会议！' }
-            : { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 12), impact: addImpact(s, 6), leetcode: Math.min(100, s.leetcode + 12), message: '首篇顶会审稿激烈惨遭拒稿，但你搭建了完备的实验基准并积累了扎实的前期产出 (Impact +6)。进入博三博四攻坚！' };
+            ? { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 15), is_phd: true, leetcode: Math.min(100, s.leetcode + 12), impact: addImpact(s, 18), story_flags: { ...(s.story_flags || {}), hawaii_conf: true }, message: '两年的昼夜颠倒，你的论文终于有突破性进展并被顶会 Oral 接收，学术界一战成名！老板大喜，决定带你去夏威夷参加顶会！' }
+            : { age: s.age + 2, year: s.year + 2, health: Math.max(0, s.health - 15), impact: addImpact(s, 4), leetcode: Math.min(100, s.leetcode + 8), message: '首篇顶会审稿激烈惨遭拒稿，你身心俱疲，仅整理出一套实验基准与前期成果。进入博三博四攻坚！' };
         },
         nextEventId: (s) => (s.story_flags?.hawaii_conf ? 'phd_conference' : 'phd_mid_stage')
       },
       {
-        text: '【跟组稳扎稳打】与实验室师兄合作发表中档二作，稳过资格考 Quals (耗时 2 年)',
+        text: '【跟组稳扎稳打】与实验室师兄合作发表中档期刊二作，稳过博士资格考 Quals (耗时 2 年)',
         effect: (s) => ({
           age: s.age + 2,
           year: s.year + 2,
-          health: Math.max(0, s.health - 8),
-          impact: addImpact(s, 12),
+          health: Math.max(0, s.health - 4),
+          impact: addImpact(s, 10),
           leetcode: Math.min(100, s.leetcode + 8),
-          message: '你稳扎稳打通过了博士资格考 (Quals)，并积累了扎实的合作论文与学术产出 (Impact +12)，深得导师信任！进入博三高年级。'
+          message: '你稳扎稳打通过了博士资格考 (Quals)，并积累了扎实的合作论文与学术产出，深得导师信任！进入博三高年级。'
         }),
         nextEventId: 'phd_mid_stage'
       },
       {
-        text: '【Tahoe 实验室滑雪团建】跟导师申请去 Lake Tahoe 滑雪度假与身心调养 (健康 +25, 耗时 1 年)',
+        text: '【担任本科生 CS 助教 (TA)】批改作业与带 Discussion 答疑，赚取生活补贴并调养作息 (耗时 1 年)',
         effect: (s) => ({
-          health: Math.min(100, s.health + 25),
+          cash: s.cash + 1.5,
+          health: Math.min(100, s.health + 20),
+          impact: addImpact(s, 2),
           age: s.age + 1,
           year: s.year + 1,
-          message: '你在 Lake Tahoe 的雪道上畅快滑雪，身心彻底满血复活！但导师在缆车上严肃提醒科研进度落后，要求你回校后必须全力攻坚。'
+          message: '你担任了一年的本科生助教，虽然科研产出不多，但作息规律充实，还拿到了额外的助教补贴，身心状态大幅恢复！'
         }),
         nextEventId: 'phd_mid_stage'
       },
       {
-        text: '【Master Out 及时止损】看清学术民工现状，拿硕士跑路求职 (耗时 1 年)',
+        text: '【Master Out 及时止损】看清学术内卷现状，拿硕士学位跑路转战硅谷大厂 (耗时 1 年)',
         effect: (s) => ({
           age: s.age + 1,
           year: s.year + 1,
           is_phd: false,
           is_master: true,
           health: Math.min(100, s.health + 15),
+          impact: Math.max(0, (s.impact || 0) - 5),
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
-          message: '你及时止损，认清了自己不适合做学术，拿着硕士学位重回硅谷求职大军。'
+          message: '你及时止损认清了学术圈现状，虽折损了部分学术头衔与影响力，但心态豁然开朗，带着硕士学位重返硅谷大厂求职！'
         }),
         nextEventId: 'job_hunt'
       }

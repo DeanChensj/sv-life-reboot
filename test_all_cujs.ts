@@ -330,27 +330,28 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   const jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.levelLabel === '全奖博士', 'Level displays 全奖博士 before job');
 
-  // 2. Anti-Loop Verification: Choice 2 (Tahoe Vacation) routes to phd_mid_stage (not looping back to phd_life)
-  let vacationRes = stepChoice(state, 'phd_life', 2);
-  assert(vacationRes.nextEventId === 'phd_mid_stage', 'PhD Tahoe vacation properly advances to phd_mid_stage (no infinite loop back to phd_life)');
-  assert(vacationRes.nextState.age === state.age + 1, 'Age increments by 1 on vacation');
-  assert(vacationRes.nextState.year === state.year + 1, 'Year increments by 1 on vacation');
-  assert(vacationRes.nextState.health === 100, 'Health restored on Tahoe ski vacation');
+  // 2. Anti-Loop Verification: Choice 2 (Teaching Assistant TA) routes to phd_mid_stage (not looping back to phd_life)
+  let taRes = stepChoice(state, 'phd_life', 2);
+  assert(taRes.nextEventId === 'phd_mid_stage', 'PhD TA properly advances to phd_mid_stage (no infinite loop back to phd_life)');
+  assert(taRes.nextState.age === state.age + 1, 'Age increments by 1 on TA year');
+  assert(taRes.nextState.year === state.year + 1, 'Year increments by 1 on TA year');
+  assert(taRes.nextState.cash === state.cash + 1.5, 'Stipend income added on TA year');
+  assert(taRes.nextState.health === 100, 'Health restored on TA teaching year');
 
   // 3. PhD Mid Stage Choice 3 (Master Out) routes to job_hunt
-  let midStageMasterOutRes = stepChoice(vacationRes.nextState, 'phd_mid_stage', 3);
+  let midStageMasterOutRes = stepChoice(taRes.nextState, 'phd_mid_stage', 3);
   assert(midStageMasterOutRes.nextEventId === 'job_hunt', 'PhD Master Out routes to job_hunt');
   assert(midStageMasterOutRes.nextState.is_phd === false, 'PhD status revoked on master out');
   assert(midStageMasterOutRes.nextState.is_master === true, 'Player receives master degree on master out');
 
   // 4. PhD Mid Stage Choice 1 (DeepMind / FAIR Research Intern) — drive the REAL success RNG
   //    (was an is_phd + cash override). On success the real effect grants +$6w and the PhD.
-  const intern = forceChoice(vacationRes.nextState, 'phd_mid_stage', 1, (r) => r.is_phd === true, 202);
+  const intern = forceChoice(taRes.nextState, 'phd_mid_stage', 1, (r) => r.is_phd === true, 202);
   assert(!!intern, 'AI research internship can succeed and complete the PhD defense (real effect)');
   assert(intern!.nextEventId === 'phd_job_hunt', 'Successful research internship routes to phd_job_hunt');
   assert(intern!.nextState.is_phd === true, 'PhD degree maintained after research internship');
-  assert(intern!.effect.cash === vacationRes.nextState.cash + 6, 'Real internship pays a +$6w stipend');
-  assert(intern!.nextState.cash > vacationRes.nextState.cash, 'Earned stipend from research internship');
+  assert(intern!.effect.cash === taRes.nextState.cash + 6, 'Real internship pays a +$6w stipend');
+  assert(intern!.nextState.cash > taRes.nextState.cash, 'Earned stipend from research internship');
   assert((intern!.nextState.impact || 0) >= 15, 'AI research internship builds research impact (>=15)');
 
   // 5. PhD Direct Paper Success -> phd_conference -> phd_job_hunt -> OpenAI MTS Offer.

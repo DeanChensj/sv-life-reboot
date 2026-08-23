@@ -21,6 +21,23 @@ export const settlementEvents: Record<string, GameEvent> = {
              newStartupTenure = 0;
            }
 
+           // ICC 外包挂靠不是长期归宿:低薪 bench、随时断供,且 USCIS 对 body-shop 重点稽查
+           // (site visit/RFE),挂靠越久越易被查;ICC 也不提供合规绿卡担保(下方 GC 段冻结、merit 段排除)。
+           // 每年被查概率随挂靠年数升级(min 75%, 25%×年数,约 1-2 年宽限期),命中即挂靠合同终止、合法
+           // 身份亮红灯 → 由 nextEventId 打入 layoff_hit 限期自救(刷题上岸/转 CPT/EB5/回国)。逼玩家尽快上岸。
+           const onIcc = s.company === 'icc' && !s.laid_off && s.job_type === 'startup';
+           const iccTempVisa = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无';
+           let iccCrackdown = false;
+           let iccMsg = '';
+           if (onIcc) {
+             if (iccTempVisa && gameRandom() < Math.min(0.75, 0.25 * newStartupTenure)) {
+               iccCrackdown = true;
+               iccMsg = ' 【USCIS 稽查】移民局对你挂靠的 ICC 外包展开突击 site visit,查出 bench 待岗与客户断供的合规问题,挂靠合同当场终止,合法工作身份亮起红灯!';
+             } else {
+               iccMsg = ' 【ICC 挂靠告急】低薪 bench 待命、客户随时断供,USCIS 对 body-shop 稽查逐年趋严且不担保合规绿卡 —— 务必尽快闭关刷题跳槽上岸!';
+             }
+           }
+
            let nextGc = s.gc_progress || 0;
            let nextStage = s.gc_stage || 'not_started';
 
@@ -200,6 +217,8 @@ export const settlementEvents: Record<string, GameEvent> = {
                  } else {
                     gcMsg = ' 【绿卡排期】你虽然失业，但由于你的 I-140 已经获批，Priority Date 依然为你保留，排期照常进行。';
                  }
+              } else if (s.company === 'icc') {
+                 gcMsg = ' 【绿卡政策】ICC 外包挂靠不提供合规绿卡担保（body-shop 的 PERM 极易被 USCIS 认定造假）——绿卡进度停滞，务必尽快跳槽到正规大厂重启排期。';
               } else if (s.difficulty_title === '困难难度' && s.job_type === 'startup') {
                  gcMsg = ' 【困难模式】在当前 AI 寒冬下，初创公司 Startup 拒绝为你递交 PERM 绿卡申请！只能跳槽大厂或办 O1 签证。';
               } else if (s.job_type === 'startup' && newStartupTenure <= 2) {
@@ -332,7 +351,7 @@ export const settlementEvents: Record<string, GameEvent> = {
             // Merit raise / RSU refresh check (45% chance) for corporate tech employees
             let updatedTC = s.tc;
             let meritMsg = '';
-            const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
+            const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && s.company !== 'icc';
             // Merit / RSU refresh 与 impact(项目影响力)挂钩：高 impact → 加薪又频又大；躺平低 impact →
             // 又稀又小，即使不追求升职、留在原级别，收入也会停滞被通胀/开销蚕食(躺平的隐性代价)。
             const impactChanceMult = 0.4 + Math.min(1.0, (s.impact || 0) / 50);   // impact 0→0.4x, 50+→1.4x
@@ -507,11 +526,14 @@ export const settlementEvents: Record<string, GameEvent> = {
                 h1bMsg,
                 gcMsg,
                 day1CptMsg,
+                iccMsg,
                 petMsg,
                 autoStockSellMsg,
                 economyMsg,
                 founderMsg,
               ].map(m => (m ? m.trim() : '')).filter(Boolean).join('\n'),
+              // ICC 稽查命中:挂靠合同终止,转入失业+身份危机 (nextEventId 会据此打入 layoff_hit)。
+              ...(iccCrackdown ? { laid_off: true, job_type: 'unemployed' as const, company: undefined, tc: 0 } : {}),
               // Natural-life ending: at the lifespan cap the game resolves even if the
               // player never hit FIRE and never died — enabling the "content" endings
               // (中产退休/海归/上岸/佛系). The `message`/`status` spread overrides above.

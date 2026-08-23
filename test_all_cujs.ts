@@ -2408,6 +2408,56 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 46 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 47: ICC 外包挂靠不是长期归宿。历史 bug:挂靠被当成普通 startup 正职——能拿绿卡、正常涨薪、
+// 无限期零风险。现实里 ICC = 低薪 bench + USCIS 重点稽查,只能短期维持身份、必须尽快刷题上岸。
+// 锁四件事:① 挂靠期间绿卡冻结(不推进);② 不涨薪(merit 排除);③ USCIS 稽查逐年升级、命中即
+// 转失业+身份危机(→ layoff_hit);④ 稽查不会无限拖延(数年内必被清退,杜绝无限挂靠)。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 47] ICC 外包挂靠:低薪/冻结绿卡/USCIS 稽查逼上岸 ---');
+  const settle = events['sv_year_end_settlement'].choices[0];
+  const iccBase = { ...generateInitialState(), company: 'icc', job_type: 'startup', visa: 'H1B (工签)',
+    tc: 14, gc_stage: 'i140_processing', gc_progress: 2, stocks: 0, cash: 20, health: 70, age: 30, status: 'playing' } as GameState;
+
+  // 多年数取样:统计稽查命中率(升级)、绿卡推进率、涨薪率。
+  const sample = (tenure: number) => {
+    let crack = 0, gcAdv = 0, merit = 0; const N = 1500;
+    for (let i = 0; i < N; i++) {
+      setGameSeed(i);
+      const r = settle.effect({ ...iccBase, startup_tenure: tenure } as GameState);
+      if (r.job_type === 'unemployed' && r.laid_off) crack++;
+      if ((r.gc_progress || 0) > 2 || (r.gc_stage && r.gc_stage !== 'i140_processing')) gcAdv++;
+      if ((r.tc || 0) > 14) merit++;
+    }
+    return { crack: crack / N, gcAdv: gcAdv / N, merit: merit / N };
+  };
+  const y1 = sample(0);   // 结算后成为第 1 年
+  const y3 = sample(2);   // 结算后成为第 3 年
+
+  // ① 绿卡冻结:任何挂靠年数都不推进绿卡。
+  assert(y1.gcAdv === 0 && y3.gcAdv === 0, 'ICC 挂靠期间绿卡完全冻结(不推进 PERM/排期)');
+  // ② 不涨薪。
+  assert(y1.merit === 0 && y3.merit === 0, 'ICC 挂靠不涨薪(merit 排除)');
+  // ③ 稽查逐年升级:第 1 年就有真实风险,第 3 年显著更高。
+  assert(y1.crack > 0.10 && y1.crack < 0.45, 'ICC 第 1 年即有 USCIS 稽查风险(约 25%)');
+  assert(y3.crack > y1.crack + 0.20, 'ICC 稽查概率随挂靠年数显著升级(越久越危险)');
+  // ④ 命中即转失业+身份危机 → layoff_hit,并非死胡同/无限挂靠。
+  setGameSeed(2); // 高年数下大概率命中
+  const caught = settle.effect({ ...iccBase, startup_tenure: 5 } as GameState);
+  if (caught.laid_off) {
+    assert(caught.job_type === 'unemployed' && caught.tc === 0, '稽查命中后挂靠合同终止(转失业、TC 清零)');
+    const routed = (settle.nextEventId as (s: GameState) => string)({ ...iccBase, ...caught } as GameState);
+    assert(routed === 'layoff_hit', '稽查命中(临时工签)→ 打入 layoff_hit 限期自救(有上岸/转CPT/回国等出路)');
+  }
+  // 永久身份(绿卡)在 ICC 不被稽查清退(只有临时签证才有遣返风险)。
+  setGameSeed(1);
+  const gcHolder = settle.effect({ ...iccBase, visa: '绿卡', startup_tenure: 5 } as GameState);
+  assert(!(gcHolder.job_type === 'unemployed' && gcHolder.laid_off), '绿卡持有者在 ICC 不因稽查被清退');
+
+  console.log('✅ CUJ 47 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

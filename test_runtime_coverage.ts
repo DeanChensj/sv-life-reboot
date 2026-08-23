@@ -30,6 +30,7 @@ const ALLOW_UI_OR_ASSET: Record<string, string> = {
   tesla_fsd_unsupervised_scare: '需 model_y/cybertruck;车为 ShopModal 购买 (UI)',
   luxury_car_meet: '需 porsche/cybertruck;豪车为 ShopModal 购买 (UI)',
   luxury_car_vandalism_towing: '需 porsche/cybertruck;豪车为 ShopModal 购买 (UI)',
+  mortgage_default_crisis: '需在商城/抢房置业且失业缺钱;房产主要在 ShopModal 购买 (UI),纯事件图模拟极少主动买房',
 };
 
 // ---------------------------------------------------------------------------------------------

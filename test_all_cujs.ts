@@ -2616,6 +2616,60 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 50 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 51: 硅谷防破产与财务梗事件 (我是学生砍价 / 前任独角兽暴富 / 房贷断供危机)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 51] 硅谷防破产与财务梗事件 (我是学生 / 前任暴富 / 房贷断供) ---');
+
+  // 1. 【我是学生，可以少算点吗？】
+  const changeRental = events['change_rental'];
+  const studentChoice = changeRental.choices.find((c) => c.text.includes('我是学生'))!;
+  assert(!!studentChoice, 'change_rental 包含【我是学生，可以少算点吗？】砍价选项');
+
+  const f1Student: GameState = {
+    ...generateInitialState(),
+    visa: 'F1 (学生)',
+    job_type: undefined,
+    rent: 2.0,
+    cash: 2.0,
+  } as GameState;
+  const studentRes = studentChoice.effect(f1Student);
+  assert(studentRes.rent! < 2.0 && studentRes.cash! > 2.0, '真实学生砍价成功减免房租');
+
+  const employedSwe: GameState = {
+    ...generateInitialState(),
+    visa: 'H1B (工签)',
+    job_type: 'big_tech',
+    rent: 2.0,
+    charm: 15,
+  } as GameState;
+  const sweRes = studentChoice.effect(employedSwe);
+  assert(sweRes.charm! < 15, '大厂高薪码农冒充学生砍价遭遇社死扣情商');
+
+  // 2. 【前任独角兽暴富】
+  const unicornEvent = events['ex_spouse_unicorn_exit'];
+  assert(!!unicornEvent && unicornEvent.choices.length === 3, 'ex_spouse_unicorn_exit 存在且有 3 个选项');
+  const divorcedState: GameState = {
+    ...generateInitialState(),
+    age: 30,
+    story_flags: { had_divorce: true },
+    cash: 20,
+  } as GameState;
+  const likeChoice = unicornEvent.choices.find((c) => c.text.includes('默默点赞'))!;
+  const likeRes = likeChoice.effect(divorcedState);
+  assert(likeRes.health! < divorcedState.health, '默默点赞心绞痛扣健康');
+
+  // 3. 【房贷断供危机】
+  const mortgageCrisis = events['mortgage_default_crisis'];
+  assert(!!mortgageCrisis && mortgageCrisis.choices.length === 3, 'mortgage_default_crisis 存在且有 3 个选项');
+  const shortSale = mortgageCrisis.choices.find((c) => c.text.includes('Short Sale'))!;
+  const saleRes = shortSale.effect({ ...divorcedState, has_housing: true, housing_name: 'Sunnyvale 老破小' } as GameState);
+  assert(saleRes.has_housing === false && saleRes.cash! > 20, 'Short Sale 卖房止损拿回流动资金退回租房');
+
+  console.log('✅ CUJ 51 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

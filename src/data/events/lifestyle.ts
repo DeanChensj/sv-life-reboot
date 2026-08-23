@@ -1770,5 +1770,44 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
-  }
+  },
+
+  'ex_spouse_unicorn_exit': {
+    id: 'ex_spouse_unicorn_exit',
+    title: '【前任独角兽暴富】各大科技媒体头条刷屏',
+    description: '当年你掏空积蓄支持创业、后来在加州法庭分走你 50% 资产的前任，其 AI 初创公司今天被科技巨头以 12 亿美元天价收购！各大媒体争相报道前任在 Sand Hill Road 购置的万尺豪华庄园，而你刚好收到今年调薪 $3k 的考评邮件……',
+    oncePerLife: true,
+    choices: [
+      {
+        text: '【默默点赞假装大度】成熟体面，放下过往纠葛',
+        effect: (s) => ({
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4),
+          health: Math.max(0, s.health - 8),
+          impact: addImpact(s, 3),
+          message: '你在朋友圈默默点了个赞，关上手机深吸一口气。虽然心绞痛扣了 8 点血，但你展现了顶级格局与从容！',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【找加州律师打财产再分配官司】主张当年出资权益与追加补偿 (花费 $5w 诉讼费)',
+        costBadge: '诉讼费 $5w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 5,
+        effect: (s) => ({
+          ...deductAssets(s, 5),
+          health: Math.max(0, s.health - 12),
+          message: '加州家庭法庭无情驳回了你的诉求，判定当年的 50/50 分割协议具备终局效力。你白白烧掉了 $5w 律师费，气得胃疼！',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【化悲痛为力量疯狂刷题】刺激做题家潜能，发誓在二级市场追平差距',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 15),
+          health: Math.max(0, s.health - 6),
+          message: '你受尽刺激，连夜怒刷 50 道 LeetCode Hard！做题家血脉彻底觉醒，算法实力暴涨！',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+    ],
+  },
 };

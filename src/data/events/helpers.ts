@@ -395,6 +395,16 @@ export const midYearEventRouter = (s: GameState): string => {
       }
     }
 
+    // 10) 离婚后前任独角兽暴富讽刺事件 (一生一次)
+    if (s.story_flags?.had_divorce && !hasSeen(s, 'ex_spouse_unicorn_exit') && s.age >= 27 && gameRandom() < 0.35) {
+      return 'ex_spouse_unicorn_exit';
+    }
+
+    // 11) 房贷断供与法拍危机 (拥有自住房但失业且现金/股票告急，一生一次)
+    if (isOwnedHousing(s.housing_name) && (!isWorking || s.laid_off) && (s.cash + (s.stocks || 0)) < 15 && !hasSeen(s, 'mortgage_default_crisis')) {
+      return 'mortgage_default_crisis';
+    }
+
     // 宏观行情快讯 (telegraph)。经济周期现由年终结算的 Markov 链驱动 (settlement.ts);这里在 H1 以
     // 完整事件「播报」当前 regime,让玩家——尤其 trader——在做年度决策前清晰读到牛/熊/横盘行情。
     // 纯播报,不改经济 (驱动在结算)。牛/熊年高频、横盘年低频。旧实现被 `!season_stage` 永久锁死

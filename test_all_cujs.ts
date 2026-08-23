@@ -708,6 +708,30 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const promoted = { ...generateInitialState(), level: 'L7 (Senior Staff)' } as GameState;
   assert(route(promoted) === 'l7_senior_staff_celebration', 'L7 success routes to l7_senior_staff_celebration');
 
+  // Raj L7 Board Rejection Guard:
+  // Even if last_promo_age === age was already true from earlier this year,
+  // failing the Raj board (level remains L6) MUST NEVER route to l7_senior_staff_celebration!
+  const rajBoard = events['raj_director_promotion_board'];
+  const rajAllyChoice = rajBoard.choices[0];
+  const rajRoute = rajAllyChoice.nextEventId as (s: GameState) => string;
+  const rajFailState: GameState = {
+    ...generateInitialState(),
+    level: 'L6 (Staff)',
+    age: 35,
+    last_promo_age: 35, // Simulate player promoted earlier in the same year or lateral hop
+  };
+  const rajFailDest = rajRoute(rajFailState);
+  assert(rajFailDest !== 'l7_senior_staff_celebration', 'Raj board rejection MUST NOT route to l7_senior_staff_celebration even if last_promo_age === age');
+
+  const rajWinState: GameState = {
+    ...generateInitialState(),
+    level: 'L7 (Senior Staff)',
+    age: 35,
+    last_promo_age: 35,
+  };
+  const rajWinDest = rajRoute(rajWinState);
+  assert(rajWinDest === 'l7_senior_staff_celebration', 'Raj board win routes to l7_senior_staff_celebration');
+
   // 合并后的唯一晋升引擎【疯狂内卷】在卷厂(meta)享更高晋升赔率(原【大厂战时冲刺】已并入):
   // 满 2 年在职 + 算法达标 → 确定性快车道晋升 L3→L4,验证晋升与文案。
   const dailyLife = events['sv_daily_life'];

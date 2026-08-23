@@ -1977,29 +1977,60 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 // -----------------------------------------------------------------------------
-// CUJ 37: WLB / AI 组养生路径的晋升封顶 L4,且 WLB 转岗为一次性。
-// 锁住"躺着养生升不到 Senior(L5)"的平衡保证:L5 及以上必须靠【疯狂内卷】耗血挣;
-// 防止有人把自然晋升上限改回 L5 让 WLB 重新变成无脑优选。
+// CUJ 37: Coasting WLB (按部就班) 封顶 L4 + 年度考评 (Perf Review EE/ME/NI)。
+// 锁两件事:①"按部就班养生"自然晋升封顶 L4(L5+ 必须【疯狂内卷】耗血挣,防养生变无脑优选);
+// ②年度考评评级正确 —— 晋升/高impact冲刺=EE,健康养生=ME(有调薪,非惩罚),摆烂=可NI+PIP,
+// 且 annual_action 每年结算后重置(防上一年动作误判后续考评)。
 // -----------------------------------------------------------------------------
 {
-  console.log('--- [CUJ 37] WLB/AI 养生路径封顶 L4 + WLB 一次性 ---');
-  const wlb = events['sv_daily_life'].choices.find((c) => c.text.includes('转岗 AI 组'))!;
-  const ai = events['sv_daily_life'].choices.find((c) => c.text.includes('在神仙 AI 组保持工作生活平衡'))!;
-  assert(!!wlb && !!ai, 'sv_daily_life 有【转岗 AI 组】与【神仙 AI 组 WLB 漫步】');
+  console.log('--- [CUJ 37] Coasting WLB 封顶 L4 + 年度考评 EE/ME/NI ---');
+  const coast = events['sv_daily_life'].choices.find((c) => c.text.includes('按部就班'))!;
+  assert(!!coast, 'sv_daily_life 有【按部就班 · 稳健 WLB】选项');
 
-  // 一个满资历、算法极高的 L4 走 WLB 或 AI 攻坚,都不能自然升到 L5(必须内卷)。
+  // 满资历高算法 L4 走按部就班,不能自然升到 L5(必须内卷);且设 annual_action=wlb。
   const l4Ripe = (over: Partial<GameState>): GameState => ({
     ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
     leetcode: 100, age: 40, last_promo_age: 30, health: 90, tc: 40, status: 'playing', ...over,
   } as GameState);
   for (let i = 0; i < 30; i++) {
-    assert(wlb.effect(l4Ripe({ transferred_to_ai: false })).level !== 'L5 (Senior)', 'WLB 养生不能自然把 L4 升到 L5');
-    assert(ai.effect(l4Ripe({ transferred_to_ai: true })).level !== 'L5 (Senior)', 'AI 攻坚不能自然把 L4 升到 L5');
+    assert(coast.effect(l4Ripe({})).level !== 'L5 (Senior)', '按部就班不能自然把 L4 升到 L5');
   }
-  // WLB 转岗保证成功 → 置 transferred_to_ai(此后 condition 因 !transferred_to_ai 隐藏,天然每局一次)
-  const wlbRes = wlb.effect(l4Ripe({ transferred_to_ai: false }));
-  assert(wlbRes.transferred_to_ai === true, 'WLB 转岗保证成功并置 transferred_to_ai(天然一次性)');
-  assert(!wlb.condition || !wlb.condition({ ...l4Ripe({}), transferred_to_ai: true } as GameState), '转岗后 WLB 选项不再出现(仅一次)');
+  assert((coast.effect(l4Ripe({})).story_flags as Record<string, unknown> | undefined)?.annual_action === 'wlb', '按部就班设 annual_action=wlb');
+
+  // 年度考评 (settlement.sv_year_end_settlement)
+  const settle = events['sv_year_end_settlement'].choices[0];
+  const emp = (over: Partial<GameState>): GameState => ({
+    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
+    visa: '公民', age: 35, last_promo_age: 25, health: 80, tc: 40, status: 'playing',
+    story_flags: {}, ...over,
+  } as GameState);
+  const rating = (r: Partial<GameState>) => (r.story_flags as Record<string, unknown> | undefined)?.last_perf_rating;
+
+  // 健康养生玩家 (annual_action=wlb) → ME (符合预期,拿到调薪,非 NI)
+  const meRes = settle.effect(emp({ story_flags: { annual_action: 'wlb' } }));
+  assert(rating(meRes) === 'ME', '健康养生玩家考评为 ME');
+  assert((meRes.tc || 0) >= 40, 'ME 拿到常规调薪 (TC 不降)');
+
+  // 当年晋升 → EE
+  assert(rating(settle.effect(emp({ last_promo_age: 35 }))) === 'EE', '当年晋升考评为 EE');
+  // 高 impact 冲刺 (非养生,未升) → EE
+  assert(rating(settle.effect(emp({ impact: 20 }))) === 'EE', '高 impact 冲刺考评为 EE');
+
+  // annual_action 每年结算后重置为 undefined
+  const resetRes = settle.effect(emp({ story_flags: { annual_action: 'wlb' } }));
+  assert((resetRes.story_flags as Record<string, unknown> | undefined)?.annual_action === undefined, 'annual_action 结算后重置');
+
+  // 摆烂 (低血低 impact) 可触发 NI,并亮起 PIP 预警
+  let sawNI = false;
+  for (let i = 0; i < 80; i++) {
+    const r = settle.effect(emp({ health: 15, impact: 2 }));
+    if (rating(r) === 'NI') {
+      sawNI = true;
+      assert((r.story_flags as Record<string, unknown> | undefined)?.pip_warning === true, 'NI 考评亮起 PIP 预警');
+      break;
+    }
+  }
+  assert(sawNI, '摆烂(低血低impact)可触发 NI 考评');
 
   console.log('✅ CUJ 37 Passed\n');
 }

@@ -3243,8 +3243,8 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【保持现状】暂时不参与股权投资，专注于当前工作',
         condition: (s) => true,
-        effect: () => ({
-          story_flags: { linda_deal_done: true },
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), linda_deal_done: true },
           message: '你向 Linda 表达了感谢，决定继续保持现有的资产节奏。'
         }),
         nextEventId: 'sv_year_end_settlement'

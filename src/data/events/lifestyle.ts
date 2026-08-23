@@ -307,6 +307,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'bay_area_dink_vs_kids': {
     id: 'bay_area_dink_vs_kids',
+    oncePerLife: true,
     title: '【双码家庭抉择】DINK 丁克自由 vs 抢 10 分学区房',
     description: '结婚几年了，湾区双职工面临终极选择：是在 Palo Alto 享受 DINK (双薪无娃) 每年开滑雪与度假，还是砸钱买 Fremont 10 分学区房准备鸡娃？',
     choices: [
@@ -326,6 +327,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           cash: s.cash - 15,
           health: s.health - 10,
+          has_child: true,
           rent: s.housing_name === HOUSING_NAMES.ATHERTON ? 0 : 4.5,
           has_housing: true,
           housing_name: s.housing_name === HOUSING_NAMES.ATHERTON ? HOUSING_NAMES.ATHERTON : HOUSING_NAMES.FREMONT_10_DISTRICT,
@@ -985,6 +987,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'ai_agent_startup': {
     id: 'ai_agent_startup',
+    oncePerLife: true,
     title: '【黑客松爆火】AI Agent 自动化工作流助手',
     description: '你在周末 Hackathon 上用 AI Agent 搭建了一个全自动替工程师开 Zoom 会与自动写 Weekly Report 的 Agent 助手，在 Twitter/X 上暴火！',
     choices: [
@@ -1033,15 +1036,15 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.tc > 0 && s.cash >= 5
       },
       {
-        text: '【天使投资一万美元】出资 $1w 当个天使投资人，博取未来百倍回报',
+        text: '【天使投资十万美元】出资 $10w 当个天使投资人，博取未来十倍回报 (高风险)',
         effect: (s) => {
           const success = gameRandom() > 0.9;
           return success 
-            ? { cash: s.cash + 100, charm: s.charm + 5, message: '离谱！这家公司莫名其妙被 Yahoo 收购了，你暴富了！' }
-            : { cash: s.cash - 1, message: '几个月后这哥们去巴厘岛做数字游民了，你的投资打了水漂。' };
+            ? { cash: s.cash + 100, charm: Math.min(s.max_charm ?? 25, s.charm + 5), message: '离谱！这家公司莫名其妙被 Yahoo 收购了，你这 $10w 天使投资翻了十倍！' }
+            : { cash: Math.max(0, s.cash - 10), message: '几个月后这哥们去巴厘岛做数字游民了，你的 $10w 投资打了水漂。' };
         },
         nextEventId: 'sv_year_end_settlement',
-        condition: (s) => s.cash >= 1
+        condition: (s) => s.cash >= 10
       },
       {
         text: '【冷笑看戏继续刷题】冷笑一声，拒绝粗制套壳，继续刷我的 LeetCode',
@@ -1513,6 +1516,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
 
   'dual_income_startup_gamble': {
     id: 'dual_income_startup_gamble',
+    oncePerLife: true,
     title: '【家庭抉择】伴侣收到 AI 独角兽核心团队 Offer',
     description: '伴侣收到了一家沙丘路顶级 VC 领投的 Pre-IPO 明星初创公司发来的核心工程师 Offer。Base 薪资略有缩减，但期权池极其丰厚。伴侣跟你商量是否要去冒这个险：',
     choices: [
@@ -1524,14 +1528,15 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           const hit = gameRandom() < 0.35;
           return hit
             ? {
-                cash: s.cash + 80,
-                stocks: (s.stocks || 0) + 120,
+                cash: s.cash + 40,
+                stocks: (s.stocks || 0) + 60,
                 health: Math.min(100, s.health + 5),
-                message: '【初创奇迹爆发！】伴侣所在的 AI 独角兽顺利完成大额新一轮融资与部分老股变现！家庭资产直接暴增 $200w！'
+                message: '【初创奇迹爆发！】伴侣所在的 AI 独角兽顺利完成大额新一轮融资与部分老股变现！家庭资产直接暴增 $100w！'
               }
             : {
+                cash: Math.max(0, s.cash - 15),
                 health: Math.max(0, s.health - 6),
-                message: '伴侣在初创每天加班到深夜，虽然业务还在推进，但期权暂时还只是纸面富贵。你默默在大厂稳住大后方。'
+                message: '伴侣裸辞加入的初创烧光了 runway，产品没跑通就地解散。这一年家庭靠你一份收入硬扛，还倒贴了不少积蓄，期权彻底归零。'
               };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -1539,8 +1544,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【稳健为王】建议伴侣留在养老大厂吃免费三餐和 RSU，家庭稳稳躺平',
         condition: (s) => s.is_married || s.relationship_status === 'married',
-        effect: () => ({
-          health: 10,
+        effect: (s) => ({
+          health: Math.min(100, s.health + 10),
           message: '伴侣接受了你的建议，留在养老大厂继续享受免费三餐与年假。周末两人一起去 Cupertino 喝奶茶，生活节奏舒适从容。'
         }),
         nextEventId: 'sv_year_end_settlement'

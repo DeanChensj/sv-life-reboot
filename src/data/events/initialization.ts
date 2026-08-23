@@ -1618,10 +1618,12 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.35 + ((s.impact || 0) >= 15 ? 0.30 : (s.impact || 0) >= 8 ? 0.15 : 0) + (s.leetcode >= 70 ? 0.15 : 0) + (s.school === 'cmu' ? 0.10 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass
-            ? { cash: s.cash + 6, health: Math.max(0, s.health - 6), age: s.age + 1, year: s.year + 1, is_phd: true, impact: addImpact(s, 15), network: Math.min(100, (s.network || 10) + 15), leetcode: Math.min(100, s.leetcode + 10), message: '在顶尖 AI 工业界实验室 (FAIR/DeepMind) 实习收获满满！以第一作者发表了重磅 Demo 与论文 (Impact +15)，攒下了 $6w 实习薪水并顺利通过博士答辩 Defense，取得 PhD 学位！' }
+            ? { cash: s.cash + 6, health: Math.max(0, s.health - 6), age: s.age + 1, year: s.year + 1, is_phd: true, impact: addImpact(s, 15), network: Math.min(100, (s.network || 10) + 15), leetcode: Math.min(100, s.leetcode + 10), story_flags: { ...(s.story_flags || {}), research_intern_landed: true }, message: '在顶尖 AI 工业界实验室 (FAIR/DeepMind) 实习收获满满！以第一作者发表了重磅 Demo 与论文 (Impact +15)，攒下了 $6w 实习薪水并顺利通过博士答辩 Defense，取得 PhD 学位！' }
             : { health: Math.max(0, s.health - 10), age: s.age + 1, year: s.year + 1, impact: addImpact(s, 4), leetcode: Math.min(100, s.leetcode + 8), message: '顶尖 Lab 实习申请竞争太激烈被刷，博士论文指标仍需打磨，你只能回校继续给导师搬砖。' };
         },
-        nextEventId: (s) => s.is_phd ? 'phd_job_hunt' : 'phd_mid_stage'
+        // Route on a pass-only flag, NOT is_phd (set true at admission, so the fail
+        // branch would otherwise wrongly graduate the player straight to phd_job_hunt).
+        nextEventId: (s) => s.story_flags?.research_intern_landed ? 'phd_job_hunt' : 'phd_mid_stage'
       },
       {
         text: '【二线期刊保底答辩】降低身段投中档期刊与 Workshop，申请博士答辩 (耗时 2 年，稳妥毕业)',

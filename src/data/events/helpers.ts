@@ -639,7 +639,9 @@ export const midYearEventRouter = (s: GameState): string => {
     if ((s.story_flags?.partner_strain || 0) >= 3) {
       return 'marriage_divorce_crisis';
     }
-    lifeEvents.push('dual_income_tech_layoff_storm', 'dual_income_startup_gamble', 'dual_income_wlb_burnout');
+    lifeEvents.push('dual_income_tech_layoff_storm', 'dual_income_wlb_burnout');
+    // dual_income_startup_gamble is oncePerLife — gate injection so it can't re-fire.
+    if (!s.story_flags?.dual_income_startup_gamble_seen) lifeEvents.push('dual_income_startup_gamble');
     if ((s.story_flags?.partner_strain || 0) >= 2) {
       lifeEvents.push('marriage_divorce_crisis');
     }
@@ -665,7 +667,9 @@ export const midYearEventRouter = (s: GameState): string => {
   }
 
   if (isCorporate) {
-      lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode', 'team_offsite', 'vibe_coding_craze', 'ai_wrapper_startup', 'ai_agent_startup');
+      lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode', 'team_offsite', 'vibe_coding_craze', 'ai_wrapper_startup');
+      // ai_agent_startup is oncePerLife — gate injection so the +$15w seed can't re-fire.
+      if (!s.story_flags?.ai_agent_startup_seen) lifeEvents.push('ai_agent_startup');
       if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') {
           lifeEvents.push('ex_1point3acres_expose');
       }
@@ -731,7 +735,7 @@ export const midYearEventRouter = (s: GameState): string => {
     lifeEvents.push('startup_angel_investing');
   }
 
-  if ((s.is_married || s.relationship_status === 'married') && !s.has_child) {
+  if ((s.is_married || s.relationship_status === 'married') && !s.has_child && !s.story_flags?.bay_area_dink_vs_kids_seen) {
     lifeEvents.push('bay_area_dink_vs_kids');
   }
 

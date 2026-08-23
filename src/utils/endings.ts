@@ -72,8 +72,9 @@ export function determineEnding(s: GameState): EndingResult {
         flavor: '账上现金见底，融资无门，你的独角兽梦想在寒冬中清算离场，背负债务重新出发。',
       };
     }
-    // Bankruptcy.
-    if (assets <= 0 || (s.cash ?? 0) <= 0) {
+    // Bankruptcy — gate on TOTAL assets (cash+stocks), not cash alone: a $0-cash but
+    // stock-rich player at game_over is not insolvent (falls through to generic ending).
+    if (assets <= 0) {
       return {
         id: 'bankruptcy', emoji: '📉', title: '资不抵债 · 破产驱逐',
         subtitle: 'STATUS: BANKRUPT', tone: 'tragedy', rarity: 'N',
@@ -95,6 +96,15 @@ export function determineEnding(s: GameState): EndingResult {
         id: 'unicorn_founder', emoji: '🦄', title: '独角兽敲钟 · 硅谷传奇',
         subtitle: 'STATUS: IPO / UNICORN', tone: 'triumph', rarity: 'UR',
         flavor: '你在纳斯达克敲响了那口钟。从沙丘路的一份 BP 到万众瞩目的敲钟人，你改写了自己的命运。',
+      };
+    }
+    // Dynasty wealth ($3000w+) is UR — checked before the SSR identity endings so a
+    // dynasty-tier trader/PhD/L8/landlord isn't silently downgraded (rarest-first).
+    if (assets >= 3000 || s.fire_tier === 'dynasty') {
+      return {
+        id: 'silicon_dynasty', emoji: '🏛️', title: '硅谷百亿巨擘 · 家族传奇',
+        subtitle: 'STATUS: FIRE (DYNASTY)', tone: 'triumph', rarity: 'UR',
+        flavor: '你的资产突破 $3000w+，建立了家族信托与慈善基金会，成为了硅谷乃至全球科技界的殿堂级传奇。',
       };
     }
     if (s.job_type === 'trader' || s.job_type === 'quant') {
@@ -123,13 +133,6 @@ export function determineEnding(s: GameState): EndingResult {
         id: 'real_estate_mogul', emoji: '🏘️', title: '湾区大地主 · 躺赢收租',
         subtitle: 'STATUS: FIRE (LANDLORD)', tone: 'triumph', rarity: 'SSR',
         flavor: '你手握一串湾区房产，每月租金自动到账。当同事还在卷 Perf，你已靠被动现金流彻底躺平。',
-      };
-    }
-    if (assets >= 3000 || s.fire_tier === 'dynasty') {
-      return {
-        id: 'silicon_dynasty', emoji: '🏛️', title: '硅谷百亿巨擘 · 家族传奇',
-        subtitle: 'STATUS: FIRE (DYNASTY)', tone: 'triumph', rarity: 'UR',
-        flavor: '你的资产突破 $3000w+，建立了家族信托与慈善基金会，成为了硅谷乃至全球科技界的殿堂级传奇。',
       };
     }
     if (s.fire_tier === 'luxury' || assets >= 1500 || (s.housing_name === HOUSING_NAMES.ATHERTON) || (isOwnedHousing(s.housing_name) && assets >= 1000)) {

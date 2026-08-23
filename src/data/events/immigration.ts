@@ -28,7 +28,11 @@ export const immigrationEvents: Record<string, GameEvent> = {
             relationship_status: 'married',
             gc_progress: Math.max(3, s.gc_progress || 0),
             gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
-            message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。双方虽结为双职工家庭并互相绑定绿卡排期，但仍需等待排期推进或继续维持合法工签！'
+            // Bridge a precarious OPT/F1 onto Day 1 CPT so the player isn't re-thrown into
+            // this same crisis every settlement (re-routes here only while OPT/F1 + 3 strikes).
+            // Preserve stronger statuses (H1B/绿卡/公民) untouched.
+            visa: (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') ? 'Day 1 CPT' : s.visa,
+            message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。你转入 Day 1 CPT 维持合法工作身份，双方结为双职工家庭互相绑定绿卡排期，静待排期推进！'
           };
         },
         // A non-citizen spouse outcome routes OUT of the crisis (was looping back to

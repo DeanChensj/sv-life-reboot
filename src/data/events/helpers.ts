@@ -302,7 +302,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
     network: 10,
     is_married: false,
     relationship_status: 'single',
-    win_threshold: 500, // basic FIRE tier; choose_trait overwrites with the trait-specific goal
+    win_threshold: 400, // basic FIRE tier; choose_trait sets the initial $400w baseline
     last_fire_milestone_reached: 0,
     laid_off: false,
     has_housing: false,

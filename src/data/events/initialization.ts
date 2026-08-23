@@ -29,7 +29,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【卷王之王】天生做题家，算法天赋极高，拥有极强的抗压耐受力，大厂内卷与跳槽如鱼得水。',
-        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 35, health: Math.max(90, s.health - 8), network: 15, win_threshold: 380 }),
+        effect: (s) => ({ trait_title: '卷王之王', leetcode: s.leetcode + 35, health: Math.max(90, s.health - 8), network: 15, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
@@ -40,7 +40,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【家里有矿】家里直接在湾区给你准备了买房首付，人脉背景深厚。',
         // Trimmed the outlier +70 cash head-start to +50 (still the biggest by far).
-        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 50, network: 25, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 450 }),
+        effect: (s) => ({ trait_title: '家里有矿', cash: s.cash + 50, network: 25, leetcode: Math.max(0, s.leetcode - 15), health: s.health - 15, win_threshold: 400 }),
         nextEventId: 'choose_year',
       },
       {
@@ -51,9 +51,8 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【小镇做题家】毫无波澜的普通面板，纯凭实力打拼。',
-        // Was strictly dominated (no bonuses at all). Now a genuine skill-focused build
-        // with the lowest FIRE threshold.
-        effect: (s) => ({ trait_title: '小镇做题家', leetcode: s.leetcode + 10, luck: Math.min(99, s.luck + 3), network: 12, win_threshold: 350 }),
+        // Was strictly dominated (no bonuses at all). Now a genuine skill-focused build.
+        effect: (s) => ({ trait_title: '小镇做题家', leetcode: s.leetcode + 10, luck: Math.min(99, s.luck + 3), network: 12, win_threshold: 400 }),
         nextEventId: 'choose_year',
       }
     ]

@@ -987,23 +987,23 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('✅ CUJ 15 Passed\n');
 }
 
-// CUJ 16: Voluntary early retirement (permanent visa + assets >= $200w/2M)
-// Late-game agency: step off the treadmill before hitting the $500w FIRE bar.
+// CUJ 16: Voluntary early retirement (permanent visa + assets >= $150w/1.5M)
+// Late-game agency: step off the treadmill before hitting the $400w FIRE bar.
 // Gated on permanent status + wealth floor; below FIRE → content ending, above → triumph.
 {
   console.log('--- [CUJ 16] Voluntary early retirement gate & ending ---');
   const findRetire = (s: GameState) =>
     events['sv_daily_life'].choices.find((c) => c.text.includes('提前上岸') && (!c.condition || c.condition(s)));
 
-  // 1. Eligible: permanent visa (绿卡) + assets >= 200 → choice available
-  const eligible: GameState = { ...generateInitialState(), visa: '绿卡', cash: 150, stocks: 100, health: 60, age: 42, status: 'playing' };
+  // 1. Eligible: permanent visa (绿卡) + assets >= 150 → choice available
+  const eligible: GameState = { ...generateInitialState(), visa: '绿卡', cash: 100, stocks: 50, health: 60, age: 42, status: 'playing' };
   const retireChoice = findRetire(eligible);
-  assert(!!retireChoice, 'Voluntary retire choice available for permanent visa + assets >= $200w');
+  assert(!!retireChoice, 'Voluntary retire choice available for permanent visa + assets >= $150w');
 
   // 2. Ineligible: temporary visa (can't just retire in the US on a work visa)
   assert(!findRetire({ ...eligible, visa: 'H1B (工签)' }), 'Voluntary retire NOT available on temporary H1B visa');
-  // 3. Ineligible: below the $200w wealth floor
-  assert(!findRetire({ ...eligible, cash: 80, stocks: 50 }), 'Voluntary retire NOT available below $200w assets');
+  // 3. Ineligible: below the $150w wealth floor
+  assert(!findRetire({ ...eligible, cash: 80, stocks: 50 }), 'Voluntary retire NOT available below $150w assets');
 
   // 4. Effect retires the player and routes to end; below-FIRE assets → content ending
   const retEff = retireChoice!.effect(eligible);

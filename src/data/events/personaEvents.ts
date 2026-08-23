@@ -169,15 +169,15 @@ export const personaEvents: Record<string, GameEvent> = {
     id: 'persona_chosen_windfall',
     oncePerLife: true,
     title: '【天选气运】玄学横财与气运爆发',
-    description: '你莫名收到一个空投/内测资格，朋友神秘兮兮地说「兄弟这波稳的」。以你逆天的气运，梭一把说不定就是一夜暴富——当然，玄学也有翻车的时候。',
+    description: '你莫名收到一个早期核心 AI/Web3 协议的内测与空投份额，朋友神秘兮兮地说「这波是内部顶级额度」。以你逆天的气运，梭一把说不定就是百倍收益！',
     choices: [
       {
         text: '【气运护体一把梭】梭哈信运气！气运护体一把梭 (高波动)',
         condition: (s) => s.cash >= 3,
         effect: (s) => {
-          const hit = gameRandom() < Math.min(0.8, 0.45 + (Math.min(80, s.luck) / 100) * 0.4);
+          const hit = gameRandom() < Math.min(0.85, 0.50 + (Math.min(80, s.luck) / 100) * 0.4);
           return hit
-            ? { cash: s.cash + 10, message: '玄学再次显灵！空投/内测项目一飞冲天，你精准踩点提现，狠狠赚了一笔横财，朋友直呼你是天选之子！' }
+            ? { cash: s.cash + 50, stocks: (s.stocks || 0) + 15, message: '【天选气运大爆发！】项目主网上线一飞冲天，你精准在高点套现 $50w 现金横财，外加分得 $15w 核心资产，朋友直呼你是天选之子！' }
             : { cash: Math.max(0, s.cash - 3), health: Math.max(0, s.health - 4), message: '这次连气运都没兜住——项目高开低走，你小亏一笔离场。看来天选之子偶尔也会打盹。' };
         },
         nextEventId: h1ToH2Router,

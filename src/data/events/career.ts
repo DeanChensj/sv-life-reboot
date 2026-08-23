@@ -109,10 +109,10 @@ export const careerEvents: Record<string, GameEvent> = {
         },
       },
       {
-        // 策略路线：不靠海投掷骰，而是亲自下场打一场三轮「见招拆招」终面 (interviewEvents.ts)。
+        // 策略路线：不靠海投掷骰，而是亲自下场打一场两轮「见招拆招」终面 (interviewEvents.ts)。
         text: '【硬核 Onsite 见招拆招】亲自下场，逐轮应对面试官刁难 (策略路线)',
         condition: (_s) => true,
-        effect: (s) => ({ story_flags: { ...(s.story_flags || {}), iv_score: 0 }, message: '你选择了最硬核的路线：不赌海投的运气，一场终面三轮，亲自见招拆招。' }),
+        effect: (s) => ({ story_flags: { ...(s.story_flags || {}), iv_score: 0 }, message: '你选择了最硬核的路线：不赌海投的运气，一场终面两轮，亲自见招拆招。' }),
         nextEventId: 'interview_onsite_gauntlet_r1',
       },
       {

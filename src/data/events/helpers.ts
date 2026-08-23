@@ -811,6 +811,12 @@ export function resolveNextEventId(
   const isAdvanceSignal =
     nextId === 'sv_year_end_settlement' || (nextId === 'sv_daily_life' && !!newState.mid_year);
   if (newState.mid_year && isAdvanceSignal) {
+    // 已完成的跳槽 (job_hop_market 签约/Match/婉拒) 就是当年的重大职业事件:直接收束到年终结算,
+    // 不再注入后续季度职场事件。否则机器会在同年继续注入 H1/H2 职场事件 (startup_crisis / overemployed),
+    // 而它们又经 job_hunt 绕回 job_hop_market,造成「同年反复跳槽」的同回合死循环 (fuzz SEED=5532)。
+    if (sourceEventId === 'job_hop_market') {
+      return { finalState: { ...newState, year_seg: undefined }, nextEventId: 'sv_year_end_settlement' };
+    }
     const seg = newState.year_seg || 0;
     const working = !!newState.job_type && newState.job_type !== 'unemployed' && !newState.laid_off;
     const regularEmployee = working && newState.job_type !== 'startup_founder' && newState.job_type !== 'trader';

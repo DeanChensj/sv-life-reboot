@@ -2447,6 +2447,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【大摆宴席】在 Santana Row 举办全组升职庆功宴 (消耗 $0.5w)',
+        condition: (s) => s.level === 'L6 (Staff)' && s.cash >= 0.5,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.5),
           health: Math.min(100, s.health + 20),
@@ -2457,6 +2458,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【深藏功名】保持低调，发小红书“L5 升 L6 心得与系统架构面经”',
+        condition: (s) => s.level === 'L6 (Staff)',
         effect: (s) => ({
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 6),
           luck: Math.min(99, (s.luck || 20) + 10),
@@ -2474,6 +2476,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【包场庆祝】包下 Sand Hill Road 顶级会所与 VP 及顶级 Headhunter 畅饮 ($1.0w)',
+        condition: (s) => s.level === 'L7 (Senior Staff)' && s.cash >= 1.0,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1.0),
           health: Math.min(100, s.health + 25),
@@ -2485,6 +2488,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【学术发表】受邀在 IEEE / NeurIPS 发表顶会 Keynote 演讲',
+        condition: (s) => s.level === 'L7 (Senior Staff)',
         effect: (s) => ({
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 8),
           luck: Math.min(99, (s.luck || 20) + 12),
@@ -2502,6 +2506,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【豪宅庄园庆功】在 Atherton / Los Altos Hills 庄园举办全公司高管慈善晚宴 ($2.5w)',
+        condition: (s) => s.level === 'L8 (Principal)' && s.cash >= 2.5,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 2.5),
           health: Math.min(100, s.health + 30),
@@ -2513,6 +2518,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【功成身退的从容】在 Los Altos Hills 豪宅中惬意品茶，各大顶级猎头与 VC 趋之若鹜',
+        condition: (s) => s.level === 'L8 (Principal)',
         effect: (s) => ({
           health: Math.min(100, s.health + 30),
           cash: s.cash + 10,
@@ -3125,7 +3131,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 12), impact: addImpact(s, 8), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【晋升通过！】Raj 在闭门会议上拍桌力挺：“This engineer is the cornerstone of our org!” 结合你扎实的影响力，你顺利晋升为 L7 Senior Staff (TC +$20w)！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 8), impact: addImpact(s, 5), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【惜败一票】即便有 Raj 力挺，委员会仍认为你的跨组影响力再沉淀一年会更稳，本轮 L7 评审惜败延期。' };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'l7_senior_staff_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.level === 'L7 (Senior Staff)' && s.last_promo_age === s.age ? 'l7_senior_staff_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【硬核技术折服】(凭借绝对过硬的 Impact 与代码能力征服评审会)',
@@ -3137,7 +3143,7 @@ export const careerEvents: Record<string, GameEvent> = {
             ? { mid_year: true, season_stage: 'h1', level: 'L7 (Senior Staff)', tc: s.tc + 20, health: Math.max(0, s.health - 15), impact: addImpact(s, 10), last_promo_age: s.age, story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【实力过会！】委员会翻阅了你主导的核心底层系统指标，数据无懈可击，一致通过晋升至 L7 Senior Staff！' }
             : { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - 10), impact: addImpact(s, 6), story_flags: { ...(s.story_flags || {}), raj_board_done: true }, message: '【名额有限】你的材料很硬，但今年 L7 名额被更资深的候选人占了，委员会建议明年再战。' };
         },
-        nextEventId: (s) => (s.last_promo_age === s.age ? 'l7_senior_staff_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.level === 'L7 (Senior Staff)' && s.last_promo_age === s.age ? 'l7_senior_staff_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【继续积累】本次暂缓，多沉淀一年跨组影响力',

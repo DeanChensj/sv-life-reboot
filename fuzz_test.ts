@@ -209,11 +209,23 @@ function runFuzzTest(iterations: number, baseSeed: number, singleSeed?: number) 
         currentState = routed.finalState;
         const nextId = routed.nextEventId;
 
-        // 路由不变量：只有本回合真正晋升 (last_promo_age === age 且非入职应届 L3) 才允许进入「晋升庆祝」事件。
-        // 这道防线专治反复出现的 message.includes('晋升') 误路由 (被拒/无关文案含"晋升" → 误弹喜报) 以及 L3 误入庆祝。
-        if (typeof nextId === 'string' && nextId.endsWith('_celebration') && (currentState.last_promo_age !== currentState.age || currentState.level === 'L3')) {
-          fail(seed, `[路由不变量] 进入晋升庆祝 '${nextId}'，但本回合未合法晋升 (last_promo_age=${currentState.last_promo_age}, age=${currentState.age}, level=${currentState.level})！事件='${currentEventId}'`, yearPath);
-          break;
+        // 路由不变量：只有本回合真正晋升 (last_promo_age === age) 且职级完全匹配才允许进入对应级别的「晋升庆祝」事件。
+        // 这道防线专治：
+        // 1. message.includes('晋升') 误路由 (被拒/无关文案含"晋升" → 误弹喜报)
+        // 2. 应届入职 L3 误入庆祝
+        // 3. 评审惜败 (未升 L7) 却因为当年此前晋升而进入 l7_senior_staff_celebration
+        if (typeof nextId === 'string' && nextId.endsWith('_celebration')) {
+          const rankMismatch =
+            (nextId === 'l8_principal_celebration' && currentState.level !== 'L8 (Principal)') ||
+            (nextId === 'l7_senior_staff_celebration' && currentState.level !== 'L7 (Senior Staff)') ||
+            (nextId === 'l6_staff_celebration' && currentState.level !== 'L6 (Staff)') ||
+            (nextId === 'promo_celebration' && currentState.level !== 'L4' && currentState.level !== 'L5 (Senior)') ||
+            (currentState.last_promo_age !== currentState.age);
+
+          if (rankMismatch) {
+            fail(seed, `[路由不变量] 进入晋升庆祝 '${nextId}'，但职级不匹配或本回合未合法晋升 (last_promo_age=${currentState.last_promo_age}, age=${currentState.age}, level=${currentState.level})！事件='${currentEventId}'`, yearPath);
+            break;
+          }
         }
 
         if (!nextId) break;

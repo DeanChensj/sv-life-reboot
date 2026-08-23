@@ -2544,6 +2544,78 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 49 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 50: 非科班转码全链路深度体验 — 专业起点/备战打磨/多元求职/职场成长
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 50] Non-CS Major Switcher Journey & Post-Transition Career Progression ---');
+
+  // 1. 验证多元背景专业选项与属性加成
+  const bgChoices = events['zhuanma_background'].choices;
+  assert(bgChoices.length >= 4, 'zhuanma_background has at least 4 background choices');
+  const bio = bgChoices.find(c => c.text.includes('生化环材'))!;
+  const biz = bgChoices.find(c => c.text.includes('商科/社科'))!;
+  const eng = bgChoices.find(c => c.text.includes('机械/电子/数理'))!;
+  assert(!!bio && !!biz && !!eng, 'All three major archetype backgrounds exist');
+
+  const sInit = { ...generateInitialState(), health: 80 } as GameState;
+  const bioState = applyStateTransition(sInit, bio.effect(sInit), { eventId: 'zhuanma_background' }).nextState;
+  assert(bioState.story_flags?.zhuanma_major === 'bio_chem', 'Bio/chem major sets zhuanma_major flag');
+  assert(bioState.health > sInit.health, 'Bio/chem major grants resilience health bonus');
+
+  // 2. 验证备战打磨事件 zhuanma_prep
+  const prep = events['zhuanma_prep'];
+  assert(!!prep, 'zhuanma_prep event exists');
+  assert(prep.choices.length === 4, 'zhuanma_prep offers 4 distinct preparation strategies');
+  for (const c of prep.choices) {
+    assert(c.nextEventId === 'zhuanma_apply', 'All zhuanma_prep choices lead to zhuanma_apply');
+  }
+
+  // 3. 验证 zhuanma_apply 多元上岸通道 (背水一战 / 传统IT / ICC外包)
+  const applyChoices = events['zhuanma_apply'].choices;
+  assert(applyChoices.length >= 3, 'zhuanma_apply has direct, enterprise IT, and ICC options');
+  const entOption = applyChoices.find(c => c.text.includes('传统企业 IT'))!;
+  const iccOption = applyChoices.find(c => c.text.includes('ICC'))!;
+  assert(!!entOption && !!iccOption, 'Enterprise IT and ICC fallback options exist in zhuanma_apply');
+
+  const richState = { ...generateInitialState(), cash: 5, status: 'playing' } as GameState;
+  const iccResult = applyStateTransition(richState, iccOption.effect(richState), { eventId: 'zhuanma_apply' }).nextState;
+  assert(iccResult.company === 'icc' && iccResult.story_flags?.zhuanma_landed === true, 'ICC choice lands switcher safely at ICC');
+
+  // 4. 验证转码职场成长线事件 (oncePerLife + midYearEventRouter 可达)
+  for (const id of ['zhuanma_imposter_syndrome', 'zhuanma_domain_crossover', 'zhuanma_mentor_community']) {
+    const ev = events[id];
+    assert(!!ev, `${id} career event is defined`);
+    assert(ev.oncePerLife === true, `${id} has oncePerLife flag set`);
+  }
+
+  // 5. 验证中后期转码事件在 midYearEventRouter 中被非科班玩家顺利命中
+  const workingSwitcher: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech',
+    company: 'google',
+    level: 'L5 (Senior)',
+    age: 28,
+    year: 2022,
+    status: 'playing',
+    story_flags: { non_cs_background: true },
+  } as GameState;
+
+  const hitEvents = new Set<string>();
+  for (let i = 0; i < 2000; i++) {
+    setGameSeed(20000 + i);
+    const routed = midYearEventRouter(workingSwitcher);
+    if (routed.startsWith('zhuanma_')) {
+      hitEvents.add(routed);
+    }
+  }
+  assert(hitEvents.has('zhuanma_imposter_syndrome'), 'zhuanma_imposter_syndrome reachable by working switcher');
+  assert(hitEvents.has('zhuanma_domain_crossover'), 'zhuanma_domain_crossover reachable by working switcher');
+  assert(hitEvents.has('zhuanma_mentor_community'), 'zhuanma_mentor_community reachable by working switcher');
+
+  console.log('✅ CUJ 50 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

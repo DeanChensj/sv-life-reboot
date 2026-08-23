@@ -130,22 +130,47 @@ export const initializationEvents: Record<string, GameEvent> = {
   'zhuanma_background': {
     id: 'zhuanma_background',
     title: '【转码起点】非 CS 本科学历与跑毒背景',
-    description: '半路转码，起点决定了你能走哪几条路。美本非科班已经在美国、身份灵活;陆本非科班没有美国学位，基本只能靠一个 CS 美硕来美上岸——但那也意味着最硬核的逆袭。',
+    description: '半路转码，起点决定了你能走哪几条路。美本非科班已经在美国、身份灵活且学科背景各异;陆本非科班没有美国学位，基本只能靠一个 CS 美硕来美上岸——但那也意味着最硬核的逆袭。',
     choices: [
       {
-        text: '【美本非CS】已在美国读了个非 CS 本科 (F1/OPT),沉没成本已付，可就地转码',
+        text: '【美本 · 生化环材】天天配试剂做实验，跑毒逃离天坑实验室 (抗压极强/零代码基础)',
         effect: (s) => ({
           has_us_degree: true,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
-          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us' },
-          message: '你在美国读了个非 CS 专业，毕业在即才幡然醒悟，决心就地转码上岸。',
+          health: Math.min(100, s.health + 8),
+          leetcode: Math.max(0, s.leetcode - 4),
+          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us', zhuanma_major: 'bio_chem' },
+          message: '在生物/化学实验室里吸了四年试剂，你彻底下定决心逃离天坑，投身代码的世界！',
         }),
         nextEventId: 'zhuanma_decision',
       },
       {
-        text: '【陆本非CS】国内非 CS 本科，无美国学位，只能搏一个 CS 美硕来美 (全游戏最硬开局)',
+        text: '【美本 · 商科/社科】商科文科求职内卷，转战科技圈 (高情商/善沟通/刷题硬啃)',
         effect: (s) => ({
-          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'cn' },
+          has_us_degree: true,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          charm: Math.min(s.max_charm ?? 25, s.charm + 4),
+          network: Math.min(100, (s.network || 10) + 8),
+          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us', zhuanma_major: 'business_humanities' },
+          message: '商科与文科求职竞争残酷，你带着出色的情商与沟通能力，毅然决定转战硅谷技术赛道！',
+        }),
+        nextEventId: 'zhuanma_decision',
+      },
+      {
+        text: '【美本 · 机械/电子/数理】理工硬核背景，高数线代满分 (逻辑严密/算法上手快)',
+        effect: (s) => ({
+          has_us_degree: true,
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
+          leetcode: Math.min(100, s.leetcode + 10),
+          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us', zhuanma_major: 'hard_engineering' },
+          message: '凭借硬核的工科数学功底，你学起数据结构和算法飞快，决心跨界成为软件工程师！',
+        }),
+        nextEventId: 'zhuanma_decision',
+      },
+      {
+        text: '【陆本 · 跨专业搏美硕】国内非 CS 本科，无美国学位，只能搏一个 CS 美硕来美 (全游戏最硬开局)',
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'cn', zhuanma_major: 'general_cn' },
           message: '你在国内读了个非 CS 专业，决心砸锅卖铁读个美国 CS 硕士，一步登天转码来美。',
         }),
         nextEventId: 'zhuanma_decision',
@@ -160,7 +185,7 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【Bootcamp 速成训练营】3-6 个月速成刷题，快但 signal 弱、上岸看运气 (花费 $2w)',
-        reqBadge: '美本非CS 专属',
+        reqBadge: '美本专属',
         condition: (s) => s.story_flags?.zhuanma_origin === 'us' && s.cash >= 2,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 2),
@@ -168,12 +193,12 @@ export const initializationEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           age: s.age + 1,
           story_flags: { ...(s.story_flags || {}), zhuanma_method: 'bootcamp' },
-          message: '你报了个硅谷知名 Bootcamp,3 个月魔鬼刷题速成，项目作品集堆了一堆，准备海投！',
+          message: '你报了个硅谷知名 Bootcamp，3 个月魔鬼刷题速成，掌握了全栈开发基础，准备打磨作品集！',
         }),
-        nextEventId: 'zhuanma_apply',
+        nextEventId: 'zhuanma_prep',
       },
       {
-        text: '【CS 美硕 · 洗背景】读个正经 CS 硕士，贵且慢，但学历直接洗白非科班 (花费 $10w · 可股票抵扣)',
+        text: '【CS 美硕 · 洗背景】读个正经 CS 硕士 (NEU Align / UPenn MCIT 等)，贵且慢，但学历直接洗白非科班 (花费 $10w · 可股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 10,
         effect: (s) => {
           const paid = deductAssets(s, 10);
@@ -189,7 +214,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【纯自学 + 疯狂刷题】边打工边自学，最省钱但最熬人、最看毅力与运气 (几乎免费)',
-        reqBadge: '美本非CS 专属',
+        reqBadge: '美本专属',
         condition: (s) => s.story_flags?.zhuanma_origin === 'us',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 2),
@@ -199,7 +224,7 @@ export const initializationEvents: Record<string, GameEvent> = {
           story_flags: { ...(s.story_flags || {}), zhuanma_method: 'self' },
           message: '你白天搬砖、深夜刷题，啃完了几十本算法书与无数 LeetCode Hard，咬牙自学转码。',
         }),
-        nextEventId: 'zhuanma_apply',
+        nextEventId: 'zhuanma_prep',
       },
       {
         text: '【陆本无美硕预算，先回国互联网卷】攒够钱/背景再图后计 (暂缓转码)',
@@ -213,6 +238,56 @@ export const initializationEvents: Record<string, GameEvent> = {
           message: '预算不够读美硕，你只能先回国内大厂卷着攒钱，把转码来美的梦想暂时压在心底。',
         }),
         nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'),
+      },
+    ],
+  },
+
+  'zhuanma_prep': {
+    id: 'zhuanma_prep',
+    title: '【转码破局】项目打造与备战策略',
+    description: '编程基础已经初步建立，但面对挑剔的硅谷 HR 和大厂 Hiring Committee，你必须拿出亮眼的项目作品集和过硬的面试准备！',
+    choices: [
+      {
+        text: '【从零手搓全栈开源项目】手写 Full-Stack 项目，代码扎实无死角 (死磕算法与底层)',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 10),
+          impact: addImpact(s, 6),
+          health: Math.max(0, s.health - 6),
+          story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'solid_project' },
+          message: '你花数月从零手写了一套高并发协作平台，每一行代码与架构细节都烂熟于心，面试官追问底层原理对答如流！',
+        }),
+        nextEventId: 'zhuanma_apply',
+      },
+      {
+        text: '【网课高并发微服务包装】简历写满千万级秒杀、Redis 缓存与 Kafka (提高初筛率)',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 6),
+          story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'packaged_resume' },
+          message: '简历上写满了 Redis 缓存击穿、Kafka 削峰与分布式事务，HR 初筛通过率暴涨，但遇到大厂老油条深挖时需谨慎应对！',
+        }),
+        nextEventId: 'zhuanma_apply',
+      },
+      {
+        text: '【垂直领域跨界杀手级应用】结合非科班本科专业打造专属工具 (发挥跨界复合优势)',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 8),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
+          impact: addImpact(s, 8),
+          story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'crossover_project' },
+          message: '你结合非科班本科专业背景，开发了一个垂直领域的自动化分析看板，独特的跨界背景让面试官眼前一亮！',
+        }),
+        nextEventId: 'zhuanma_apply',
+      },
+      {
+        text: '【转码微信群抱团 + 1v1 Mock】与战友互相模拟面试与 BQ (提升临场心态与表达)',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 12),
+          network: Math.min(100, (s.network || 10) + 8),
+          charm: Math.min(s.max_charm ?? 25, s.charm + 3),
+          story_flags: { ...(s.story_flags || {}), zhuanma_prep_style: 'mock_buddy' },
+          message: '你找到了几位志同道合的转码伙伴，每天互相 1v1 模拟面试手撕代码与 BQ 行为面，面试临场表达大幅提升！',
+        }),
+        nextEventId: 'zhuanma_apply',
       },
     ],
   },
@@ -231,7 +306,12 @@ export const initializationEvents: Record<string, GameEvent> = {
           // 玩家累计上岸 ~60-75%(即 washout 25-40%),让"逆袭"有真实翻车风险。
           const methodBonus = s.story_flags?.zhuanma_method === 'self' ? 0.03 : 0;
           const ageMalus = s.age >= 35 ? Math.min(0.18, (s.age - 35) * 0.015) : 0;
-          const prob = Math.max(0.08, Math.min(0.6, 0.12 + (s.leetcode / 320) + ((s.luck || 20) / 500) + methodBonus - ageMalus));
+          const prepBonus = s.story_flags?.zhuanma_prep_style === 'solid_project' ? 0.04
+            : (s.story_flags?.zhuanma_prep_style === 'mock_buddy' ? 0.05
+            : (s.story_flags?.zhuanma_prep_style === 'crossover_project' ? 0.04
+            : (s.story_flags?.zhuanma_prep_style === 'packaged_resume' ? 0.03 : 0)));
+          const majorBonus = s.story_flags?.zhuanma_major === 'hard_engineering' ? 0.03 : 0;
+          const prob = Math.max(0.08, Math.min(0.65, 0.12 + (s.leetcode / 320) + ((s.luck || 20) / 500) + methodBonus + prepBonus + majorBonus - ageMalus));
           if (gameRandom() < prob) {
             // 上岸:非科班先够得着初创/中型公司(Top100 档),日后再跳。
             const lvl = s.is_phd ? 'L4' : 'L3';
@@ -254,6 +334,54 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.story_flags?.zhuanma_landed
           ? (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
           : 'zhuanma_setback',
+      },
+      {
+        text: '【稳健求生 · 传统企业 IT 部门 / 银行零售系统】门槛友好、稳定性好、WLB 极佳 (年薪 $18w)',
+        effect: (s) => {
+          const attempts = Number(s.story_flags?.zhuanma_attempts || 0);
+          const prepBonus = s.story_flags?.zhuanma_prep_style ? 0.05 : 0;
+          const prob = Math.max(0.20, Math.min(0.85, 0.28 + (s.leetcode / 240) + ((s.luck || 20) / 400) + prepBonus));
+          if (gameRandom() < prob) {
+            const lvl = s.is_phd ? 'L4' : 'L3';
+            return {
+              job_type: 'big_tech',
+              company: 'cisco',
+              level: lvl,
+              tc: getLevelScaledTC(18, lvl),
+              laid_off: false,
+              health: Math.min(100, s.health + 6),
+              story_flags: { ...(s.story_flags || {}), zhuanma_landed: true },
+              message: `【稳健上岸传统 IT！】凭借扎实的应用开发与出色的稳定性，你顺利拿下了传统科技企业的 IT 研发部门 Offer (定级 ${lvl} · 年薪 $${getLevelScaledTC(18, lvl)}w)！WLB 极佳且稳稳保住了身份！`,
+            };
+          }
+          return {
+            health: Math.max(0, s.health - 5),
+            story_flags: { ...(s.story_flags || {}), zhuanma_attempts: attempts + 1 },
+            message: '【竞争白热化】今年传统企业的 IT 部门也涌入了大量转码竞争者，由于 HC 缩减未能拿到录用。',
+          };
+        },
+        nextEventId: (s) => s.story_flags?.zhuanma_landed
+          ? (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life')
+          : 'zhuanma_setback',
+      },
+      {
+        text: '【签约 ICC 外包挂靠 · 曲线救国先保身份】签约 ICC 挂靠, 进合宿单间, 边搬砖边刷题跳槽 (花费 $1w)',
+        condition: (s) => s.cash >= 1,
+        effect: (s) => ({
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
+          cash: Math.max(0, s.cash - 1),
+          tc: 6,
+          company: 'icc',
+          job_type: 'startup',
+          level: 'L3',
+          laid_off: false,
+          rent: 1,
+          has_housing: true,
+          housing_name: 'ICC 挂靠合宿单间',
+          story_flags: { ...(s.story_flags || {}), zhuanma_landed: true },
+          message: '【签约 ICC 挂靠】在残酷的求职季中，你签约了印裔 ICC 外包公司作为跳板，住进外包合宿单间等待派遣，同时暗中疯狂刷题备战跳槽大厂！',
+        }),
+        nextEventId: 'icc_work',
       },
     ],
   },

@@ -381,7 +381,7 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
   state = openai!.nextState;
   assert(state.job_type === 'ai_research', 'Job type is ai_research');
   assert(state.visa === 'O1 (杰出人才)', 'Visa is O1');
-  assert((state.impact || 0) >= 38, 'Winning OpenAI MTS brings total cumulative impact to >=38');
+  assert((state.impact || 0) >= 33, 'Winning OpenAI MTS brings total cumulative impact to >=33');
 
   const jobInfo2 = getJobDisplayInfo(state);
   assert(jobInfo2.companyLabel === 'OpenAI', 'Company displays OpenAI');

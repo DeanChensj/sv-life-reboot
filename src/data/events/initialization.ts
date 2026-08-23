@@ -1484,8 +1484,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【申请大厂研究实习】申请 Meta FAIR / Google DeepMind 做研究实习 (耗时 1 年，高风险高回报)',
-        // The fast lane is now a REAL gamble: on failure you do NOT get the PhD — you go
-        // back to grinding (routes to phd_mid_stage).
         effect: (s) => {
           const passProb = 0.35 + ((s.impact || 0) >= 15 ? 0.30 : (s.impact || 0) >= 8 ? 0.15 : 0) + (s.leetcode >= 70 ? 0.15 : 0) + (s.school === 'cmu' ? 0.10 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
@@ -1497,8 +1495,6 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【二线期刊保底答辩】降低身段投中档期刊与 Workshop，申请博士答辩 (耗时 2 年，稳妥毕业)',
-        // The reliable "safety" path: slowest (2yr) but the highest PhD-pass odds at a
-        // low health cost — a genuine low-risk alternative to the research-implant gamble.
         effect: (s) => {
           const passProb = 0.75 + ((s.impact || 0) >= 10 ? 0.15 : 0) + (s.leetcode >= 50 ? 0.05 : 0) + ((s.luck || 20) / 300);
           const pass = gameRandom() < passProb;
@@ -1516,8 +1512,9 @@ export const initializationEvents: Record<string, GameEvent> = {
           is_phd: false,
           is_master: true,
           health: Math.min(100, s.health + 15),
+          impact: Math.max(0, (s.impact || 0) - 5),
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'OPT (实习)',
-          message: '你不再为学术廉价劳动力买单，带着 CS 硕士学位进入硅谷人才市场！'
+          message: '你不再为学术廉价劳动力买单，虽折损了部分学术头衔与影响力，但带着 CS 硕士学位轻松进入硅谷人才市场！'
         }),
         nextEventId: 'job_hunt'
       }
@@ -1527,16 +1524,46 @@ export const initializationEvents: Record<string, GameEvent> = {
   'phd_conference': {
     id: 'phd_conference',
     title: '【学术顶会】夏威夷 CVPR / NeurIPS 巅峰聚会',
-    description: '你在夏威夷的会场做完了 Poster 展示。接下来几天，你打算怎么安排？',
+    description: '你在夏威夷的会场做完了精彩的 Poster 与 Oral 展示。在接下来的几天会议日程中，你打算把重心放在哪里？',
     choices: [
       {
-        text: '【疯狂 Network】疯狂 Network，结识学术大牛与顶尖 Lab 负责人 (耗时 1 年顺利毕业答辩)',
-        effect: (s) => ({ charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5), age: s.age + 1, year: s.year + 1, health: Math.max(0, s.health - 8), is_phd: true, impact: addImpact(s, 8), network: Math.min(100, (s.network || 10) + 20), leetcode: Math.min(100, s.leetcode + 12), message: '你成功给几位学术大佬与 OpenAI/Google 研究员留下了深刻印象，论文引用量稳步攀升 (Impact +8)！回到学校后顺利完成 Defense，拿到了沉甸甸的 PhD 学位！' }),
+        text: '【工业界企业展台 Networking】在 OpenAI / DeepMind 展台投递简历并结识研究员 (耗时 1 年)',
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 10) + 10),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          health: Math.max(0, s.health - 5),
+          age: s.age + 1,
+          year: s.year + 1,
+          is_phd: true,
+          impact: addImpact(s, 5),
+          message: '你结识了多位工业界 AI Lab 的资深研究员，拓展了求职人脉！回校后顺利完成答辩取得 PhD 学位！'
+        }),
         nextEventId: 'phd_job_hunt'
       },
       {
-        text: '【海滩冲浪放飞自我】去海滩冲浪放飞自我 (引起老板不满，延毕 1 年)',
-        effect: (s) => ({ health: Math.min(100, s.health + 20), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5), age: s.age + 2, year: s.year + 2, is_phd: true, impact: addImpact(s, 6), leetcode: Math.min(100, s.leetcode + 8), message: '你在海滩上玩疯了，没参加老板组织的组会。老板很生气，多留了你一年才放你毕业。' }),
+        text: '【闭门 Workshop 与学术研讨】死磕垂直领域前沿，与学者探讨后续架构理论 (耗时 1 年)',
+        effect: (s) => ({
+          impact: addImpact(s, 8),
+          leetcode: Math.min(100, s.leetcode + 4),
+          health: Math.max(0, s.health - 6),
+          age: s.age + 1,
+          year: s.year + 1,
+          is_phd: true,
+          message: '你与领域内的前沿学者进行了深入的学术探讨，成果受到广泛关注 (Impact +8)！回校后顺利通过博士论文答辩！'
+        }),
+        nextEventId: 'phd_job_hunt'
+      },
+      {
+        text: '【海滩漫步与心态调适】在夏威夷海滩漫步吹风，调整心态从容备战答辩 (耗时 1 年)',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 10),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          impact: addImpact(s, 3),
+          age: s.age + 1,
+          year: s.year + 1,
+          is_phd: true,
+          message: '海风吹散了多年的科研疲惫，你以良好的精神面貌回到学校，从容通过了博士毕业答辩！'
+        }),
         nextEventId: 'phd_job_hunt'
       }
     ]
@@ -1551,12 +1578,11 @@ export const initializationEvents: Record<string, GameEvent> = {
         text: '【申请 OpenAI / Anthropic】申请 OpenAI / Anthropic 核心研究员 (地狱面试 · 年薪 $80w · O-1 签证)',
         reqBadge: '地狱级门槛 · 需高学术 Impact',
         effect: (s) => {
-          // Top 15%-25% elite path: heavily weights Impact (papers/citations) + leetcode + school/network
           const winRate = 0.15 + ((s.impact || 0) >= 35 ? 0.22 : (s.impact || 0) >= 20 ? 0.12 : 0) + (s.leetcode >= 80 ? 0.10 : 0) + (s.school === 'cmu' ? 0.08 : 0) + ((s.network || 10) >= 25 ? 0.08 : 0) + ((s.luck || 20) / 200);
           const win = gameRandom() < winRate;
           return win
-            ? { tc: 80, cash: s.cash + 20, health: Math.max(0, s.health - 15), impact: addImpact(s, 15), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'openai', job_type: 'ai_research', level: 'MTS', message: '震撼硅谷！凭借顶尖的学术论文影响力 (Impact) 与前沿架构功底，OpenAI 直接用 $80w 顶配包裹和 O1 签证把你聘为核心研究员 (MTS)！' }
-            : { tc: 32, cash: s.cash + 5, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', company: 'google', job_type: 'big_tech', level: 'L4', message: 'OpenAI 核心研究员面试太残酷了！手撕 Triton 算子挂在最后一轮。不过顶级大厂看重你的博士背景，直接给出了 Google L4 SDE 研发岗位 (年薪 $32w)！' };
+            ? { tc: 80, cash: s.cash + 20, health: Math.max(0, s.health - 15), impact: addImpact(s, 10), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'openai', job_type: 'ai_research', level: 'MTS', message: '震撼硅谷！凭借顶尖的学术论文影响力与前沿架构功底，OpenAI 直接用 $80w 顶配包裹和 O1 签证把你聘为核心研究员 (MTS)！' }
+            : { tc: 32, cash: s.cash + 5, health: Math.max(0, s.health - 8), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', company: 'google', job_type: 'big_tech', level: 'L4', message: 'OpenAI 核心研究员面试太残酷了！手撕 Triton 算子挂在最后一轮。好在凭借扎实的博士功底，调剂入职 Google L4 研发岗位 (年薪 $32w)！' };
         },
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       },
@@ -1567,22 +1593,23 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.45 + ((s.impact || 0) >= 20 ? 0.25 : (s.impact || 0) >= 10 ? 0.12 : 0) + (s.leetcode >= 65 ? 0.10 : 0) + ((s.network || 10) >= 20 ? 0.08 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass
-            ? { tc: 48, cash: s.cash + 15, impact: addImpact(s, 10), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'google', job_type: 'ai_research', level: 'L5 (Senior)', message: '大厂的科学家岗位待遇丰厚！不用写纯业务 CRUD，负责核心模型算法架构研发，享受 $48w 高额年薪与 O-1 签证！' }
-            : { tc: 32, cash: s.cash + 5, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', company: 'meta', job_type: 'big_tech', level: 'L4', message: '科学家岗位 Headcount 紧张未能入选，但 HR 迅速将你转入 Engineering 部门，以 L4 高级研发工程师录用 (年薪 $32w)！' };
+            ? { tc: 48, cash: s.cash + 15, impact: addImpact(s, 8), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'google', job_type: 'ai_research', level: 'L5 (Senior)', message: '大厂的科学家岗位待遇丰厚！不用写纯业务 CRUD，负责核心模型算法架构研发，享受 $48w 高额年薪与 O-1 签证！' }
+            : { tc: 32, cash: s.cash + 5, health: Math.max(0, s.health - 6), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', company: 'meta', job_type: 'big_tech', level: 'L4', message: '科学家岗位 Headcount 紧张未能入选，但面试委员会认可你的工程能力，将你调剂入职 Meta L4 研发工程师 (年薪 $32w)！' };
         },
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       },
       {
-        text: '【大厂研发工程师保底】大厂研发工程师保底入职 (免刷题内卷 · 定级 L4 · 年薪 $32w)',
+        text: '【大厂研发工程师保底入职】免除高压内卷，直通 Google / Apple 稳定架构组 (定级 L4 · 年薪 $32w · 良好 WLB)',
         effect: (s) => ({
           tc: 32,
           cash: s.cash + 6,
           company: 'google',
           job_type: 'big_tech',
           level: 'L4',
-          impact: addImpact(s, 5),
+          health: Math.min(100, s.health + 5),
+          impact: addImpact(s, 3),
           visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)',
-          message: '凭着博士沉淀的技术功底，你免去了一切内卷，直接以 L4 职级入职硅谷科技大厂，享受 $32w 丰厚起薪与舒适 WLB！'
+          message: '凭借扎实的博士科研功底，你免去了高压冲顶的风险，直接以 L4 职级入职科技大厂核心稳定组，享受 $32w 起薪与极佳的 WLB！'
         }),
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       },
@@ -1593,8 +1620,8 @@ export const initializationEvents: Record<string, GameEvent> = {
           const passProb = 0.22 + (s.leetcode >= 80 ? 0.25 : 0.05) + ((s.impact || 0) >= 15 ? 0.10 : 0) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);
           const pass = gameRandom() < passProb;
           return pass
-            ? { tc: 60, cash: s.cash + 25, impact: addImpact(s, 8), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'citadel', job_type: 'quant', level: 'Quant', message: '华尔街顶级对冲基金抢夺学术英才！Citadel 开出 $60w 顶配待遇与高额提成，聘请你为量化研究员！' }
-            : { tc: 32, cash: s.cash + 5, visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', company: 'google', job_type: 'big_tech', level: 'L4', message: 'Quant 脑筋急转弯与高频随机过程面试太硬核了！未能拿到 Offer，转而入职硅谷科技大厂 L4 研发。' };
+            ? { tc: 60, cash: s.cash + 25, impact: addImpact(s, 6), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'citadel', job_type: 'quant', level: 'Quant', message: '华尔街顶级对冲基金抢夺学术英才！Citadel 开出 $60w 顶配待遇与高额提成，聘请你为量化研究员！' }
+            : { tc: 32, cash: s.cash + 5, health: Math.max(0, s.health - 8), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', company: 'google', job_type: 'big_tech', level: 'L4', message: 'Quant 脑筋急转弯与高频随机过程面试太硬核了！未能拿到 Offer，转而调剂入职科技大厂 L4 研发。' };
         },
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       }

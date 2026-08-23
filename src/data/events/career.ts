@@ -1015,6 +1015,16 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: (s) => (s.last_promo_age === s.age && s.level === 'L4' ? 'promo_celebration' : h1ToH2Router(s)),
       },
       {
+        text: '【申请内部转组 · 换道破局】逃离 Toxic 组 / 投奔前沿 AI / 换养老支持组 (改变后续赛道)',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), annual_action: 'transfer' },
+          message: '你提交了内部转组申请，HR 与 Internal Mobility 系统向你展示了当前开放的转组去向：',
+        }),
+        nextEventId: 'internal_team_transfer',
+      },
+      {
         text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
         condition: (s) => s.job_type === 'startup' && !s.laid_off,
         hideIfUnavailable: true,
@@ -3558,6 +3568,41 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       }
     ]
+  },
+
+  // 内部转组:换赛道破局。两个去向,各自【真正改变后续 H1 职场事件的走向】(team_focus 驱动
+  // midYearEventRouter 的 H1 池)。TPM 线较大,待 PM 事件线 (#32) 落地后再补。
+  'internal_team_transfer': {
+    id: 'internal_team_transfer',
+    title: '【内部转组】换道破局与赛道抉择',
+    description: '厌倦了当前组的无休内耗、遭遇了 Toxic 老板，或想换个赛道重新出发？公司内部的 Internal Transfer 系统向你开放，选择未来的团队方向 (将持续影响你后续几年的职场事件走向)：',
+    choices: [
+      {
+        text: '【转入前沿 AI / 核心大模型组】冲刺高业务能见度与核心 Refresher (高强度/高上限)',
+        reqBadge: '算法 ≥ 35',
+        condition: (s) => s.leetcode >= 35,
+        effect: (s) => ({
+          health: Math.max(0, s.health - 6),
+          impact: addImpact(s, 8),
+          tc: s.tc + 2.0,
+          transferred_to_ai: true,
+          story_flags: { ...(s.story_flags || {}), team_focus: 'ai_core', pip_warning: false },
+          message: '【成功加入前沿 AI 组】你顺利 Transfer 到了公司最核心的大模型与分布式系统研发团队！坐拥顶级业务能见度与高额 Refresher 潜力，此后你会更频繁地卷入前沿攻坚与高影响力机遇，但节奏明显变紧！(清空考评预警)',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【转入内部工具 / 养老合规支持组】神仙 WLB 准时打卡，远离线上 P0 警报 (养生回血/低压)',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 15),
+          leetcode: Math.min(100, s.leetcode + 3),
+          transferred_to_ai: false,
+          story_flags: { ...(s.story_flags || {}), team_focus: 'wlb_tools', pip_warning: false },
+          message: '【成功转入养老支持组】你转到了节奏极佳的内部工具与合规支持组，每天下午四点半准时下班，代码没有深夜 P0 警报。此后你会远离高压 PIP 与裁员风暴，身心彻底满血复活！(清空考评预警)',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
   }
 };
 

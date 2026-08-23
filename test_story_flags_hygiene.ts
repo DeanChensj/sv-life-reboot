@@ -39,7 +39,6 @@ const isRead = (key: string) => new RegExp('\\.' + key + '\\b').test(src);
 // Keep this list minimal; prefer consuming the flag or the oncePerLife base over adding here.
 const KNOWN_UNREAD: Record<string, string> = {
   credit_grabbed: 'dilemma 抢功记录,留作未来 karma/口碑',
-  had_divorce: '离婚记录,留作未来再婚/成就',
   met_dave: 'Dave 宿敌首遇记录(宿敌线由 has_dave_evidence/dave_conflict_year 驱动)',
   dave_meet_year: '同上,首遇年份breadcrumb',
   icu_insurance_saved: 'ICU 分支记录(大厂医保),留作成就',

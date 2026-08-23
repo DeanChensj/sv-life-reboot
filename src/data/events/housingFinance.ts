@@ -63,6 +63,31 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: returnToAnnualPanel
       },
       {
+        text: '【我是学生，可以少算点吗？】向华人房东亮出学生身份/扮嫩砍价',
+        condition: (s) => (s.rent || 0) > 0,
+        effect: (s) => {
+          const isStudent = s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || !s.job_type || s.job_type === 'unemployed';
+          if (isStudent) {
+            const newRent = Math.max(0.5, parseFloat(((s.rent || 2) - 0.3).toFixed(1)));
+            return {
+              rent: newRent,
+              cash: s.cash + 0.3,
+              charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+              last_housing_action_year: s.year,
+              message: '【留学生专属同情】房东叹了口气：“看在当年我也是留学生熬过来的份上，今年每月给你免 $200 房租！” 经典学生砍价大获全胜！',
+            };
+          }
+          return {
+            charm: Math.max(0, (s.charm || 10) - 3),
+            network: Math.max(0, (s.network || 10) - 3),
+            health: Math.max(0, s.health - 2),
+            last_housing_action_year: s.year,
+            message: '【社会性死亡】年薪数十万的大厂工程师冒充“我是学生”疯狂砍价 $50 块，被房东截图发到了小红书《湾区极品抠门房客大赏》，全网群嘲！',
+          };
+        },
+        nextEventId: returnToAnnualPanel
+      },
+      {
         text: '【维持现状不搬家】目前的房子住得挺好，暂不搬家',
         effect: (s) => ({ last_housing_action_year: s.year, message: '你打消了搬家念头。' }),
         nextEventId: returnToAnnualPanel
@@ -388,5 +413,50 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       }
     ]
-  }
+  },
+
+  'mortgage_default_crisis': {
+    id: 'mortgage_default_crisis',
+    title: '【断供危机】高昂房贷与银行催款函',
+    description: '失业加上每月高额的房贷月供与地税，你的流动现金与股票账户已跌破警戒线。银行房贷部门发来严正催款通知：“若连续 3 个月未按时还款，将启动房屋法拍 (Foreclosure) 程序。”',
+    oncePerLife: true,
+    choices: [
+      {
+        text: '【紧急 Short Sale 降价卖房】止损割肉，保住剩余本金退回租房',
+        // Recover buyer equity only — nothing if parents funded the house (same guard as the
+        // house_slave 断供 branch; closes the parents-buy → default-sell free-cash exploit).
+        effect: (s) => ({
+          has_housing: false,
+          housing_name: HOUSING_NAMES.NORMAL_SHARED,
+          rent: 2.0,
+          cash: s.cash + (s.parents_helped_house ? 0 : 25),
+          health: Math.min(100, s.health + 8),
+          message: s.parents_helped_house
+            ? '你以市价 85 折挂牌急售。房子当年是父母全款买的、你并无本金投入，割肉后仅卸下沉重房贷包袱退回租房。'
+            : '你果断以市价 85 折挂牌急售。虽然亏掉了部分前期本金，但成功拿回 $25w 宝贵流动资金，卸下了沉重的房贷包袱！',
+        }),
+        nextEventId: returnToAnnualPanel,
+      },
+      {
+        text: '【向银行申请延期还款 (Forbearance)】苦苦哀求争取半年喘息期',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 10),
+          charm: Math.max(0, (s.charm || 10) - 2),
+          message: '经过漫长的材料提交与跨洋沟通，银行同意为你延期还款半年，但高额利息将计入本金，催款压力依旧如影随形。',
+        }),
+        nextEventId: returnToAnnualPanel,
+      },
+      {
+        text: '【加建/爆改主卧出租】自己搬去车库住，把大主卧挂牌给实习生',
+        condition: (s) => !s.has_adu_rented,
+        effect: (s) => ({
+          has_adu_rented: true,
+          rental_income: (s.rental_income || 0) + 1.5,
+          health: Math.max(0, s.health - 8),
+          message: '你把自己的主卧和次卧全部挂在小红书招租，自己带着行军床搬进了车库。每月多收租金，硬生生把房贷窟窿给补上了！',
+        }),
+        nextEventId: returnToAnnualPanel,
+      },
+    ],
+  },
 };

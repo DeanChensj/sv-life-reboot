@@ -19,6 +19,7 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Google: 养老厂反复重组 ----------------
   'google_reorg_limbo': {
     id: 'google_reorg_limbo',
+    oncePerLife: true,
     title: '【巨头动荡】Google 又一轮重组 (Reorg Limbo)',
     description: '新一轮组织架构调整降临，你的组被并入一个新部门，新老板还没到位，你陷入了“组织待定”的模糊地带。好在 Google 极少裁人，你有的是时间观望。',
     choices: [
@@ -28,7 +29,6 @@ export const companyEvents: Record<string, GameEvent> = {
           network: Math.min(100, (s.network || 10) + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           health: Math.max(0, s.health - 8),
-          story_flags: seen(s, 'google_reorg_limbo'),
           message: '你请了半个部门喝咖啡、刷遍了内部 Tech Talk，成功拿到了热门 AI 组的转岗内诺，人脉大涨！',
         }),
         nextEventId: h1ToH2Router,
@@ -39,7 +39,6 @@ export const companyEvents: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 12),
           leetcode: Math.max(0, s.leetcode - 3),
           impact: addImpact(s, -8),
-          story_flags: seen(s, 'google_reorg_limbo'),
           message: '你把重组当带薪疗养，每天班车、食堂、健身房三点一线，身体养得倍儿棒，就是手感生疏了点。',
         }),
         nextEventId: h1ToH2Router,
@@ -50,6 +49,7 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Meta: All-in 转型豪赌 ----------------
   'meta_metaverse_pivot': {
     id: 'meta_metaverse_pivot',
+    oncePerLife: true,
     title: '【战略转向】Meta 战略 All-in (元宇宙 → AI)',
     description: '小扎在全员会上再次宣布公司要 All-in 新方向，你手上的项目被当场砍掉。要么赌一把转去新方向的核心组冲业绩，要么稳一手混个 Meets 保平安。',
     choices: [
@@ -59,8 +59,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.35 + ((s.network || 10) / 100) * 0.5);
           return win
-            ? { tc: s.tc + 8, leetcode: Math.min(100, s.leetcode + 5), health: Math.max(0, s.health - 12), story_flags: seen(s, 'meta_metaverse_pivot'), message: '你压中了风口！新方向拿下高层背书，你作为核心成员吃到了丰厚的股票刷新与影响力红利！' }
-            : { health: Math.max(0, s.health - 12), charm: Math.max(0, (s.charm || 10) - 1), story_flags: seen(s, 'meta_metaverse_pivot'), message: '新方向半年后又被砍，你的产出打了水漂，白忙一场还落了一身疲惫。' };
+            ? { tc: s.tc + 8, leetcode: Math.min(100, s.leetcode + 5), health: Math.max(0, s.health - 12), message: '你压中了风口！新方向拿下高层背书，你作为核心成员吃到了丰厚的股票刷新与影响力红利！' }
+            : { health: Math.max(0, s.health - 12), charm: Math.max(0, (s.charm || 10) - 1), message: '新方向半年后又被砍，你的产出打了水漂，白忙一场还落了一身疲惫。' };
         },
         nextEventId: h1ToH2Router,
       },
@@ -68,7 +68,6 @@ export const companyEvents: Record<string, GameEvent> = {
         text: '【稳健维持 Meets】稳一手：低调维持 Meets 绩效，不掺和高层斗争',
         effect: (s) => ({
           health: Math.max(0, s.health - 4),
-          story_flags: seen(s, 'meta_metaverse_pivot'),
           message: '你选择了明哲保身，安稳拿着标准包裹，避开了这场豪赌的腥风血雨。',
         }),
         nextEventId: h1ToH2Router,
@@ -79,6 +78,7 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Nvidia: 皮衣黄股价狂飙 ----------------
   'nvidia_rsu_moonshot': {
     id: 'nvidia_rsu_moonshot',
+    oncePerLife: true,
     title: '【黄氏狂欢】Nvidia 算力暴涨与 RSU 封神',
     description: 'AI 算力军备竞赛下，英伟达股价一年翻了几倍，你的 RSU 账户肉眼可见地膨胀。茶水间里同事都在争论：是套现落袋买房，还是钻石手继续持有？',
     choices: [
@@ -89,7 +89,6 @@ export const companyEvents: Record<string, GameEvent> = {
           stocks: Math.max(0, (s.stocks || 0) - 8),
           cash: s.cash + 8,
           health: Math.min(100, s.health + 5),
-          story_flags: seen(s, 'nvidia_rsu_moonshot'),
           message: '你冷静地卖出了一部分持仓，把纸面富贵变成了实打实的现金，睡得踏实多了。',
         }),
         nextEventId: h1ToH2Router,
@@ -100,8 +99,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const moon = gameRandom() < Math.min(0.6, 0.45 + (Math.min(60, s.luck) / 100) * 0.2);
           return moon
-            ? { stocks: (s.stocks || 0) + 10, story_flags: seen(s, 'nvidia_rsu_moonshot'), message: '信仰充值成功！财报再超预期，股价又一波拉升，你的持仓继续膨胀！' }
-            : { stocks: Math.max(0, (s.stocks || 0) - 6), health: Math.max(0, s.health - 4), story_flags: seen(s, 'nvidia_rsu_moonshot'), message: '一次获利回吐让股价短线回调，你的账户缩水了一截，钻石手也有点发抖。' };
+            ? { stocks: (s.stocks || 0) + 10, message: '信仰充值成功！财报再超预期，股价又一波拉升，你的持仓继续膨胀！' }
+            : { stocks: Math.max(0, (s.stocks || 0) - 6), health: Math.max(0, s.health - 4), message: '一次获利回吐让股价短线回调，你的账户缩水了一截，钻石手也有点发抖。' };
         },
         nextEventId: h1ToH2Router,
       },
@@ -111,6 +110,7 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- TikTok / 字节: 美国封禁听证会 ----------------
   'tiktok_us_ban_hearing': {
     id: 'tiktok_us_ban_hearing',
+    oncePerLife: true,
     title: '【风口浪尖】TikTok 听证会与地缘风暴',
     description: '国会又双叒在讨论强制剥离 TikTok 美国业务，你所在的组前途未卜，Slack 里人心惶惶，猎头电话却打爆了。',
     choices: [
@@ -120,8 +120,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const survive = gameRandom() < 0.6;
           return survive
-            ? { cash: s.cash + 3, tc: s.tc + 4, health: Math.max(0, s.health - 6), story_flags: seen(s, 'tiktok_us_ban_hearing'), message: '虚惊一场！业务顺利完成剥离重组，公司为留任员工发了慰问留任奖金，你稳住了。' }
-            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), story_flags: seen(s, 'tiktok_us_ban_hearing'), message: '最坏的结果发生了：美国业务被迫关停，整个组一夜之间被裁，你拿着 N+1 走人。' };
+            ? { cash: s.cash + 3, tc: s.tc + 4, health: Math.max(0, s.health - 6), message: '虚惊一场！业务顺利完成剥离重组，公司为留任员工发了慰问留任奖金，你稳住了。' }
+            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), message: '最坏的结果发生了：美国业务被迫关停，整个组一夜之间被裁，你拿着 N+1 走人。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
@@ -135,7 +135,6 @@ export const companyEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           network: Math.min(100, (s.network || 10) + 3),
           is_new_job: true,
-          story_flags: seen(s, 'tiktok_us_ban_hearing'),
           message: '你未雨绸缪，赶在风暴前跳去了以稳定著称的大厂。虽然全现金包裹略有回落，但换来了安稳。',
         }),
         nextEventId: h1ToH2Router,
@@ -179,6 +178,7 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Apple: 保密文化 ----------------
   'apple_secrecy_crackdown': {
     id: 'apple_secrecy_crackdown',
+    oncePerLife: true,
     title: '【黑屋风暴】Apple 严苛保密审查升级',
     description: '库比蒂诺的保密文化再次收紧。你因为在内部群里随手发了一张未发布产品的截图，被合规团队约谈，气氛一度非常紧张。',
     choices: [
@@ -187,7 +187,6 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           health: Math.max(0, s.health - 8),
           charm: Math.max(0, (s.charm || 10) - 1),
-          story_flags: seen(s, 'apple_secrecy_crackdown'),
           message: '你态度良好地配合了调查，虚惊一场保住了工作，但也被扣了当季的一部分信誉分，心有余悸。',
         }),
         nextEventId: h1ToH2Router,
@@ -198,8 +197,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const ok = gameRandom() < Math.min(0.7, 0.4 + ((s.charm || 10) / 100) * 0.3);
           return ok
-            ? { charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), health: Math.max(0, s.health - 4), story_flags: seen(s, 'apple_secrecy_crackdown'), message: '你有理有据地申辩，合规团队认定情节轻微不予追究，你还因不卑不亢赢得了同事敬重。' }
-            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), story_flags: seen(s, 'apple_secrecy_crackdown'), message: '你的强硬触怒了合规团队，泄密条款零容忍，你被以违反保密协议为由直接解雇。' };
+            ? { charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), health: Math.max(0, s.health - 4), message: '你有理有据地申辩，合规团队认定情节轻微不予追究，你还因不卑不亢赢得了同事敬重。' }
+            : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 10), message: '你的强硬触怒了合规团队，泄密条款零容忍，你被以违反保密协议为由直接解雇。' };
         },
          nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
@@ -209,6 +208,7 @@ export const companyEvents: Record<string, GameEvent> = {
   // ---------------- Robinhood: 散户 meme 股狂潮 / SEC 问询 ----------------
   'robinhood_meme_stock_frenzy': {
     id: 'robinhood_meme_stock_frenzy',
+    oncePerLife: true,
     title: '【散户狂欢】Robinhood Meme 股暴动与 SEC 问询',
     description: '散户在论坛上抱团逼空，某 meme 股单周暴涨十倍，你们的下单与撮合系统被交易洪峰冲到宕机边缘。App 商店涌入百万新用户，但 SEC 已就"限制买入"与订单流返佣 (PFOF) 向公司发来问询函……',
     choices: [
@@ -218,8 +218,8 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.4 + (s.leetcode / 100) * 0.25);
           return win
-            ? { impact: addImpact(s, 8), stocks: (s.stocks || 0) + 6, health: Math.max(0, s.health - 12), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '你带队通宵扩容，系统在交易洪峰中稳如泰山！新增用户暴涨、HOOD 股价起飞，你吃到丰厚 RSU 刷新与全公司认可 (Impact 大涨)!' }
-            : { health: Math.max(0, s.health - 14), impact: addImpact(s, -3), story_flags: seen(s, 'robinhood_meme_stock_frenzy'), message: '撮合系统还是在最高峰宕机数小时，散户集体声讨、监管盯上你们组，你背了故障锅、身心俱疲，这半年的产出付诸东流。' };
+            ? { impact: addImpact(s, 8), stocks: (s.stocks || 0) + 6, health: Math.max(0, s.health - 12), message: '你带队通宵扩容，系统在交易洪峰中稳如泰山！新增用户暴涨、HOOD 股价起飞，你吃到丰厚 RSU 刷新与全公司认可 (Impact 大涨)!' }
+            : { health: Math.max(0, s.health - 14), impact: addImpact(s, -3), message: '撮合系统还是在最高峰宕机数小时，散户集体声讨、监管盯上你们组，你背了故障锅、身心俱疲，这半年的产出付诸东流。' };
         },
         nextEventId: (s) => h1ToH2Router(s),
       },
@@ -229,7 +229,6 @@ export const companyEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           network: Math.min(100, (s.network || 10) + 5),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-          story_flags: seen(s, 'robinhood_meme_stock_frenzy'),
           message: '你协助法务与合规连夜准备应询材料，滴水不漏地扛过了监管风波。虽没吃到风口红利，却赢得了跨部门的信任与人脉。',
         }),
         nextEventId: (s) => h1ToH2Router(s),
@@ -242,34 +241,36 @@ export const companyEvents: Record<string, GameEvent> = {
   // 一生一次(story_flags.<id>_seen),由 midYearEventRouter 以 ~25% 概率注入。
   'open_source_breakout': {
     id: 'open_source_breakout',
+    oncePerLife: true,
     title: '【开源出圈】你的业余开源项目一夜爆红',
     description: '你利用业余时间维护的开源库突然冲上 GitHub Trending 与 Hacker News 头条，一晚暴涨上万 star，业界大佬纷纷转发，连你老板都在全员频道 @ 你！',
     choices: [
       {
         text: '【全力运营】投入精力打磨社区与文档，把开源热度变现为职业影响力',
-        effect: (s) => ({ health: Math.max(0, s.health - 8), impact: addImpact(s, 12), network: Math.min(100, (s.network || 10) + 6), leetcode: Math.min(100, s.leetcode + 3), story_flags: seen(s, 'open_source_breakout'), message: '你顺势把开源热度运营成个人技术品牌，行业影响力 (Impact) 大涨，还结识了一批核心圈内人！' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 8), impact: addImpact(s, 12), network: Math.min(100, (s.network || 10) + 6), leetcode: Math.min(100, s.leetcode + 3), message: '你顺势把开源热度运营成个人技术品牌，行业影响力 (Impact) 大涨，还结识了一批核心圈内人！' }),
         nextEventId: (s) => h1ToH2Router(s),
       },
       {
         text: '【随缘维护】热度随它去，主要精力还是放回本职工作',
-        effect: (s) => ({ impact: addImpact(s, 5), story_flags: seen(s, 'open_source_breakout'), message: '你没太上心，热度过后项目渐渐沉寂，但这段经历仍为你攒下了一些行业影响力。' }),
+        effect: (s) => ({ impact: addImpact(s, 5), message: '你没太上心，热度过后项目渐渐沉寂，但这段经历仍为你攒下了一些行业影响力。' }),
         nextEventId: (s) => h1ToH2Router(s),
       },
     ],
   },
   'internal_tech_talk_viral': {
     id: 'internal_tech_talk_viral',
+    oncePerLife: true,
     title: '【技术分享出圈】你的 Tech Talk 火遍全公司',
     description: '你在公司技术大会上的架构分享意外出圈，录播在内网被疯狂转发，好几个组主动来取经，连 VP 都私信约你喝咖啡……',
     choices: [
       {
         text: '【趁热打铁】牵头成立跨组技术委员会，扩大技术话语权',
-        effect: (s) => ({ health: Math.max(0, s.health - 7), impact: addImpact(s, 10), network: Math.min(100, (s.network || 10) + 8), story_flags: seen(s, 'internal_tech_talk_viral'), message: '你借势牵头跨组技术委员会，成了公司级技术意见领袖，影响力 (Impact) 与人脉双丰收！' }),
+        effect: (s) => ({ health: Math.max(0, s.health - 7), impact: addImpact(s, 10), network: Math.min(100, (s.network || 10) + 8), message: '你借势牵头跨组技术委员会，成了公司级技术意见领袖，影响力 (Impact) 与人脉双丰收！' }),
         nextEventId: (s) => h1ToH2Router(s),
       },
       {
         text: '【低调收尾】收下好评，继续专注手头项目',
-        effect: (s) => ({ impact: addImpact(s, 4), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), story_flags: seen(s, 'internal_tech_talk_viral'), message: '你谦逊地收下同事们的称赞，低调回归本职，小小刷了一波存在感。' }),
+        effect: (s) => ({ impact: addImpact(s, 4), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), message: '你谦逊地收下同事们的称赞，低调回归本职，小小刷了一波存在感。' }),
         nextEventId: (s) => h1ToH2Router(s),
       },
     ],

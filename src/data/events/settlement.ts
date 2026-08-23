@@ -337,7 +337,7 @@ export const settlementEvents: Record<string, GameEvent> = {
             let newH1bTenure = s.h1b_tenure || 0;
             if (newVisa === 'H1B (工签)') {
               newH1bTenure += 1;
-              if (newH1bTenure === 6) {
+              if (newH1bTenure >= 6) {
                 if (nextStage === 'i140_approved' || nextStage === 'i485_pending' || nextStage === 'approved' || nextGc >= 3) {
                   h1bMsg = `${h1bMsg ? h1bMsg + '\n' : ''}【H-1B 6年大限豁免】你的 H-1B 已满 6 年！好在你的 I-140 移民申请已获批锁定 PD，成功依据 AC21 法案获得无上限 3 年延期！`.trim();
                 } else {

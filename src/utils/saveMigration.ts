@@ -134,6 +134,9 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
     rent: sanitizedRent,
     gc_progress: sanitizedGcProgress,
     visa: sanitizedVisa,
+    // `message` is a required string; a save carrying `message: undefined` would otherwise
+    // survive the ...rawState spread and violate the type. Re-assert it.
+    message: typeof rawState.message === 'string' ? rawState.message : fallbackState.message,
     // Coerce persisted booleans (undefined falls back to the fresh-game default).
     has_us_degree: Boolean(rawState.has_us_degree ?? fallbackState.has_us_degree),
     is_phd: Boolean(rawState.is_phd ?? fallbackState.is_phd),

@@ -24,7 +24,7 @@ export const IMPACT_TIERS: { min: number; label: string }[] = [
 export const impactTier = (n: number): string => (IMPACT_TIERS.find((t) => (n || 0) >= t.min) || IMPACT_TIERS[IMPACT_TIERS.length - 1]).label;
 
 // 加/减 impact 的安全封装(下限 0，无硬上限但天然被衰减压住)。
-export const addImpact = (s: GameState, delta: number): number => Math.max(0, (s.impact || 0) + delta);
+export const addImpact = (s: GameState, delta: number): number => Math.max(0, (s.impact || 0) + (Number.isFinite(delta) ? delta : 0));
 
 // 大额资产扣除安全封装：优先扣除现金，现金不足时平仓变现股票，彻底杜绝负现金
 export const deductAssets = (s: GameState, cost: number): { cash: number; stocks: number } => {
@@ -457,7 +457,9 @@ export const midYearEventRouter = (s: GameState): string => {
         // 优先于下方的公司/人设/职级 flavor 事件——两难是核心体验，且触发门槛更窄，应先派发。
         // ① 有毒老板 vs 绿卡人质：仅当临时签证 + PERM/I-140 尚未获批时成立（跳槽会触发 stateTransitions 的绿卡重置）。
         const gcMidPerm = s.gc_stage === 'perm_processing' || s.gc_stage === 'perm_audit' || s.gc_stage === 'i140_processing' || s.gc_stage === 'i140_rfe';
-        if (!isPermanentVisa(s.visa) && s.visa !== '无' && !s.is_phd && gcMidPerm && !sig.dilemma_toxic_boss_gc_hostage_seen && gameRandom() < 0.3) return 'dilemma_toxic_boss_gc_hostage';
+        // Exclude O-1: the PERM-reset-on-hop penalty (stateTransitions) exempts O-1, so the
+        // dilemma's "跳槽→绿卡进度清零" cost would be a no-op for O-1 holders.
+        if (!isPermanentVisa(s.visa) && s.visa !== '无' && s.visa !== 'O1 (杰出人才)' && !s.is_phd && gcMidPerm && !sig.dilemma_toxic_boss_gc_hostage_seen && gameRandom() < 0.3) return 'dilemma_toxic_boss_gc_hostage';
         // ② 独吞功劳 vs 提携恩情：中层最纠结。
         if ((lvl === 'L4' || lvl === 'L5 (Senior)' || lvl === 'L6 (Staff)') && !sig.dilemma_credit_grab_mentor_seen && gameRandom() < 0.3) return 'dilemma_credit_grab_mentor';
 

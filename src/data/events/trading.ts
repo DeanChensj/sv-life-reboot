@@ -328,15 +328,30 @@ export const tradingEvents: Record<string, GameEvent> = {
       {
         text: '【参加量化对冲私董会】在沙丘路展示实盘 Sharpe 收益曲线，吸引高净值 LP 资金 (花费 $0.5w)',
         condition: (s) => s.job_type === 'trader' && s.cash >= 0.5,
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          tc: 0,
-          cash: parseFloat((s.cash - 0.5 + 4.5).toFixed(1)),
-          network: Math.min(100, (s.network || 0) + 3),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-          health: Math.max(0, s.health - 2),
-          message: '【斩获 LP 管理费分红】你在量化私董会上凭借优秀的夏普比率惊艳全场，数位科技新贵与天使 LP 委托你打理资金池，获得 +$4.0w 净管理分红！'
-        }),
+        effect: (s) => {
+          // Pitching LPs is a real gamble now (was a guaranteed +$4w/yr): the $0.5w entry
+          // fee is sunk, and whether high-net-worth LPs actually commit depends on your
+          // Sharpe pitch (charm/network/luck).
+          const raised = gameRandom() < Math.min(0.85, 0.35 + (s.charm || 10) / 50 + (s.network || 0) / 200 + (s.luck || 20) / 200);
+          return raised
+            ? {
+                mid_year: true, season_stage: 'h1',
+                tc: 0,
+                cash: parseFloat((s.cash - 0.5 + 4.5).toFixed(1)),
+                network: Math.min(100, (s.network || 0) + 3),
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+                health: Math.max(0, s.health - 2),
+                message: '【斩获 LP 管理费分红】你在量化私董会上凭借优秀的夏普比率惊艳全场，数位科技新贵与天使 LP 委托你打理资金池，获得 +$4.0w 净管理分红！'
+              }
+            : {
+                mid_year: true, season_stage: 'h1',
+                tc: 0,
+                cash: parseFloat((s.cash - 0.5).toFixed(1)),
+                network: Math.min(100, (s.network || 0) + 2),
+                health: Math.max(0, s.health - 2),
+                message: '【路演反响平平】你展示了实盘曲线，但近期回撤让 LP 们持观望态度，没能拉到新资金，白搭了入场费与精力。'
+              };
+        },
         nextEventId: h1ToH2Router,
       },
       {

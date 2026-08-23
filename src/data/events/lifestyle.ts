@@ -649,7 +649,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【算了吧】算了吧，我还要在家 On-Call',
         effect: (s) => ({ 
           health: s.health + 5,
-          cash: s.cash + (s.tc / 12),
+          cash: s.cash + Math.min(1.5, s.tc / 12),
           message: '你因为顶替他们做了假期的 On-Call 拿到了额外的 Bonus。但看着他们朋友圈的末日废土风照片，你流下了社畜的眼泪。'
         }),
         nextEventId: 'sv_year_end_settlement'
@@ -1502,12 +1502,12 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【领离职大礼包】伴侣拿了 6 个月 Severance 离职补偿金，转入理财账户',
-        reqBadge: '入账 +$8w 补偿金',
+        reqBadge: '补偿金入账，但少了一份收入',
         condition: (s) => s.is_married || s.relationship_status === 'married',
         effect: (s) => ({
-          cash: s.cash + 8,
+          cash: s.cash + 3,
           health: Math.max(0, s.health - 5),
-          message: '伴侣拿着 N+3 离职大礼包一次性到账 $8w！虽然短期内失去了一份薪水，但手头现金大幅充裕。'
+          message: '伴侣拿着 N+3 离职大礼包一次性到账 $8w，但接下来这一年家庭少了一份薪水、靠积蓄硬扛，现金只是小幅净增。'
         }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1630,7 +1630,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           is_married: false,
           relationship_status: 'single',
-          partner: undefined,
+          partner_type: undefined,
           cash: Math.floor(s.cash * 0.5 * 10) / 10,
           stocks: Math.floor((s.stocks || 0) * 0.5 * 10) / 10,
           health: Math.max(0, s.health - 8),

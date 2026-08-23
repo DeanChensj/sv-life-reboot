@@ -1811,7 +1811,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
           const newTC = getLevelScaledTC(24, targetLvl);
           return pass
-            ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 15), message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${targetLvl} · 年薪 ${newTC}w) 并成功办理 H1B Transfer 保住工签！` }
+            ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 15), visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'], message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${targetLvl} · 年薪 ${newTC}w) 并成功办理工签 Transfer 保住合法身份！` }
             : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，工签身份到期被迫登机离境。' };
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
@@ -1826,7 +1826,8 @@ export const careerEvents: Record<string, GameEvent> = {
           laid_off: false,
           job_type: 'startup',
           health: Math.max(0, s.health - 10),
-          message: '外包中介连夜为你开具了紧急 Offer 办理了 H1B Transfer！虽然总包大打折扣，但你的 60 天工签遣返警报成功解除！'
+          visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'],
+          message: '外包中介连夜为你开具了紧急 Offer 办理了工签 Transfer！虽然总包大打折扣，但你的 60 天遣返警报成功解除！'
         }),
         nextEventId: h1ToH2Router,
       },
@@ -1946,6 +1947,7 @@ export const careerEvents: Record<string, GameEvent> = {
           job_type: 'startup',
           tc: Math.max(10, Math.floor(s.tc * 0.55)),
           health: s.health - 15,
+          visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'],
           message: '外包中介连夜为你开具了紧急 Offer 办理了工签 Transfer！虽然总包大幅跳水，但你的 60 天合法身份警报成功解除！'
         }),
         nextEventId: h1ToH2Router
@@ -2210,7 +2212,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【降薪跳槽养老】太累了，降薪跳槽去 Google/Apple 养老',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
-        effect: (s) => ({ tc: Math.max(26, s.tc - 8), company: 'google', health: Math.min(100, s.health + 20), message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹略有回落，但终于有了生活。' }),
+        effect: (s) => ({ tc: Math.max(26, s.tc - 8), company: 'google', health: Math.min(100, s.health + 20), visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'], message: '你受够了 Meta 的高压，降薪跳槽去了以 WLB 著称的养老大厂。虽然包裹略有回落，但终于有了生活。' }),
         nextEventId: h1ToH2Router,
       }
     ]

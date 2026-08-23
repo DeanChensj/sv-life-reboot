@@ -621,7 +621,9 @@ export const initializationEvents: Record<string, GameEvent> = {
           leetcode: s.leetcode + 10,
           message: '【本科毕业】顺利斩获世界名校学士学位并激活 OPT 实习签证！你带着满满的干劲投身硅谷大厂校招求职！'
         }),
-        nextEventId: (s) => s.visa === 'F1 (学生)' ? 'us_undergrad_grad' : 'job_hunt',
+        // Effect flips F1→OPT before routing reads state, so the old F1 self-loop guard was
+        // dead code — always went to job_hunt anyway. Route there directly.
+        nextEventId: 'job_hunt',
       },
       {
         text: '【申请大U硕士】刷题进厂预备役，避避风头',

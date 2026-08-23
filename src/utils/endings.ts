@@ -89,7 +89,7 @@ export function determineEnding(s: GameState): EndingResult {
   }
 
   // ---------- Triumph (FIRE-level wealth: status 'win', or 'retired' while wealthy) ----------
-  const wealthy = s.status === 'win' || assets >= 500;
+  const wealthy = s.status === 'win' || assets >= (s.win_threshold || 500);
   if (wealthy) {
     if (s.founder_stage === 'exit' || (s.company_valuation || 0) >= 6000) {
       return {

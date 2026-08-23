@@ -101,7 +101,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【做天使】做天使 / Advisor，用资源与经验扶持后辈创业 (需现金>=20w)',
+        text: '【做天使】做天使 / Advisor，用资源与经验扶持后辈创业 (需现金 >= $20w · 实际投入 $3w)',
         condition: (s) => s.cash >= 20,
         effect: (s) => ({
           cash: parseFloat((s.cash - 3).toFixed(1)),
@@ -141,7 +141,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【投身慈善】投身慈善 / 成立开源基金会，把财富转化为影响力 (捐赠 $10w)',
+        text: '【投身慈善】投身慈善 / 成立开源基金会，把财富转化为影响力 (需现金 >= $20w · 捐赠 $10w)',
         condition: (s) => s.cash >= 20,
         effect: (s) => ({
           cash: parseFloat((s.cash - 10).toFixed(1)),

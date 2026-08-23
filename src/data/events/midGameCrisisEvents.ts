@@ -22,7 +22,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
       {
         text: '【忍辱负重求稳】主动收缩 Scope、接受降薪，保住这份饭碗',
         effect: (s) => ({
-          tc: Math.max(22, Math.floor(s.tc * 0.85)),
+          tc: Math.min(s.tc, Math.max(22, Math.floor(s.tc * 0.85))),
           health: Math.max(0, s.health - 8),
           message: '你咽下了中年人的现实：主动交出核心项目、接受了一轮降薪，用「性价比」换来了暂时的安稳。饭碗保住了，但心气也磨掉了一截。',
         }),

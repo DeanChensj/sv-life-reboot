@@ -9,7 +9,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: 'rocket',
     category: 'ending',
     description: '成功创办 AI Agent 科技公司，公司顺利在纳斯达克 IPO 敲钟！',
-    hint: '暗号：从事 AI 研究，并在后期财富积累达到 $400w 以上。'
+    hint: '暗号：投身 AI 创业，作为创始人/核心成员带公司 IPO 敲钟上市并达成 FIRE。'
   },
   {
     id: 'crypto_whale',
@@ -165,7 +165,9 @@ export function unlockAchievement(id: string): boolean {
 export function checkAndUnlockAchievements(state: GameState): string[] {
   const newlyUnlocked: string[] = [];
 
-  if (((state.job_type === 'ai_research' || state.job_type === 'startup_founder' || state.story_flags?.alex_ipo_done || state.founder_stage === 'exit') && state.status === 'win')) {
+  // Founder-path only: the title/description are "创办…IPO 敲钟". A plain ai_research
+  // EMPLOYEE who FIREs never founded anything, so it no longer qualifies (was a mismatch).
+  if (((state.job_type === 'startup_founder' || state.story_flags?.alex_ipo_done || state.founder_stage === 'exit') && state.status === 'win')) {
     if (unlockAchievement('ai_unicorn_founder')) newlyUnlocked.push('ai_unicorn_founder');
   }
 

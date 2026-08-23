@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { h1ToH2Router, gameRandom, stampSeen, addImpact , markSeen} from './helpers';
+import { h1ToH2Router, gameRandom, stampSeen, addImpact , markSeen, resolveHopVisaTransition} from './helpers';
 
 // 公司专属随机事件 (Company-specific flavor events).
 // Each is a once-per-life SIGNATURE beat for its company path, injected from
@@ -135,6 +135,7 @@ export const companyEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 5),
           network: Math.min(100, (s.network || 10) + 3),
           is_new_job: true,
+          visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'],
           message: '你未雨绸缪，赶在风暴前跳去了以稳定著称的大厂。虽然全现金包裹略有回落，但换来了安稳。',
         }),
         nextEventId: h1ToH2Router,

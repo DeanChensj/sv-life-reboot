@@ -2647,6 +2647,53 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 50 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 51: 内部转组 (internal_team_transfer) 改变后续赛道。锁三件事:
+// ①sv_daily_life 有转组入口且路由到 internal_team_transfer + 设 annual_action=transfer;
+// ②AI 核心组置 team_focus=ai_core + transferred_to_ai + 清 PIP;养老组置 wlb_tools + 清 PIP;
+// ③team_focus 真正影响 H1 事件池:wlb_tools 绝不出 PIP/裁员/危机,ai_core 能卷入 AI 攻坚。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 51] 内部转组改变后续 H1 赛道 (team_focus → midYearEventRouter) ---');
+  const entry = events['sv_daily_life'].choices.find((c) => c.text.includes('申请内部转组'))!;
+  assert(!!entry, 'sv_daily_life 有【申请内部转组】入口');
+  const emp: GameState = { ...generateInitialState(), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)', leetcode: 60, health: 70, status: 'playing' } as GameState;
+  const entryRes = entry.effect(emp);
+  assert((typeof entry.nextEventId === 'function' ? entry.nextEventId(emp) : entry.nextEventId) === 'internal_team_transfer', '转组入口路由到 internal_team_transfer');
+  assert((entryRes.story_flags as Record<string, unknown>)?.annual_action === 'transfer', '转组入口设 annual_action=transfer');
+
+  const transfer = events['internal_team_transfer'];
+  const aiChoice = transfer.choices.find((c) => c.text.includes('前沿 AI'))!;
+  const wlbChoice = transfer.choices.find((c) => c.text.includes('养老'))!;
+  assert(transfer.choices.length === 2, 'TPM 已移除,转组只剩 AI核心 / 养老支持 两个去向');
+
+  const aiRes = aiChoice.effect({ ...emp, story_flags: { pip_warning: true } } as GameState);
+  assert((aiRes.story_flags as Record<string, unknown>)?.team_focus === 'ai_core', 'AI 组置 team_focus=ai_core');
+  assert(aiRes.transferred_to_ai === true, 'AI 组接上 transferred_to_ai (启用既有 AI 机制)');
+  assert((aiRes.story_flags as Record<string, unknown>)?.pip_warning === false, 'AI 组清空 PIP 预警');
+
+  const wlbRes = wlbChoice.effect({ ...emp, story_flags: { pip_warning: true }, health: 40 } as GameState);
+  assert((wlbRes.story_flags as Record<string, unknown>)?.team_focus === 'wlb_tools', '养老组置 team_focus=wlb_tools');
+  assert((wlbRes.health || 0) > 40, '养老组回血');
+  assert((wlbRes.story_flags as Record<string, unknown>)?.pip_warning === false, '养老组清空 PIP 预警');
+
+  // team_focus 真正影响 H1 池:养老组多次抽样绝不返回 PIP/裁员/危机
+  const banned = ['friday_pip', 'layoff_rumor', 'stock_crash', 'ai_disruption_existential', 'friday_p0_outage_crisis', 'agent_hallucination_prod_disaster'];
+  const wlbState: GameState = { ...emp, year: 2025, story_flags: { team_focus: 'wlb_tools' }, season_stage: 'h1' } as GameState;
+  for (let i = 0; i < 120; i++) {
+    const ev = midYearEventRouter(wlbState);
+    assert(!banned.includes(ev), `养老组 H1 不应出现高压事件 (got ${ev})`);
+  }
+  // AI 核心组能卷入前沿 AI 攻坚 (多次抽样至少命中一次 AI/影响力事件)
+  const aiState: GameState = { ...emp, year: 2025, company: 'google', story_flags: { team_focus: 'ai_core' }, season_stage: 'h1' } as GameState;
+  const aiPool = new Set<string>();
+  for (let i = 0; i < 200; i++) aiPool.add(midYearEventRouter(aiState));
+  const aiFrontier = ['llm_datacenter_power_outage', 'ai_disruption_existential', 'open_source_breakout', 'internal_tech_talk_viral'];
+  assert(aiFrontier.some((e) => aiPool.has(e)), 'AI 核心组 H1 能卷入前沿 AI / 影响力事件');
+
+  console.log('✅ CUJ 51 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

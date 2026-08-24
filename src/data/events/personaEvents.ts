@@ -22,7 +22,7 @@ export const personaEvents: Record<string, GameEvent> = {
     description: 'VP 拍脑袋定下一个「三周上线」的死线，全组都觉得是 mission impossible。作为天生的做题家，你却隐隐兴奋——这正是你碾压同僚、证明抗压天赋的舞台。',
     choices: [
       {
-        text: '【极限爆肝单挑模块】极限爆肝：连轴转三周单挑核心模块，一战封神 (卷王抗压)',
+        text: '【极限爆肝单挑模块】连轴转三周单挑核心模块，以惊人产出一战封神',
         condition: employed,
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 10),
@@ -56,7 +56,7 @@ export const personaEvents: Record<string, GameEvent> = {
     description: '组里周围全是藤校、大厂履历闪闪发光的天才，开会时的黑话你有时都跟不上。深夜你盯着天花板，怀疑自己是不是只是运气好混进来的冒牌货。',
     choices: [
       {
-        text: '【死磕源码实力翻盘】闷头刷题、死磕源码，用硬实力堵住所有人的嘴 (实力翻盘)',
+        text: '【死磕源码实力自证】闷头刷题、死磕底层源码，用硬核技术实力打破质疑',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 12),
           health: Math.max(0, s.health - 8),
@@ -85,7 +85,7 @@ export const personaEvents: Record<string, GameEvent> = {
     description: '凭着你八面玲珑的名声，你被拉进了一场 Sand Hill Road 的顶级私人晚宴——满屋子的 VC、连续创业者和网红。这是你的主场。',
     choices: [
       {
-        text: '【长袖善舞拿捏全场】长袖善舞、拿捏全场，把每个大佬都聊成朋友 (海王本色)',
+        text: '【长袖善舞拿捏全场】在高端社交场谈笑风生，结交顶级 VC 与连续创业者',
         effect: (s) => ({
           network: Math.min(100, (s.network || 10) + 10),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
@@ -142,7 +142,7 @@ export const personaEvents: Record<string, GameEvent> = {
     description: '过年视频时，父母主动提出再给你一笔钱「垫一垫」——可以加码买房，也可以做启动金。但话里话外，也带着对你人生规划的期待与掌控。',
     choices: [
       {
-        text: '【欣然接受家庭赞助】欣然接受，如虎添翼 (接受家庭期待的附加压力)',
+        text: '【欣然接受家庭赞助】坦然收下父母资助，充实买房与投资现金流',
         effect: (s) => ({
           cash: s.cash + 8,
           network: Math.min(100, (s.network || 10) + 3),
@@ -152,7 +152,7 @@ export const personaEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【婉拒赞助独立闯荡】婉拒：这次想靠自己闯出来 (独立自证)',
+        text: '【婉拒赞助独立闯荡】委婉谢绝家庭经济资助，决心靠自己的双手闯出一片天地',
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 5),
           network: Math.min(100, (s.network || 10) + 3),
@@ -172,7 +172,8 @@ export const personaEvents: Record<string, GameEvent> = {
     description: '你莫名收到一个早期核心 AI/Web3 协议的内测与空投份额，朋友神秘兮兮地说「这波是内部顶级额度」。以你逆天的气运，梭一把说不定就是百倍收益！',
     choices: [
       {
-        text: '【气运护体一把梭】梭哈信运气！气运护体一把梭 (高波动)',
+        text: '【相信气运一把梭哈】放手一搏，跟随直觉果断押注早期协议份额',
+        costBadge: '投入 $3w',
         condition: (s) => s.cash >= 3,
         effect: (s) => {
           const hit = gameRandom() < Math.min(0.85, 0.50 + (Math.min(80, s.luck) / 100) * 0.4);

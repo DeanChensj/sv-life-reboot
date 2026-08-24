@@ -144,7 +144,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'zhuanma_decision',
       },
       {
-        text: '【美本 · 商科/社科】商科文科求职内卷，转战科技圈 (高情商/善沟通/刷题硬啃)',
+        text: '【美本 · 商科/社科】商科文科求职内卷，转战科技赛道',
         effect: (s) => ({
           has_us_degree: true,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
@@ -156,7 +156,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'zhuanma_decision',
       },
       {
-        text: '【美本 · 机械/电子/数理】理工硬核背景，高数线代满分 (逻辑严密/算法上手快)',
+        text: '【美本 · 机械/电子/数理】理工硬核背景，高数线代功底扎实跨界转码',
         effect: (s) => ({
           has_us_degree: true,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
@@ -167,7 +167,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'zhuanma_decision',
       },
       {
-        text: '【陆本 · 跨专业搏美硕】国内非 CS 本科，无美国学位，只能搏一个 CS 美硕来美 (全游戏最硬开局)',
+        text: '【陆本 · 跨专业搏美硕】国内非 CS 本科，决心赴美攻读 CS 硕士实现转码',
         effect: (s) => ({
           story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'cn', zhuanma_major: 'general_cn' },
           message: '你在国内读了个非 CS 专业，决心砸锅卖铁读个美国 CS 硕士，一步登天转码来美。',

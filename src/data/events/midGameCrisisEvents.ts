@@ -29,7 +29,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【硬刚证明价值】不服老，硬刚证明价值 (赌一把，败则被优化)',
+        text: '【正面硬刚证明价值】不服老、不退缩，主动承接高难度攻坚项目自证价值',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.30 + (s.leetcode / 250) + ((s.network || 10) / 200));
@@ -63,7 +63,7 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
     description: '大模型海啸拍了下来：公司高层宣布，你所在的整条业务线将由 AI 工具与 Agent 全面替代，全组就地解散。这一次不是你表现不好——是你这个岗位，从此不存在了。',
     choices: [
       {
-        text: '【拼命 Reskill 转组】拼命 Reskill：抢转公司前沿 AI 大模型核心组 (需硬核算法，赌一把)',
+        text: '【拼命 Reskill 申请转组】恶补前沿大模型技术栈，申请内部转岗至 AI 核心组',
         condition: employed,
         effect: (s) => {
           const win = gameRandom() < Math.min(0.65, 0.25 + (s.leetcode / 200));

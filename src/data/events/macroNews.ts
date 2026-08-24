@@ -9,7 +9,7 @@ export const macroNewsEvents: Record<string, GameEvent> = {
     description: '手机弹出华尔街日报推送："美联储意外宣布降息 50 个基点，纳斯达克指数创历史新高！各大 AI 独角兽宣布完成百亿融资！"\n\nBlind 上的跳槽包裹满天飞，连前台都在聊股票。硅谷的空气里充满了金钱的味道。',
     choices: [
       {
-        text: '【确认宏观趋势】了解宏观市场行情，调整个人策略 (Ack)',
+        text: '【已阅·知悉市场行情】关注宏观周期走势，随时调整个人策略与资产配置',
         // 纯播报当前行情 (经济由年终结算的周期驱动,此处不改 macro_economy);读到牛市→年底 RSU 暴涨、
         // 招聘回暖,trader 宜做多。
         effect: () => ({ message: '宏观经济正处【狂暴大牛市】！大厂疯狂扩招、面试门槛降低，年底 RSU 有望暴涨——做多正当时！' }),
@@ -24,7 +24,7 @@ export const macroNewsEvents: Record<string, GameEvent> = {
     description: '手机弹出 Bloomberg 推送："通胀超预期，美联储宣布暴力加息！纳斯达克单日暴跌 5%！"\n\n紧接着，Blind 上传出多个大厂即将冻结招聘 (Hiring Freeze) 甚至筹备万人大裁员的风声。硅谷的资本盛宴戛然而止。',
     choices: [
       {
-        text: '【确认宏观趋势】了解宏观市场行情，调整个人策略 (Ack)',
+        text: '【已阅·知悉市场行情】关注宏观周期走势，随时调整个人策略与资产配置',
         effect: () => ({ message: '宏观经济正处【裁员大熊市】！求职面试地狱难度、年底 RSU 严重缩水、裁员风声四起——现金为王,trader 宜做空避险。' }),
         nextEventId: (s: GameState) => h1ToH2Router(s)
       }
@@ -37,7 +37,7 @@ export const macroNewsEvents: Record<string, GameEvent> = {
     description: '经历了前段时间的剧烈波动，华尔街和硅谷大厂达成了某种默契。\n\n"各大科技公司表示将专注盈利和核心业务，停止无序扩张，但也不会进行大规模裁员。" 市场情绪逐渐平稳。',
     choices: [
       {
-        text: '【确认宏观趋势】了解宏观市场行情，调整个人策略 (Ack)',
+        text: '【已阅·知悉市场行情】关注宏观周期走势，随时调整个人策略与资产配置',
         effect: () => ({ message: '宏观经济处于【正常震荡期】。一切按部就班，靠实力说话。' }),
         nextEventId: (s: GameState) => h1ToH2Router(s)
       }

@@ -1140,7 +1140,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         condition: (s) => s.tc > 0 && s.cash >= 5
       },
       {
-        text: '【天使投资十万美元】出资 $10w 当个天使投资人，博取未来十倍回报 (高风险)',
+        text: '【天使投资十万美元】出资 $10w 当个天使投资人，博取未来早期回报',
+        costBadge: '投资 $10w',
         effect: (s) => {
           const success = gameRandom() > 0.9;
           return success 
@@ -1168,13 +1169,15 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '为避免云端 API 账单爆表与隐私泄露，你果断花了 $2,000 美金抢购了一台 64GB 统一内存的 Mac Mini，在客厅 24 小时本地部署跑 OpenClaw / 本地自主 Agent！',
     choices: [
       {
-        text: '【配置 Agent 自动工作】调教 Agent 替你自动抓取与总结邮件 (花费 $0.2w)',
+        text: '【配置 Agent 自动工作】调教 Agent 替你自动抓取与总结日常邮件',
+        costBadge: '花费 $0.2w',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), leetcode: Math.min(100, s.leetcode + 4), health: Math.min(100, s.health + 5), message: '本地 OpenClaw 部署成功！虽然折腾 YAML 配置有点累，但 Agent 帮处理了不少琐碎爬虫与邮件任务。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【折腾发小红书炫耀】折腾三天环境，发小红书“湾区码农客厅 AI 服务器” (花费 $0.2w)',
+        text: '【折腾发小红书炫耀】折腾三天环境，发小红书“湾区码农客厅 AI 服务器”',
+        costBadge: '花费 $0.2w',
         condition: (s) => s.cash >= 0.2,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.2), charm: Math.min(s.max_charm ?? 25, s.charm + 2), message: '你的客厅 Mac Mini 服务器组照获得了 200+ 赞，不少极客同仁在评论区交流开源部署心得。' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1196,7 +1199,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         // Was an unconditional +$12w faucet with a strictly-worse alternative. Now a
         // modest, genuinely risky side income (EV ~ +$1.75w/yr).
-        text: '【全力运行套利脚本】全力运行 Multi-Agent 自动套利脚本 (高波动副业)',
+        text: '【全力运行套利脚本】全力运行 Multi-Agent 自动抓取与套利脚本',
         effect: (s) => {
           const win = gameRandom() < 0.55;
           return win
@@ -1238,7 +1241,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你急于拓展圈子，用自动化脚本向湾区 200 多位大厂 Director / VP 批量发送了推销自己的 Cold Message。结果被某总监截图发在 Pulse 专栏吐槽“缺乏基本职业素养”...',
     choices: [
       {
-        text: '【评论区论战维护尊严】在评论区与发帖总监论战维护尊严 (硬刚涨黑粉气场)',
+        text: '【评论区论战维护尊严】在评论区有理有据与发帖总监论战，维护个人名誉与专业尊严',
         // No longer a strict loss: fighting back costs network but a vocal minority
         // finds you "based" (charm up), so it trades network for charm vs the apology.
         effect: (s) => ({ network: Math.max(0, (s.network || 0) - 4), charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.max(0, s.health - 3), message: '你在评论区舌战群儒，虽然得罪了部分业内大佬(人脉受损)，但你的犀利与硬气也圈了一批欣赏你的粉丝！' }),
@@ -1294,7 +1297,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【17-Mile 极限跑山】下场 17-Mile 沿海公路体验极限跑山 (消耗 $0.5w)',
+        text: '【17-Mile 极限跑山】下场 17-Mile 沿海公路体验极限跑山',
+        costBadge: '花费 $0.5w',
         // Distinct payoff (charm + car-scene clout as luck) so it isn't just a
         // worse version of the networking option for employed players.
         effect: (s) => ({
@@ -1315,7 +1319,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '周六下午，你开车去旧金山 Mission 区吃网红 Tacos。停在路边仅 1 小时，回来赫然发现后车窗被打碎，后备箱里的健身包与备用笔记本被搜刮一空...',
     choices: [
       {
-        text: '【走保险自付额换玻璃】自认倒霉走自付额 Deductible 立刻换玻璃 (消耗 $0.1w)',
+        text: '【走保险自付额换玻璃】走自付额 Deductible 报销并立刻预约更换原厂玻璃',
+        costBadge: '自付 $0.1w',
         condition: (s) => s.cash >= 0.1,
         // Fixing it promptly = no lingering stress (no health hit); the tradeoff is
         // paying $0.1w vs the free "post it online" option that keeps the -5 health.
@@ -1364,19 +1369,21 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你停在 Palo Alto 大学路旁边的保时捷 / 豪车突然被无良拖车公司强行拖走！不仅车窗被恶意损坏，恶霸拖车公司还开出了包含强制 Storage 存放费的天价赎车单...',
     choices: [
       {
-        text: '【花钱消灾缴纳赎金】直接缴纳天价赎车费与维修费，息事宁人 (消耗 $2w)',
+        text: '【花钱消灾缴纳赎金】直接缴纳赎车费与维修费用，息事宁人',
+        costBadge: '赎车费 $2w',
         condition: (s) => s.cash >= 2,
         effect: (s) => ({ cash: s.cash - 2, health: s.health - 5, message: '你一次性掏出 $2w 赎回了豪车并修好了大灯。高阶玩家的烦恼往往就是这么朴实无华。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【找律师控诉并曝光】找律师控诉并录制视频发全网曝光维权 (消耗 $0.5w)',
+        text: '【找律师控诉并曝光】聘请律师控诉不良拖车公司并录制视频全网曝光',
+        costBadge: '律师费 $0.5w',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: s.cash - 0.5, health: s.health - 10, charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你的曝光视频引发了舆论关注，拖车公司迫于压力退还了赎车费，但你折腾得精疲力竭。' }),
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【信用卡透支交赎金】现金不足，强行通过信用卡透支支付赎车费 (健康 -10)',
+        text: '【信用卡透支交赎金】现金见底，咬牙通过信用卡高息透支支付赎车费',
         condition: (s) => s.cash < 0.5,
         // Narrative is "survive via credit-card overdraft", so floor cash at 0 — never let this
         // safe branch itself trigger bankruptcy for a sub-$0.5w player.
@@ -1392,7 +1399,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '在 Stanford Health 的年度体检中，医生严肃地指着你的报告：中度脂肪肝、腰椎 L4-L5 间盘突出、血压血脂双双超标。“如果你继续保持每天坐 10 个小时、高压冲刺代码的生活，5 年内猝死风险高达 40%！”',
     choices: [
       {
-        text: '【开启彻底保养】买升降桌、立式办公、每周 3 次皮拉提斯与私人教练 (花费 $1w)',
+        text: '【开启彻底保养】购置顶级人体工学升降桌、立式办公，配置私人普拉提教练',
+        costBadge: '花费 $1w',
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1),
           health: Math.min(100, s.health + 25),
@@ -1426,7 +1434,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【预约植发体态矫正】预约土耳其植发与高端体态矫正普拉提 (花费 $0.5w)',
+        text: '【预约植发体态矫正】预约土耳其专业植发与高端体态矫正课程',
+        costBadge: '花费 $0.5w',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.5), charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: '植发与体态矫正效果显著！你的精气神与个人吸引力大幅度恢复！' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1445,7 +1454,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【报名狼人杀与攀岩】强迫自己报名湾区桌游与攀岩圈，拓展社交 (花费 $0.05w)',
+        text: '【报名桌游与攀岩】主动报名湾区热门桌游与室内攀岩社团，拓展同好社交',
+        costBadge: '活动费 $0.05w',
         condition: (s) => s.cash >= 0.05,
         effect: (s) => ({ cash: Math.max(0, s.cash - 0.05), charm: Math.min(s.max_charm ?? 25, s.charm + 2), network: Math.min(100, (s.network || 0) + 3), message: '在桌游与攀岩中你结识了多位开朗的新朋友，重新找回了社交节奏！' }),
         nextEventId: 'sv_year_end_settlement'
@@ -1459,7 +1469,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '五月加州阳光明媚，湾区朋友圈与 Slack #random 频道被 Brentwood 摘樱桃 (U-Pick Cherries) 彻底刷屏！你戴上草帽、开着车加入了浩浩荡荡的果园大军...',
     choices: [
       {
-        text: '【狂摘 25 磅】烈日下抢摘顶级 Rainier 白樱桃，周一带去 MicroKitchen 分给组员 (花费 $0.08w)',
+        text: '【狂摘 25 磅樱桃】烈日下采摘顶级 Rainier 白樱桃，周一带去公司茶水间分享',
+        costBadge: '花费 $0.08w',
         condition: (s) => s.cash >= 0.08,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.08),
@@ -1487,7 +1498,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '圣诞长假来临，你逃离了湾区的阴雨，飞往墨西哥坎昆 (Cancun) 的 5 星级全包度假村。加勒比海滩、无限续杯的 Margaritas 与全天候 Taco 自助餐让你彻底放空。',
     choices: [
       {
-        text: '【彻底合上电脑】海滩躺平 7 天，享受顶级纯享 WLB 避世 (花费 $0.4w)',
+        text: '【彻底合上电脑】海滩躺平 7 天，享受纯粹无干扰的 WLB 避世休假',
+        costBadge: '度假 $0.4w',
         condition: (s) => s.cash >= 0.4,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.4),
@@ -1498,7 +1510,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【泳池边边摸鱼边度假】无边泳池喝鸡尾酒，开着笔记本在 Slack 上秒回 “LGTM” (花费 $0.25w)',
+        text: '【泳池边边摸鱼边度假】在无边泳池边喝冷饮，开着笔记本在 Slack 上秒回 “LGTM”',
+        costBadge: '度假 $0.25w',
         condition: (s) => s.cash >= 0.25,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.25),
@@ -1526,7 +1539,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '随着入职时间变长，你发现组里从 Senior 到 VP 清一色都是“湾区经典皮肤”：Patagonia Better Sweater 抓绒马甲 + 灰色 Allbirds/On 跑鞋 + 黑色公司 Logo 卫衣。',
     choices: [
       {
-        text: '【全套入乡随俗】添置经典抓绒马甲与昂跑跑鞋，完美融入硅谷老油条圈子 (花费 $0.05w)',
+        text: '【全套入乡随俗】添置经典 Patagonia 抓绒马甲与跑鞋，融入硅谷工程师画风',
+        costBadge: '花费 $0.05w',
         condition: (s) => s.cash >= 0.05,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.05),
@@ -1563,7 +1577,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【囤满养生保健品】采购辅酶 Q10、高纯鱼油与护肝片，为高强度开发蓄力 (花费 $0.03w)',
+        text: '【囤满养生保健品】采购辅酶 Q10、高纯鱼油与护肝片，为高强度工作蓄力',
+        costBadge: '花费 $0.03w',
         condition: (s) => s.cash >= 0.03,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.03),
@@ -1581,8 +1596,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '伴侣所在的大厂突然宣布裁员 10%，伴侣收到了 HR 的离职谈话。家庭现金流瞬间减少，湾区的房贷与生活账单全落到了你肩上。',
     choices: [
       {
-        text: '【家庭顶梁柱】安抚伴侣，支持 TA 居家休整半年 (支出少量积蓄，家庭温情)',
-        costBadge: '花费 $1w (应急金)',
+        text: '【家庭顶梁柱】安抚伴侣，支持 TA 居家休整半年重新寻找方向',
+        costBadge: '生活费 $1w',
         reqBadge: '需总资产 >= $1w',
         condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 1,
         effect: (s) => ({
@@ -1663,7 +1678,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '你和伴侣双双处于晋升答辩冲刺期，连续一个月每天加班到深夜，回家只能靠冷掉的外卖果腹，身心俱疲。',
     choices: [
       {
-        text: '【飞夏威夷度假】两人请 2 周 PTO 年假去 Maui 岛冲浪躺平 (花费 $0.8w)',
+        text: '【飞夏威夷度假】两人请 2 周 PTO 年假去 Maui 岛冲浪躺平',
         costBadge: '花费 $0.8w',
         reqBadge: '需总资产 >= $0.8w',
         condition: (s) => (s.is_married || s.relationship_status === 'married') && (s.cash + (s.stocks || 0)) >= 0.8,
@@ -1687,7 +1702,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【谁也不退让：继续死磕答辩】双方通宵写晋升文档与架构方案 (Impact +6, 健康 -8 · 累积家庭矛盾)',
+        text: '【谁也不退让：继续死磕答辩】双方通宵闭门赶工晋升文档与架构方案，谁也不肯牺牲自己的事业',
         condition: (s) => s.is_married || s.relationship_status === 'married',
         effect: (s) => ({
           impact: addImpact(s, 6),
@@ -1706,7 +1721,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '连续数月深夜加班回家后，你发现客厅灯亮着，桌上放着一纸《婚姻解除协议》与湾区顶级家庭法律师的名片。伴侣眼眶泛红、神情冰冷地看着你：“你眼里只有你的 OKR、你的晋升和你的股票，这个家对你来说只是个免费旅馆。按照加州法律，我们平分所有婚后资产吧。”',
     choices: [
       {
-        text: '【痛定思痛：预约家庭婚姻咨询，重新划定生活边界】(花费 $0.5w · 解除危机)',
+        text: '【痛定思痛：预约家庭婚姻咨询】坦诚面对隔阂，寻求专业咨询师介入并重新划定生活边界',
+        costBadge: '咨询费 $0.5w',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.5),
@@ -1717,7 +1733,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【放下工作：请年假带伴侣去夏威夷海岛重温蜜月】(花费 $2w · 可用股票抵扣)',
+        text: '【放下工作：请年假带伴侣去夏威夷海岛重温蜜月】彻底关掉工作通知，在海风与日光下重拾当年的心动',
+        costBadge: '度假花费 $2w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 2,
         effect: (s) => ({
           ...deductAssets(s, 2),
@@ -1752,7 +1769,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '秋季干燥季降临，北加州山火导致湾区天空被染成末日般的深橙色，空气质量 AQI 瞬间爆表飙升至 300+！雪上加霜的是，电力公司 PG&E 为了“防止电线引燃山火”，宣布对整个湾区实行长达数天的「预防性轮流大停电 (Public Safety Power Shutoff)」。家里的冰箱停摆，空气里充斥着呛人的焦木味……',
     choices: [
       {
-        text: '【闭门不出，开满 4 台 Dyson 空气净化器并吃泡面】硬抗加州风味空气 (花费 $0.3w)',
+        text: '【闭门不出，开满 4 台 Dyson 空气净化器并吃泡面】紧闭门窗，备足自热火锅硬抗加州风味空气',
+        costBadge: '花费 $0.3w',
         condition: (s) => s.cash >= 0.3,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.3),
@@ -1762,7 +1780,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【立刻订机票飞往夏威夷/西雅图 Workation】海滩边听海浪边远程办公 (花费 $1.5w)',
+        text: '【立刻订机票飞往夏威夷/西雅图 Workation】收拾行李连夜避险，在海滩边听海浪边远程办公',
+        costBadge: '花费 $1.5w',
         condition: (s) => s.cash >= 1.5,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 1.5),
@@ -1791,7 +1810,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     imageUrl: 'images/burnout.jpg',
     choices: [
       {
-        text: '【大厂顶级 PPO 医保兜底】触发年度 Out-of-Pocket Max 自付上限 (自付 $0.3w)',
+        text: '【大厂顶级 PPO 医保兜底】出示大厂高阶医保卡，触发年度 OOP Max 自付上限抵扣天价账单',
+        costBadge: '自付 $0.3w',
         condition: (s) => (s.job_type === 'big_tech' || s.job_type === 'ai_research' || s.job_type === 'quant' || ['google', 'meta', 'apple', 'amazon', 'nvidia', 'tiktok', 'microsoft', 'cisco', 'oracle', 'robinhood'].includes(s.company || '')) && !s.laid_off,
         reqBadge: '需大厂/量化/AI实验室在职',
         effect: (s) => {
@@ -1810,7 +1830,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【硬核砍价：索要 Itemized Bill】要求提供逐笔明细并申请 Financial Hardship (自付 $0.6w)',
+        text: '【硬核砍价：索要 Itemized Bill】要求医院提供逐笔收费明细，并向财务部门申请账单减免',
+        costBadge: '自付 $0.6w',
         reqBadge: '通用智慧',
         condition: (_s) => true,
         effect: (s) => {
@@ -1829,7 +1850,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【搬出《No Surprises Act》法案维权】向加州保险局投诉网络外幽灵医生违规 (自付 $0.2w)',
+        text: '【搬出《No Surprises Act》法案维权】援引联邦无意外法案，向加州保险局严正投诉网络外幽灵医生违规',
+        costBadge: '自付 $0.2w',
         reqBadge: '需高情商 Charm >= 15 或 Network >= 15',
         condition: (s) => (s.charm || 10) >= 15 || (s.network || 10) >= 15,
         effect: (s) => {
@@ -1843,14 +1865,15 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               icu_crisis_survived: true,
               icu_legal_win: true,
             },
-            message: '【法律维权大胜】你敏锐抓住了急诊救治中医院未经同意指派 Out-of-Network 网络外救护车与麻醉师的漏洞，引用联邦《No Surprises Act》反意外账单法案向监管机构投诉。医院法务部火速服软，仅象征性收取 $0.2w 即结案！(健康 +22，魅力 +2)'
+            message: '【法律维权大胜】你敏锐抓住了急诊救治中医院未经同意指派 Out-of-Network 网络外救护车与麻销师的漏洞，引用联邦《No Surprises Act》反意外账单法案向监管机构投诉。医院法务部火速服软，仅象征性收取 $0.2w 即结案！(健康 +22，魅力 +2)'
           };
         },
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【失业/初创裸奔大出血】无大厂全额医保兜底，被迫全款缴清天价账单 (资产消耗 $2.5w · 恢复看运气)',
-        reqBadge: '高风险·恢复不全',
+        text: '【失业/初创自费结算】无大厂全额医保兜底，忍痛自费缴清医院天价账单',
+        costBadge: '自付 $2.5w',
+        reqBadge: '自费·恢复看体质',
         condition: (_s) => true,
         effect: (s) => {
           const assets = deductAssets(s, 2.5);
@@ -1893,7 +1916,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【找加州律师打财产再分配官司】主张当年出资权益与追加补偿 (花费 $5w 诉讼费)',
+        text: '【聘请加州律师打官司】主张当年出资权益与追加补偿，向家庭法庭提起诉讼',
         costBadge: '诉讼费 $5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 5,
         effect: (s) => ({

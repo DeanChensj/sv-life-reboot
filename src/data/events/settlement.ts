@@ -617,7 +617,7 @@ export const settlementEvents: Record<string, GameEvent> = {
     imageUrl: 'images/house.jpg',
     choices: [
       {
-        text: '【见好就收 · 基础 FIRE 提前退休】宣布达成 $500w 基础财务自由，正式登出硅谷内卷（进入胜利结算）',
+        text: '【见好就收 · 基础 FIRE 提前退休】宣布达成 $500w 基础财务自由，正式登出硅谷内卷，享受自在人生',
         costBadge: '终局胜利',
         condition: (s) => (s.cash + (s.stocks || 0)) < 800,
         hideIfUnavailable: true,
@@ -630,7 +630,7 @@ export const settlementEvents: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '【自在人生 · 舒适 FIRE 荣耀退休】宣布达成 $800w+ 舒适财务自由，潇洒享受生活（进入胜利结算）',
+        text: '【自在人生 · 舒适 FIRE 荣耀退休】宣布达成 $800w+ 舒适财务自由，潇洒享受高品质退休生活',
         costBadge: '终局胜利',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 800 && (s.cash + (s.stocks || 0)) < 1500,
         hideIfUnavailable: true,
@@ -643,7 +643,7 @@ export const settlementEvents: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '【豪门巨擘 · 奢华 FIRE 巅峰退休】宣布达成 $1500w+ 奢华财务自由，登顶人生赢家（进入胜利结算）',
+        text: '【豪门巨擘 · 奢华 FIRE 巅峰退休】宣布达成 $1500w+ 奢华财务自由，登顶硅谷顶层人生赢家',
         costBadge: '终局胜利',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 1500 && (s.cash + (s.stocks || 0)) < 3000,
         hideIfUnavailable: true,
@@ -656,7 +656,7 @@ export const settlementEvents: Record<string, GameEvent> = {
         nextEventId: 'end',
       },
       {
-        text: '【登峰造极 · 硅谷传奇百亿退休】宣布达成 $3000w+ 硅谷传奇 FIRE，名留硅谷史册（进入胜利结算）',
+        text: '【登峰造极 · 硅谷传奇百亿退休】宣布达成 $3000w+ 硅谷传奇 FIRE，建立家族信托名留硅谷史册',
         costBadge: '终局胜利',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 3000,
         hideIfUnavailable: true,

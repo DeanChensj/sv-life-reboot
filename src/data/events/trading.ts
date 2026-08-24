@@ -94,7 +94,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '美股大盘全线暴跌，纳斯达克惨不忍睹。你的公司股价腰斩，导致你今年的 RSU 价值大幅缩水！',
     choices: [
       {
-        text: '【心在滴血接受现实】心在滴血，但也只能接受现实 (总包 TC 缩水 20%)',
+        text: '【心在滴血接受现实】心在滴血但也只能承受，接受资产与薪酬缩水的残酷现实',
         effect: (s) => ({
           tc: Math.floor(s.tc * 0.8),
           stocks: Math.floor((s.stocks || 0) * 0.75),
@@ -105,7 +105,8 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【加杠杆暴力抄底】此时不博何时博？加杠杆抄底！(需现金 > 30w)',
+        text: '【加杠杆暴力抄底】此时不博何时博？加杠杆抄底！',
+        costBadge: '需现金 > $30w',
         condition: (s) => s.cash >= 30,
         effect: (s) => {
            const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%
@@ -140,7 +141,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【拍小红书挂壁 VLOG】拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》(能否爆火看运气)',
+        text: '【拍小红书挂壁 VLOG】拍小红书 VLOG《28岁硅谷码农资产蒸发 60%，带你体验极简挂壁生活》',
         // No longer a free loss-eraser: going viral is a gamble with a real editing/health cost.
         effect: (s) => {
           const viral = gameRandom() < 0.55;
@@ -164,7 +165,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '作为全职 Trader，你不再依靠大厂发放的固定工资。今年的美股/加密货币市场波谲云诡，你打算采用哪种操盘策略？',
     choices: [
       {
-        text: '【稳健对冲股息策略】主要布局标普500/高股息 ETF 与跨期对冲期权 (低风险 · 全天候抗跌)',
+        text: '【稳健对冲股息策略】主要布局标普500/高股息 ETF 与跨期领子对冲期权',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBear = s.macro_economy === 'bear';
@@ -197,7 +198,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【重仓科技龙头股票】梭哈英伟达 (NVDA) / 特斯拉 / AI 芯片龙头 (中风险 · 牛市利器,熊市易被砸盘)',
+        text: '【重仓科技龙头股票】重仓配置英伟达 (NVDA)、特斯拉与前沿半导体龙头股票',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
@@ -227,7 +228,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【高杠杆末日期权】重仓 0DTE 末日期权与 Web3 杠杆博弈 (极高风险 · 牛市偏好,高波动)',
+        text: '【高杠杆末日期权】重仓 0DTE 末日期权与高 Beta 科技股衍生品博弈',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const isBull = s.macro_economy === 'bull';
@@ -269,7 +270,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         // 读牌博弈的另一极:唯一能在熊市主动赚钱的策略(反向 ETF + 长久期国债)。方向按宏观
         // regime 确定 (熊市稳赚 / 牛市反噬 / 横盘小幅拖累),幅度带运气浮动,配合仪表盘的
         // 牛熊指示形成「看盘下注」闭环。中等力度:读对明显更优、读错明显更差但不致命。
-        text: '【做空避险:反向 ETF + 长债】押注大盘下行,买入反向 ETF 与长久期国债 (熊市利器,牛市反噬)',
+        text: '【做空避险:反向 ETF + 长债】买入 SQQQ 等大盘反向三倍 ETF 与 20 年期长久期美债',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const luck = ((s.luck || 20) / 1000);
@@ -326,7 +327,8 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【参加量化对冲私董会】在沙丘路展示实盘 Sharpe 收益曲线，吸引高净值 LP 资金 (花费 $0.5w)',
+        text: '【参加量化对冲私董会】在沙丘路展示实盘 Sharpe 收益曲线，吸引高净值 LP 资金',
+        costBadge: '门票 $0.5w',
         condition: (s) => s.job_type === 'trader' && s.cash >= 0.5,
         effect: (s) => {
           // Pitching LPs is a real gamble now (was a guaranteed +$4w/yr): the $0.5w entry
@@ -375,7 +377,7 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '最近股市剧烈波动，你的量化策略出现了巨大的 Drawdown (回撤)。',
     choices: [
       {
-        text: '【手动干预加大杠杆】顶着高压，手动干预策略并加大杠杆！(40% 概率获得 $60w 巨额 Bonus, 否则爆仓被裁)',
+        text: '【手动干预加大杠杆】顶着强平线高压强行干预模型参数，在悬崖边缘豪赌巨额分红！',
         // Jackpot cut from a degenerate $250w (which alone cleared FIRE) to a
         // realistic top-quant bonus of $60w; the loss still fires you.
         effect: (s) => {
@@ -387,7 +389,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
-        text: '【相信数学求稳退守】相信数学，不干预策略 (求稳退守)',
+        text: '【相信数学策略模型】相信量化数学模型，不进行情绪化人工干预',
         // 反软印钞机：原为无条件 +$15w 现金（每逢 quant_stress 稳拿，健康可回血 → 变相印钞）。
         // 改为随宏观周期与运气小幅波动的「小额 Bonus」，可正可负、上限低，符合「求稳退守」定位。
         effect: (s) => {
@@ -414,7 +416,8 @@ export const tradingEvents: Record<string, GameEvent> = {
     description: '一个高中同学突然拉你进了一个 Web3 交流群，里面的人天天晒豪车和几十倍收益的截图。',
     choices: [
       {
-        text: '【高杠杆冲土狗币】搏一搏，单车变摩托！投入 $5w (高风险)',
+        text: '【高杠杆冲土狗币】搏一搏，单车变摩托！全仓买入社区 Meme 币与链上衍生品',
+        costBadge: '投入 $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {
           const winRate = 0.01 + (Math.min(45, s.luck) / 100) * 0.15;
@@ -495,7 +498,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【单边重仓科技七巨头】单边重仓做多科技七巨头 (Magnificent 7) 业绩预期 (需现金>=10w)',
+        text: '【单边重仓科技七巨头】单边重仓做多科技七巨头 (Magnificent 7) 业绩预期',
         reqBadge: '需现金 >= $10w',
         condition: (s) => s.cash >= 10,
         effect: (s) => {
@@ -542,7 +545,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【反手做空远期 Put】反向做空：等待非理性狂热情绪见顶，反手布局 Put 远期看跌期权 (高风险)',
+        text: '【反手做空远期 Put】等待非理性狂热情绪见顶，反手布局 Put 远期看跌期权',
         // Shorting a live short-squeeze is one of the most dangerous trades — it's now a
         // real gamble, not a guaranteed free win that dominated the "跟风" option.
         effect: (s) => {

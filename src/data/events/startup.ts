@@ -9,7 +9,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '你的 Startup 最近融资不太顺利，账上的钱只够发 3 个月工资了。',
     choices: [
       {
-        text: '【相信老板期权大饼】相信老板的 PPT，自愿降薪换取更多期权 (博取小概率收购变现)',
+        text: '【相信老板期权大饼】相信创始团队愿景与 PPT，自愿降薪换取更多早期期权',
         effect: (s) => {
           const win = gameRandom() < 0.05;
           return win 
@@ -220,7 +220,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'founder_exit_event',
       },
       {
-        text: '【精简开支苟活】裁撤非核心人员，收缩战线，努力过冬 (无条件，保现金)',
+        text: '【断臂求生：开源节流】挥泪裁撤非核心人员与非主营业务，收缩战线保住现金流',
         // The defensive cash-preservation play: extends runway (gains cash, low health
         // cost) at the price of valuation. No longer a strict trap vs the growth options.
         effect: (s) => ({
@@ -241,7 +241,8 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '作为初创公司 CEO，你手握公司的核心技术与商业壁垒，站在了终局退场的十字路口。请选择最符合当前利益的退场方案：',
     choices: [
       {
-        text: '【纳斯达克挂牌敲钟 (IPO)】向 SEC 递交招股书，实现全球资本市场上市套现 (需估值>=3000w 或 exit 阶段)',
+        text: '【纳斯达克挂牌敲钟 (IPO)】向 SEC 递交招股书，实现全球资本市场上市套现',
+        reqBadge: '需进入 Exit 阶段或估值>=3000w',
         condition: (s) => (s.company_valuation || 0) >= 3000 || s.founder_stage === 'exit',
         hideIfUnavailable: true,
         effect: (s) => {
@@ -570,7 +571,7 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '一家世界 500 强巨头释放了 $200w 年度采购意向，但要求你的团队在 3 个月内交付满足企业级合规与 SLA 的私有化部署版本。这是一次决定公司命运的豪赌。',
     choices: [
       {
-        text: '【全力接单赶工交付】全力接单：集中全员通宵赶工，3 个月啃下企业级版本 (高压高回报)',
+        text: '【全力接单赶工交付】集中全员通宵赶工，3 个月啃下企业级版本',
         effect: (s) => {
           const win = gameRandom() < (0.55 + (s.leetcode >= 60 ? 0.15 : 0));
           if (win) {
@@ -594,7 +595,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【稳健签署里程碑交付】稳健评估：分阶段签署里程碑交付，不透支团队健康',
+        text: '【分阶段里程碑交付】分阶段签署里程碑交付合同，不透支团队健康',
         effect: (s) => {
           const newVal = (s.company_valuation || 180) + 220;
           return {

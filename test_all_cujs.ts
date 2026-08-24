@@ -11,6 +11,14 @@ import { determineEnding } from './src/utils/endings';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
+// Deterministic RNG for the whole suite. random.ts seeds the global PRNG with Math.random()
+// at module load, so any CUJ that consumes gameRandom (directly or via an event effect)
+// without first calling setGameSeed would take a different branch each run — making the
+// assertion COUNT (and any RNG-sensitive assertion) flaky, and letting real regressions pass
+// by luck. Pin it once here so every run is reproducible; CUJs that need a specific stream
+// still call setGameSeed themselves.
+setGameSeed(20260824);
+
 let totalAssertions = 0;
 let passedAssertions = 0;
 let failedAssertions = 0;
@@ -24,6 +32,14 @@ function assert(condition: boolean, message: string) {
     console.error(`❌ ASSERTION FAILED: ${message}`);
   }
 }
+
+// Deterministic per-call seed for bare generateInitialState(nextCujSeed()) calls. A no-arg
+// generateInitialState(nextCujSeed()) reseeds the global PRNG with Date.now()^Math.random()
+// (helpers.ts) — so it scrambles RNG differently every run, making the assertion
+// COUNT and any RNG-sensitive assertion flaky. Passing an incrementing fixed seed
+// keeps each base state deterministic AND varied, so the whole suite is reproducible.
+let __cujSeedCounter = 700001;
+const nextCujSeed = (): number => __cujSeedCounter++;
 
 /**
  * Helper to simulate a choice transition with full invariant checks
@@ -95,7 +111,7 @@ function stepChoice(
 // =========================================================================
 console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.is_ssr_unlocked = false;
   state.cash = 40;
 
@@ -267,7 +283,7 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
 // =========================================================================
 console.log('--- [CUJ 2] Native US Citizen SSR Journey ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.is_ssr_unlocked = true;
 
   // 1. Choose Trait: 原生美籍 (SSR)
@@ -296,7 +312,7 @@ console.log('--- [CUJ 2] Native US Citizen SSR Journey ---');
 // =========================================================================
 console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.cash = 35;
   state.leetcode = 80;
 
@@ -397,7 +413,7 @@ console.log('--- [CUJ 3] PhD Academic / AI Researcher / MTS Journey ---');
 // =========================================================================
 console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.visa = 'H1B (工签)';
   state.job_type = 'big_tech';
   state.company = 'meta';
@@ -444,7 +460,7 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
   // 4. Re-employment level preservation: OpenAI MTS & Laid-off Staff must NOT be demoted to L3
   const appleChoice = events['job_hop_market'].choices.find((c) => c.text.includes('Apple'))!;
   const mtsLaidOffState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     company: 'openai',
     job_type: 'unemployed',
     laid_off: true,
@@ -459,7 +475,7 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
   assert((mtsRehire.tc || 0) >= 50, 'OpenAI MTS re-hiring at Apple gets Staff compensation band');
 
   const staffLaidOffState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     company: 'meta',
     job_type: 'unemployed',
     laid_off: true,
@@ -481,7 +497,7 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
 // =========================================================================
 console.log('--- [CUJ 5] Domestic Undergrad to Overseas Tech Journey ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.cash = 5;
 
   // 1. Domestic Undergrad School choice
@@ -546,7 +562,7 @@ console.log('--- [CUJ 5] Domestic Undergrad to Overseas Tech Journey ---');
 // =========================================================================
 console.log('--- [CUJ 6] Real Estate & Passive Cash Flow Expansion ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.cash = 100;
   state.stocks = 50;
 
@@ -588,7 +604,7 @@ console.log('--- [CUJ 6] Real Estate & Passive Cash Flow Expansion ---');
 // =========================================================================
 console.log('--- [CUJ 7] Game Over / Bankruptcy & Burnout Handlers ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.health = 5;
   state.cash = 0.5;
   state.stocks = 0;
@@ -599,14 +615,14 @@ console.log('--- [CUJ 7] Game Over / Bankruptcy & Burnout Handlers ---');
   assert(transition.targetEventId === 'end', 'Routes to end event on game over');
 
   // 2. Trigger Bankruptcy with no stocks
-  let state2 = generateInitialState();
+  let state2 = generateInitialState(nextCujSeed());
   state2.cash = 1;
   state2.stocks = 0;
   let transition2 = applyStateTransition(state2, { cash: -5 });
   assert(transition2.nextState.status === 'game_over', 'Negative cash with 0 stocks triggers bankruptcy game_over');
 
   // 3. Trigger Auto Liquidation when stocks are available
-  let state3 = generateInitialState();
+  let state3 = generateInitialState(nextCujSeed());
   state3.cash = 2;
   state3.stocks = 10;
   let transition3 = applyStateTransition(state3, { cash: state3.cash - 6 });
@@ -664,7 +680,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 // CUJ 9: Multi-ending classifier (determineEnding)
 {
   console.log('--- [CUJ 9] Multi-Ending Classifier ---');
-  const base = () => generateInitialState();
+  const base = () => generateInitialState(nextCujSeed());
   const end = (over: Partial<GameState>) => determineEnding({ ...base(), ...over } as GameState).id;
 
   // Tragedies
@@ -704,11 +720,11 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const l7 = perf.choices.find((c) => c.text.includes('L7 Senior Staff'))!;
   const route = l7.nextEventId as (s: GameState) => string;
   // Rejection: level unchanged (MTS/L6), message contains 晋升委员会否决
-  const rejected = { ...generateInitialState(), level: 'MTS', message: '晋升委员会否决了你的 L7 Senior Staff 申请，认为你…白卷了一整年。' } as GameState;
+  const rejected = { ...generateInitialState(nextCujSeed()), level: 'MTS', message: '晋升委员会否决了你的 L7 Senior Staff 申请，认为你…白卷了一整年。' } as GameState;
   const rid = route(rejected);
   assert(rid !== 'l7_senior_staff_celebration' && rid !== 'promo_celebration', 'L7 rejection does NOT route to any 晋升喜报 celebration');
   // Success: level actually became L7
-  const promoted = { ...generateInitialState(), level: 'L7 (Senior Staff)' } as GameState;
+  const promoted = { ...generateInitialState(nextCujSeed()), level: 'L7 (Senior Staff)' } as GameState;
   assert(route(promoted) === 'l7_senior_staff_celebration', 'L7 success routes to l7_senior_staff_celebration');
 
   // Raj L7 Board Rejection Guard:
@@ -718,7 +734,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const rajAllyChoice = rajBoard.choices[0];
   const rajRoute = rajAllyChoice.nextEventId as (s: GameState) => string;
   const rajFailState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     level: 'L6 (Staff)',
     age: 35,
     last_promo_age: 35, // Simulate player promoted earlier in the same year or lateral hop
@@ -727,7 +743,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(rajFailDest !== 'l7_senior_staff_celebration', 'Raj board rejection MUST NOT route to l7_senior_staff_celebration even if last_promo_age === age');
 
   const rajWinState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     level: 'L7 (Senior Staff)',
     age: 35,
     last_promo_age: 35,
@@ -740,7 +756,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const dailyLife = events['sv_daily_life'];
   const grindChoice = dailyLife.choices.find((c) => c.text.includes('疯狂内卷'))!;
   const metaStateL3: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     company: 'meta', job_type: 'big_tech', level: 'L3',
     leetcode: 35, age: 24, last_promo_age: 22, tc: 22,
   };
@@ -757,7 +773,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 {
   console.log('--- [CUJ 11] Year-end company message covers every job_type ---');
   const settleMsg = (over: Partial<GameState>): string => {
-    const st = { ...generateInitialState(), health: 60, tc: 30, cash: 20, stocks: 0, laid_off: false, mid_year: false, ...over } as GameState;
+    const st = { ...generateInitialState(nextCujSeed()), health: 60, tc: 30, cash: 20, stocks: 0, laid_off: false, mid_year: false, ...over } as GameState;
     return stepChoice(st, 'sv_year_end_settlement', 0).nextState.message || '';
   };
   assert(settleMsg({ company: 'tiktok', job_type: 'big_tech' }).includes('字节'), 'TikTok -> 字节 (not 养老大厂)');
@@ -779,7 +795,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('--- [CUJ 12] RSU 4-Year Vesting Cliff tenure gate ---');
   // At year 1 (age 24, job_start_age 24, tenure 0), rsu_vesting_crash is NEVER picked across 100 trials
   const stYear1: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     age: 24,
     job_start_age: 24,
     job_type: 'big_tech',
@@ -833,7 +849,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 {
   console.log('--- [CUJ 13] Founder mode valuation monotonicity & FIRE milestone protection ---');
   const founderState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'startup_founder',
     founder_stage: 'seed',
     company_valuation: 1000,
@@ -868,7 +884,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 
   // 3. HUD founder-stage label is driven PURELY by the authoritative founder_stage, never a
   //    mismatched valuation threshold (regression: $500w pre_seed once mislabeled 种子轮).
-  const preSeed500 = { ...generateInitialState(), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 500 } as GameState;
+  const preSeed500 = { ...generateInitialState(nextCujSeed()), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 500 } as GameState;
   assert(getJobDisplayInfo(preSeed500).levelLabel.includes('车库 Pre-Seed'), 'Founder pre_seed @ $500w shows 车库 Pre-Seed (not 种子轮)');
   const seedStage = { ...preSeed500, founder_stage: 'seed', company_valuation: 700 } as GameState;
   assert(getJobDisplayInfo(seedStage).levelLabel.includes('种子轮 Seed'), 'Founder seed stage shows 种子轮 Seed');
@@ -885,7 +901,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('--- [CUJ 14] Multi-tier FIRE milestone progression ---');
   // 1. Initial 500w milestone trigger
   const state500w: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     cash: 520,
     stocks: 0,
     win_threshold: 500,
@@ -930,7 +946,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 {
   console.log('--- [CUJ 15] Founder exit decision & M&A/IPO resolution ---');
   const founderState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'startup_founder',
     founder_stage: 'series_b',
     company_valuation: 4500,
@@ -998,7 +1014,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
     events['sv_daily_life'].choices.find((c) => c.text.includes('提前上岸') && (!c.condition || c.condition(s)));
 
   // 1. Eligible: permanent visa (绿卡) + assets >= 150 → choice available
-  const eligible: GameState = { ...generateInitialState(), visa: '绿卡', cash: 100, stocks: 50, health: 60, age: 42, status: 'playing' };
+  const eligible: GameState = { ...generateInitialState(nextCujSeed()), visa: '绿卡', cash: 100, stocks: 50, health: 60, age: 42, status: 'playing' };
   const retireChoice = findRetire(eligible);
   assert(!!retireChoice, 'Voluntary retire choice available for permanent visa + assets >= $150w');
 
@@ -1037,28 +1053,28 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   //    Temp-visa holder leaving for 大理 → 海归/homecoming (previously unreachable ending).
   const dali = findChoice('回大理');
   assert(!!dali, '大理躺平 choice exists');
-  const daliBase = { ...generateInitialState(), cash: 8, stocks: 0, health: 90, visa: 'H1B (工签)' } as GameState;
+  const daliBase = { ...generateInitialState(nextCujSeed()), cash: 8, stocks: 0, health: 90, visa: 'H1B (工签)' } as GameState;
   const { nextState: daliState } = applyStateTransition(daliBase, dali!.effect(daliBase), { eventId: 'sv_daily_life' });
   assert(daliState.status === 'retired', '大理躺平 sets status retired (not win)');
   const daliEnd = determineEnding(daliState);
   assert(daliEnd.tone === 'content', `大理躺平 yields a content ending, not a FIRE triumph (got ${daliEnd.id})`);
   assert(daliEnd.id === 'homecoming', `Temp-visa 大理躺平 -> 海归 homecoming (got ${daliEnd.id})`);
   // Permanent resident keeps status (middleware protects 绿卡) → not homecoming.
-  const daliPerm = { ...generateInitialState(), cash: 8, stocks: 0, health: 90, visa: '绿卡' } as GameState;
+  const daliPerm = { ...generateInitialState(nextCujSeed()), cash: 8, stocks: 0, health: 90, visa: '绿卡' } as GameState;
   const { nextState: daliPermState } = applyStateTransition(daliPerm, dali!.effect(daliPerm), { eventId: 'sv_daily_life' });
   assert(daliPermState.visa === '绿卡', '大理躺平 does NOT downgrade a green card (middleware protected)');
 
   // 2. Temp-visa 放弃求职 forced departure must classify as 'deported' (message keyword).
   const quit = findChoice('放弃求职');
   assert(!!quit, '放弃求职 choice exists');
-  const quitBase = { ...generateInitialState(), visa: 'H1B (工签)', cash: 10, stocks: 0 } as GameState;
+  const quitBase = { ...generateInitialState(nextCujSeed()), visa: 'H1B (工签)', cash: 10, stocks: 0 } as GameState;
   const quitEff = quit!.effect(quitBase);
   assert(quitEff.status === 'game_over', '放弃求职 (temp visa) is game_over');
   assert(determineEnding({ ...quitBase, ...quitEff } as GameState).id === 'deported', 'temp-visa 放弃求职 -> deported (not generic/bankruptcy)');
 
   // 3. Founder burnout death -> burnout card, not startup_ruin (endings priority order).
   assert(
-    determineEnding({ ...generateInitialState(), status: 'game_over', health: 0, cash: 5, stocks: 0, job_type: 'startup_founder' } as GameState).id === 'burnout',
+    determineEnding({ ...generateInitialState(nextCujSeed()), status: 'game_over', health: 0, cash: 5, stocks: 0, job_type: 'startup_founder' } as GameState).id === 'burnout',
     'Founder who dies of burnout (health 0) -> burnout, not startup_ruin'
   );
 
@@ -1072,7 +1088,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
     events[evId].choices.find((c) => c.text.includes(text));
   // High-stat L5 who has NOT earned impact — must NOT reach L6 via any promo path.
   const l5NoImpact = (over: Partial<GameState> = {}): GameState => ({
-    ...generateInitialState(), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)',
+    ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)',
     leetcode: 90, charm: 25, network: 60, health: 100, tc: 80, impact: 0,
     age: 40, last_promo_age: 34, job_start_age: 24, laid_off: false, status: 'playing', ...over,
   } as GameState);
@@ -1092,7 +1108,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(hopTargetLevel(l5NoImpact({ impact: 25, laid_off: false, job_type: 'big_tech' })) === 'L6 (Staff)', 'in-job L5 with impact>=20 CAN target L6 on hop');
 
   // 4. No false promo-celebration on a lateral hire or fresh onboarding hire
-  const laidOffL6: GameState = { ...generateInitialState(), level: 'L6 (Staff)', job_type: 'unemployed', laid_off: true, job_start_age: 24, age: 40, last_promo_age: 34, impact: 10, hop_offers: ['google'], status: 'playing' } as GameState;
+  const laidOffL6: GameState = { ...generateInitialState(nextCujSeed()), level: 'L6 (Staff)', job_type: 'unemployed', laid_off: true, job_start_age: 24, age: 40, last_promo_age: 34, impact: 10, hop_offers: ['google'], status: 'playing' } as GameState;
   assert(hopTargetLevel(laidOffL6) === 'L6 (Staff)', 'laid-off L6 re-hire preserves L6 (lateral, not demoted)');
   assert(hopIsPromotion(laidOffL6) === false, 'laid-off same-level re-hire is NOT a promotion');
   const googleJoin = findChoice('job_hop_market', '入职 Google')!;
@@ -1101,13 +1117,13 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(joinEff.last_promo_age !== 40, 'lateral re-hire does NOT stamp last_promo_age (no false celebration)');
 
   // Former L6 returning from startup / day-trader with level undefined or non-corporate preserves L6 via max_level
-  const formerL6Trader: GameState = { ...generateInitialState(), level: '全职 Trader', max_level: 'L6 (Staff)', job_type: 'trader', age: 48, hop_offers: ['apple'], status: 'playing' } as GameState;
+  const formerL6Trader: GameState = { ...generateInitialState(nextCujSeed()), level: '全职 Trader', max_level: 'L6 (Staff)', job_type: 'trader', age: 48, hop_offers: ['apple'], status: 'playing' } as GameState;
   assert(hopTargetLevel(formerL6Trader) === 'L6 (Staff)', 'former L6 trader re-entering big tech preserves L6');
-  const formerL6Unemployed: GameState = { ...generateInitialState(), level: undefined, max_level: 'L6 (Staff)', job_type: 'unemployed', laid_off: true, age: 48, hop_offers: ['apple'], status: 'playing' } as GameState;
+  const formerL6Unemployed: GameState = { ...generateInitialState(nextCujSeed()), level: undefined, max_level: 'L6 (Staff)', job_type: 'unemployed', laid_off: true, age: 48, hop_offers: ['apple'], status: 'playing' } as GameState;
   assert(hopTargetLevel(formerL6Unemployed) === 'L6 (Staff)', 'former L6 unemployed re-entering big tech preserves L6');
 
   // Fresh grad joining at L3 is onboarding, NOT a promotion
-  const freshGrad: GameState = { ...generateInitialState(), level: undefined, job_type: undefined, age: 24, hop_offers: ['google'], status: 'playing' } as GameState;
+  const freshGrad: GameState = { ...generateInitialState(nextCujSeed()), level: undefined, job_type: undefined, age: 24, hop_offers: ['google'], status: 'playing' } as GameState;
   assert(hopTargetLevel(freshGrad) === 'L3', 'fresh grad hop target is L3');
   assert(hopIsPromotion(freshGrad) === false, 'fresh grad initial onboarding hire is NOT a promotion');
   const freshEff = googleJoin.effect(freshGrad);
@@ -1121,14 +1137,14 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const promoCelebration = events['promo_celebration'];
   assert(!!promoCelebration, 'promo_celebration exists');
   const celebChoice = promoCelebration.choices[0];
-  const l3State: GameState = { ...generateInitialState(), level: 'L3', job_type: 'big_tech', status: 'playing' } as GameState;
-  const l4State: GameState = { ...generateInitialState(), level: 'L4', job_type: 'big_tech', status: 'playing' } as GameState;
+  const l3State: GameState = { ...generateInitialState(nextCujSeed()), level: 'L3', job_type: 'big_tech', status: 'playing' } as GameState;
+  const l4State: GameState = { ...generateInitialState(nextCujSeed()), level: 'L4', job_type: 'big_tech', status: 'playing' } as GameState;
   assert(celebChoice.condition ? !celebChoice.condition(l3State) : false, 'promo_celebration rejects L3');
   assert(celebChoice.condition ? celebChoice.condition(l4State) : true, 'promo_celebration accepts L4');
 
   // 5. dave_retaliation_showdown choice-1: an L6 player (no level change) does not falsely celebrate
   const daveWin = findChoice('dave_retaliation_showdown', '雷霆出击')!;
-  const l6Dave: GameState = { ...generateInitialState(), level: 'L6 (Staff)', age: 41, last_promo_age: 36, job_start_age: 24, story_flags: { has_dave_evidence: true }, status: 'playing' } as GameState;
+  const l6Dave: GameState = { ...generateInitialState(nextCujSeed()), level: 'L6 (Staff)', age: 41, last_promo_age: 36, job_start_age: 24, story_flags: { has_dave_evidence: true }, status: 'playing' } as GameState;
   const daveEff = daveWin.effect(l6Dave);
   assert(daveEff.last_promo_age !== 41, 'dave showdown: L6 win does not stamp last_promo_age');
   const daveNext = typeof daveWin.nextEventId === 'function' ? daveWin.nextEventId({ ...l6Dave, ...daveEff } as GameState) : daveWin.nextEventId;
@@ -1168,13 +1184,13 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   // #3: parents-help buy_house choice is now reachable (cash<40 but total>=40) → house_slave.
   const parents = choiceOf('buy_house', '父母紧急开支票')!;
   assert(!!parents, 'buy_house has parents-help choice');
-  assert(parents.condition!({ ...generateInitialState(), cash: 10, stocks: 40, parents_helped_house: false } as GameState) === true, 'parents-help available when cash<40 but total>=40 (was dead code)');
-  assert(parents.condition!({ ...generateInitialState(), cash: 50, stocks: 0, parents_helped_house: false } as GameState) === false, 'parents-help hidden when cash>=40');
+  assert(parents.condition!({ ...generateInitialState(nextCujSeed()), cash: 10, stocks: 40, parents_helped_house: false } as GameState) === true, 'parents-help available when cash<40 but total>=40 (was dead code)');
+  assert(parents.condition!({ ...generateInitialState(nextCujSeed()), cash: 50, stocks: 0, parents_helped_house: false } as GameState) === false, 'parents-help hidden when cash>=40');
   assert(parents.nextEventId === 'house_slave' && !!events['house_slave'], 'parents-help routes to (now reachable) house_slave');
 
   // #9: h1b_final_crisis marry-non-citizen outcome moves OFF OPT/F1 → Day 1 CPT (breaks annual crisis re-loop).
   const marry = choiceOf('h1b_final_crisis', '真爱伴侣结婚自救')!;
-  const marryBase = { ...generateInitialState(), visa: 'OPT (实习)', relationship_status: 'dating', h1b_attempts: 3, gc_stage: 'not_started', status: 'playing' } as GameState;
+  const marryBase = { ...generateInitialState(nextCujSeed()), visa: 'OPT (实习)', relationship_status: 'dating', h1b_attempts: 3, gc_stage: 'not_started', status: 'playing' } as GameState;
   let sawNonCitizen = false;
   for (let i = 0; i < 80; i++) {
     const r = marry.effect(marryBase);
@@ -1185,10 +1201,10 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   // #7: HOA assessment always offers a safe (no-condition) finance branch; tax-hike defers for cash in [1,3).
   assert(events['property_hoa_special_assessment'].choices.some((c) => !c.condition), 'HOA special assessment has an always-available safe finance branch (no forced bankruptcy)');
   const taxDefer = choiceOf('property_supplemental_tax_hike', '延期与分期')!;
-  assert(taxDefer.condition!({ ...generateInitialState(), cash: 2 } as GameState) === true, 'tax-hike safe deferral covers cash in [1,3)');
+  assert(taxDefer.condition!({ ...generateInitialState(nextCujSeed()), cash: 2 } as GameState) === true, 'tax-hike safe deferral covers cash in [1,3)');
   // #7: luxury-car overdraft branch never drives cash below 0.
   const tow = choiceOf('luxury_car_vandalism_towing', '信用卡透支')!;
-  const towRes = tow.effect({ ...generateInitialState(), cash: 0.2, stocks: 0 } as GameState);
+  const towRes = tow.effect({ ...generateInitialState(nextCujSeed()), cash: 0.2, stocks: 0 } as GameState);
   assert((towRes.cash ?? 0) >= 0, 'luxury-car overdraft branch floors cash at 0 (no forced bankruptcy)');
 
   console.log('✅ CUJ 19 Passed\n');
@@ -1274,7 +1290,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(hub.choices.length === 5, 'side_hustle_hub provides 5 distinct route options (SaaS, Advisor, Creator, Boba, Back)');
 
   const baseState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)',
     cash: 50, stocks: 20, leetcode: 50, charm: 18, network: 30, health: 90, status: 'playing'
   } as GameState;
@@ -1323,7 +1339,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 
   // 1. Once-per-life invariant: taking the pilot license grants has_pilot_license flag
   const basePilot: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     cash: 50, stocks: 0, health: 100, charm: 10, luck: 20, age: 28, year: 2026, status: 'playing'
   } as GameState;
   const pilotEff = pilotChoice.effect(basePilot);
@@ -1363,7 +1379,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   console.log('--- [CUJ 23] Impact setback events (project cancelled / launch incident / legacy) ---');
   const setbackIds = ['impact_project_cancelled', 'impact_launch_incident', 'impact_legacy_maintenance'];
   const base: GameState = {
-    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L6 (Staff)',
+    ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L6 (Staff)',
     leetcode: 75, charm: 18, network: 40, health: 90, tc: 50, impact: 40, age: 34, status: 'playing',
   } as GameState;
   for (const id of setbackIds) {
@@ -1385,7 +1401,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   }
   // 可达性:impact 职业 + impact>=15 的在职攀爬者,midYearEventRouter H1 会注入这些挫折事件
   const climber: GameState = {
-    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
+    ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
     leetcode: 70, charm: 16, network: 35, health: 90, tc: 45, impact: 30, age: 33, year: 2026,
     season_stage: undefined, status: 'playing', story_flags: {},
   } as GameState;
@@ -1408,7 +1424,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 // =========================================================================
 console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 {
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
   state.cash = 35; // sufficient for UCB undergrad + Master
 
   // 1. Choose Trait -> Choose Year -> Choose School: UCB
@@ -1493,7 +1509,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 // -----------------------------------------------------------------------------
 {
   console.log('--- [CUJ 25] Invariant Protections: Negative Cash Clamping & Crisis Stock Liquidity ---');
-  let state = generateInitialState();
+  let state = generateInitialState(nextCujSeed());
 
   // 1. Simultaneous Burnout + Negative Cash: verify cash is non-negative on game_over
   const brokeAndBurnoutEffect = { health: 0, cash: -8.5 };
@@ -1546,7 +1562,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('--- [CUJ 26] Leadership gambles: real downside reachable & invariant-safe ---');
   // Base state satisfies every gamble choice's condition (network>=15, impact>=35, !laid_off).
   const base: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     level: 'L7 (Senior Staff)', laid_off: false, health: 90,
     impact: 40, network: 20, charm: 15, leetcode: 70, tc: 60,
   } as GameState;
@@ -1595,7 +1611,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(!!rh, 'job_hop_market has a named Robinhood choice');
 
   const base: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', impact: 40,
     tc: 30, cash: 20, health: 80, laid_off: false, hop_offers: ['robinhood'],
   } as GameState;
@@ -1626,7 +1642,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(allHands.choices.length === 4, 'all_hands_corporate_bs has 4 choices');
 
   const base: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', health: 70, leetcode: 50,
   } as GameState;
 
@@ -1660,7 +1676,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(ev.choices.length === 3, 'snack_perks_downgrade has 3 choices');
 
   const base: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', health: 70, cash: 10,
   } as GameState;
 
@@ -1690,7 +1706,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(ev.choices.length === 3, 'wildfire_smoke_pge_blackout has 3 choices');
 
   const base: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'big_tech', company: 'apple', health: 70, cash: 10, leetcode: 50,
   } as GameState;
 
@@ -1721,7 +1737,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(ev.choices.length === 3, 'marriage_divorce_crisis has 3 choices');
 
   const base: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     is_married: true,
     relationship_status: 'married',
     cash: 50,
@@ -1781,7 +1797,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // 2. CS 美硕 method reuses the existing us_master pipeline + launders background
   const msChoice = events['zhuanma_decision'].choices.find((c) => c.text.includes('CS 美硕'))!;
-  const cnSwitcher: GameState = { ...generateInitialState(), cash: 40, story_flags: { non_cs_background: true, zhuanma_origin: 'cn' } } as GameState;
+  const cnSwitcher: GameState = { ...generateInitialState(nextCujSeed()), cash: 40, story_flags: { non_cs_background: true, zhuanma_origin: 'cn' } } as GameState;
   assert(msChoice.condition!(cnSwitcher) === true, 'CS master method available to 陆本 switcher with funds');
   const msRes = msChoice.effect(cnSwitcher) as Partial<GameState>;
   assert(msRes.has_us_degree === true, 'CS master method grants US degree (launders non-CS background)');
@@ -1790,15 +1806,15 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // 3. Bootcamp is 美本-only; 陆本 without master funds cannot pick it
   const bootcamp = events['zhuanma_decision'].choices.find((c) => c.text.includes('Bootcamp'))!;
   assert(bootcamp.condition!(cnSwitcher) === false, 'Bootcamp NOT available to 陆本 switcher');
-  const usSwitcherRich: GameState = { ...generateInitialState(), cash: 20, story_flags: { non_cs_background: true, zhuanma_origin: 'us' } } as GameState;
+  const usSwitcherRich: GameState = { ...generateInitialState(nextCujSeed()), cash: 20, story_flags: { non_cs_background: true, zhuanma_origin: 'us' } } as GameState;
   assert(bootcamp.condition!(usSwitcherRich) === true, 'Bootcamp available to 美本 switcher with funds');
 
   // 4. Washout: quitting sets game_over + flag → determineEnding gives the 转码劝退 card
   const quit = events['zhuanma_setback'].choices.find((c) => c.text.includes('退出转码'))!;
-  const quitRes = quit.effect({ ...generateInitialState(), story_flags: { non_cs_background: true, zhuanma_attempts: 3 } } as GameState) as Partial<GameState>;
+  const quitRes = quit.effect({ ...generateInitialState(nextCujSeed()), story_flags: { non_cs_background: true, zhuanma_attempts: 3 } } as GameState) as Partial<GameState>;
   assert(quitRes.status === 'game_over', 'Quitting 转码 sets game_over');
   assert(quitRes.story_flags?.zhuanma_washout === true, 'Quitting sets zhuanma_washout flag');
-  const washEnding = determineEnding({ ...generateInitialState(), status: 'game_over', story_flags: { zhuanma_washout: true } } as GameState);
+  const washEnding = determineEnding({ ...generateInitialState(nextCujSeed()), status: 'game_over', story_flags: { zhuanma_washout: true } } as GameState);
   assert(washEnding.id === 'zhuanma_washout', 'Washout flag maps to 转码劝退 ending');
 
   // 5. Balance: a competent self-taught 美本 switcher washes out in 25-40% of careers.
@@ -1844,18 +1860,18 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 {
   console.log('--- [CUJ 33] Charm cap honors max_charm (海王 breaks the old hard-25 ceiling) ---');
   // 海王: max_charm 30. A charm-granting effect must push charm past 25, up to 30.
-  const seaKing: GameState = { ...generateInitialState(), max_charm: 30, charm: 24, job_type: 'big_tech', company: 'google', level: 'L5 (Senior)' } as GameState;
+  const seaKing: GameState = { ...generateInitialState(nextCujSeed()), max_charm: 30, charm: 24, job_type: 'big_tech', company: 'google', level: 'L5 (Senior)' } as GameState;
   const kingAfter = applyStateTransition(seaKing, { charm: Math.min(seaKing.max_charm ?? 25, seaKing.charm + 8) }, { eventId: 'test' }).nextState;
   assert((kingAfter.charm ?? 0) > 25, `海王 charm can exceed the old 25 ceiling (got ${kingAfter.charm})`);
   assert((kingAfter.charm ?? 0) === 30, `海王 charm caps at max_charm=30 (got ${kingAfter.charm})`);
 
   // Normal player: max_charm 25 still caps at 25 (central clamp backstop).
-  const normal: GameState = { ...generateInitialState(), max_charm: 25, charm: 24 } as GameState;
+  const normal: GameState = { ...generateInitialState(nextCujSeed()), max_charm: 25, charm: 24 } as GameState;
   const normalAfter = applyStateTransition(normal, { charm: 24 + 8 }, { eventId: 'test' }).nextState;
   assert((normalAfter.charm ?? 0) === 25, `Normal player charm still capped at max_charm=25 (got ${normalAfter.charm})`);
 
   // Central clamp also floors luck at 0 / impact at 0 (robustness backstop).
-  const rogue = applyStateTransition({ ...generateInitialState() } as GameState, { luck: -5, impact: -10 }, { eventId: 'test' }).nextState;
+  const rogue = applyStateTransition({ ...generateInitialState(nextCujSeed()) } as GameState, { luck: -5, impact: -10 }, { eventId: 'test' }).nextState;
   assert((rogue.luck ?? 0) >= 0, 'luck floored at 0 by central clamp');
   assert((rogue.impact ?? 0) >= 0, 'impact floored at 0 by central clamp');
 
@@ -1871,7 +1887,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(Boolean(ev), 'post_green_card event exists');
 
   const founderState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: '绿卡',
     job_type: 'startup_founder',
     company: 'AI Startup',
@@ -1880,7 +1896,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   };
 
   const traderState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: '绿卡',
     job_type: 'trader',
     company: '全职 Day Trader',
@@ -1888,7 +1904,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   };
 
   const employeeState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: '绿卡',
     job_type: 'big_tech',
     company: 'Google',
@@ -1932,7 +1948,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const growth = ev.choices.find(c => c.text.includes('重仓科技龙头'));
   assert(!!growth, 'trader_annual_strategy still has the bull-favored 重仓科技龙头 choice');
 
-  const baseTrader: GameState = { ...generateInitialState(), job_type: 'trader', company: '全职 Day Trader', level: '全职 Trader', cash: 100, tc: 0 } as GameState;
+  const baseTrader: GameState = { ...generateInitialState(nextCujSeed()), job_type: 'trader', company: '全职 Day Trader', level: '全职 Trader', cash: 100, tc: 0 } as GameState;
   const bearState = { ...baseTrader, macro_economy: 'bear' as const };
   const bullState = { ...baseTrader, macro_economy: 'bull' as const };
 
@@ -1957,7 +1973,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const hire = ev.choices.find(c => c.text.includes('高举高打招聘'));
   assert(!!talk && !!pmf && !!hire, 'founder_annual_strategy has 演讲 / 死磕PMF / 招架构师 remedies');
 
-  const baseFounder = { ...generateInitialState(), job_type: 'startup_founder', level: 'CEO & Founder', founder_stage: 'seed', company_valuation: 1000, cash: 50, tc: 10 } as GameState;
+  const baseFounder = { ...generateInitialState(nextCujSeed()), job_type: 'startup_founder', level: 'CEO & Founder', founder_stage: 'seed', company_valuation: 1000, cash: 50, tc: 10 } as GameState;
   const valOf = (choice: any, situation: any) => {
     const st = { ...baseFounder, founder_situation: situation } as GameState;
     return applyStateTransition(st, choice.effect(st), { eventId: 'founder_annual_strategy' }).nextState;
@@ -1998,7 +2014,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // 满资历高算法 L4 走按部就班,不能自然升到 L5(必须内卷);且设 annual_action=wlb，且不白送算法和产出。
   const l4Ripe = (over: Partial<GameState>): GameState => ({
-    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
+    ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L4',
     leetcode: 100, age: 40, last_promo_age: 30, health: 90, tc: 40, status: 'playing', ...over,
   } as GameState);
   for (let i = 0; i < 30; i++) {
@@ -2012,7 +2028,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // 年度考评 (settlement.sv_year_end_settlement)
   const settle = events['sv_year_end_settlement'].choices[0];
   const emp = (over: Partial<GameState>): GameState => ({
-    ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
+    ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
     visa: '公民', age: 35, last_promo_age: 25, health: 80, tc: 40, status: 'playing',
     story_flags: {}, ...over,
   } as GameState);
@@ -2055,7 +2071,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('--- [CUJ 38] 升职受阻·定性复盘 (黑箱,不泄露数值) ---');
   const grind = events['sv_daily_life'].choices.find((c) => c.text.includes('疯狂内卷'))!;
   // L5、impact=0、network 低 → 冲 L6 必然受阻(impact<20 短路 meetsOrganicPromo)→ 落入底部定性复盘。
-  const stuck = { ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
+  const stuck = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)',
     leetcode: 70, impact: 0, network: 10, charm: 12, tc: 60, health: 80, age: 40, last_promo_age: 35, status: 'playing' } as GameState;
   let sawDiag = false, leakedNumber = false;
   for (let i = 0; i < 20; i++) {
@@ -2089,7 +2105,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // ① 年度学费 + 健康代价:CPT 与绿卡失业玩家其余条件全同,唯一差异应是 +$1.2w 学费与 -4 健康。
   // 二者失业(无 H1B 抽签)、stocks=0、经济中性 → effect 全程零随机,可精确断言。
-  const cptUnemp = { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'unemployed',
+  const cptUnemp = { ...generateInitialState(nextCujSeed()), visa: 'Day 1 CPT', job_type: 'unemployed',
     laid_off: false, tc: 0, cash: 30, stocks: 0, health: 50, is_married: false, has_pet: false,
     macro_economy: 'neutral', rental_income: 0, status: 'playing' } as GameState;
   const gcUnemp = { ...cptUnemp, visa: '绿卡' } as GameState;
@@ -2103,7 +2119,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(!(rG.message ?? '').includes('Day 1 CPT 学业维持'), '非 CPT 玩家不出现 CPT 学费文案');
 
   // ② settlement 路由:在职 CPT 玩家约 10% 进 day1_cpt_compliance,其余进 sv_daily_life,别无它路。
-  const cptEmp = { ...generateInitialState(), visa: 'Day 1 CPT', job_type: 'big_tech', company: 'google',
+  const cptEmp = { ...generateInitialState(nextCujSeed()), visa: 'Day 1 CPT', job_type: 'big_tech', company: 'google',
     laid_off: false, gc_progress: 2, cash: 50, stocks: 50, win_threshold: 500, h1b_attempts: 0,
     age: 40, status: 'playing' } as GameState;
   const routeTargets = new Set<string>();
@@ -2121,14 +2137,14 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(compliance.choices.length >= 3, '合规抽检提供至少 3 条应对出路');
   assert(compliance.choices.every((c) => c.nextEventId === 'sv_daily_life'),
     '合规抽检所有出路回 sv_daily_life (不回环、不卡死)');
-  const broke = { ...generateInitialState(), visa: 'Day 1 CPT', cash: 0, stocks: 0, health: 40, status: 'playing' } as GameState;
+  const broke = { ...generateInitialState(nextCujSeed()), visa: 'Day 1 CPT', cash: 0, stocks: 0, health: 40, status: 'playing' } as GameState;
   const avail = compliance.choices.filter((c) => !c.condition || c.condition(broke));
   assert(avail.length >= 1, '破产 (cash=0) CPT 玩家在合规抽检仍有可选出路 (非死胡同)');
   let sawGameOver = false;
   for (const c of compliance.choices) {
     for (let seed = 0; seed < 40; seed++) {
       setGameSeed(seed);
-      const solvent = { ...generateInitialState(), visa: 'Day 1 CPT', cash: 20, stocks: 0, health: 50, status: 'playing' } as GameState;
+      const solvent = { ...generateInitialState(nextCujSeed()), visa: 'Day 1 CPT', cash: 20, stocks: 0, health: 50, status: 'playing' } as GameState;
       if (c.condition && !c.condition(solvent)) continue;
       const r = c.effect(solvent);
       if (r.status === 'game_over') sawGameOver = true;
@@ -2151,7 +2167,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Case 1: L-1 持有者具备 O-1 资质 (如 PhD) -> 自动 Transfer 至 O-1 签证
   const l1Phd: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: 'L1 (外派)',
     is_phd: true,
     company: 'amazon',
@@ -2166,7 +2182,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Case 2: L-1 普通员工无 O-1/绿卡资质 -> 紧急挂靠 Day 1 CPT 过渡入职
   const l1Normal: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: 'L1 (外派)',
     is_phd: false,
     impact: 5,
@@ -2183,7 +2199,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Case 3: 绿卡/公民跳槽 -> 保留绿卡/公民身份不变
   const gcPlayer: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: '绿卡',
     company: 'amazon',
     job_type: 'big_tech',
@@ -2207,7 +2223,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Case 1: H-1B 满 6 年但 I-140 仍未获批 (PERM 进行中) -> 触发 6 年大限危机
   const h1bNearCap: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     age: 32,
     year: 2026,
     visa: 'H1B (工签)',
@@ -2266,7 +2282,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 // -----------------------------------------------------------------------------
 {
   console.log('--- [CUJ 42] 路由单一真相源 + 年度季度事件机 (year_seg) ---');
-  const base = { ...generateInitialState(), status: 'playing', job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', age: 30 } as GameState;
+  const base = { ...generateInitialState(nextCujSeed()), status: 'playing', job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', age: 30 } as GameState;
 
   // ① 中央终局/FIRE 路由 (targetEventId) 永远压过事件自身的 nextEventId。
   const over = resolveNextEventId({ nextEventId: 'sv_daily_life' }, base, 'fire_milestone_choice');
@@ -2319,7 +2335,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const H1_ONLY = new Set(['layoff_rumor', 'friday_pip', 'perf_review', 'meta_reorg_manager_left',
     'all_hands_corporate_bs', 'snack_perks_downgrade', 'empty_promotion_promise', 'multi_timezone_calendar_hell']);
   // 低 leetcode / 年限浅 → 疯狂内卷多为"未晋升"(不弹庆祝),稳定走 H1 注入路径。
-  const worker = { ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
+  const worker = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L4',
     leetcode: 30, impact: 2, tc: 30, health: 80, age: 30, last_promo_age: 29, status: 'playing' } as GameState;
   const seen = new Set<string>();
   for (let seed = 0; seed < 400; seed++) {
@@ -2354,7 +2370,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
     const d: Record<string, number> = { neutral: 0, bull: 0, bear: 0 };
     for (let seed = 0; seed < 800; seed++) {
       setGameSeed(seed);
-      const s = { ...generateInitialState(), macro_economy: from, job_type: 'big_tech', company: 'google',
+      const s = { ...generateInitialState(nextCujSeed()), macro_economy: from, job_type: 'big_tech', company: 'google',
         level: 'L4', tc: 30, stocks: 20, health: 80, age: 30, status: 'playing' } as GameState;
       const r = settle.effect(s);
       d[(r.macro_economy as string) || 'neutral']++;
@@ -2374,7 +2390,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // news_* 现为可达的「行情播报」,且不再驱动经济(驱动唯一在结算,避免双驱动)。
   for (const id of ['news_bull_market_start', 'news_bear_market_crash', 'news_neutral_market']) {
     assert(!!events[id], `${id} 事件存在`);
-    const r = events[id].choices[0].effect({ ...generateInitialState(), macro_economy: 'bear' } as GameState);
+    const r = events[id].choices[0].effect({ ...generateInitialState(nextCujSeed()), macro_economy: 'bear' } as GameState);
     assert(r.macro_economy === undefined, `${id} 为纯播报,不改写 macro_economy(经济驱动唯一在结算)`);
   }
 
@@ -2392,8 +2408,8 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Choice 1: 大厂 PPO 医保兜底 (自付 $0.3w)
   const ppoChoice = icuEvent.choices[0];
-  const bigTechEmp = { ...generateInitialState(), job_type: 'big_tech', company: 'google', cash: 5, health: 30, status: 'playing' } as GameState;
-  const unemployed = { ...generateInitialState(), job_type: 'unemployed', laid_off: true, cash: 5, health: 30, status: 'playing' } as GameState;
+  const bigTechEmp = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', cash: 5, health: 30, status: 'playing' } as GameState;
+  const unemployed = { ...generateInitialState(nextCujSeed()), job_type: 'unemployed', laid_off: true, cash: 5, health: 30, status: 'playing' } as GameState;
   assert(ppoChoice.condition ? ppoChoice.condition(bigTechEmp) : false, '大厂员工可使用 PPO 医保兜底');
   assert(ppoChoice.condition ? !ppoChoice.condition(unemployed) : true, '失业玩家不可使用大厂 PPO 医保兜底');
   const ppoRes = ppoChoice.effect(bigTechEmp);
@@ -2409,8 +2425,8 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Choice 3: No Surprises Act 法律维权
   const legalChoice = icuEvent.choices[2];
-  const lowCharm = { ...generateInitialState(), charm: 8, network: 5, cash: 5, status: 'playing' } as GameState;
-  const highCharm = { ...generateInitialState(), charm: 18, network: 5, cash: 5, status: 'playing' } as GameState;
+  const lowCharm = { ...generateInitialState(nextCujSeed()), charm: 8, network: 5, cash: 5, status: 'playing' } as GameState;
+  const highCharm = { ...generateInitialState(nextCujSeed()), charm: 18, network: 5, cash: 5, status: 'playing' } as GameState;
   assert(legalChoice.condition ? !legalChoice.condition(lowCharm) : true, '低魅力/人脉不可维权');
   assert(legalChoice.condition ? legalChoice.condition(highCharm) : false, '高魅力/人脉可维权');
   const legalRes = legalChoice.effect(highCharm);
@@ -2418,7 +2434,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Choice 4: 裸奔大出血 (安全扣减股票，不产生负现金)
   const uninsuredChoice = icuEvent.choices[3];
-  const brokePlayer = { ...generateInitialState(), cash: 0.5, stocks: 10, health: 25, status: 'playing' } as GameState;
+  const brokePlayer = { ...generateInitialState(nextCujSeed()), cash: 0.5, stocks: 10, health: 25, status: 'playing' } as GameState;
   const brokeRes = uninsuredChoice.effect(brokePlayer);
   assert(brokeRes.cash === 0, '现金清零且不为负');
   assert(brokeRes.stocks === 8, '股票平仓扣除剩余 $2.0w');
@@ -2433,17 +2449,17 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('--- [CUJ 46] 卷王之王 PhD 录取加成与直博被拒转读 MS 曲线救国 ---');
   
   // 1. calculatePhdAdmitProb 权重校验
-  const plainStudent = { ...generateInitialState(), school: 'state', leetcode: 30, impact: 0, status: 'playing' } as GameState;
+  const plainStudent = { ...generateInitialState(nextCujSeed()), school: 'state', leetcode: 30, impact: 0, status: 'playing' } as GameState;
   const plainProb = calculatePhdAdmitProb(plainStudent, false);
   // 无投入地板收紧:普通美本(无科研/低算法)基础录取率 12%,PhD 奖励投入而非白嫖抽奖。
   assert(plainProb === 0.12, '普通美本(零投入)基础录取率收紧至 12%');
 
-  const juanwangStudent = { ...generateInitialState(), trait_title: '卷王之王', school: 'ucb', leetcode: 65, impact: 0, status: 'playing' } as GameState;
+  const juanwangStudent = { ...generateInitialState(nextCujSeed()), trait_title: '卷王之王', school: 'ucb', leetcode: 65, impact: 0, status: 'playing' } as GameState;
   const juanwangProb = calculatePhdAdmitProb(juanwangStudent, false);
   // 0.12 + 0.15 (ucb) + 0.15 (卷王) + 0.12 (leetcode 65) = 0.54
   assert(Math.abs(juanwangProb - 0.54) < 0.001, `卷王之王获得专属加成，录取率达 ${(juanwangProb * 100).toFixed(0)}%`);
 
-  const researchJuanwang = { ...generateInitialState(), trait_title: '卷王之王', school: 'cmu', leetcode: 85, impact: 15, story_flags: { phd_ready: true }, status: 'playing' } as GameState;
+  const researchJuanwang = { ...generateInitialState(nextCujSeed()), trait_title: '卷王之王', school: 'cmu', leetcode: 85, impact: 15, story_flags: { phd_ready: true }, status: 'playing' } as GameState;
   const researchProb = calculatePhdAdmitProb(researchJuanwang, false);
   assert(researchProb >= 0.90, '顶配科研卷王录取率达 90%+');
 
@@ -2468,7 +2484,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(msPivotChoice.nextEventId === 'us_master_year1', '进入硕士第一年');
 
   // 3. 硕士毕业二战 PhD 享受 phd_reapply_ready 加成
-  const msGrad = { ...generateInitialState(), is_master: true, school: 'ucb', leetcode: 70, story_flags: { phd_reapply_ready: true }, status: 'playing' } as GameState;
+  const msGrad = { ...generateInitialState(nextCujSeed()), is_master: true, school: 'ucb', leetcode: 70, story_flags: { phd_reapply_ready: true }, status: 'playing' } as GameState;
   const reapplyProb = calculatePhdAdmitProb(msGrad, true);
   // 0.25 (master base) + 0.15 (ucb) + 0.12 (leetcode 70) + 0.12 (reapply bonus) = 0.64
   assert(reapplyProb >= 0.60, '二战申博享受硕士再战加成');
@@ -2485,7 +2501,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 {
   console.log('--- [CUJ 47] ICC 外包挂靠:低薪/冻结绿卡/USCIS 稽查逼上岸 ---');
   const settle = events['sv_year_end_settlement'].choices[0];
-  const iccBase = { ...generateInitialState(), company: 'icc', job_type: 'startup', visa: 'H1B (工签)',
+  const iccBase = { ...generateInitialState(nextCujSeed()), company: 'icc', job_type: 'startup', visa: 'H1B (工签)',
     tc: 14, gc_stage: 'i140_processing', gc_progress: 2, stocks: 0, cash: 20, health: 70, age: 30, status: 'playing' } as GameState;
 
   // 多年数取样:统计稽查命中率(升级)、绿卡推进率、涨薪率。
@@ -2534,7 +2550,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 {
   console.log('--- [CUJ 48] ICU 事件:一生一次门禁 + 裸奔下行分支 ---');
   // ① 一生一次:已度过 ICU 的玩家,H2 生活池 N 次采样都不会再出现该事件。
-  const survivedIcu = { ...generateInitialState(), job_type: 'big_tech', company: 'google', laid_off: false,
+  const survivedIcu = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', laid_off: false,
     health: 20, car: 'none', is_married: false, status: 'playing',
     story_flags: { icu_crisis_survived: true } } as GameState;
   let recurred = false;
@@ -2551,7 +2567,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // ② 裸奔分支有真实下行:多次采样中既有勉强恢复(+18)也有后遗症(+4),证明存在下行支。
   const uninsured = events['us_healthcare_icu_crisis'].choices[3];
-  const patient = { ...generateInitialState(), cash: 30, stocks: 0, health: 25, status: 'playing' } as GameState;
+  const patient = { ...generateInitialState(nextCujSeed()), cash: 30, stocks: 0, health: 25, status: 'playing' } as GameState;
   const heals = new Set<number>();
   for (let i = 0; i < 200; i++) { setGameSeed(i); const r = uninsured.effect(patient); heals.add((r.health ?? 25) - 25); }
   assert(heals.has(4) && heals.has(18), '裸奔分支存在下行(后遗症 +4)与常规恢复(+18)两种结局');
@@ -2568,7 +2584,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 // -----------------------------------------------------------------------------
 {
   console.log('--- [CUJ 49] 一生一次统一基座 oncePerLife + hasSeen/markSeen ---');
-  const s0 = { ...generateInitialState(), status: 'playing' } as GameState;
+  const s0 = { ...generateInitialState(nextCujSeed()), status: 'playing' } as GameState;
   assert(hasSeen(s0, 'foo_evt') === false, 'hasSeen 初始为 false');
   const flags = markSeen(s0, 'foo_evt');
   assert(flags['foo_evt_seen'] === true, 'markSeen 置位 ${id}_seen');
@@ -2601,7 +2617,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const eng = bgChoices.find(c => c.text.includes('机械/电子/数理'))!;
   assert(!!bio && !!biz && !!eng, 'All three major archetype backgrounds exist');
 
-  const sInit = { ...generateInitialState(), health: 80 } as GameState;
+  const sInit = { ...generateInitialState(nextCujSeed()), health: 80 } as GameState;
   const bioState = applyStateTransition(sInit, bio.effect(sInit), { eventId: 'zhuanma_background' }).nextState;
   assert(bioState.story_flags?.zhuanma_major === 'bio_chem', 'Bio/chem major sets zhuanma_major flag');
   assert(bioState.health > sInit.health, 'Bio/chem major grants resilience health bonus');
@@ -2621,7 +2637,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const iccOption = applyChoices.find(c => c.text.includes('ICC'))!;
   assert(!!entOption && !!iccOption, 'Enterprise IT and ICC fallback options exist in zhuanma_apply');
 
-  const richState = { ...generateInitialState(), cash: 5, status: 'playing' } as GameState;
+  const richState = { ...generateInitialState(nextCujSeed()), cash: 5, status: 'playing' } as GameState;
   const iccResult = applyStateTransition(richState, iccOption.effect(richState), { eventId: 'zhuanma_apply' }).nextState;
   assert(iccResult.company === 'icc' && iccResult.story_flags?.zhuanma_landed === true, 'ICC choice lands switcher safely at ICC');
 
@@ -2634,7 +2650,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // 5. 验证中后期转码事件在 midYearEventRouter 中被非科班玩家顺利命中
   const workingSwitcher: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'big_tech',
     company: 'google',
     level: 'L5 (Senior)',
@@ -2669,7 +2685,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('--- [CUJ 51] 内部转组改变后续 H1 赛道 (team_focus → midYearEventRouter) ---');
   const entry = events['sv_daily_life'].choices.find((c) => c.text.includes('申请内部转组'))!;
   assert(!!entry, 'sv_daily_life 有【申请内部转组】入口');
-  const emp: GameState = { ...generateInitialState(), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)', leetcode: 60, health: 70, status: 'playing' } as GameState;
+  const emp: GameState = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'meta', level: 'L5 (Senior)', leetcode: 60, health: 70, status: 'playing' } as GameState;
   const entryRes = entry.effect(emp);
   assert((typeof entry.nextEventId === 'function' ? entry.nextEventId(emp) : entry.nextEventId) === 'internal_team_transfer', '转组入口路由到 internal_team_transfer');
   assert((entryRes.story_flags as Record<string, unknown>)?.annual_action === 'transfer', '转组入口设 annual_action=transfer');
@@ -2718,7 +2734,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(!!studentChoice, 'change_rental 包含【我是学生，可以少算点吗？】砍价选项');
 
   const f1Student: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: 'F1 (学生)',
     job_type: undefined,
     rent: 2.0,
@@ -2728,7 +2744,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(studentRes.rent! < 2.0 && studentRes.cash! > 2.0, '真实学生砍价成功减免房租');
 
   const employedSwe: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     visa: 'H1B (工签)',
     job_type: 'big_tech',
     rent: 2.0,
@@ -2741,7 +2757,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const unicornEvent = events['ex_spouse_unicorn_exit'];
   assert(!!unicornEvent && unicornEvent.choices.length === 3, 'ex_spouse_unicorn_exit 存在且有 3 个选项');
   const divorcedState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     age: 30,
     story_flags: { had_divorce: true },
     cash: 20,
@@ -2774,7 +2790,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(!!ev && ev.choices.length === 2, 'home_visit_family 存在且有 2 个选项');
   const go = ev.choices.find((c) => c.text.includes('回国过年'))!;
   const stay = ev.choices.find((c) => c.text.includes('留守'))!;
-  const base = (over: Partial<GameState>): GameState => ({ ...generateInitialState(), age: 30, health: 70, cash: 10, story_flags: {}, ...over } as GameState);
+  const base = (over: Partial<GameState>): GameState => ({ ...generateInitialState(nextCujSeed()), age: 30, health: 70, cash: 10, story_flags: {}, ...over } as GameState);
 
   // 绿卡:回国纯正向、不滞留、设冷却
   const gc = go.effect(base({ visa: '绿卡' }));
@@ -2807,7 +2823,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('--- [CUJ 54] Achievement Codex triggers and integrity ---');
   assert(ACHIEVEMENTS.length === 27, `ACHIEVEMENTS codex has 27 total achievements (actual: ${ACHIEVEMENTS.length})`);
 
-  const base = generateInitialState();
+  const base = generateInitialState(nextCujSeed());
 
   // 1. 转码神话
   const zmWin = checkAndUnlockAchievements({ ...base, status: 'win', story_flags: { zhuanma_landed: true } });
@@ -2862,7 +2878,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(ev.choices.length === 2, 'dilemma_credit_grab_mentor has 2 choices');
 
   const base: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     age: 26,
     last_promo_age: 25,
     level: 'L4',
@@ -2923,7 +2939,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(COMPANY_PROFILES.amazon.signatureEvent === 'amazon_six_pager_review', 'Amazon profile wires signatureEvent');
 
   const baseEmp: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     job_type: 'big_tech', company: 'amazon', level: 'L4', tc: 28, health: 80, leetcode: 50, impact: 10,
   } as GameState;
 

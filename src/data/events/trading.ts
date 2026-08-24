@@ -201,12 +201,13 @@ export const tradingEvents: Record<string, GameEvent> = {
         text: '【重仓科技龙头股票】重仓配置英伟达 (NVDA)、特斯拉与前沿半导体龙头股票',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
+          const totalCap = s.cash + (s.stocks || 0);
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
           const winRate = isBull ? 0.55 : (isBear ? 0.32 : 0.45);
           const isWin = gameRandom() < winRate;
           if (isWin) {
-            const gain = Math.min(45, s.cash * 0.30);
+            const gain = Math.min(80, totalCap * 0.30);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
@@ -215,7 +216,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               message: ` 飞天暴赚！你重仓的 AI 科技巨头股价随着算力风口暴涨！现金暴增 +$${gain.toFixed(1)}w 美元！`
             };
           } else {
-            const loss = Math.min(s.cash * 0.28, 35);
+            const loss = Math.min(totalCap * 0.28, 50);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
@@ -231,12 +232,13 @@ export const tradingEvents: Record<string, GameEvent> = {
         text: '【高杠杆末日期权】重仓 0DTE 末日期权与高 Beta 科技股衍生品博弈',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
+          const totalCap = s.cash + (s.stocks || 0);
           const isBull = s.macro_economy === 'bull';
           const isBear = s.macro_economy === 'bear';
           const winRate = isBull ? 0.40 : (isBear ? 0.18 : 0.28);
           const roll = gameRandom();
           if (roll < winRate) {
-            const doubleGain = Math.min(60, s.cash * 0.50);
+            const doubleGain = Math.min(120, totalCap * 0.50);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
@@ -245,7 +247,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               message: ` 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +$${doubleGain.toFixed(1)}w 美元！`
             };
           } else if (roll < winRate + 0.40) {
-            const drop = Math.min(s.cash * 0.30, 40);
+            const drop = Math.min(totalCap * 0.30, 60);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
@@ -254,7 +256,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -$${drop.toFixed(1)}w 美元！`
             };
           } else {
-            const bust = Math.min(s.cash * 0.55, 60);
+            const bust = Math.min(totalCap * 0.55, 90);
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
@@ -273,9 +275,10 @@ export const tradingEvents: Record<string, GameEvent> = {
         text: '【做空避险:反向 ETF + 长债】买入 SQQQ 等大盘反向三倍 ETF 与 20 年期长久期美债',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
+          const totalCap = s.cash + (s.stocks || 0);
           const luck = ((s.luck || 20) / 1000);
           if (s.macro_economy === 'bear') {
-            const gain = Math.min(40, s.cash * (0.26 + luck));
+            const gain = Math.min(70, totalCap * (0.26 + luck));
             return {
               mid_year: true, season_stage: 'h1', tc: 0,
               cash: parseFloat((s.cash + gain).toFixed(1)),
@@ -283,7 +286,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               message: ` 逆势封神！熊市中反向 ETF 与避险长债齐飞,你在别人割肉时反手做空大赚 +$${gain.toFixed(1)}w 美元!`
             };
           } else if (s.macro_economy === 'bull') {
-            const loss = Math.min(30, s.cash * 0.22);
+            const loss = Math.min(50, totalCap * 0.22);
             return {
               mid_year: true, season_stage: 'h1', tc: 0,
               cash: Math.max(5, parseFloat((s.cash - loss).toFixed(1))),
@@ -291,7 +294,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               message: ` 逆势踏空!牛市一路轧空,你的空头仓位与长债被反复碾压,倒亏 -$${loss.toFixed(1)}w 美元。`
             };
           } else {
-            const drag = Math.min(10, s.cash * 0.05);
+            const drag = Math.min(15, totalCap * 0.05);
             return {
               mid_year: true, season_stage: 'h1', tc: 0,
               cash: Math.max(5, parseFloat((s.cash - drag).toFixed(1))),
@@ -309,10 +312,11 @@ export const tradingEvents: Record<string, GameEvent> = {
         // negative in a bear market (real drawdown), there is no +$6w floor, and it
         // costs a little health instead of healing.
         effect: (s) => {
+          const totalCap = s.cash + (s.stocks || 0);
           const leetBonus = Math.min(0.08, (s.leetcode / 1000));
           const ecoBonus = s.macro_economy === 'bull' ? 0.06 : (s.macro_economy === 'bear' ? -0.06 : 0.02);
           const yieldRate = 0.04 + leetBonus + ecoBonus; // can go negative
-          const pnl = Math.max(-25, Math.min(20, parseFloat((s.cash * yieldRate).toFixed(1))));
+          const pnl = Math.max(-40, Math.min(45, parseFloat((totalCap * yieldRate).toFixed(1))));
           return {
             mid_year: true, season_stage: 'h1',
             tc: 0,

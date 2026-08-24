@@ -756,7 +756,7 @@ export const settlementEvents: Record<string, GameEvent> = {
           fire_tier: 'luxury',
           job_type: 'startup_founder',
           founder_stage: 'pre_seed',
-          company_valuation: 500,
+          company_valuation: 180,
           tc: 6,
           level: undefined,
           company: undefined,

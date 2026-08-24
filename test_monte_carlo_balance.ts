@@ -70,7 +70,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       const pmf = validChoices.find(c => c.text.includes('死磕产品'));
       const talk = validChoices.find(c => c.text.includes('TechCrunch'));
       const hire = validChoices.find(c => c.text.includes('高举高打招聘'));
-      const survive = validChoices.find(c => c.text.includes('苟活'));
+      const survive = validChoices.find(c => c.text.includes('断臂求生') || c.text.includes('苟活'));
       // 能力型创始人先读仪表盘的「痛点」信号对症下药 (估值停滞→演讲 / 客户流失→死磕PMF /
       // 线上事故→招架构师),把年度痛点化解掉拿对症加成;健康告急则苟活保命;后期冲刺退场;
       // 无痛点信号时以融资推进轮次为主。(与 startup.ts 的 founder_situation 对症加成对齐。)

@@ -106,7 +106,7 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【加杠杆暴力抄底】此时不博何时博？加杠杆抄底！',
-        costBadge: '需现金 > $30w',
+        reqBadge: '需现金 > $30w',
         condition: (s) => s.cash >= 30,
         effect: (s) => {
            const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%

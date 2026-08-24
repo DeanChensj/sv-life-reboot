@@ -1865,7 +1865,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               icu_crisis_survived: true,
               icu_legal_win: true,
             },
-            message: '【法律维权大胜】你敏锐抓住了急诊救治中医院未经同意指派 Out-of-Network 网络外救护车与麻销师的漏洞，引用联邦《No Surprises Act》反意外账单法案向监管机构投诉。医院法务部火速服软，仅象征性收取 $0.2w 即结案！(健康 +22，魅力 +2)'
+            message: '【法律维权大胜】你敏锐抓住了急诊救治中医院未经同意指派 Out-of-Network 网络外救护车与麻醉师的漏洞，引用联邦《No Surprises Act》反意外账单法案向监管机构投诉。医院法务部火速服软，仅象征性收取 $0.2w 即结案！(健康 +22，魅力 +2)'
           };
         },
         nextEventId: 'sv_year_end_settlement'

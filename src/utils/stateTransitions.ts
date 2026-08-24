@@ -255,7 +255,7 @@ export function applyStateTransition(
     if (targetJobType === 'startup_founder') {
       const compName = normalizedEffect.company
         ? (getCompanyProfile(normalizedEffect.company)?.timelineName || normalizedEffect.company)
-        : (newState.company_name || '科技初创公司');
+        : '科技初创公司';
       const valStr = (newState.company_valuation || 0) > 0 ? `估值 $${newState.company_valuation}w` : `启动资金 $${(newState.cash || 0).toFixed(1)}w`;
       pushTimeline({
         age: recAge, year: recYear,

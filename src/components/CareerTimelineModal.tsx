@@ -821,7 +821,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-zinc-100">
                   {gameState.job_type === 'startup_founder'
-                    ? `${gameState.level || 'CEO & Founder'} @ ${gameState.company_name || '科技初创'}`
+                    ? `${gameState.level || 'CEO & Founder'} @ 科技初创`
                     : gameState.job_type === 'trader'
                     ? '独立交易员 @ 美股与衍生品市场'
                     : gameState.job_type === 'unemployed' || gameState.laid_off

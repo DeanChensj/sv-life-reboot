@@ -476,6 +476,28 @@ export const settlementEvents: Record<string, GameEvent> = {
                 statHighlight: `$${newNetWorth.toFixed(1)}w 舒适 FIRE`
               });
             }
+            if (newNetWorth >= 1500 && !newStoryFlags.milestone_1500w) {
+              newStoryFlags.milestone_1500w = true;
+              newTimeline.push({
+                age: s.age,
+                year: s.year,
+                title: '里程碑: 达成奢华级 FIRE 财务自由 ($1500w)',
+                description: '资产突破 1500 万美元！坐拥顶级不动产与家族创投资本，登顶硅谷精英巅峰！',
+                category: 'milestone',
+                statHighlight: `$${newNetWorth.toFixed(1)}w 奢华 FIRE`
+              });
+            }
+            if (newNetWorth >= 3000 && !newStoryFlags.milestone_3000w) {
+              newStoryFlags.milestone_3000w = true;
+              newTimeline.push({
+                age: s.age,
+                year: s.year,
+                title: '里程碑: 达成硅谷百亿传奇 ($3000w+)',
+                description: '资产突破 3000 万美元！建立家族信托与独立创投基金，书写属于你的时代传奇！',
+                category: 'milestone',
+                statHighlight: `$${newNetWorth.toFixed(1)}w 硅谷传奇`
+              });
+            }
 
             // Founder 痛点信号 (Phase 2 读牌→对症):每年为下一年抛出一个核心痛点,玩家需在
             // founder_annual_strategy 用对症 remedy 化解 (会清空 founder_situation)。若上一年痛点被

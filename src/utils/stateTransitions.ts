@@ -2,6 +2,7 @@ import type { GameState, TimelineRecord } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { getSchoolProfile } from '../data/schoolProfiles';
+import { normalizeLevel, getLevelRank, LEVEL_PROFILES } from '../data/levelProfiles';
 import { events as eventRegistry } from '../data/events';
 
 export interface TransitionContext {
@@ -164,6 +165,22 @@ export function applyStateTransition(
   // the war report / HUD "峰值总包" is a true peak, not the current (possibly $0) TC.
   newState.max_tc = Math.max(newState.max_tc || 0, prevState.tc || 0, newState.tc || 0);
 
+  // Track the all-time peak tech ladder level (max_level) so returning from startup/trading/layoff preserves career grade
+  const curNorm = normalizeLevel(newState.level, newState);
+  const prevNorm = normalizeLevel(prevState.level, prevState);
+  const targetNorm = curNorm || prevNorm;
+  if (targetNorm) {
+    const curMaxRank = getLevelRank(newState.max_level || prevState.max_level, newState);
+    const newRank = LEVEL_PROFILES[targetNorm].rank;
+    if (newRank > curMaxRank) {
+      newState.max_level = targetNorm;
+    } else if (!newState.max_level && prevState.max_level) {
+      newState.max_level = prevState.max_level;
+    }
+  } else if (!newState.max_level && prevState.max_level) {
+    newState.max_level = prevState.max_level;
+  }
+
   // 5. Auto Liquidate Stocks if Cash < 0 on Purchases
   let liquidationNote = '';
   if (newState.cash < -0.001 && (newState.stocks || 0) > 0 && (newState.status === 'playing' || newState.status === 'retired')) {
@@ -184,8 +201,16 @@ export function applyStateTransition(
   const recAge = prevState.age;
   const recYear = prevState.year;
 
+  const pushTimeline = (entry: TimelineRecord) => {
+    // Avoid pushing duplicate entry with same title in the exact same year/age
+    const exists = updatedTimeline.some(t => t.age === entry.age && t.title === entry.title);
+    if (!exists) {
+      updatedTimeline.push(entry);
+    }
+  };
+
   if (context.eventId === 'choose_trait' && normalizedEffect.trait_title) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: `特质觉醒: ${normalizedEffect.trait_title}`,
       description: '开启独特的硅谷人生底色与专属天赋属性',
@@ -196,7 +221,7 @@ export function applyStateTransition(
   if (context.eventId === 'choose_school') {
     const profile = getSchoolProfile(normalizedEffect.school);
     const schoolName = profile ? profile.timelineName : '国内高校 / 中外合办大学';
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: `踏上征途: 入读 ${schoolName}`,
       description: normalizedEffect.school ? '背上行囊，正式开启学术积累与北美留学生涯' : '进入大学校园，打下扎实的高等数学与算法编程底子',
@@ -205,7 +230,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.is_master && !prevState.is_master) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: '深造进阶: 入读北美 CS 硕士研究生',
       description: '手握录取通知书飞赴美国，开启高强度课业与刷题求职新篇章！',
@@ -214,7 +239,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.is_phd && !prevState.is_phd) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: '学术殿堂: 斩获北美顶尖 CS 全奖直博 PhD',
       description: '加入顶级人工智能实验室，致力于前沿顶会论文与分布式架构研发！',
@@ -222,33 +247,83 @@ export function applyStateTransition(
     });
   }
 
-  if (normalizedEffect.is_new_job || (normalizedEffect.job_type && normalizedEffect.job_type !== 'unemployed' && (normalizedEffect.job_type !== prevState.job_type || normalizedEffect.company !== prevState.company))) {
-    // Big-tech employer hire names come from the company table (timelineName);
-    // non-big-tech / job_type-primary employers keep their own names here.
-    const legacyCompNames: Record<string, string> = {
-      openai: 'OpenAI', citadel: 'Citadel (城堡)',
-      cn_big_tech: '国内一线互联网大厂', icc: 'ICC 外包公司',
-    };
-    const compName = normalizedEffect.company
-      ? (getCompanyProfile(normalizedEffect.company)?.timelineName || legacyCompNames[normalizedEffect.company] || normalizedEffect.company.toUpperCase())
-      : (normalizedEffect.job_type === 'cn_tech' ? '国内一线互联网大厂' : normalizedEffect.job_type === 'startup_founder' ? 'AI 独角兽' : '硅谷科技企业');
-    const lvl = normalizedEffect.level || (normalizedEffect.job_type === 'cn_tech' ? '国内研发' : normalizedEffect.job_type === 'startup_founder' ? 'Founder' : 'SDE');
-    updatedTimeline.push({
-      age: recAge, year: recYear,
-      title: `成功入职: ${compName} (${lvl})`,
-      description: `顺利通过技术面试，年薪总包达到 $${(newState.tc || 0).toFixed(1)}w！`,
-      category: 'career',
-      statHighlight: `TC $${(newState.tc || 0).toFixed(1)}w`,
-    });
+  const targetJobType = normalizedEffect.job_type || (normalizedEffect.is_new_job ? (newState.job_type || prevState.job_type) : undefined);
+  const isJobChange = normalizedEffect.is_new_job ||
+    (targetJobType && targetJobType !== 'unemployed' && (targetJobType !== prevState.job_type || (normalizedEffect.company !== undefined && normalizedEffect.company !== prevState.company)));
+
+  if (isJobChange) {
+    if (targetJobType === 'startup_founder') {
+      const compName = normalizedEffect.company
+        ? (getCompanyProfile(normalizedEffect.company)?.timelineName || normalizedEffect.company)
+        : (newState.company_name || '科技初创公司');
+      const valStr = (newState.company_valuation || 0) > 0 ? `估值 $${newState.company_valuation}w` : `启动资金 $${(newState.cash || 0).toFixed(1)}w`;
+      pushTimeline({
+        age: recAge, year: recYear,
+        title: `开启创业: 创立 ${compName} (CEO & Founder)`,
+        description: '告别大厂打工人身份，在硅谷创立自己的科技公司，踏上生死时速的创业征途！',
+        category: 'career',
+        statHighlight: valStr,
+      });
+    } else if (targetJobType === 'trader') {
+      pushTimeline({
+        age: recAge, year: recYear,
+        title: '转型全职交易: 独立操盘手 (Day Trader)',
+        description: '登出职场与固定薪资体系，以独立操盘手身份博弈美股与衍生品市场！',
+        category: 'career',
+        statHighlight: '全职独立交易',
+      });
+    } else {
+      const legacyCompNames: Record<string, string> = {
+        openai: 'OpenAI', citadel: 'Citadel (城堡)',
+        cn_big_tech: '国内一线互联网大厂', icc: 'ICC 外包公司',
+      };
+      const compKey = normalizedEffect.company || newState.company || prevState.company;
+      const compName = compKey
+        ? (getCompanyProfile(compKey)?.timelineName || legacyCompNames[compKey] || compKey.toUpperCase())
+        : (targetJobType === 'cn_tech' ? '国内一线互联网大厂'
+          : targetJobType === 'ai_research' ? '前沿 AI 实验室'
+          : targetJobType === 'quant' ? '华尔街量化基金'
+          : targetJobType === 'startup' ? '硅谷高成长初创'
+          : '硅谷科技企业');
+      const lvl = normalizedEffect.level || newState.level || prevState.level || (targetJobType === 'cn_tech' ? '国内研发' : 'SDE');
+      const tcVal = newState.tc || 0;
+      const desc = targetJobType === 'cn_tech'
+        ? `加入国内一线互联网团队，开启硬核业务研发实战！${tcVal > 0 ? `年薪总包达到 $${tcVal.toFixed(1)}w！` : ''}`
+        : `顺利通过技术面试，年薪总包达到 $${tcVal.toFixed(1)}w！`;
+
+      pushTimeline({
+        age: recAge, year: recYear,
+        title: `成功入职: ${compName} (${lvl})`,
+        description: desc,
+        category: 'career',
+        ...(tcVal > 0 ? { statHighlight: `TC $${tcVal.toFixed(1)}w` } : {}),
+      });
+    }
   } else if ((normalizedEffect.laid_off && !prevState.laid_off) || (normalizedEffect.job_type === 'unemployed' && prevState.job_type && prevState.job_type !== 'unemployed')) {
-    updatedTimeline.push({
-      age: recAge, year: recYear,
-      title: '职场变故: 离开当前岗位进入待业期',
-      description: '遭遇部门业务调整或主动离职，重新进入求职与调整期！',
-      category: 'career',
-    });
+    if (prevState.job_type === 'startup_founder') {
+      pushTimeline({
+        age: recAge, year: recYear,
+        title: '初创清算: 结束创业旅程',
+        description: '初创项目告一段落，盘点经验与资金，重新规划下一步方向。',
+        category: 'career',
+      });
+    } else if (prevState.job_type === 'trader') {
+      pushTimeline({
+        age: recAge, year: recYear,
+        title: '结束独立交易: 重返求职市场',
+        description: '结束全职交易生涯，重新整理简历与刷题，准备重返职场。',
+        category: 'career',
+      });
+    } else {
+      pushTimeline({
+        age: recAge, year: recYear,
+        title: '职场变故: 离开当前岗位进入待业期',
+        description: '遭遇部门业务调整或主动离职，重新进入求职与调整期！',
+        category: 'career',
+      });
+    }
   } else if (normalizedEffect.level && normalizedEffect.level !== prevState.level && normalizedEffect.level !== '待业' && !normalizedEffect.is_new_job && !normalizedEffect.laid_off && normalizedEffect.job_type !== 'unemployed' && prevState.job_type !== 'unemployed' && (newState.tc || 0) > 0) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: `职级晋升: 升至 ${normalizedEffect.level}`,
       description: `斩获优秀绩效考核，总包提升至 $${(newState.tc || 0).toFixed(1)}w！`,
@@ -269,7 +344,7 @@ export function applyStateTransition(
       'F1 (学生)': { title: '求学签证: 获批 F-1 留学生签证', desc: '踏上赴美求学之路，开启海外求学生涯！' },
     };
     const info = visaDescriptions[normalizedEffect.visa] || { title: `身份跨越: 取得 ${normalizedEffect.visa}`, desc: '北美合法留美与工作身份迎来关键突破！' };
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: info.title,
       description: info.desc,
@@ -279,7 +354,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.housing_name && normalizedEffect.housing_name !== prevState.housing_name && isOwnedHousing(normalizedEffect.housing_name)) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: `置业安家: 购入 ${normalizedEffect.housing_name}`,
       description: `在加州湾区拥有了属于自己的房产，成为有产阶级！`,
@@ -289,7 +364,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.rental_income && (normalizedEffect.rental_income > (prevState.rental_income || 0))) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: '资产扩张: 布局不动产被动现金流',
       description: `名下投资房产/ADU 落地出租，年化被动租金现金流增至 +$${normalizedEffect.rental_income.toFixed(1)}w！`,
@@ -300,7 +375,7 @@ export function applyStateTransition(
 
   if (normalizedEffect.car && normalizedEffect.car !== prevState.car && normalizedEffect.car !== 'none') {
     const carMap: Record<string, string> = { porsche: '保时捷 Porsche 911', cybertruck: '特斯拉 Cybertruck', model_y: 'Tesla Model Y' };
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: `座驾升级: 提车 ${carMap[normalizedEffect.car] || normalizedEffect.car}`,
       description: '行驶在加州 101 高速公路上，尽情体验硅谷速度与驾驶乐趣！',
@@ -310,7 +385,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.is_married && !prevState.is_married) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: '缔结良缘: 步入婚姻殿堂',
       description: '在加州与心仪的伴侣正式领证结婚，组建幸福的湾区家庭！',
@@ -319,7 +394,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.story_flags?.alex_ipo_done && !prevState.story_flags?.alex_ipo_done) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: '时代盛宴: OmniAgent 终局退出结算',
       description: '见证 Alex 博士初创智能体公司走向纳斯达克挂牌与巨头并购退出！',
@@ -328,7 +403,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.story_flags?.dave_defeated && !prevState.story_flags?.dave_defeated) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: '绝地反击: 击溃 Manager Dave',
       description: '凭借扎实的证据链在闭门考核中彻底扳倒职场宿敌！',
@@ -337,7 +412,7 @@ export function applyStateTransition(
   }
 
   if (normalizedEffect.story_flags?.sam_zero_day_done && !prevState.story_flags?.sam_zero_day_done) {
-    updatedTimeline.push({
+    pushTimeline({
       age: recAge, year: recYear,
       title: '黑客探险: 斩获 Zero-Day 漏洞赏金',
       description: '与极客战友 Sam 在车库通宵调试并提交 AI 云平台底层逃逸漏洞 PoC！',

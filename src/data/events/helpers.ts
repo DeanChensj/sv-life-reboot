@@ -3,6 +3,7 @@ import { safeStorage } from '../../utils/safeStorage';
 import { STORAGE_KEYS, isOwnedHousing, VISA_STATUS, isPermanentVisa } from '../../constants/gameConstants';
 import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '../../utils/random';
 import { getCompanyProfile } from '../companyProfiles';
+import { normalizeLevel } from '../levelProfiles';
 
 export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 
@@ -79,12 +80,18 @@ const LADDER = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L
 // Map the player's CURRENT level — including non-standard titles (MTS/Quant/Founder/CN) —
 // onto a Big-Tech ladder rung. Returns '' for a true new grad with no prior standing.
 const currentLadderRung = (s: GameState): string => {
+  if (s.level && s.level !== '待业') {
+    const direct = normalizeLevel(s.level, s);
+    if (direct) return direct;
+  }
+  // When currently unemployed, trading, or transitioning back from founder, fallback to historical max_level
+  if (s.max_level) {
+    const maxDirect = normalizeLevel(s.max_level, s);
+    if (maxDirect) return maxDirect;
+  }
   if (!s.level || s.level === '待业' || (!s.job_start_age && s.level === '初级研发')) return '';
   let baseLevel = s.level;
-  if (baseLevel === 'MTS') {
-    // OpenAI Member of Technical Staff (MTS) 对标大厂 L6 Staff (若 TC>=60 或 impact>=20) 或 L5 Senior
-    baseLevel = (s.tc >= 60 || (s.impact || 0) >= 20) ? 'L6 (Staff)' : 'L5 (Senior)';
-  } else if (baseLevel === 'Quant') {
+  if (baseLevel === 'MTS' || baseLevel === 'Quant') {
     baseLevel = (s.tc >= 60 || (s.impact || 0) >= 20) ? 'L6 (Staff)' : 'L5 (Senior)';
   } else if (baseLevel === 'CEO & Founder' || baseLevel === 'CTO & Co-Founder') {
     baseLevel = (s.impact || 0) >= 45 ? 'L7 (Senior Staff)' : (s.impact || 0) >= 20 ? 'L6 (Staff)' : 'L5 (Senior)';
@@ -102,8 +109,8 @@ export const hopTargetLevel = (s: GameState): string => {
   const curIdx = LADDER.indexOf(rung);
   if (curIdx < 0) return 'L5 (Senior)';
 
-  // 被裁员/待业状态的社招资深员工：平级录用 (Lateral hire)，绝不降级至应届 L3
-  if (s.laid_off || s.job_type === 'unemployed') return LADDER[curIdx];
+  // 被裁员/待业/Trader/Founder 重新回归大厂的资深员工：平级录用 (Lateral hire)，绝不降级至应届 L3/L4
+  if (s.laid_off || s.job_type === 'unemployed' || s.job_type === 'trader' || s.job_type === 'startup_founder') return LADDER[curIdx];
 
   // 在职主动跳槽：尝试阶梯 +1，若 impact 不足则平跳 (Lateral)
   const target = LADDER[Math.min(LADDER.length - 1, curIdx + 1)];

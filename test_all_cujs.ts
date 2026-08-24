@@ -1098,6 +1098,12 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(joinEff.level === 'L6 (Staff)', 'lateral re-hire lands at L6');
   assert(joinEff.last_promo_age !== 40, 'lateral re-hire does NOT stamp last_promo_age (no false celebration)');
 
+  // Former L6 returning from startup / day-trader with level undefined or non-corporate preserves L6 via max_level
+  const formerL6Trader: GameState = { ...generateInitialState(), level: '全职 Trader', max_level: 'L6 (Staff)', job_type: 'trader', age: 48, hop_offers: ['apple'], status: 'playing' } as GameState;
+  assert(hopTargetLevel(formerL6Trader) === 'L6 (Staff)', 'former L6 trader re-entering big tech preserves L6');
+  const formerL6Unemployed: GameState = { ...generateInitialState(), level: undefined, max_level: 'L6 (Staff)', job_type: 'unemployed', laid_off: true, age: 48, hop_offers: ['apple'], status: 'playing' } as GameState;
+  assert(hopTargetLevel(formerL6Unemployed) === 'L6 (Staff)', 'former L6 unemployed re-entering big tech preserves L6');
+
   // Fresh grad joining at L3 is onboarding, NOT a promotion
   const freshGrad: GameState = { ...generateInitialState(), level: undefined, job_type: undefined, age: 24, hop_offers: ['google'], status: 'playing' } as GameState;
   assert(hopTargetLevel(freshGrad) === 'L3', 'fresh grad hop target is L3');

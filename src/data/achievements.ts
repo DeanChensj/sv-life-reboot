@@ -326,7 +326,7 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
   }
 
   // 10 New Achievements Logic:
-  if ((state.story_flags?.zhuanma_landed || state.story_flags?.non_cs_background || state.zhuanma_origin) && state.status === 'win') {
+  if ((state.story_flags?.zhuanma_landed || state.story_flags?.non_cs_background || state.story_flags?.zhuanma_origin) && state.status === 'win') {
     if (unlockAchievement('zhuanma_miracle')) newlyUnlocked.push('zhuanma_miracle');
   }
 
@@ -343,7 +343,7 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('acqui_hire_exit')) newlyUnlocked.push('acqui_hire_exit');
   }
 
-  if (state.story_flags?.last_perf_rating === 'EE' || state.last_perf_rating === 'EE') {
+  if (state.story_flags?.last_perf_rating === 'EE') {
     if (unlockAchievement('grind_god')) newlyUnlocked.push('grind_god');
   }
 

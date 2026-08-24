@@ -2821,7 +2821,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(acquiWin.includes('acqui_hire_exit'), 'acqui_hire_exit unlocks when acqui_hire_done flag is set');
 
   // 5. 卷王之王
-  const grindWin = checkAndUnlockAchievements({ ...base, last_perf_rating: 'EE' });
+  const grindWin = checkAndUnlockAchievements({ ...base, story_flags: { last_perf_rating: 'EE' } });
   assert(grindWin.includes('grind_god'), 'grind_god unlocks when last_perf_rating is EE');
 
   // 6. 猫狗双全

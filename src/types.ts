@@ -48,6 +48,8 @@ export interface StoryFlags {
   milestone_300w?: boolean;
   milestone_500w?: boolean;
   milestone_800w?: boolean;
+  milestone_1500w?: boolean;
+  milestone_3000w?: boolean;
   raj_alignment_seen?: boolean;
   raj_meet_year?: number;
   raj_ally?: boolean;

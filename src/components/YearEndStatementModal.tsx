@@ -163,30 +163,31 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
           {preTaxBase > 0 && (
             <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
               <span className="text-zinc-400 flex items-center gap-2.5">
-                <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                {gameState.job_type === 'trader' ? `资本利得税 (-${taxPct}%)` : `现金所得税 (-${taxPct}%)`}
+                <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                {gameState.job_type === 'trader' ? '年度操盘收益 (Cash)' : gameState.job_type === 'startup_founder' ? '创始人薪水/套现 (Cash)' : '年度 Base 薪资 (Cash)'}
               </span>
-              <span className="font-bold text-rose-400 tabular-nums">-${taxAmount}w</span>
+              <span className="font-bold text-emerald-400 tabular-nums">+${preTaxBase.toFixed(1)}w</span>
             </div>
           )}
 
           {preTaxRSU > 0 && (
-            <>
-              <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-400 flex items-center gap-2.5">
-                  <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                  年度 RSU 归属 (转入股票资产)
-                </span>
-                <span className="font-bold text-emerald-400 tabular-nums">+${preTaxRSU.toFixed(1)}w</span>
-              </div>
-              <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
-                <span className="text-zinc-400 flex items-center gap-2.5">
-                  <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                  股票所得税 (-{taxPct}% 补充预扣)
-                </span>
-                <span className="font-bold text-rose-400 tabular-nums">-${rsuTaxAmountNum.toFixed(1)}w</span>
-              </div>
-            </>
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                年度 RSU 归属 (转入股票资产)
+              </span>
+              <span className="font-bold text-emerald-400 tabular-nums">+${preTaxRSU.toFixed(1)}w</span>
+            </div>
+          )}
+
+          {(preTaxBase > 0 || preTaxRSU > 0) && (
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                {gameState.job_type === 'trader' ? `资本利得与综合预扣税 (-${taxPct}%)` : `年度综合预扣所得税 (-${taxPct}%)`}
+              </span>
+              <span className="font-bold text-rose-400 tabular-nums">-${(parseFloat(taxAmount) + rsuTaxAmountNum).toFixed(1)}w</span>
+            </div>
           )}
 
           {rentalIncomeNum > 0 && (
@@ -258,10 +259,6 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
               </span>
             </div>
           )}
-          <div className="flex justify-between">
-            <span className="text-zinc-400 font-mono">算法解题储备:</span>
-            <span className="font-bold text-amber-400 font-mono tabular-nums">{gameState.leetcode} 题</span>
-          </div>
         </div>
 
         {/* Continue Button */}

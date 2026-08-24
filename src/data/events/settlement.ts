@@ -48,7 +48,7 @@ export const settlementEvents: Record<string, GameEvent> = {
 
            // 自有住房维护、HOA 与地税储备金 (Property Maintenance, HOA & Property Tax Reserves)
            let propertyMaintenanceExpense = 0;
-           let propertyMaintenanceMsg = '';
+           
            if (isHomeowner) {
              if (s.housing_name === HOUSING_NAMES.ATHERTON) {
                propertyMaintenanceExpense = 2.5;
@@ -59,7 +59,7 @@ export const settlementEvents: Record<string, GameEvent> = {
              } else {
                propertyMaintenanceExpense = 0.8;
              }
-             propertyMaintenanceMsg = ` 【房产维护与HOA】自有房产维护、HOA及地税储备金支出: -$${propertyMaintenanceExpense.toFixed(1)}w。`;
+             
            }
 
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
@@ -106,8 +106,6 @@ export const settlementEvents: Record<string, GameEvent> = {
 
            // 股票资产真实波动 (Stock Market Fluctuation with Realistic Volatility)
            let currentStocks = s.stocks || 0;
-           let stockReturnPct = 0;
-           let stockFluctuationMsg = '';
            if (currentStocks > 0) {
              let stockMultiplier = 1.0;
              if (newEconomy === 'bull') {
@@ -117,13 +115,7 @@ export const settlementEvents: Record<string, GameEvent> = {
              } else {
                stockMultiplier = 0.94 + gameRandom() * 0.14; // -6% ~ +8% (平均 +1.0% 震荡)
              }
-             stockReturnPct = parseFloat(((stockMultiplier - 1) * 100).toFixed(1));
              currentStocks = currentStocks * stockMultiplier;
-             if (stockReturnPct >= 0) {
-               stockFluctuationMsg = ` 【股票持仓收益】股市回报率 +${stockReturnPct}%。`;
-             } else {
-               stockFluctuationMsg = ` 【股票持仓波动】股市回报率 ${stockReturnPct}%。`;
-             }
            }
            
            // Standardized compensation split (Cash & RSU)
@@ -404,12 +396,6 @@ export const settlementEvents: Record<string, GameEvent> = {
                 updatedTC = raiseTo(parseFloat((baseRefresh * Math.min(1.0, impactAmtMult)).toFixed(1)));
               }
               // NI: no raise (updatedTC stays s.tc).
-            } else if (s.job_type === 'startup_founder' && !s.laid_off) {
-              if (newEconomy === 'bull') {
-                meritMsg = '【初创运营】初创团队业务在牛市大环境中健康增长，公司产品顺利推进！';
-              } else if (newEconomy === 'bear') {
-                meritMsg = '【初创运营】宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬！';
-              }
             }
 
            const newNetWorth = finalCash + currentStocks;
@@ -498,9 +484,10 @@ export const settlementEvents: Record<string, GameEvent> = {
             let founderValuation = s.company_valuation;
             let founderMsg = '';
             if (s.job_type === 'startup_founder' && s.status === 'playing') {
+              let unresolvedMsg = '';
               if (s.founder_situation && (s.company_valuation || 0) > 0) {
                 founderValuation = Math.max(100, Math.round((s.company_valuation || 0) * 0.92));
-                founderMsg = '【上年痛点未化解】董事会对停滞不前的核心问题深表担忧,公司估值遭受折损。';
+                unresolvedMsg = '上年痛点仍未有效化解，董事会深表担忧，公司估值折损 8%；';
               }
               // 并非年年都有危机:约 45% 的年份抛出一个核心痛点(需对症化解),其余年份无痛点,
               // 让创始人腾出手推进融资轮次(沙丘路)——否则年年疲于救火、公司永远长不大。
@@ -508,13 +495,20 @@ export const settlementEvents: Record<string, GameEvent> = {
                 const painRoll = gameRandom();
                 nextFounderSituation = painRoll < 0.34 ? 'valuation_stall' : (painRoll < 0.67 ? 'churn' : 'outage');
                 const painLabel = nextFounderSituation === 'valuation_stall'
-                  ? '估值增长停滞、资本市场关注度下滑 —— 需要一场技惊四座的公关演讲重夺聚光灯'
+                  ? '公司估值增长停滞，资本市场与行业关注度显著下滑。'
                   : nextFounderSituation === 'churn'
-                  ? '核心客户流失、续约率下降 —— 需要带队死磕产品 PMF 与企业大单'
-                  : '线上事故与技术债频发、系统稳定性告急 —— 需要重金招募大厂资深架构师补齐工程';
-                founderMsg = `${founderMsg} 【董事会警报】本年核心痛点:${painLabel}。`.trim();
+                  ? '核心企业客户流失，产品续约率出现危险下滑。'
+                  : '线上系统故障与技术债频发，系统稳定性面临严峻考验。';
+                founderMsg = `【初创运营】${unresolvedMsg}${painLabel}`;
               } else {
                 nextFounderSituation = undefined;
+                if (unresolvedMsg) {
+                  founderMsg = `【初创运营】${unresolvedMsg}当前团队各项指标恢复平稳。`;
+                } else if (newEconomy === 'bull') {
+                  founderMsg = '【初创运营】初创团队业务在科技牛市中迅猛扩张，各条业务线健康推进。';
+                } else if (newEconomy === 'bear') {
+                  founderMsg = '【初创运营】宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬。';
+                }
               }
             }
 
@@ -554,8 +548,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               message: [
                 companyMsg,
                 meritMsg,
-                propertyMaintenanceMsg,
-                stockFluctuationMsg,
+                founderMsg,
                 h1bMsg,
                 gcMsg,
                 day1CptMsg,
@@ -563,7 +556,6 @@ export const settlementEvents: Record<string, GameEvent> = {
                 petMsg,
                 autoStockSellMsg,
                 economyMsg,
-                founderMsg,
               ].map(m => (m ? m.trim() : '')).filter(Boolean).join('\n'),
               // ICC 稽查命中:挂靠合同终止,转入失业+身份危机 (nextEventId 会据此打入 layoff_hit)。
               ...(iccCrackdown ? { laid_off: true, job_type: 'unemployed' as const, company: undefined, tc: 0 } : {}),

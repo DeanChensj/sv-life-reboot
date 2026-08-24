@@ -955,6 +955,59 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     ]
   },
 
+  'home_visit_family': {
+    id: 'home_visit_family',
+    title: '【回国探亲】跨越太平洋的春节与渐老的爸妈',
+    description: '微信家庭群里，爸妈又发来「什么时候回来」的语音，老家亲戚也在问。你已经好几年没回去过年了，父母肉眼可见地老了。春节将至——回，还是不回？',
+    choices: [
+      {
+        text: '【回国过年 · 阖家团圆】飞回老家陪爸妈过年 (机票 $0.3w)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.3,
+        effect: (s) => {
+          const isTempVisa = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无';
+          if (isTempVisa) {
+            // 回美需重新面签,~20% 撞上 221(g) 行政审查(check)滞留 —— 惊魂但最终有惊无险(非 game over)。
+            if (gameRandom() < 0.20) {
+              return {
+                cash: Math.max(0, s.cash - 0.6),
+                health: Math.max(0, s.health - 8),
+                story_flags: { ...(s.story_flags || {}), last_home_visit_year: s.year },
+                message: '你陪爸妈过了个团圆年，但返美签证面签被抽中 221(g) 行政审查 (check)！你在国内多滞留了两个多月，天天刷 CEAC 状态、机票一改再改，老板脸色越来越难看，所幸最终有惊无险拿到签证飞回湾区。',
+              };
+            }
+            return {
+              cash: Math.max(0, s.cash - 0.3),
+              health: Math.min(100, s.health + 8),
+              charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+              story_flags: { ...(s.story_flags || {}), last_home_visit_year: s.year },
+              message: '你回老家陪爸妈过了个热闹的团圆年，吃遍家乡菜、见了老同学，身心充电满满。返美面签虽捏了把汗，但顺利过签、按时飞回。',
+            };
+          }
+          return {
+            cash: Math.max(0, s.cash - 0.3),
+            health: Math.min(100, s.health + 12),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+            network: Math.min(100, (s.network || 10) + 2),
+            story_flags: { ...(s.story_flags || {}), last_home_visit_year: s.year },
+            message: '手握绿卡/护照说走就走，你回老家陪爸妈过了个团圆年，吃遍家乡菜、走亲访友，身心彻底治愈——这是漂泊多年里最踏实的时刻。',
+          };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【留守湾区 · 视频拜年 + 给爸妈打钱】太忙 / 怕签证折腾，寄钱尽孝、把假期用来充电 (寄 $0.2w)',
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.2),
+          health: Math.max(0, s.health - 2),
+          leetcode: Math.min(100, s.leetcode + 2),
+          story_flags: { ...(s.story_flags || {}), last_home_visit_year: s.year },
+          message: '你又一次没回去，除夕夜隔着屏幕给爸妈拜年、发了个大红包，转头把假期都用来刷题充电。他们笑说「不用惦记我们，忙你的」，你却对着湾区的夜色沉默了很久。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+    ],
+  },
+
   'vibe_coding_craze': {
     id: 'vibe_coding_craze',
     title: '【AI新纪元】Vibecoding：用 Cursor/Claude 替代手打代码',

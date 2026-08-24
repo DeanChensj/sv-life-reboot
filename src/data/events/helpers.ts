@@ -752,6 +752,13 @@ export const midYearEventRouter = (s: GameState): string => {
     lifeEvents.push('h1b_visa_stamping_crisis');
   }
 
+  // 回国探亲/过年:移民(人在美国 → visa 非 '无')每隔几年一次的家庭羁绊事件。临时工签持有者
+  // 附带「回美需重新签证、可能行政审查滞留」的真实焦虑。用 last_home_visit_year 做 ~3 年冷却,
+  // 使其「介于年度与偶发之间」,而非每年刷屏。
+  if (s.visa !== '无' && s.age >= 24 && (!s.story_flags?.last_home_visit_year || (s.year - Number(s.story_flags.last_home_visit_year)) >= 3)) {
+    lifeEvents.push('home_visit_family');
+  }
+
   if (s.car === 'porsche' || s.car === 'cybertruck') {
     lifeEvents.push('luxury_car_meet', 'luxury_car_vandalism_towing');
   }

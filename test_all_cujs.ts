@@ -2751,6 +2751,45 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 52 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 53: 回国探亲 (home_visit_family)。锁三件事:①永久身份(绿卡/公民)回国纯正向回血;
+// ②临时工签(H1B)回国存在 221(g) 行政审查滞留风险,但最坏也只是惊魂、绝不 game over,且顺利过签也可达;
+// ③留守把假期用于充电(leetcode+);两个选项都设 last_home_visit_year 冷却。
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 53] 回国探亲:签证滞留风险 / 永久身份纯正向 / 冷却 ---');
+  const ev = events['home_visit_family'];
+  assert(!!ev && ev.choices.length === 2, 'home_visit_family 存在且有 2 个选项');
+  const go = ev.choices.find((c) => c.text.includes('回国过年'))!;
+  const stay = ev.choices.find((c) => c.text.includes('留守'))!;
+  const base = (over: Partial<GameState>): GameState => ({ ...generateInitialState(), age: 30, health: 70, cash: 10, story_flags: {}, ...over } as GameState);
+
+  // 绿卡:回国纯正向、不滞留、设冷却
+  const gc = go.effect(base({ visa: '绿卡' }));
+  assert((gc.health || 0) > 70, '绿卡回国纯正向回血');
+  assert((gc.story_flags as Record<string, unknown>)?.last_home_visit_year !== undefined, '回国设 last_home_visit_year 冷却');
+  assert(gc.status !== 'game_over', '回国不会 game over');
+
+  // H1B:滞留 (221g) 与顺利过签两种结局都可达,且都不 game over
+  let sawStuck = false, sawSmooth = false;
+  for (let seed = 1; seed <= 80 && !(sawStuck && sawSmooth); seed++) {
+    setGameSeed(seed);
+    const r = go.effect(base({ visa: 'H1B (工签)' }));
+    assert(r.status !== 'game_over', 'H1B 回国最坏也只是滞留惊魂,不 game over');
+    if ((r.message || '').includes('行政审查')) { sawStuck = true; assert((r.health || 0) < 70, '滞留分支扣血'); }
+    else if ((r.health || 0) > 70) { sawSmooth = true; }
+  }
+  assert(sawStuck, 'H1B 回国存在 221(g) 行政审查滞留风险');
+  assert(sawSmooth, 'H1B 回国也能顺利过签');
+
+  // 留守:安全,用假期充电 (leetcode+),设冷却
+  const st = stay.effect(base({ visa: 'H1B (工签)', leetcode: 50 }));
+  assert((st.leetcode || 0) > 50, '留守把假期用来充电 leetcode+');
+  assert((st.story_flags as Record<string, unknown>)?.last_home_visit_year !== undefined, '留守也设冷却');
+
+  console.log('✅ CUJ 53 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

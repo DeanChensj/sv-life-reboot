@@ -650,34 +650,33 @@ export const initializationEvents: Record<string, GameEvent> = {
     imageUrl: 'images/visa_denied.jpg',
     choices: [
       {
-        text: '【转申美国 CS 硕士】去大U读 MS 曲线救国，进实验室积累科研成果再战 PhD！(消耗 $10w)',
-        costBadge: '学费 $10w',
-        condition: (s) => s.cash >= 10,
-        effect: (s) => ({
-          cash: s.cash - 10,
-          is_master: true,
-          has_us_degree: true,
-          housing_name: '美硕 校外公寓',
-          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
-          health: Math.min(100, s.health + 5),
-          message: '【破茧重生】你收拾行囊前往顶级名校攻读 CS 硕士！你暗自发誓一定要在硕士期间进组跟大佬做 Research 发顶会，毕业时再次冲击 PhD！'
-        }),
-        nextEventId: 'us_master_year1',
-      },
-      {
-        text: '【申请 CS 硕士 + TA 助教贷款】资金不足借贷读硕，边打工做科研边备战重申 (消耗 $3w)',
-        costBadge: '自付 $3w',
+        text: '【申请美国 CS 硕士】读 MS 曲线救国，边做科研边备战重申 PhD (学费 $10w，资金紧张可申请助教减免至 $3w)',
+        costBadge: '学费 $3w~$10w',
         condition: (s) => s.cash >= 3,
-        effect: (s) => ({
-          cash: s.cash - 3,
-          is_master: true,
-          has_us_degree: true,
-          housing_name: '美硕 校外公寓',
-          story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
-          health: Math.max(0, s.health - 5),
-          leetcode: s.leetcode + 5,
-          message: '【自立自强】凭借本科过硬的算法能力，你成功申到了硕士院系 TA 助教职位与助学贷款，踏上边代课边做科研的硕士进阶之路！'
-        }),
+        effect: (s) => {
+          const hasFullTuition = s.cash >= 10;
+          if (hasFullTuition) {
+            return {
+              cash: s.cash - 10,
+              is_master: true,
+              has_us_degree: true,
+              housing_name: '美硕 校外公寓',
+              story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
+              health: Math.min(100, s.health + 5),
+              message: '【破茧重生】全款交齐 $10w 学费前往顶级名校攻读 CS 硕士！你暗自发誓一定要在硕士期间进组跟大佬做 Research 发顶会，毕业时再次冲击 PhD！'
+            };
+          }
+          return {
+            cash: s.cash - 3,
+            is_master: true,
+            has_us_degree: true,
+            housing_name: '美硕 校外公寓',
+            story_flags: { ...(s.story_flags || {}), college_next: 'us_master_grad', phd_reapply_ready: true },
+            health: Math.max(0, s.health - 5),
+            leetcode: s.leetcode + 5,
+            message: '【自立自强】凭借本科过硬的算法能力，你成功申到了硕士院系 TA 助教职位与助学贷款（自付 $3w），踏上边代课边做科研的硕士进阶之路！'
+          };
+        },
         nextEventId: 'us_master_year1',
       },
       {

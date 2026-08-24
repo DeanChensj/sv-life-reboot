@@ -9,70 +9,64 @@ export const immigrationEvents: Record<string, GameEvent> = {
     description: 'H-1B 遭遇 RFE 拒签或工签出现重大变故！公司律所发来通知需尽快解决合法留美身份，请选择你的自救路线：',
     choices: [
       {
-        text: '【真爱伴侣结婚自救】与交往伴侣正式领证结婚，递交 I-130/I-485 婚姻绿卡 (合法合规)',
-        condition: (s) => (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) && s.visa !== '绿卡' && s.visa !== '公民',
+        text: '【婚姻绿卡自救】通过伴侣领证递交 I-130/I-485，或单身付费匹配商婚 (合规直批/博弈救命)',
+        reqBadge: '需有交往伴侣 或 现金>= $8w',
+        condition: (s) => (s.visa !== '绿卡' && s.visa !== '公民') && (
+          (s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married) ||
+          ((s.cash + (s.stocks || 0)) >= 8 && !s.story_flags?.scam_marriage_failed)
+        ),
         effect: (s) => {
-          const partnerIsCitizen = gameRandom() < 0.40;
-          if (partnerIsCitizen) {
+          const hasPartner = s.relationship_status === 'dating' || s.relationship_status === 'matched' || s.is_married;
+          if (hasPartner) {
+            const partnerIsCitizen = gameRandom() < 0.40;
+            if (partnerIsCitizen) {
+              return {
+                visa: '绿卡',
+                gc_progress: 5,
+                gc_stage: 'approved',
+                is_married: true,
+                relationship_status: 'married',
+                message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决留美身份！'
+              };
+            }
             return {
-              visa: '绿卡',
-              gc_progress: 5,
-              gc_stage: 'approved',
               is_married: true,
               relationship_status: 'married',
-              message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决留美身份！'
-            };
-          }
-          return {
-            is_married: true,
-            relationship_status: 'married',
-            gc_progress: Math.max(3, s.gc_progress || 0),
-            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
-            // Bridge a precarious OPT/F1 onto Day 1 CPT so the player isn't re-thrown into
-            // this same crisis every settlement (re-routes here only while OPT/F1 + 3 strikes).
-            // Preserve stronger statuses (H1B/绿卡/公民) untouched.
-            visa: (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') ? 'Day 1 CPT' : s.visa,
-            message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。你转入 Day 1 CPT 维持合法工作身份，双方结为双职工家庭互相绑定绿卡排期，静待排期推进！'
-          };
-        },
-        // A non-citizen spouse outcome routes OUT of the crisis (was looping back to
-        // the same event, letting the 40% citizen-spouse roll be re-clicked to a
-        // guaranteed green card). You married; you live with the outcome this year.
-        nextEventId: (s) => s.visa === '绿卡' ? 'post_green_card' : 'sv_year_end_settlement',
-      },
-      {
-        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需总资产 >= $8w, 极高风险)',
-        costBadge: '花费 $8w',
-        reqBadge: '高风险',
-        condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && (s.cash + (s.stocks || 0)) >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.scam_marriage_failed,
-        effect: (s) => {
-          const roll = gameRandom();
-          if (roll < 0.35) {
-            return {
-              cash: s.cash - 8,
-              visa: '绿卡',
-              gc_progress: 5,
-              gc_stage: 'approved',
-              is_married: true,
-              relationship_status: 'married',
-              message: '【商婚侥幸成功】你支付了 $8w 现金通过中介办妥了婚姻绿卡，彻底化解了身份危机！'
-            };
-          } else if (roll < 0.70) {
-            return {
-              cash: s.cash - 8,
-              health: Math.max(0, s.health - 15),
-              story_flags: { ...(s.story_flags || {}), scam_marriage_failed: true },
-              message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救失败！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
+              gc_progress: Math.max(3, s.gc_progress || 0),
+              gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+              visa: (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') ? 'Day 1 CPT' : s.visa,
+              message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。你转入 Day 1 CPT 维持合法工作身份，双方结为双职工家庭互相绑定绿卡排期，静待排期推进！'
             };
           } else {
-            return {
-              cash: s.cash - 8,
-              status: 'game_over',
-              message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
-            };
+            // 单身付费商婚博弈
+            const roll = gameRandom();
+            if (roll < 0.35) {
+              return {
+                cash: s.cash - 8,
+                visa: '绿卡',
+                gc_progress: 5,
+                gc_stage: 'approved',
+                is_married: true,
+                relationship_status: 'married',
+                message: '【商婚侥幸成功】你支付了 $8w 现金通过中介办妥了婚姻绿卡，彻底化解了身份危机！'
+              };
+            } else if (roll < 0.70) {
+              return {
+                cash: s.cash - 8,
+                health: Math.max(0, s.health - 15),
+                story_flags: { ...(s.story_flags || {}), scam_marriage_failed: true },
+                message: '【中介卷款跑路】收钱后中介直接失联注销微信，假结婚对象人间蒸发！你血亏 $8w 现金且身份自救失败！系统已返回自救面板，请立即选择其他备用路线 (如 Day 1 CPT / 外派温哥华 / EB-5 / O-1)！'
+              };
+            } else {
+              return {
+                cash: s.cash - 8,
+                status: 'game_over',
+                message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
+              };
+            }
           }
         },
-        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
+        nextEventId: (s) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : (s.story_flags?.scam_marriage_failed ? 'h1b_fallback_options' : 'sv_year_end_settlement')),
       },
       {
         text: '【杰出人才自救】申办 O1 签证 (花费 $5w 律师费)',
@@ -114,12 +108,6 @@ export const immigrationEvents: Record<string, GameEvent> = {
         costBadge: '花费 $1.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 1.5, message: '白天写代码，晚上做作业，你凭 Day 1 CPT 成功维持了合法工作身份！' }),
-        nextEventId: 'sv_year_end_settlement',
-      },
-      {
-        text: '【绿卡/公民身份】已有绿卡或公民身份，直接跳过抽签困境',
-        condition: (s) => s.visa === '绿卡' || s.visa === '公民',
-        effect: (s) => ({ message: '你拥有绿卡/公民身份，完全不受抽签限制，继续专注于工作与生活！' }),
         nextEventId: 'sv_year_end_settlement',
       }
     ]

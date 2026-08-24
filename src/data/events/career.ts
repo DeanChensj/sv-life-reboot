@@ -1194,9 +1194,9 @@ export const careerEvents: Record<string, GameEvent> = {
           return h1ToH2Router(s);
         },
       },
-      // 稳健 WLB (60分及格线) 与 内部转组:排在核心冲刺 (内卷/刷题) 之后、情境动作之前。
+      // 按部就班 (60分及格线) 与 内部转组:排在核心冲刺 (内卷/刷题) 之后、情境动作之前。
       {
-        text: '【按部就班 · 稳健 WLB】完成本职需求及格线 (Meets Bar)，准时打卡下班、养生回血',
+        text: '【按部就班】完成本职需求及格线 (Meets Bar)，准时打卡下班、养生回血',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         hideIfUnavailable: true,
         effect: (s) => {
@@ -1209,8 +1209,7 @@ export const careerEvents: Record<string, GameEvent> = {
             return {
               mid_year: true, season_stage: 'h1',
               level: 'L4', tc: s.tc + 3.5, last_promo_age: s.age,
-              impact: addImpact(s, 4),
-              health: Math.min(100, s.health + 12), leetcode: Math.min(100, s.leetcode + 2),
+              health: Math.min(100, s.health + 12),
               story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
               message: '【稳健及格·水到渠成升 L4】在按部就班完成本职需求的同时，凭借扎实的日常工程交付水到渠成晋升 L4 工程师！总包调升 +$3.5w！',
             };
@@ -1226,8 +1225,6 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             mid_year: true, season_stage: 'h1',
             health: Math.min(100, s.health + 14),
-            leetcode: Math.min(100, s.leetcode + 2),
-            impact: addImpact(s, 2),
             story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
             message: chillMsg,
           };

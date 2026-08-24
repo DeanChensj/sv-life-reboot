@@ -30,10 +30,10 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【内推绿色通道 (Referral & 校友网络)】凭借资深人脉或名校/PhD 背书免初筛直通录用',
         reqBadge: '需熟人人脉 或 名校/PhD 背景',
-        condition: (s) => ((s.network || 0) >= 25 && s.leetcode >= 30) || (isTopTierCSSchool(s.school) && s.leetcode >= 40) || s.is_phd,
+        condition: (s) => ((s.network || 0) >= 30 && s.leetcode >= 35) || (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const isElite = (isTopTierCSSchool(s.school) && s.leetcode >= 40) || s.is_phd;
+          const isElite = (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd;
 
           if (isElite) {
             // 名校 / 博士校友黑手党路线：直通顶级大厂核心架构团队，享受顶格 Base TC + $8w 签字费

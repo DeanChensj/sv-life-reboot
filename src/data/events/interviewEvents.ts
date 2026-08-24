@@ -63,7 +63,7 @@ function resolveGauntlet(s: GameState, addPts: number, healthDelta: number, flav
   for (const comp of targetCompanies) {
     if (newLeet >= comp.minLeet - (total >= 3 ? 8 : 0)) {
       const diff = newLeet - comp.minLeet;
-      const passProb = Math.max(0.05, Math.min(0.85, (0.35 + (diff / 75) + scoreBonus + econBonus + charmBonus + luckBonus + ageBonus) * comp.weight));
+      const passProb = Math.max(0.05, Math.min(0.78, (0.28 + (diff / 85) + scoreBonus + econBonus + charmBonus + luckBonus + ageBonus) * comp.weight));
       if (gameRandom() < passProb) {
         wonOffers.push(comp.id);
       }

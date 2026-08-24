@@ -1,5 +1,6 @@
 import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb } from './src/data/events';
 import { ACHIEVEMENTS, checkAndUnlockAchievements } from './src/data/achievements';
+import { COMPANY_PROFILES } from './src/data/companyProfiles';
 import { GameState, Choice } from './src/types';
 import { HOUSING_NAMES } from './src/constants/gameConstants';
 import { applyStateTransition } from './src/utils/stateTransitions';
@@ -2908,6 +2909,66 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(generous.npcs?.mentor?.status === 'ally', 'Giving credit makes mentor an ally');
 
   console.log('✅ CUJ 55 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 56: Amazon & Oracle signature events + silent pet health boost
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 56] Amazon & Oracle signature events + silent pet health boost ---');
+  // 1. Amazon signature event
+  const amzEv = events['amazon_six_pager_review'];
+  assert(!!amzEv, 'amazon_six_pager_review event is registered');
+  assert(amzEv.choices.length === 2, 'amazon_six_pager_review has 2 choices');
+  assert(COMPANY_PROFILES.amazon.signatureEvent === 'amazon_six_pager_review', 'Amazon profile wires signatureEvent');
+
+  const baseEmp: GameState = {
+    ...generateInitialState(),
+    job_type: 'big_tech', company: 'amazon', level: 'L4', tc: 28, health: 80, leetcode: 50, impact: 10,
+  } as GameState;
+
+  const amzC0 = amzEv.choices[0].effect(baseEmp) as Partial<GameState>;
+  assert((amzC0.impact as number) !== undefined, 'Amazon 6-pager choice 0 updates impact');
+  assert(baseEmp.health - (amzC0.health as number) <= 15, 'Amazon choice 0 health drain <= 15');
+
+  const amzC1 = amzEv.choices[1].effect(baseEmp) as Partial<GameState>;
+  assert((amzC1.network as number) > (baseEmp.network || 10), 'Amazon choice 1 boosts network');
+
+  // 2. Oracle signature event
+  const orcEv = events['oracle_oci_expansion'];
+  assert(!!orcEv, 'oracle_oci_expansion event is registered');
+  assert(orcEv.choices.length === 2, 'oracle_oci_expansion has 2 choices');
+  assert(COMPANY_PROFILES.oracle.signatureEvent === 'oracle_oci_expansion', 'Oracle profile wires signatureEvent');
+
+  const orcC0 = orcEv.choices[0].effect(baseEmp) as Partial<GameState>;
+  assert((orcC0.impact as number) > (baseEmp.impact || 0), 'Oracle OCI choice 0 boosts impact');
+  assert((orcC0.tc as number) > baseEmp.tc, 'Oracle OCI choice 0 boosts TC');
+
+  const orcC1 = orcEv.choices[1].effect(baseEmp) as Partial<GameState>;
+  assert((orcC1.health as number) >= baseEmp.health + 15, 'Oracle WLB choice 1 recovers +15 health');
+
+  // 3. Silent pet health boost in year-end settlement (no spammy message in annual report)
+  const settle = events['sv_year_end_settlement'].choices[0];
+  const petEmp: GameState = {
+    ...baseEmp,
+    has_pet: true,
+    pet_name: '柴犬 Mochi',
+    health: 60,
+    visa: '公民',
+  } as GameState;
+  const noPetEmp: GameState = {
+    ...baseEmp,
+    has_pet: false,
+    health: 60,
+    visa: '公民',
+  } as GameState;
+
+  const petRes = settle.effect(petEmp) as Partial<GameState>;
+  const noPetRes = settle.effect(noPetEmp) as Partial<GameState>;
+  assert((petRes.health as number) === (noPetRes.health as number) + 2, 'Pet grants +2 health boost silently in settlement');
+  assert(!petRes.message?.includes('【宠物陪伴】'), 'Year-end report message does not spam 【宠物陪伴】');
+
+  console.log('✅ CUJ 56 Passed\n');
 }
 
 console.log(`\n======================================================`);

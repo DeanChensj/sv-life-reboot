@@ -1270,15 +1270,15 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'stock_market_annual_gamble',
       },
       {
-        text: '【活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
-        condition: (s) => true,
-        effect: (s) => ({
+        text: '【经营人际】把这一年的重心放在人与人的连接：朋友 / 社区 / 家庭 / 姻缘',
+        condition: (_s) => true,
+        effect: (_s) => ({
           mid_year: true, season_stage: 'h1',
-          health: Math.max(0, s.health - 10),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
-          message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
+          message: '你决定这一年多花心思在人际连接上——深耕友情社区、陪伴家人，或认真寻觅良缘。'
         }),
-        nextEventId: (s) => !s.is_married ? 'dating_market' : h1ToH2Router(s),
+        // 人人都进「经营人际」枢纽:朋友/社区对所有人开放,单身/未婚在枢纽内多一个相亲入口 (→ dating_market),
+        // 有伴侣的多一个陪伴家人。
+        nextEventId: 'active_social_life',
       },
 
       // --- 生活与资产：置业安家 (首付达标时可见，完成后返回工作重心) ---

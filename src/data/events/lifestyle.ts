@@ -3,6 +3,57 @@ import { getLevelScaledTC, gameRandom, deductAssets, addImpact } from './helpers
 import { HOUSING_NAMES } from '../../constants/gameConstants';
 
 export const lifestyleEvents: Record<string, GameEvent> = {
+  // 「经营人际」枢纽:朋友/社区人人可选;单身/未婚多一个「相亲·推进感情」入口 (→ dating_market),
+  // 有伴侣多一个「陪伴伴侣家人」。让社交对单身与已婚玩家都有意义,而不再只有相亲。
+  'active_social_life': {
+    id: 'active_social_life',
+    title: '【经营人际】湾区的朋友、社区、家庭与姻缘',
+    description: '在高压漂泊的湾区，人与人的连接格外珍贵。这一年，你想把社交精力主要投向哪里？',
+    choices: [
+      {
+        text: '【老友组局 · 校友饭局】办后院 BBQ、约前同事与校友，维系圈子 (花费 $0.3w)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.3,
+        effect: (s) => ({
+          cash: Math.max(0, s.cash - 0.3),
+          network: Math.min(100, (s.network || 10) + 6),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          health: Math.min(100, s.health + 4),
+          message: '你张罗了几场后院 BBQ 与校友饭局，老友常联系、圈子越做越活，聊着聊着还听到了几个内推与合伙的机会。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【深耕社区 · 兴趣社群】华人教会 / 老乡会 / 骑行队 / 开源志愿者，找到归属感',
+        condition: (_s) => true,
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 10) + 5),
+          luck: Math.min(99, (s.luck || 20) + 3),
+          health: Math.min(100, s.health + 6),
+          message: '你固定参加社区与兴趣社群活动，漂泊多年终于有了「附近」与归属感，人脉与心气都悄悄回暖。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【陪伴伴侣 / 家人】推掉无谓应酬，把周末还给家人：一起下厨、短途旅行',
+        condition: (s) => s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating' || s.relationship_status === 'matched',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 8),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          story_flags: { ...(s.story_flags || {}), partner_strain: 0 },
+          message: '你把时间留给伴侣与家人，一起下厨、周末短途旅行。感情的裂痕被慢慢抚平，家成了高压生活里最好的充电站。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        // 未婚 (单身 / matched / dating) 专属:进入交友主线 dating_market，找对象或推进现有关系。
+        text: '【相亲 · 推进感情】打开 CMB 认真找对象，或推进与 TA 的关系',
+        condition: (s) => !s.is_married && s.relationship_status !== 'married',
+        effect: (_s) => ({}),
+        nextEventId: 'dating_market',
+      },
+    ],
+  },
+
   'dating_market': {
     id: 'dating_market',
     title: '【湾区交友】CMB 刷人与情感发展',

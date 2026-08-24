@@ -66,9 +66,26 @@ function play(seed: number, policy: 'random' | 'grind') {
     if (!valid.length) break;
     let chosen: Choice;
     if (policy === 'grind' && currentEventId === 'sv_daily_life') {
+      // seed%5 is a divorce-seeking cohort: it marries, then accrues partner_strain at the
+      // dual-income crises and divorces — keeping marriage_divorce_crisis / had_divorce /
+      // ex_spouse_unicorn_exit sim-reachable now that 活跃社交 routes married players to a hub.
       chosen = (seed % 3 === 0 ? valid.find(c => /置业安家/.test(c.text)) : undefined)
+        || (seed % 5 === 0 ? valid.find(c => /经营人际/.test(c.text)) : undefined)
         || (state.health < 55 ? valid.find(c => /躺平|WLB|火人节|养生/.test(c.text)) : undefined)
         || valid.find(c => /疯狂内卷|刷题跳槽|顶会 Paper/.test(c.text)) || valid[0];
+    } else if (policy === 'grind' && currentEventId === 'dating_market') {
+      chosen = valid.find(c => /闪婚|走进婚姻/.test(c.text)) || valid[0];
+    } else if (policy === 'grind' && currentEventId === 'active_social_life') {
+      // everyone routes through this hub now. Unmarried → 相亲 (drive toward dating_market →
+      // marriage); married → friends/community (strain-neutral; NOT 陪伴, which清零 partner_strain
+      // and would starve the divorce chain the seed%5 cohort is pursuing).
+      chosen = (!state.is_married && state.relationship_status !== 'married')
+        ? (valid.find(c => /相亲|推进感情/.test(c.text)) || valid[0])
+        : (valid.find(c => /老友组局|深耕社区/.test(c.text)) || valid[0]);
+    } else if (policy === 'grind' && currentEventId === 'dual_income_wlb_burnout') {
+      chosen = valid.find(c => /谁也不退让|死磕/.test(c.text)) || valid[0];
+    } else if (policy === 'grind' && currentEventId === 'marriage_divorce_crisis') {
+      chosen = valid.find(c => /协议离婚/.test(c.text)) || valid[0];
     } else if (policy === 'grind' && state.health < 40) {
       chosen = valid.find(c => /休息|养生|求医|恢复|稳健|苟|婉拒|妥协/.test(c.text)) || valid[Math.floor(gameRandom() * valid.length)];
     } else {

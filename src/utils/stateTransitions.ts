@@ -322,7 +322,7 @@ export function applyStateTransition(
         category: 'career',
       });
     }
-  } else if (normalizedEffect.level && normalizedEffect.level !== prevState.level && normalizedEffect.level !== '待业' && !normalizedEffect.is_new_job && !normalizedEffect.laid_off && normalizedEffect.job_type !== 'unemployed' && prevState.job_type !== 'unemployed' && (newState.tc || 0) > 0) {
+  } else if (normalizedEffect.level && normalizedEffect.level !== prevState.level && normalizedEffect.level !== '待业' && !normalizedEffect.is_new_job && !normalizedEffect.laid_off && normalizedEffect.job_type !== 'unemployed' && prevState.job_type !== 'unemployed' && (newState.tc || 0) > 0 && getLevelRank(normalizedEffect.level, newState) > getLevelRank(prevState.level, prevState)) {
     pushTimeline({
       age: recAge, year: recYear,
       title: `职级晋升: 升至 ${normalizedEffect.level}`,

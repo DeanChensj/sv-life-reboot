@@ -32,7 +32,7 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需熟人人脉 或 名校/PhD 背景',
         condition: (s) => ((s.network || 0) >= 30 && s.leetcode >= 35) || (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd,
         effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          const lvl = hopTargetLevel(s); // retain historical rank (max_level) — never demote a re-hired senior to L3/L4
           const isElite = (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd;
 
           if (isElite) {
@@ -84,7 +84,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【急召外包 / ICC / 中型公司紧急避险】保住合法工签身份与基础现金流',
         condition: (_s) => true,
         effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
+          const lvl = hopTargetLevel(s); // retain historical rank (max_level) — never demote a re-hired senior to L3/L4
           const stateCompanies = [
             { company: 'cisco', name: 'Cisco 思科网络研发部', baseTc: 20 },
             { company: 'oracle', name: 'Oracle 甲骨文云架构组', baseTc: 21 },

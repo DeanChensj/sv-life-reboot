@@ -189,7 +189,7 @@ export const tradingEvents: Record<string, GameEvent> = {
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(5, parseFloat((s.cash - loss).toFixed(1))),
+              cash: parseFloat((s.cash - loss).toFixed(1)),
               health: Math.max(0, s.health - 6),
               message: ` 熊市震荡！宏观大盘整体回调，对冲仓位受损 -$${loss.toFixed(1)}w 美元。好在你严格止损，保住了绝大部分主力资金。`
             };
@@ -220,7 +220,7 @@ export const tradingEvents: Record<string, GameEvent> = {
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(8, parseFloat((s.cash - loss).toFixed(1))),
+              cash: parseFloat((s.cash - loss).toFixed(1)),
               health: Math.max(0, s.health - 10),
               message: ` 宏观回调！科技板块遭遇资金阶段性获利砸盘，仓位回调 -$${loss.toFixed(1)}w 美元！`
             };
@@ -251,7 +251,7 @@ export const tradingEvents: Record<string, GameEvent> = {
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(5, parseFloat((s.cash - drop).toFixed(1))),
+              cash: parseFloat((s.cash - drop).toFixed(1)),
               health: Math.max(0, s.health - 12),
               message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -$${drop.toFixed(1)}w 美元！`
             };
@@ -260,7 +260,7 @@ export const tradingEvents: Record<string, GameEvent> = {
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
-              cash: Math.max(2, parseFloat((s.cash - bust).toFixed(1))),
+              cash: parseFloat((s.cash - bust).toFixed(1)),
               health: Math.max(0, s.health - 15),
               message: ` 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
             };
@@ -290,7 +290,7 @@ export const tradingEvents: Record<string, GameEvent> = {
             const loss = Math.min(50, totalCap * 0.22);
             return {
               mid_year: true, season_stage: 'h1', tc: 0,
-              cash: Math.max(5, parseFloat((s.cash - loss).toFixed(1))),
+              cash: parseFloat((s.cash - loss).toFixed(1)),
               health: Math.max(0, s.health - 8),
               message: ` 逆势踏空!牛市一路轧空,你的空头仓位与长债被反复碾压,倒亏 -$${loss.toFixed(1)}w 美元。`
             };
@@ -298,7 +298,7 @@ export const tradingEvents: Record<string, GameEvent> = {
             const drag = Math.min(15, totalCap * 0.05);
             return {
               mid_year: true, season_stage: 'h1', tc: 0,
-              cash: Math.max(5, parseFloat((s.cash - drag).toFixed(1))),
+              cash: parseFloat((s.cash - drag).toFixed(1)),
               health: Math.max(0, s.health - 5),
               message: ` 横盘磨人:震荡期没有明确方向,做空与长债的持有成本(Decay/负 Carry)小幅拖累了本金 -$${drag.toFixed(1)}w。`
             };
@@ -321,7 +321,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           return {
             mid_year: true, season_stage: 'h1',
             tc: 0,
-            cash: Math.max(2, parseFloat((s.cash + pnl).toFixed(1))),
+            cash: parseFloat((s.cash + pnl).toFixed(1)),
             leetcode: s.leetcode + 4,
             health: Math.max(0, s.health - 4),
             message: pnl >= 0
@@ -404,7 +404,7 @@ export const tradingEvents: Record<string, GameEvent> = {
           const pnl = Math.max(-6, Math.min(8, base + luckAdj));
           return {
             health: Math.max(0, s.health - 8),
-            cash: Math.max(2, parseFloat((s.cash + pnl).toFixed(1))),
+            cash: parseFloat((s.cash + pnl).toFixed(1)),
             message: pnl >= 0
               ? `你忍住了干预的冲动，策略慢慢回本，年底拿到了小幅 Bonus (+$${pnl}w)。`
               : `你坚持不干预，但回撤未能及时收复，策略小幅亏损 (-$${Math.abs(pnl)}w)，好在没伤筋动骨。`,

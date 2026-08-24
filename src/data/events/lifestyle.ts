@@ -159,8 +159,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         // Only a MARRIED split divides assets (community property). A dating breakup
         // has no merged finances, so no asset division.
         effect: (s) => s.is_married
-          ? { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产 (现金与股票均分)，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }
-          : { relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 10), message: '你们和平分手，各自安好。恋爱期间财务独立，没有财产纠纷，只是心里空落落的。' },
+          ? { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), story_flags: { ...(s.story_flags || {}), partner_strain: 0, had_divorce: true }, message: '你们平静地签了字。由于湾区共同财产法，你分走了一半的共同资产 (现金与股票均分)，重新搬回了单身公寓。你的生活瞬间空虚了许多。' }
+          : { relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 10), story_flags: { ...(s.story_flags || {}), partner_strain: 0 }, message: '你们和平分手，各自安好。恋爱期间财务独立，没有财产纠纷，只是心里空落落的。' },
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -181,6 +181,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
             relationship_status: 'single',
             partner_type: undefined,
             health: Math.max(0, s.health - 15),
+            story_flags: { ...(s.story_flags || {}), partner_strain: 0, had_divorce: true },
             message: win
               ? '律师非常给力！你成功保住了 90% 的婚内资产 (扣除律师费后同比例保留)，但漫长的官司让你心力交瘁，头发白了一半。'
               : '律师是个水货！不仅花了高昂的律师费，你还被判决失去了 40% 的资产 (扣除律师费后按判决执行)，你痛心不已！'
@@ -199,8 +200,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               : { health: Math.min(100, s.health + 10), story_flags: { ...(s.story_flags || {}), partner_strain: 0 }, message: '对方被你的诚意打动，你们和好如初，感情更进一步。' };
           }
           return s.is_married
-            ? { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产 (现金与股票均分)。' }
-            : { relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 12), message: '破镜难重圆。对方觉得你只是在画大饼，还是离开了你。' };
+            ? { cash: s.cash / 2, stocks: (s.stocks || 0) / 2, is_married: false, relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 15), story_flags: { ...(s.story_flags || {}), partner_strain: 0, had_divorce: true }, message: '破镜难重圆。对方觉得你只是在画大饼，依然坚决离开了你。你被动平分了资产 (现金与股票均分)。' }
+            : { relationship_status: 'single', partner_type: undefined, health: Math.max(0, s.health - 12), story_flags: { ...(s.story_flags || {}), partner_strain: 0 }, message: '破镜难重圆。对方觉得你只是在画大饼，还是离开了你。' };
         },
         nextEventId: 'sv_year_end_settlement'
       }

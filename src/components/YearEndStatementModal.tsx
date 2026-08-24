@@ -31,19 +31,32 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
     ? (gameState.partner_type === 'vc' ? 15 : gameState.partner_type === 'founder' ? 12 : gameState.partner_type === 'engineer' ? 10 : gameState.partner_type === 'artist' ? 3 : 6)
     : 0;
 
-  // Expenses matched with settlement logic
-  const housingExpenseNum = gameState.rent !== undefined 
+  // Expenses — MUST mirror settlement.ts totalExpense exactly, or the预测 is systematically
+  // too optimistic (it previously omitted property maintenance, inflation, and CPT tuition).
+  const housingRentNum = gameState.rent !== undefined 
     ? gameState.rent 
     : (isHomeowner ? (gameState.housing_name === HOUSING_NAMES.ATHERTON ? 5.0 : 2.0) : 4.0);
-  const housingExpense = housingExpenseNum.toFixed(1);
+  // Owned-home maintenance / HOA / property-tax reserves — settlement charges this on top of rent(=0).
+  let propertyMaintenanceNum = 0;
+  if (isHomeowner) {
+    if (gameState.housing_name === HOUSING_NAMES.ATHERTON) propertyMaintenanceNum = 2.5;
+    else if (gameState.housing_name === HOUSING_NAMES.FREMONT || gameState.housing_name === HOUSING_NAMES.FREMONT_10_DISTRICT) propertyMaintenanceNum = 1.2;
+    else propertyMaintenanceNum = 0.8;
+  }
+  // Housing row shown to the player: rent for renters, maintenance/HOA/tax for owners.
+  const housingExpense = (isHomeowner ? propertyMaintenanceNum : housingRentNum).toFixed(1);
   const carExpenseNum = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
   const carExpense = carExpenseNum.toFixed(1);
   const livingExpenseNum = 3.0;
   const livingExpense = livingExpenseNum.toFixed(1);
   const petExpenseNum = gameState.has_pet ? 0.3 : 0;
   const petExpense = petExpenseNum.toFixed(1);
-
-  const totalExpense = housingExpenseNum + carExpenseNum + livingExpenseNum + petExpenseNum;
+  // Bay Area cost-of-living inflation (2%/yr compounding off 2018, capped +80%) and Day 1 CPT tuition.
+  const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (gameState.year || 2018) - 2018)));
+  const day1CptTuitionNum = gameState.visa === 'Day 1 CPT' ? 1.2 : 0;
+  const baseExpenseNum = housingRentNum + propertyMaintenanceNum + carExpenseNum + livingExpenseNum + petExpenseNum;
+  const inflationSurchargeNum = baseExpenseNum * (inflationFactor - 1);
+  const totalExpense = parseFloat((baseExpenseNum * inflationFactor + day1CptTuitionNum).toFixed(2));
   const estNetChange = (postTaxIncomeNum + rentalIncomeNum + spouseIncomeNum - totalExpense).toFixed(1);
   const isNetPositive = parseFloat(estNetChange) >= 0;
 
@@ -233,6 +246,26 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
                 {`宠物抚养与医疗 (${gameState.pet_name || '宠物'})`}
               </span>
               <span className="font-bold text-amber-300 tabular-nums">-${petExpense}w</span>
+            </div>
+          )}
+
+          {inflationSurchargeNum > 0.05 && (
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                {`湾区生活成本通胀 (×${inflationFactor.toFixed(2)})`}
+              </span>
+              <span className="font-bold text-rose-400 tabular-nums">-${inflationSurchargeNum.toFixed(1)}w</span>
+            </div>
+          )}
+
+          {day1CptTuitionNum > 0 && (
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                Day 1 CPT 学费
+              </span>
+              <span className="font-bold text-rose-400 tabular-nums">-${day1CptTuitionNum.toFixed(1)}w</span>
             </div>
           )}
         </div>

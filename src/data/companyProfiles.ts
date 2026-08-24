@@ -76,6 +76,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     timelineName: 'Amazon',
     pipTier: 'high',
     yearEndHealth: { drain: 3, msg: ' 【职场健康】亚麻的 PIP 文化让你不敢懈怠 (健康 -3)。' },
+    signatureEvent: 'amazon_six_pager_review',
   },
   nvidia: {
     label: 'Nvidia',
@@ -113,6 +114,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
     className: 'text-red-300 bg-red-950/40 border-red-600/30 font-bold',
     timelineName: 'Oracle',
     pipTier: 'medium',
+    signatureEvent: 'oracle_oci_expansion',
   },
   robinhood: {
     // Fintech / retail-brokerage — the boom-bust archetype. Its total comp is

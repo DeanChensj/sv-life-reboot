@@ -65,7 +65,7 @@
 - **前端核心**：React 19 + TypeScript 6.0 + Vite 8
 - **样式与布局**：Tailwind CSS 3.4 + Bento Grid Responsive Design
 - **架构设计**：
-  - **事件解耦**：229+ 剧情事件按领域拆分至 `src/data/events/` 独立子模块，统一集中导出。
+  - **事件解耦**：231+ 剧情事件按领域拆分至 `src/data/events/` 独立子模块，统一集中导出。
   - **全局中间件**：`applyStateTransitions` 统一拦截状态变更，严格维护身份防降级、失业 TC 归零、历史最高职级保存 (`max_level`)、流动性平仓等全局不变性（Invariants）。
   - **持久化防作弊**：`safeStorage` + 确定性 PRNG 随机数生成器。
 
@@ -82,9 +82,9 @@ npm test
 | 测试套件 | 验证范围与核心指标 |
 | :--- | :--- |
 | **1. `audit.ts`** | 全量事件路由连通性校验，确保无死胡同与非法 `nextEventId`。 |
-| **2. `audit_all_flows.ts`** | 基于有向图 BFS 遍历 229 个节点的可达性分析与文案合规性审计。 |
+| **2. `audit_all_flows.ts`** | 基于有向图 BFS 遍历 231 个节点的可达性分析与文案合规性审计。 |
 | **3. `test_routing_guards.ts`** | 路由防劣化棘轮机制 (Ratchet)，严禁新增基于文案子串的分支路由，强制驱动状态化控制流。 |
-| **4. `test_all_cujs.ts`** | **53 大核心用户旅程 (CUJs)** 场景级端到端测试，1,600+ 项断言 100% 通过。 |
+| **4. `test_all_cujs.ts`** | **55 大核心用户旅程 (CUJs)** 场景级端到端测试，1,600+ 项断言 100% 通过。 |
 | **5. `fuzz_test.ts`** | **10,000 局**全自动随机决策 Fuzzing，验证 500,000+ 次状态流转的状态不变性。 |
 | **6. `test_monte_carlo_balance.ts`** | **3,000 局**蒙特卡洛数值平衡模拟，确保平均寿命 35~55 岁、FIRE 胜率 20%~40%。 |
 | **7. `test_runtime_coverage.ts`** | **8,000 局**真实统一路由运行时覆盖审计，确保无新增死事件与板块孤岛（覆盖率 >= 97%）。 |

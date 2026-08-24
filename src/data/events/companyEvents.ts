@@ -237,6 +237,78 @@ export const companyEvents: Record<string, GameEvent> = {
     ],
   },
 
+  // ---------------- Amazon: 6-Pager 答辩与 Day 1 末位生存战 ----------------
+  'amazon_six_pager_review': {
+    id: 'amazon_six_pager_review',
+    oncePerLife: true,
+    title: '【Day 1 戒律】Amazon 严苛的 6-Pager 答辩与末位考核',
+    description: '西雅图总部开启了年度核心业务复盘。作为 SDE，你必须在没有 PPT 的情况下，用严格的 6 页叙述性文档 (Narrative) 面对 Bar Raiser 与高管的静默阅读与逐行拷问。组里正顶着末位淘汰指标，答辩表现直接决定去留与股票刷新……',
+    choices: [
+      {
+        text: '【通宵雕琢 6-Pager 极致叙事】通宵打磨核心架构与飞轮指标，正面迎战 Bar Raiser 答辩',
+        condition: employed,
+        effect: (s) => {
+          const win = gameRandom() < Math.min(0.7, 0.4 + (s.leetcode / 150) + ((s.impact || 0) / 100));
+          return win
+            ? {
+                impact: addImpact(s, 10),
+                tc: s.tc + 4.5,
+                health: Math.max(0, s.health - 12),
+                message: '你的 6-Pager 逻辑严密、数据无懈可击！Bar Raiser 当场给出最高评级，不仅顺利避开末位指标，还斩获额外 RSU 刷新与核心项目主导权 (Impact 大涨)！',
+              }
+            : {
+                health: Math.max(0, s.health - 14),
+                impact: addImpact(s, -2),
+                message: '高管对文档中的边缘 Case 提出了尖锐质疑，答辩陷入被动。虽然勉强保住了工作，但身心极度透支，当季产出被判定为平平。',
+              };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【跨组对齐 稳妥防守保及格】私下与各方提前对齐利益与共识，低调达成稳妥交付 (Meets Bar)',
+        effect: (s) => ({
+          health: Math.max(0, s.health - 6),
+          network: Math.min(100, (s.network || 10) + 6),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          message: '你通过充分的人脉沟通提前化解了各方分歧，评审波澜不惊地通过。虽无惊艳亮相，但保住了安全距离，平稳落袋基本收益。',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
+  },
+
+  // ---------------- Oracle: 云计算突围 vs 夏威夷拉奈岛神仙养老 ----------------
+  'oracle_oci_expansion': {
+    id: 'oracle_oci_expansion',
+    oncePerLife: true,
+    title: '【老牌帝国】Oracle 云基础设施 (OCI) 扩张与拉奈岛度假',
+    description: '甲骨文正斥巨资扩张 OCI 云计算业务以抢夺云市场。公司氛围呈现出奇妙的两极分化：一边是拿着海量算力预算冲刺前沿云架构的核心团队，另一边是下午 4 点准时下班去夏威夷拉奈岛 (Lanai) 打高尔夫的神仙养老前辈……',
+    choices: [
+      {
+        text: '【主导 OCI 关键系统研发】接下核心云分布式架构攻坚任务，借甲骨文庞大算力冲击技术突破',
+        condition: employed,
+        effect: (s) => ({
+          impact: addImpact(s, 10),
+          leetcode: Math.min(100, s.leetcode + 4),
+          health: Math.max(0, s.health - 8),
+          tc: s.tc + 4.0,
+          message: '你扛下了 OCI 分布式数据底座的关键攻坚！借助公司丰沛的硬件资源，核心模块成功上线，你的行业影响力 (Impact) 与年薪总包显著提升！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【彻底融入神仙 WLB 养老】准时下午 4 点合上电脑，享受硅谷老牌帝国的纯粹 Rest and Vest',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 15),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+          impact: Math.max(0, (s.impact || 0) - 2),
+          message: '你彻底融入了甲骨文的神仙养老文化，每天下午在 Redwood Shores 园区人工湖畔散步，周末去太浩湖滑雪，身心健康拉满，完美诠释 Rest and Vest！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
+  },
+
   // ---------------- 通用「影响力机遇」随机事件 (impact opportunities) ----------------
   // 给大厂/研究路径额外的 impact 来源(除年度硬卷外),让积累影响力不必只靠爆肝。
   // 一生一次(story_flags.<id>_seen),由 midYearEventRouter 以 ~25% 概率注入。

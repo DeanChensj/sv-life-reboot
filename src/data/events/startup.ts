@@ -2,6 +2,39 @@ import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom, addImpact } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 
+// Market x luck modulation for a founder's yearly valuation change. A startup's valuation is
+// NOT a guaranteed +X: it rides the macro regime (bull/neutral/bear) and a good/bad-luck roll,
+// and in a bear market it can be a DOWN ROUND (markdown) instead of growth. Pain-point rescues
+// pass shieldDownRound=true, so actively correcting the year's problem is at worst flat.
+// Returns the new valuation (floored at 80).
+function founderValuationGrowth(s: GameState, baseGain: number, shieldDownRound = false): number {
+  const cur = s.company_valuation || 180;
+  const eco = s.macro_economy;
+  // Bear market down round: ~40% of bear years the valuation marks down instead of growing.
+  if (eco === 'bear' && !shieldDownRound && gameRandom() < 0.4) {
+    const markdown = 0.85 + gameRandom() * 0.07; // x0.85 – x0.92
+    return Math.max(80, Math.round(cur * markdown));
+  }
+  const marketMult = eco === 'bull' ? 1.25 : eco === 'bear' ? 0.4 : 0.8;
+  const luckMult = 0.65 + (Math.min(80, s.luck || 20) / 100) * 0.5 + gameRandom() * 0.4; // ~0.65 – 1.55
+  const gain = Math.round(baseGain * marketMult * luckMult);
+  return Math.max(80, cur + gain);
+}
+
+// Sign-aware valuation-outcome clause reflecting the market/luck result of a growth action.
+function founderValMsg(eco: GameState['macro_economy'], cur: number, newVal: number): string {
+  const delta = newVal - cur;
+  if (delta > 0) {
+    return eco === 'bull'
+      ? `恰逢科技牛市顺风，公司估值大涨 +$${delta}w (至 $${newVal}w)！`
+      : `公司估值增长 +$${delta}w (至 $${newVal}w)。`;
+  }
+  if (delta < 0) {
+    return `但恰逢资本寒冬，一级市场重新定价，公司估值不升反降 (down round) $${delta}w (至 $${newVal}w)。`;
+  }
+  return `但资本寒冬下市场情绪低迷，公司估值原地踏步 (维持 $${newVal}w)。`;
+}
+
 export const startupEvents: Record<string, GameEvent> = {
   'startup_crisis': {
     id: 'startup_crisis',
@@ -144,17 +177,18 @@ export const startupEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => {
           const onPoint = s.founder_situation === 'churn';
-          const gain = onPoint ? 700 : 350;
-          const newVal = (s.company_valuation || 180) + gain;
+          const cur = s.company_valuation || 180;
+          const newVal = founderValuationGrowth(s, onPoint ? 700 : 350, onPoint);
           return {
             mid_year: true, season_stage: 'h1',
             health: Math.max(0, s.health - 8),
             cash: parseFloat((s.cash + (onPoint ? 10 : 5)).toFixed(1)),
             company_valuation: newVal,
             ...(onPoint ? { founder_situation: undefined } : {}),
-            message: onPoint
-              ? `【力挽狂澜·成功止血】正值客户流失当口，你带队死磕 PMF 与企业大单，续约率触底反弹、ARR 破 $80w！按 SaaS/AI 行业 ARR 估值倍数，公司总估值大幅修复 +$${gain}w (跃升至 $${newVal}w)！`
-              : `【ARR 稳步破 $50w 美元 · 估值大涨】经过半年高强度产品迭代与上门攻坚，公司拿下多家科技企业采购合同！按 SaaS/AI 行业 10x ARR 估值倍数，公司总估值增加 $${gain}w (跃升至 $${newVal}w)，实现微利造血与创始人分红！`
+            message: (onPoint
+              ? '【死磕 PMF·成功止血】正值客户流失当口，你带队死磕 PMF 与企业大单，续约率触底反弹、ARR 破 $80w！'
+              : '【产品迭代·上门攻坚】经过半年高强度产品迭代，公司拿下多家科技企业采购合同，实现微利造血！')
+              + founderValMsg(s.macro_economy, cur, newVal),
           };
         },
         nextEventId: h1ToH2Router,
@@ -164,7 +198,8 @@ export const startupEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => {
           const onPoint = s.founder_situation === 'valuation_stall';
-          const newVal = (s.company_valuation || 180) + (onPoint ? 500 : 200);
+          const cur = s.company_valuation || 180;
+          const newVal = founderValuationGrowth(s, onPoint ? 500 : 200, onPoint);
           return {
             mid_year: true, season_stage: 'h1',
             health: Math.max(0, s.health - 4),
@@ -172,9 +207,10 @@ export const startupEvents: Record<string, GameEvent> = {
             charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
             company_valuation: newVal,
             ...(onPoint ? { founder_situation: undefined } : {}),
-            message: onPoint
-              ? `【重夺聚光灯·估值飙升】正值估值停滞期，你一场技惊四座的 Live Demo 登上 Hacker News 首页并引爆媒体热度，资本市场重新追捧，公司估值大幅跃升至 $${newVal}w！`
-              : `【Live Demo 技惊全场！】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页，吸引了上千名早期极客用户注册体验，公司估值提升至 $${newVal}w！`
+            message: (onPoint
+              ? '【重夺聚光灯】正值估值停滞期，你一场技惊四座的 Live Demo 登上 Hacker News 首页并引爆媒体热度，资本市场重新追捧！'
+              : '【Live Demo 技惊全场】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页，吸引上千名早期极客用户注册体验！')
+              + founderValMsg(s.macro_economy, cur, newVal),
           };
         },
         nextEventId: h1ToH2Router,
@@ -187,26 +223,28 @@ export const startupEvents: Record<string, GameEvent> = {
           const onPoint = s.founder_situation === 'outage';
           // 对症(线上事故频发)时,资深架构师正中要害:必然稳住系统并大幅提升交付,估值强修复。
           const success = onPoint || gameRandom() < 0.65;
+          const cur = s.company_valuation || 180;
           if (success) {
-            const newVal = (s.company_valuation || 180) + (onPoint ? 550 : 300);
+            const newVal = founderValuationGrowth(s, onPoint ? 550 : 300, onPoint);
             return {
               mid_year: true, season_stage: 'h1',
               cash: parseFloat((s.cash - 8).toFixed(1)),
               company_valuation: newVal,
               leetcode: Math.min(100, s.leetcode + 6),
               ...(onPoint ? { founder_situation: undefined } : {}),
-              message: onPoint
-                ? `【稳住系统·交付提速】正值线上事故频发，你重金请来的大厂资深架构师重构了底层服务，故障率骤降、SLA 达标，交付提速带动公司估值强劲修复至 $${newVal}w！`
-                : `【核心架构师加盟】大厂 Senior 大牛加盟后研发出高效的 AI 底层服务，产品交付速度明显提升，公司估值提升至 $${newVal}w！`
+              message: (onPoint
+                ? '【稳住系统·交付提速】正值线上事故频发，你重金请来的大厂资深架构师重构了底层服务，故障率骤降、SLA 达标！'
+                : '【核心架构师加盟】大厂 Senior 大牛加盟后研发出高效的 AI 底层服务，产品交付速度明显提升！')
+                + founderValMsg(s.macro_economy, cur, newVal),
             };
           } else {
-            const newVal = (s.company_valuation || 180) + 100;
+            const newVal = founderValuationGrowth(s, 100, false);
             return {
               mid_year: true, season_stage: 'h1',
               cash: parseFloat((s.cash - 8).toFixed(1)),
               company_valuation: newVal,
               health: Math.max(0, s.health - 8),
-              message: `【团队磨合阵痛】空降大牛与早期极客团队理念冲突，消耗了大笔安家费预算，公司估值仅微增至 $${newVal}w。`
+              message: `【团队磨合阵痛】空降大牛与早期极客团队理念冲突，消耗了大笔安家费预算。` + founderValMsg(s.macro_economy, cur, newVal),
             };
           }
         },

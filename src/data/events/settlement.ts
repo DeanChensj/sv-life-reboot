@@ -525,6 +525,8 @@ export const settlementEvents: Record<string, GameEvent> = {
                   founderMsg = '【初创运营】初创团队业务在科技牛市中迅猛扩张，各条业务线健康推进。';
                 } else if (newEconomy === 'bear') {
                   founderMsg = '【初创运营】宏观资本市场遇冷，你带领初创团队紧抓现金流，控制 Burn Rate 稳步渡过寒冬。';
+                } else {
+                  founderMsg = '【初创运营】初创团队各项业务指标平稳推进，现金流与研发节奏保持健康。';
                 }
               }
             }

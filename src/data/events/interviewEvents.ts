@@ -14,20 +14,66 @@ import { gameRandom } from './helpers';
 // always-available choice (no dead-ends).
 
 const OFFER_NAMES: Record<string, string> = {
-  google: 'Google', meta: 'Meta', nvidia: 'Nvidia', tiktok: 'TikTok', apple: 'Apple', startup: 'AI Startup',
+  google: 'Google',
+  meta: 'Meta',
+  nvidia: 'Nvidia',
+  tiktok: 'TikTok',
+  apple: 'Apple',
+  amazon: 'Amazon',
+  startup: 'AI Startup',
+  robinhood: 'Robinhood',
+  openai: 'OpenAI',
 };
 
 // Final resolution shared by all round-2 choices: map the accumulated score to Offers.
 // Score economy: R1 technical (0-2) + R2 behavioral (0-2) = max 4.
 function resolveGauntlet(s: GameState, addPts: number, healthDelta: number, flavor: string): Partial<GameState> {
   const total = (s.story_flags?.iv_score || 0) + addPts;
-  const newLeet = Math.min(100, s.leetcode + 8); // a full onsite gauntlet sharpens you regardless of outcome
-  const pool = ['google', 'meta', 'nvidia', 'tiktok', 'apple', 'startup'].filter((c) => c !== s.company && c !== s.job_type);
-  const shuffled = [...pool].sort(() => gameRandom() - 0.5);
+  const isKingOfRoll = s.trait_title === '卷王之王';
+  const newLeet = s.leetcode; // Already boosted in job_hunt prep, plus ongoing practice
 
-  let wonOffers: string[] = [];
-  if (total >= 3 && newLeet >= 45) wonOffers = shuffled.slice(0, 2);
-  else if (total >= 2) wonOffers = shuffled.slice(0, 1);
+  const allPool: Array<{ id: string; name: string; minLeet: number; weight: number }> = [
+    { id: 'google', name: 'Google', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 45), weight: 0.95 },
+    { id: 'meta', name: 'Meta', minLeet: s.macro_economy === 'bear' ? 65 : (s.macro_economy === 'bull' ? 45 : 55), weight: 0.90 },
+    { id: 'nvidia', name: 'Nvidia', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
+    { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+    { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
+    { id: 'amazon', name: 'Amazon', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 44), weight: 1.0 },
+    { id: 'startup', name: 'AI Startup', minLeet: 30, weight: 1.05 },
+    { id: 'robinhood', name: 'Robinhood', minLeet: s.macro_economy === 'bear' ? 54 : (s.macro_economy === 'bull' ? 38 : 46), weight: s.macro_economy === 'bear' ? 0.7 : 0.9 },
+  ];
+
+  if ((newLeet >= 70 || s.is_phd) && (s.impact || 0) >= 30) {
+    allPool.push({ id: 'openai', name: 'OpenAI', minLeet: s.macro_economy === 'bull' ? 70 : 75, weight: 0.65 });
+  }
+
+  const eligiblePool = allPool.filter((c) => c.id !== s.company && c.id !== s.job_type);
+
+  // 终面选择策略打分 total (0~4分) 显著影响通过概率与 Offer 数量
+  const scoreBonus = (total - 2) * 0.18; // -0.36 to +0.36
+  const econBonus = s.macro_economy === 'bull' ? 0.14 : (s.macro_economy === 'bear' ? -0.20 : 0);
+  const charmBonus = ((s.charm || 10) - 10) / 140;
+  const luckBonus = ((s.luck || 20) - 20) / 300;
+  const ageBonus = s.age >= 35 ? -Math.min(0.18, (s.age - 35) * 0.015) : 0;
+
+  const targetCount = Math.min(eligiblePool.length, total >= 3 ? (isKingOfRoll ? 4 : 3) : (total >= 2 ? 2 : 1));
+  const targetCompanies = [...eligiblePool].sort(() => gameRandom() - 0.5).slice(0, targetCount);
+
+  const wonOffers: string[] = [];
+  for (const comp of targetCompanies) {
+    if (newLeet >= comp.minLeet - (total >= 3 ? 8 : 0)) {
+      const diff = newLeet - comp.minLeet;
+      const passProb = Math.max(0.05, Math.min(0.85, (0.35 + (diff / 75) + scoreBonus + econBonus + charmBonus + luckBonus + ageBonus) * comp.weight));
+      if (gameRandom() < passProb) {
+        wonOffers.push(comp.id);
+      }
+    }
+  }
+
+  // 卷王保底机制 / 高分保底
+  if ((isKingOfRoll || total >= 3) && wonOffers.length === 0 && targetCompanies.length > 0 && newLeet >= 35) {
+    wonOffers.push(targetCompanies[0].id);
+  }
 
   const health = Math.max(0, s.health + healthDelta);
   const flags = { ...(s.story_flags || {}), iv_score: 0 };
@@ -35,20 +81,21 @@ function resolveGauntlet(s: GameState, addPts: number, healthDelta: number, flav
   if (wonOffers.length > 0) {
     const names = wonOffers.map((id) => OFFER_NAMES[id] || id).join('、');
     return {
-       health,
-       leetcode: newLeet,
-       hop_applied_count: 1,
-       hop_offers: wonOffers,
-       story_flags: flags,
-      message: `${flavor}两轮鏖战下来，综合评分 ${total}/4——你成功拿下了 ${names} 的 Offer！请选择入职去向：`,
+      health,
+      leetcode: newLeet,
+      hop_applied_count: targetCompanies.length,
+      hop_offers: wonOffers,
+      story_flags: flags,
+      message: `${flavor}两轮鏖战下来（综合表现评分 ${total}/4），你凭借出色的现场发挥与扎实的代码功底，成功斩获了 ${names} 的正式录用 Offer！请选择入职去向：`,
     };
   }
   return {
     health,
     leetcode: newLeet,
+    hop_applied_count: targetCompanies.length,
     hop_offers: [],
     story_flags: flags,
-    message: `${flavor}综合评分 ${total}/4，终面惜败未发 Offer。但这场硬仗让你的算法与临场经验实打实大涨 (算法 +8)，下次再战！`,
+    message: `${flavor}两轮综合评分 ${total}/4，由于岗位竞争激烈或临场发挥略有遗憾，未能进入最终录用名单。好在硬核终面让你积累了宝贵的实战经验，技术底子更加扎实！`,
   };
 }
 

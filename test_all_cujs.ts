@@ -143,16 +143,25 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   state = res.nextState;
   assert(state.visa === 'OPT (实习)', 'Graduation activated OPT');
 
-  // 6a. 海投大厂 (job_hunt idx0) really RUNS the offer generator — it does NOT directly hire.
-  // (Was faked with a stepChoice override injecting {company,tc,level} that job_hunt never
-  // actually produces; the real effect yields hop_offers and routes to the offer market.)
+  // 6a. 大厂 Onsite 终面 (job_hunt idx0 -> interview gauntlet R1 -> R2 -> job_hop_market)
   setGameSeed(7);
   const jobHunt0 = events['job_hunt'].choices[0];
   const huntEff = jobHunt0.effect(state);
-  assert((huntEff.hop_offers || []).length > 0, 'King-of-roll 海投 wins at least one Offer (real effect)');
+  assert((huntEff.leetcode || 0) > state.leetcode, 'King-of-roll Onsite 备战 LeetCode 提升');
   const huntRoute = typeof jobHunt0.nextEventId === 'function' ? jobHunt0.nextEventId({ ...state, ...huntEff } as GameState) : jobHunt0.nextEventId;
-  assert(huntRoute === 'job_hop_market', 'Winning offers routes to job_hop_market (real routing, not a fabricated direct hire)');
+  assert(huntRoute === 'interview_onsite_gauntlet_r1', 'job_hunt idx0 进终面 R1');
   state = applyStateTransition(state, huntEff, { eventId: 'job_hunt' }).nextState;
+
+  // R1: 手撕真实架构与最优解
+  const r1Choice = events['interview_onsite_gauntlet_r1'].choices[1];
+  const r1Eff = r1Choice.effect(state);
+  state = applyStateTransition(state, r1Eff, { eventId: 'interview_onsite_gauntlet_r1' }).nextState;
+
+  // R2: 谈薪结算
+  const r2Choice = events['interview_onsite_gauntlet_r2'].choices[0];
+  const r2Eff = r2Choice.effect(state);
+  assert((r2Eff.hop_offers || []).length > 0, 'Onsite 终面斩获 Offer');
+  state = applyStateTransition(state, r2Eff, { eventId: 'interview_onsite_gauntlet_r2' }).nextState;
 
   // 6b. Sign with Google at the offer market — exercise the REAL hire effect.
   state.hop_offers = ['google'];
@@ -2986,6 +2995,54 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(!petRes.message?.includes('【宠物陪伴】'), 'Year-end report message does not spam 【宠物陪伴】');
 
   console.log('✅ CUJ 56 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 57: Streamlined Job Hunt Routes (Unified Onsite & Unified Referral)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 57] Streamlined Job Hunt Routes (Unified Onsite & Referral) ---');
+  const jobHunt = events['job_hunt'];
+  assert(jobHunt.choices.length === 7, 'job_hunt has 7 streamlined choices');
+
+  // Choice 0: Onsite gauntlet route
+  const c0 = jobHunt.choices[0];
+  assert(c0.text.includes('Onsite 终面'), 'Choice 0 is unified Onsite route');
+  assert(c0.nextEventId === 'interview_onsite_gauntlet_r1', 'Choice 0 enters gauntlet R1');
+
+  // Choice 1: Unified Referral route
+  const c1 = jobHunt.choices[1];
+  assert(c1.text.includes('内推绿色通道'), 'Choice 1 is unified Referral route');
+
+  // Test Referral with Network background (non-elite school)
+  const netState: GameState = {
+    ...generateInitialState(),
+    school: 'state',
+    is_phd: false,
+    network: 30,
+    leetcode: 35,
+    cash: 20,
+  } as GameState;
+  assert(c1.condition!(netState) === true, 'Network-rich player qualifies for referral');
+  const netEff = c1.effect(netState) as Partial<GameState>;
+  assert(netEff.cash === netState.cash + 6, 'Standard referral gives +$6w sign-on bonus');
+  assert((netEff.message || '').includes('【熟人内推直通】'), 'Standard referral shows 熟人内推 message');
+
+  // Test Referral with Elite CS School / PhD background
+  const eliteState: GameState = {
+    ...generateInitialState(),
+    school: 'cmu',
+    is_phd: false,
+    network: 10,
+    leetcode: 45,
+    cash: 20,
+  } as GameState;
+  assert(c1.condition!(eliteState) === true, 'Elite school player qualifies for referral');
+  const eliteEff = c1.effect(eliteState) as Partial<GameState>;
+  assert(eliteEff.cash === eliteState.cash + 8, 'Elite mafia referral gives +$8w sign-on bonus');
+  assert((eliteEff.message || '').includes('【校友黑手党直通】'), 'Elite referral shows 校友黑手党 message');
+
+  console.log('✅ CUJ 57 Passed\n');
 }
 
 console.log(`\n======================================================`);

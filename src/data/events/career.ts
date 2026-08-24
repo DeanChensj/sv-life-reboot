@@ -12,161 +12,69 @@ export const careerEvents: Record<string, GameEvent> = {
     description: '身处全球科技中心的湾区，你面临着下一阶段的人生与职业方向抉择。无论是积极重返大厂、动用人脉捷径，还是彻底换个赛道休养调养，命运全由你掌握：',
     choices: [
       {
-        text: '【海投大厂社招/校招】闭关刷题备战，海投各大科技巨头开启 Onsite 面试',
+        text: '【大厂社招/校招 Onsite 终面】闭关备战沉淀算法，海投各大科技巨头开启两轮终面见招拆招',
         condition: (_s) => true,
         effect: (s) => {
           const isKingOfRoll = s.trait_title === '卷王之王';
-          const drain = isKingOfRoll ? 6 : 12;
-          const leetBonus = isKingOfRoll ? 18 : 12;
-          const newLeet = s.leetcode + leetBonus;
-
-          const allPool: Array<{ id: string; name: string; minLeet: number; weight: number }> = [
-            { id: 'google', name: 'Google', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 45), weight: 0.95 },
-            { id: 'meta', name: 'Meta', minLeet: s.macro_economy === 'bear' ? 65 : (s.macro_economy === 'bull' ? 45 : 55), weight: 0.90 },
-            { id: 'nvidia', name: 'Nvidia', minLeet: s.macro_economy === 'bear' ? 60 : (s.macro_economy === 'bull' ? 40 : 48), weight: 0.90 },
-            { id: 'tiktok', name: 'TikTok', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
-            { id: 'apple', name: 'Apple', minLeet: s.macro_economy === 'bear' ? 55 : (s.macro_economy === 'bull' ? 35 : 42), weight: 0.95 },
-            // Amazon: high-volume hirer (high weight), moderate bar, but brutal PIP culture (health drain in settlement).
-            { id: 'amazon', name: 'Amazon', minLeet: s.macro_economy === 'bear' ? 52 : (s.macro_economy === 'bull' ? 35 : 44), weight: 1.0 },
-            { id: 'startup', name: 'AI Startup', minLeet: 32, weight: 1.05 },
-            // Robinhood: fintech mid-cap. Moderate bar; hires aggressively in a bull, freezes in a bear.
-            { id: 'robinhood', name: 'Robinhood', minLeet: s.macro_economy === 'bear' ? 54 : (s.macro_economy === 'bull' ? 38 : 46), weight: s.macro_economy === 'bear' ? 0.7 : 0.9 },
-          ];
-
-          // OpenAI/前沿 AI 实验室是高级岗，除算法/PhD 外还看项目影响力 (impact≥30)；躺平者跳不动。
-          if ((newLeet >= 70 || s.is_phd) && (s.impact || 0) >= 30) {
-            allPool.push({ id: 'openai', name: 'OpenAI', minLeet: s.macro_economy === 'bull' ? 70 : 75, weight: 0.65 });
-          }
-
-          const eligiblePool = allPool.filter(c => c.id !== s.company && c.id !== s.job_type);
-          const targetCount = Math.min(eligiblePool.length, isKingOfRoll ? 4 : (gameRandom() < 0.45 ? 2 : 3));
-          const targetCompanies = [...eligiblePool].sort(() => gameRandom() - 0.5).slice(0, targetCount);
-
-          const wonOffers: string[] = [];
-          const econBonus = s.macro_economy === 'bull' ? 0.14 : (s.macro_economy === 'bear' ? -0.20 : 0);
-          const charmBonus = ((s.charm || 10) - 10) / 140;
-          const luckBonus = ((s.luck || 20) - 20) / 300;
-          // 中年 ageism (T2)：科技行业的隐性年龄歧视现实里从 ~35 岁就开始 —— 面试通过率随年龄递减
-          // (35 岁起每岁 -1.5%，最多 -18%)，让中后期失业/跳槽不再稳稳翻身，制造真实存亡压力。
-          const ageBonus = s.age >= 35 ? -Math.min(0.18, (s.age - 35) * 0.015) : 0;
-
-          for (const comp of targetCompanies) {
-            if (newLeet >= comp.minLeet) {
-              const diff = newLeet - comp.minLeet;
-              const passProb = Math.max(0.05, Math.min(0.72, (0.20 + (diff / 85) + econBonus + charmBonus + luckBonus + ageBonus) * comp.weight));
-              if (gameRandom() < passProb) {
-                wonOffers.push(comp.id);
-              }
-            }
-          }
-
-          if (isKingOfRoll && wonOffers.length === 0 && newLeet >= 50 && targetCompanies.length > 0) {
-            const fallback = targetCompanies[Math.floor(gameRandom() * targetCompanies.length)];
-            wonOffers.push(fallback.id);
-          }
-
-          if (wonOffers.length === 0) {
-            return {
-              health: Math.max(0, s.health - drain),
-              leetcode: newLeet,
-              hop_applied_count: targetCompanies.length,
-              hop_offers: [],
-              message: s.macro_economy === 'bear'
-                ? `【熊市寒冬·HC 冻结】科技股熊市下各大厂招聘收紧，简历多数石沉大海，多轮 Onsite 终面后均未发 Offer。好在今年狂刷算法与架构 (算法 +${leetBonus})，技术储备大涨！`
-                : (newLeet < 40 
-                  ? `【算法深度不足·遗憾未过】大厂面试 Bar 极高，系统设计与复杂算法未能打动面试委员会，投递的各家均未发 Offer。你利用这一年沉淀了扎实算法 (算法 +${leetBonus})！`
-                  : `【名额有限·全挂遗憾】今年求职竞争极其白热化，几轮终面 Hiring Committee 均因名额有限未发 Offer。虽然暂时未上岸，但扎实的技术储备 (算法 +${leetBonus}) 实打实留存！`)
-            };
-          }
-
-          const nameMap: Record<string, string> = {
-            google: 'Google',
-            meta: 'Meta',
-            nvidia: 'Nvidia',
-            tiktok: 'TikTok',
-            apple: 'Apple',
-            amazon: 'Amazon',
-            openai: 'OpenAI',
-            startup: 'AI Startup',
-            robinhood: 'Robinhood'
-          };
-          const offerNames = wonOffers.map(id => nameMap[id] || id).join('、');
-
+          const drain = isKingOfRoll ? 4 : 8;
+          const leetBonus = isKingOfRoll ? 14 : 10;
           return {
             health: Math.max(0, s.health - drain),
-            leetcode: newLeet,
-            hop_applied_count: targetCompanies.length,
-            hop_offers: wonOffers,
-            message: wonOffers.length > 1
-              ? `【大丰收！斩获 ${wonOffers.length} 份社招 Competing Offers】经过一整年的闭关刷题与疯狂面试轰炸 (算法 +${leetBonus})，你成功斩获了 ${offerNames} 的正式录用 Offer！请选择入职去向：`
-              : `【斩获录取 Offer】经过一整年的闭关刷题与多轮 Onsite 面试 (算法 +${leetBonus})，你顺利拿下了 ${offerNames} 的正式录用 Offer！请选择入职去向：`
+            leetcode: Math.min(100, s.leetcode + leetBonus),
+            story_flags: { ...(s.story_flags || {}), iv_score: 0 },
+            message: `【闭关备战·奔赴终面】你闭关狂刷高频题与系统设计 (算法 +${leetBonus})，简历顺利通过各巨头初筛，整装待发直奔两轮 Onsite 终面现场！`,
           };
         },
-        nextEventId: (s: GameState) => {
-          const offers = s.hop_offers || [];
-          if (offers.length > 0) return 'job_hop_market';
-          return 'job_hunt_fail';
-        },
-      },
-      {
-        // 策略路线：不靠海投掷骰，而是亲自下场打一场两轮「见招拆招」终面 (interviewEvents.ts)。
-        text: '【硬核 Onsite 见招拆招】亲自下场，逐轮应对面试官刁难 (策略路线)',
-        condition: (_s) => true,
-        effect: (s) => ({ story_flags: { ...(s.story_flags || {}), iv_score: 0 }, message: '你选择了最硬核的路线：不赌海投的运气，一场终面两轮，亲自见招拆招。' }),
         nextEventId: 'interview_onsite_gauntlet_r1',
       },
       {
-        text: '【强力人脉 Referral】凭借学长学姐/熟人总监内推直通终面',
-        reqBadge: '需资深人脉背书 & LeetCode >= 35',
-        condition: (s) => (s.network || 0) >= 30 && s.leetcode >= 35,
+        text: '【内推绿色通道 (Referral & 校友网络)】凭借资深人脉或名校/PhD 背书免初筛直通录用',
+        reqBadge: '需熟人人脉 或 名校/PhD 背景',
+        condition: (s) => ((s.network || 0) >= 25 && s.leetcode >= 30) || (isTopTierCSSchool(s.school) && s.leetcode >= 40) || s.is_phd,
         effect: (s) => {
           const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const referralPool = [
-            { company: 'google', name: 'Google', baseTc: 20, healthDelta: 6, desc: '凭借强大人脉网络 (Referral) 与扎实的算法储备，熟人总监力挺免除简历初筛，终面发挥出色顺利上岸 Google，享受顶尖 WLB！' },
-            { company: 'meta', name: 'Meta', baseTc: 22, healthDelta: -10, desc: '在熟人 Tech Lead 的强力内推与手撕代码的高分表现下，你直接拿下 Menlo Park Meta 核心组高额总包，但面临高强度挑战！' },
-            { company: 'apple', name: 'Apple', baseTc: 20, healthDelta: 4, desc: '库比蒂诺 Apple 资深总监开绿灯加急终面，你凭借扎实算法顺利过关，内推至 Apple Park 核心工程团队！' },
-            { company: 'microsoft', name: 'Microsoft', baseTc: 19, healthDelta: 8, desc: '微软云与 AI 部门熟人校友直接内推并加急面试，你顺利通过技术终面入组，作息极度规律，生活质量拉满！' }
-          ];
-          const chosen = referralPool[Math.floor(gameRandom() * referralPool.length)];
-          return {
-            tc: getLevelScaledTC(chosen.baseTc, lvl),
-            laid_off: false,
-            cash: s.cash + 6,
-            company: chosen.company,
-            job_type: 'big_tech',
-            level: lvl,
-            health: Math.min(100, Math.max(0, s.health + chosen.healthDelta)),
-            network: Math.min(100, (s.network || 0) + 5),
-            message: chosen.desc
-          };
-        },
-        nextEventId: (s: GameState) => {
-          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);
-        },
-      },
-      {
-        text: '【校友黑手党/教授内推】凭借名校校友网络与导师背书冲击核心团队',
-        reqBadge: '需名校背景/PhD & LeetCode >= 45',
-        condition: (s) => (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd,
-        effect: (s) => {
-          const lvl = s.level ? s.level : (s.is_phd ? 'L4' : 'L3');
-          const mafiaTargets = [
-            { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: '名校校友与硬核算法表现直接将你推进山景城 Googleplex 基础设施组！享受顶尖 WLB 与美味食堂。' },
-            { company: 'meta', name: 'Meta (AI 算法与分布式系统)', tcBoost: 35, healthDrain: 16, desc: '校友总监与硬核手撕 Hard 题表现将你拉入 Menlo Park Meta 核心组，拿到顶格包裹但面临高压节奏！' },
-            { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: '校友学长与顶尖工程底子内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态！' },
-            { company: 'robinhood', name: 'Robinhood (核心交易撮合引擎)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌与过硬算法，校友学姐直接将你带入 Robinhood 核心交易团队，赶上牛市红利期！' }
-          ];
-          const chosen = mafiaTargets[Math.floor(gameRandom() * mafiaTargets.length)];
-          return { 
-            health: Math.max(0, s.health - chosen.healthDrain), 
-            tc: getLevelScaledTC(chosen.tcBoost, lvl), 
-            laid_off: false, 
-            cash: s.cash + 8, 
-            company: chosen.company, 
-            job_type: 'big_tech', 
-            level: lvl, 
-            message: chosen.desc 
-          };
+          const isElite = (isTopTierCSSchool(s.school) && s.leetcode >= 40) || s.is_phd;
+
+          if (isElite) {
+            // 名校 / 博士校友黑手党路线：直通顶级大厂核心架构团队，享受顶格 Base TC + $8w 签字费
+            const mafiaTargets = [
+              { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: '名校校友网络与硬核算法表现直接将你推进山景城 Googleplex 基础设施核心组！享受顶尖 WLB 与美味食堂，附赠 $8w 丰厚签字费！' },
+              { company: 'meta', name: 'Meta (AI 算法与分布式系统)', tcBoost: 35, healthDrain: 16, desc: '校友总监与硬核代码功底将你拉入 Menlo Park Meta 核心 AI 组，拿到顶格包裹与 $8w 签字费，但面临高压节奏！' },
+              { company: 'apple', name: 'Apple (Apple Park 架构团队)', tcBoost: 30, healthDrain: 6, desc: '校友学长与顶尖工程底子内推你直通 Apple Park 架构团队，拥有极高稳定性与顶尖硬件生态，附赠 $8w 签字费！' },
+              { company: 'robinhood', name: 'Robinhood (核心交易撮合引擎)', tcBoost: 32, healthDrain: 12, desc: '凭借名校金字招牌与过硬算法，校友学姐直接将你带入 Robinhood 核心交易团队，赶上牛市红利期，附赠 $8w 签字费！' }
+            ];
+            const chosen = mafiaTargets[Math.floor(gameRandom() * mafiaTargets.length)];
+            return {
+              health: Math.max(0, s.health - chosen.healthDrain),
+              tc: getLevelScaledTC(chosen.tcBoost, lvl),
+              laid_off: false,
+              cash: s.cash + 8,
+              company: chosen.company,
+              job_type: 'big_tech',
+              level: lvl,
+              message: `【校友黑手党直通】${chosen.desc}`
+            };
+          } else {
+            // 资深熟人内推路线：熟人总监力挺免除简历初筛，100% 录用至大厂成熟业务团队，附赠 $6w 签字费 + 人脉 +5
+            const referralPool = [
+              { company: 'google', name: 'Google', baseTc: 20, healthDelta: 6, desc: '凭借强大人脉网络 (Referral) 与及格算法储备，熟人总监力挺免除初筛，顺利上岸 Google 享受神仙 WLB，附赠 $6w 签字费！' },
+              { company: 'meta', name: 'Meta', baseTc: 22, healthDelta: -10, desc: '在熟人 Tech Lead 的强力内推下，你直接拿下 Menlo Park Meta 核心团队高额总包与 $6w 签字费！' },
+              { company: 'apple', name: 'Apple', baseTc: 20, healthDelta: 4, desc: '库比蒂诺 Apple 资深总监开绿灯加急终面，你顺利内推至 Apple Park 核心工程团队，附赠 $6w 签字费！' },
+              { company: 'microsoft', name: 'Microsoft', baseTc: 19, healthDelta: 8, desc: '微软云与 AI 部门熟人校友直接内推，你顺利通过终面入组，作息极度规律，附赠 $6w 签字费！' }
+            ];
+            const chosen = referralPool[Math.floor(gameRandom() * referralPool.length)];
+            return {
+              tc: getLevelScaledTC(chosen.baseTc, lvl),
+              laid_off: false,
+              cash: s.cash + 6,
+              company: chosen.company,
+              job_type: 'big_tech',
+              level: lvl,
+              health: Math.min(100, Math.max(0, s.health + chosen.healthDelta)),
+              network: Math.min(100, (s.network || 0) + 5),
+              message: `【熟人内推直通】${chosen.desc}`
+            };
+          }
         },
         nextEventId: (s: GameState) => {
           return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);

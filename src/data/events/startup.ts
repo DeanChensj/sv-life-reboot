@@ -7,18 +7,26 @@ import { getTCBreakdown } from '../../utils/gameStateSelectors';
 // and in a bear market it can be a DOWN ROUND (markdown) instead of growth. Pain-point rescues
 // pass shieldDownRound=true, so actively correcting the year's problem is at worst flat.
 // Returns the new valuation (floored at 80).
-function founderValuationGrowth(s: GameState, baseGain: number, shieldDownRound = false): number {
+function founderValuationGrowth(s: GameState, baseGain: number, onPoint = false): number {
   const cur = s.company_valuation || 180;
   const eco = s.macro_economy;
-  // Bear market down round: ~40% of bear years the valuation marks down instead of growing.
-  if (eco === 'bear' && !shieldDownRound && gameRandom() < 0.4) {
+  // onPoint = you correctly diagnosed and fixed the year's specific pain point. Correct play is
+  // rewarded reliably: the full baseGain always lands (never a markdown, never a bear penalty),
+  // with bull-market + luck upside on top. So onPoint growth is >= baseGain by construction.
+  if (onPoint) {
+    const bull = eco === 'bull' ? 1.2 : 1.0;
+    const luckUp = 1 + (Math.min(80, s.luck || 20) / 100) * 0.3 + gameRandom() * 0.2; // 1.0 – ~1.5
+    return Math.max(80, cur + Math.round(baseGain * bull * luckUp));
+  }
+  // General yearly growth rides the macro regime and a luck roll; a bear market can be a DOWN
+  // ROUND (~40% of bear years) where the valuation marks down instead of growing.
+  if (eco === 'bear' && gameRandom() < 0.4) {
     const markdown = 0.85 + gameRandom() * 0.07; // x0.85 – x0.92
     return Math.max(80, Math.round(cur * markdown));
   }
   const marketMult = eco === 'bull' ? 1.25 : eco === 'bear' ? 0.4 : 0.8;
   const luckMult = 0.65 + (Math.min(80, s.luck || 20) / 100) * 0.5 + gameRandom() * 0.4; // ~0.65 – 1.55
-  const gain = Math.round(baseGain * marketMult * luckMult);
-  return Math.max(80, cur + gain);
+  return Math.max(80, cur + Math.round(baseGain * marketMult * luckMult));
 }
 
 // Sign-aware valuation-outcome clause reflecting the market/luck result of a growth action.

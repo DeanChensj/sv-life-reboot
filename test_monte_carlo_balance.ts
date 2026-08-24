@@ -70,7 +70,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       const pmf = validChoices.find(c => c.text.includes('死磕产品'));
       const talk = validChoices.find(c => c.text.includes('TechCrunch'));
       const hire = validChoices.find(c => c.text.includes('高举高打招聘'));
-      const survive = validChoices.find(c => c.text.includes('断臂求生') || c.text.includes('苟活'));
+      const survive = validChoices.find(c => c.text.includes('断臂求生'));
       // 能力型创始人先读仪表盘的「痛点」信号对症下药 (估值停滞→演讲 / 客户流失→死磕PMF /
       // 线上事故→招架构师),把年度痛点化解掉拿对症加成;健康告急则苟活保命;后期冲刺退场;
       // 无痛点信号时以融资推进轮次为主。(与 startup.ts 的 founder_situation 对症加成对齐。)
@@ -131,8 +131,8 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
       const csChoices = validChoices.filter(c => !c.text.includes('转码'));
       chosen = (zhuanma && gameRandom() < 0.15) ? zhuanma : csChoices[Math.floor(gameRandom() * csChoices.length)];
     } else if (currentEventId === 'zhuanma_background') {
-      // 能力型转码:美本非CS(三条路全开)最灵活。
-      chosen = validChoices.find(c => c.text.includes('美本非CS')) || validChoices[0];
+      // 能力型转码:取第一个可选的美本非CS背景(生化环材/商科社科/机电数理三条路全开最灵活)。
+      chosen = validChoices[0];
     } else if (currentEventId === 'zhuanma_decision') {
       // 付得起就读 CS 美硕(最稳,复用科班管线);否则自学(免费且 signal 略高于 bootcamp)。
       const ms = validChoices.find(c => c.text.includes('CS 美硕'));

@@ -3016,7 +3016,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Test Referral with Network background (non-elite school)
   const netState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     school: 'state',
     is_phd: false,
     network: 30,
@@ -3030,7 +3030,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   // Test Referral with Elite CS School / PhD background
   const eliteState: GameState = {
-    ...generateInitialState(),
+    ...generateInitialState(nextCujSeed()),
     school: 'cmu',
     is_phd: false,
     network: 10,

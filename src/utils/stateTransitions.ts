@@ -122,11 +122,22 @@ export function applyStateTransition(
   if (newState.laid_off || newState.job_type === 'unemployed') {
     newState.tc = 0;
     newState.job_start_age = undefined;
+    // Leaving the job ends the current team assignment: the internal-transfer lane
+    // (team_focus) and AI-org perks (transferred_to_ai) must not carry over.
+    newState.transferred_to_ai = false;
+    if ((newState.story_flags as Record<string, unknown>)?.team_focus) {
+      const f = { ...newState.story_flags };
+      delete (f as Record<string, unknown>).team_focus;
+      newState.story_flags = f;
+    }
   } else if (isNewJob && newState.job_type) {
     newState.job_start_age = newState.age;
+    // A new employer means a fresh team: drop the old team_focus lane + AI-org perk.
+    newState.transferred_to_ai = false;
     if (newState.story_flags) {
       const updatedFlags = { ...newState.story_flags };
       delete (updatedFlags as Record<string, unknown>).rsu_cliff_done;
+      delete (updatedFlags as Record<string, unknown>).team_focus;
       newState.story_flags = updatedFlags;
     }
   } else if (newState.job_start_age === undefined && newState.job_type) {

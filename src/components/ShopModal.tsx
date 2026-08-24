@@ -75,7 +75,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
               
               <button
-                disabled={!gameState.has_housing || isHomeowner}
+                disabled={!gameState.has_housing || isHomeowner || gameState.last_housing_action_year === gameState.year}
                 onClick={() => { onClose(); onTriggerEvent('change_rental'); }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >

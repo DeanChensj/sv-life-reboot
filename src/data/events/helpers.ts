@@ -399,11 +399,8 @@ export const midYearEventRouter = (s: GameState): string => {
     if (s.story_flags?.had_divorce && !hasSeen(s, 'ex_spouse_unicorn_exit') && s.age >= 27 && gameRandom() < 0.35) {
       return 'ex_spouse_unicorn_exit';
     }
-
-    // 11) 房贷断供与法拍危机 (拥有自住房但失业且现金/股票告急，一生一次)
-    if (isOwnedHousing(s.housing_name) && (!isWorking || s.laid_off) && (s.cash + (s.stocks || 0)) < 15 && !hasSeen(s, 'mortgage_default_crisis')) {
-      return 'mortgage_default_crisis';
-    }
+    // 注:房贷断供危机(触发条件含失业)注入在 H2 段 —— H1 只对【在职】regularEmployee 运行,
+    // 失业者永远到不了这里(旧位置是死代码)。见下方 Stage H2。
 
     // 宏观行情快讯 (telegraph)。经济周期现由年终结算的 Markov 链驱动 (settlement.ts);这里在 H1 以
     // 完整事件「播报」当前 regime,让玩家——尤其 trader——在做年度决策前清晰读到牛/熊/横盘行情。
@@ -602,10 +599,9 @@ export const midYearEventRouter = (s: GameState): string => {
       }
 
       // ── 转组赛道 (team_focus) 塑造 H1 事件走向 ──
-      // 前沿 AI 核心组:高业务能见度 → 更频繁卷入大模型攻坚与影响力机遇 (高强度高上限)。
+      // 前沿 AI 核心组:高业务能见度 → 更频繁卷入影响力机遇 (高强度高上限)。llm_datacenter 已由
+      // transferred_to_ai 分支注入、ai_disruption 由 2024+ 分支注入,这里只额外加权一次性影响力机遇。
       if (teamFocus === 'ai_core' && isCorporate) {
-        if (s.year >= 2023) workEvents.push('llm_datacenter_power_outage');
-        if (s.year >= 2024) workEvents.push('ai_disruption_existential');
         if (!s.story_flags?.open_source_breakout_seen) workEvents.push('open_source_breakout');
         if (!s.story_flags?.internal_tech_talk_viral_seen) workEvents.push('internal_tech_talk_viral');
       }
@@ -622,6 +618,12 @@ export const midYearEventRouter = (s: GameState): string => {
   const isCorporate = isWorking && s.job_type !== 'trader' && s.job_type !== 'startup_founder';
   const isTrader = s.job_type === 'trader';
   const isFounder = s.job_type === 'startup_founder';
+
+  // 房贷断供与法拍危机 (一生一次):自住房主 + 失业/被裁 + 现金股票告急。放在 H2 段是因为 H1 只对
+  // 【在职】玩家运行,而本危机的触发条件恰恰是失业 —— 放 H1 是永不可达的死代码。优先于普通生活事件。
+  if (isOwnedHousing(s.housing_name) && (!isWorking || s.laid_off) && (s.cash + (s.stocks || 0)) < 15 && !hasSeen(s, 'mortgage_default_crisis')) {
+    return 'mortgage_default_crisis';
+  }
 
   // 因果离婚 (T1)：长期以事业压倒家庭累积的 partner_strain 越线，感情危机由「随机」升级为「高概率必来」。
   // breakup_crisis 的挽留成功分支会把 partner_strain 清零，避免同一裂痕反复触发。

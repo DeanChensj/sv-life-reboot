@@ -1016,7 +1016,9 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【申请内部转组 · 换道破局】逃离 Toxic 组 / 投奔前沿 AI / 换养老支持组 (改变后续赛道)',
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        // 3-year cooldown: internal mobility isn't a yearly toy — prevents farming the
+        // ai_core +impact / free PIP-clear every single year.
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && (!s.story_flags?.last_transfer_year || (s.year - Number(s.story_flags.last_transfer_year)) >= 3),
         hideIfUnavailable: true,
         effect: (s) => ({
           story_flags: { ...(s.story_flags || {}), annual_action: 'transfer' },
@@ -3582,11 +3584,12 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '算法 ≥ 35',
         condition: (s) => s.leetcode >= 35,
         effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
           health: Math.max(0, s.health - 6),
           impact: addImpact(s, 8),
           tc: s.tc + 2.0,
           transferred_to_ai: true,
-          story_flags: { ...(s.story_flags || {}), team_focus: 'ai_core', pip_warning: false },
+          story_flags: { ...(s.story_flags || {}), team_focus: 'ai_core', pip_warning: false, last_transfer_year: s.year },
           message: '【成功加入前沿 AI 组】你顺利 Transfer 到了公司最核心的大模型与分布式系统研发团队！坐拥顶级业务能见度与高额 Refresher 潜力，此后你会更频繁地卷入前沿攻坚与高影响力机遇，但节奏明显变紧！(清空考评预警)',
         }),
         nextEventId: h1ToH2Router,
@@ -3594,10 +3597,11 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【转入内部工具 / 养老合规支持组】神仙 WLB 准时打卡，远离线上 P0 警报 (养生回血/低压)',
         effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
           health: Math.min(100, s.health + 15),
           leetcode: Math.min(100, s.leetcode + 3),
           transferred_to_ai: false,
-          story_flags: { ...(s.story_flags || {}), team_focus: 'wlb_tools', pip_warning: false },
+          story_flags: { ...(s.story_flags || {}), team_focus: 'wlb_tools', pip_warning: false, last_transfer_year: s.year },
           message: '【成功转入养老支持组】你转到了节奏极佳的内部工具与合规支持组，每天下午四点半准时下班，代码没有深夜 P0 警报。此后你会远离高压 PIP 与裁员风暴，身心彻底满血复活！(清空考评预警)',
         }),
         nextEventId: h1ToH2Router,

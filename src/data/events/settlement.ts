@@ -360,10 +360,14 @@ export const settlementEvents: Record<string, GameEvent> = {
             if (isEmployee) {
               const action = s.story_flags?.annual_action;
               const coasting = action === 'wlb' || action === 'transfer';
+              // 本年是否真有交付(impact 高于上次结算基线)。EE 要求「本年主动交付」而非仅仅
+              // 「历史 impact 高」,否则一个高 impact 玩家躺平一年(不涨 impact)也拿 EE、而勤恳
+              // 按部就班反倒只有 ME —— 考评反转。用 impact_ytd_base 精确判定本年交付。
+              const deliveredThisYear = (s.impact || 0) > (s.impact_ytd_base ?? 0) + 0.001;
               const justPromoted = s.last_promo_age === s.age;
               const isKingOfRoll = s.trait_title === '卷王之王';
 
-              if (justPromoted || (!coasting && ((s.impact || 0) >= 12 || isKingOfRoll))) {
+              if (justPromoted || (!coasting && deliveredThisYear && ((s.impact || 0) >= 12 || isKingOfRoll))) {
                 perfRating = 'EE'; // Exceeds Expectations (卓越)
               } else if ((s.story_flags?.pip_warning && gameRandom() < 0.5) || (s.health < 25 && (s.impact || 0) < 6 && gameRandom() < 0.35)) {
                 perfRating = 'NI'; // Needs Improvement (待改进 → PIP)
@@ -381,20 +385,24 @@ export const settlementEvents: Record<string, GameEvent> = {
                 'Quant': 85
               };
               const norm = normalizeLevel(s.level, s);
-              const curLevelKey = norm || (s.job_type === 'quant' ? 'Quant' : s.is_phd ? 'L4' : 'L3');
+              // Quant 优先用其专属 85 cap (normalizeLevel 会把 Quant 折成 L5/L6,导致 'Quant' 档位死掉、量化被误封在 52/78)。
+              const curLevelKey = (s.job_type === 'quant') ? 'Quant' : (norm || (s.is_phd ? 'L4' : 'L3'));
               const levelCap = maxCapByLevel[curLevelKey] || 55;
               const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60); // impact 0→0.5x, 60+→1.5x
+              // 调薪只增不减:已在/超过 level cap 的高薪玩家(如 OpenAI MTS tc=80 折算 L6 cap 78)
+              // 不应被 Math.min(cap,...) 反向倒扣 TC(那会边涨薪文案边掉薪)。
+              const raiseTo = (amt: number) => Math.max(s.tc, Math.min(levelCap, parseFloat((s.tc + amt).toFixed(1))));
 
               if (perfRating === 'EE') {
                 const baseRefresh = newEconomy === 'bull' ? 3.0 : newEconomy === 'bear' ? 1.0 : 2.0;
                 const refreshAmt = parseFloat((baseRefresh * impactAmtMult).toFixed(1));
-                updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
-                meritMsg = `【年度考评 · EE 卓越】年度 PSC 考评斩获 Exceeds Expectations！凭借卓越交付拿到 Merit 调薪与大额 RSU Refresh (+${refreshAmt.toFixed(1)}w TC)！`;
+                updatedTC = raiseTo(refreshAmt);
+                meritMsg = `【年度考评 · EE 卓越】年度 PSC 考评斩获 Exceeds Expectations！凭借卓越交付拿到 Merit 调薪与大额 RSU Refresh (+${(updatedTC - s.tc).toFixed(1)}w TC)！`;
               } else if (perfRating === 'ME') {
                 const baseRefresh = newEconomy === 'bull' ? 1.5 : newEconomy === 'bear' ? 0.5 : 1.0;
                 const refreshAmt = parseFloat((baseRefresh * Math.min(1.0, impactAmtMult)).toFixed(1));
-                updatedTC = Math.min(levelCap, parseFloat((s.tc + refreshAmt).toFixed(1)));
-                meritMsg = `【年度考评 · ME 符合预期】稳定达成 Meets Expectations (60分及格线)，完成本职的同时守住了身心，拿到常规调薪 (+${refreshAmt.toFixed(1)}w TC)！`;
+                updatedTC = raiseTo(refreshAmt);
+                meritMsg = `【年度考评 · ME 符合预期】稳定达成 Meets Expectations (60分及格线)，完成本职的同时守住了身心，拿到常规调薪 (+${(updatedTC - s.tc).toFixed(1)}w TC)！`;
               } else {
                 meritMsg = `【年度考评 · NI 待改进】Manager 约谈指出你本年度交付不足、明显掉队 (Needs Improvement)，团队亮起 PIP 预警红灯，无奖金调薪，建议尽快内部转组或跳槽自救！`;
               }
@@ -434,7 +442,9 @@ export const settlementEvents: Record<string, GameEvent> = {
               // Annual Perf Review outcome + reset this year's action so it can't carry over.
               last_perf_rating: perfRating,
               annual_action: undefined,
-              ...(perfRating ? { pip_warning: perfRating === 'NI' } : {}),
+              // Only NI (as an employee) keeps a PIP warning; non-employee years (founder/
+              // trader/unemployed) clear it so it can't linger stale into a later comeback.
+              pip_warning: isEmployee ? (perfRating === 'NI') : false,
             };
 
             if (newNetWorth >= 100 && !newStoryFlags.milestone_100w) {

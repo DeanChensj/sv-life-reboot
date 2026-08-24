@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, gameRandom, deductAssets, addImpact } from './helpers';
+import { getLevelScaledTC, gameRandom, deductAssets, addImpact, hopTargetLevel } from './helpers';
 import { HOUSING_NAMES } from '../../constants/gameConstants';
 
 export const lifestyleEvents: Record<string, GameEvent> = {
@@ -432,7 +432,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！有投资人给你推了独角兽面试，但你太久不练算法，白板编程没有通过面试。'
             };
           }
-          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const targetLvl = hopTargetLevel(s);
           const newTC = isUnemployed ? getLevelScaledTC(22, targetLvl) : s.tc + 6;
           return {
             tc: newTC,
@@ -458,7 +458,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           if (win && isUnemployed && !canLandJob) {
             return { cash: s.cash - 1, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档并获推面试，但算法生疏未能拿到 Offer。' };
           }
-          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const targetLvl = hopTargetLevel(s);
           const newTC = isUnemployed ? getLevelScaledTC(20, targetLvl) : s.tc + 5;
           return win
             ? { cash: s.cash - 1, tc: newTC, level: targetLvl, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: `你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司 (定级 ${targetLvl} · 总包 ${newTC}w)！` }
@@ -501,7 +501,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               message: '老哥极为欣赏你的解题节奏并为你推荐了 AI 团队面试，可惜你长期没练算法没能通过白板面试。'
             };
           }
-          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const targetLvl = hopTargetLevel(s);
           const newTC = isUnemployed ? getLevelScaledTC(20, targetLvl) : s.tc + 5;
           return win
             ? {

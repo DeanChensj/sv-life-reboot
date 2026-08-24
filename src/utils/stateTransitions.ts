@@ -2,6 +2,7 @@ import type { GameState, TimelineRecord } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { getSchoolProfile } from '../data/schoolProfiles';
+import { normalizeLevel, getLevelRank, LEVEL_PROFILES } from '../data/levelProfiles';
 import { events as eventRegistry } from '../data/events';
 
 export interface TransitionContext {
@@ -163,6 +164,22 @@ export function applyStateTransition(
   // Track the all-time peak TC (BEFORE any layoff can zero it out for the year) so
   // the war report / HUD "峰值总包" is a true peak, not the current (possibly $0) TC.
   newState.max_tc = Math.max(newState.max_tc || 0, prevState.tc || 0, newState.tc || 0);
+
+  // Track the all-time peak tech ladder level (max_level) so returning from startup/trading/layoff preserves career grade
+  const curNorm = normalizeLevel(newState.level, newState);
+  const prevNorm = normalizeLevel(prevState.level, prevState);
+  const targetNorm = curNorm || prevNorm;
+  if (targetNorm) {
+    const curMaxRank = getLevelRank(newState.max_level || prevState.max_level, newState);
+    const newRank = LEVEL_PROFILES[targetNorm].rank;
+    if (newRank > curMaxRank) {
+      newState.max_level = targetNorm;
+    } else if (!newState.max_level && prevState.max_level) {
+      newState.max_level = prevState.max_level;
+    }
+  } else if (!newState.max_level && prevState.max_level) {
+    newState.max_level = prevState.max_level;
+  }
 
   // 5. Auto Liquidate Stocks if Cash < 0 on Purchases
   let liquidationNote = '';

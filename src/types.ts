@@ -136,6 +136,7 @@ export interface GameState {
   job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'trader' | 'startup_founder' | 'cn_tech';
   company?: string;
   level?: string;
+  max_level?: string; // 历史最高达到的技术职级 (如 L6 Staff, 创业/转Trader/待业后回归大厂不降级)
   job_start_age?: number;
   last_promo_age?: number;
   h1b_attempts?: number;

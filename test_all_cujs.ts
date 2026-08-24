@@ -1906,14 +1906,6 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
     company_valuation: 1000
   };
 
-  const traderState: GameState = {
-    ...generateInitialState(nextCujSeed()),
-    visa: '绿卡',
-    job_type: 'trader',
-    company: '全职 Day Trader',
-    level: '全职 Trader'
-  };
-
   const employeeState: GameState = {
     ...generateInitialState(nextCujSeed()),
     visa: '绿卡',
@@ -1929,14 +1921,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(founderHasExpansion, 'Founder has dedicated 全速扩张 choice in post_green_card');
   assert(!founderHasResign, 'Founder does NOT see employee resignation choice in post_green_card');
 
-  // 2. Trader should have the trader choice and NOT employee office politics
-  const traderChoices = ev.choices.filter(c => !c.condition || c.condition(traderState));
-  const traderHasTrading = traderChoices.some(c => c.text.includes('深耕交易'));
-  const traderHasOfficePolitics = traderChoices.some(c => c.text.includes('不再唯唯诺诺'));
-  assert(traderHasTrading, 'Trader has dedicated 深耕交易 choice in post_green_card');
-  assert(!traderHasOfficePolitics, 'Trader does NOT see corporate office politics in post_green_card');
-
-  // 3. Employee sees standard corporate paths
+  // 2. Employee sees standard corporate paths
   const employeeChoices = ev.choices.filter(c => !c.condition || c.condition(employeeState));
   const employeeHasStartup = employeeChoices.some(c => c.text.includes('全职创业'));
   const employeeHasOfficePolitics = employeeChoices.some(c => c.text.includes('不再唯唯诺诺'));

@@ -409,18 +409,6 @@ export const immigrationEvents: Record<string, GameEvent> = {
           message: '绿卡获批彻底解除了你在美的身份枷锁，你可以 100% 专注于带领公司壮大，估值与业务再创新高！'
         }),
         nextEventId: 'founder_annual_strategy',
-      },
-      {
-        text: '【深耕交易】获得合法居民身份，心无旁骛专注于二级市场交易',
-        condition: (s) => s.job_type === 'trader',
-        effect: (s) => ({
-          visa: s.visa === '公民' ? '公民' : '绿卡',
-          gc_progress: 5,
-          gc_stage: 'approved',
-          cash: s.cash + 10,
-          message: '摆脱工签束缚，你以完全合法的居民身份专注于资本市场套利与策略研究！'
-        }),
-        nextEventId: 'trader_annual_strategy',
       }
     ]
   },

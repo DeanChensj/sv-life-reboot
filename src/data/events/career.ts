@@ -720,7 +720,7 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       // 1. 【每年专属动态轮替机遇池】 (每年动态激活 1~2 个专属限时奇遇)
       {
-        text: '【限时机遇：AI 初创团队挖角】收到前沿 AI 初创公司合伙人发来的直通终面邀请 (终身仅 1 次)',
+        text: '【限时机遇：AI 初创团队挖角】收到前沿 AI 初创公司合伙人发来的直通终面邀请',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_cursor_hunt') && !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
@@ -786,7 +786,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：硬核破圈】考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w · 终身仅 1 次)',
+        text: '【限时机遇：硬核破圈】考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_pilot_license') && s.cash >= 2.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -894,7 +894,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：捡漏投资房】参与东湾法拍独栋房捡漏拍卖 (首付 $20w · 获稳健被动租金 · 终身仅 1 次)',
+        text: '【限时机遇：捡漏投资房】参与东湾法拍独栋房捡漏拍卖 (首付 $20w · 获稳健被动租金)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_foreclosure_deal') && (s.cash + (s.stocks || 0)) >= 20 && (s.rental_income || 0) < 10 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({

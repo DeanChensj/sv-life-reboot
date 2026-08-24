@@ -152,14 +152,6 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
 
         {/* Detailed Financial Breakdown Table */}
         <div className="space-y-2.5 font-mono text-xs mb-6">
-          <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
-            <span className="text-zinc-400 flex items-center gap-2.5">
-              <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-              {gameState.job_type === 'trader' ? '年度操盘收益 (Cash)' : gameState.job_type === 'startup_founder' ? '创始人薪水/套现 (Cash)' : '年度 Base 薪资 (Cash)'}
-            </span>
-            <span className="font-bold text-emerald-400 tabular-nums">+${preTaxBase.toFixed(1)}w</span>
-          </div>
-
           {preTaxBase > 0 && (
             <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
               <span className="text-zinc-400 flex items-center gap-2.5">

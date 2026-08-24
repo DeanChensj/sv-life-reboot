@@ -464,8 +464,9 @@ console.log('--- [CUJ 4] Layoff & Contingency Journey ---');
   const marriedState: GameState = { ...state, relationship_status: 'dating', is_married: false };
 
   const fallbackEv = events['h1b_fallback_options'];
-  assert(!fallbackEv.choices[0].condition!(singlePoorState), 'Single poor player cannot choose true love marriage');
-  assert(!fallbackEv.choices[1].condition!(singlePoorState), 'Single poor player cannot choose $8w commercial marriage');
+  assert(!fallbackEv.choices[0].condition!(singlePoorState), 'Single poor player cannot choose marriage green card (neither partner nor $8w)');
+  assert(fallbackEv.choices[0].condition!(singleRichState) === true, 'Single rich player qualifies for marriage green card (commercial)');
+  assert(fallbackEv.choices[0].condition!(marriedState) === true, 'Dating player qualifies for marriage green card (partner)');
   // 4. Re-employment level preservation: OpenAI MTS & Laid-off Staff must NOT be demoted to L3
   const appleChoice = events['job_hop_market'].choices.find((c) => c.text.includes('Apple'))!;
   const mtsLaidOffState: GameState = {
@@ -2481,9 +2482,9 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   const rejectEvent = events['us_undergrad_phd_rejection'];
   assert(!!rejectEvent, 'us_undergrad_phd_rejection 事件存在');
-  assert(rejectEvent.choices.length === 3, '申博失利提供 3 大出路');
+  assert(rejectEvent.choices.length === 2, '申博失利提供 2 大精炼出路');
 
-  // Choice 1: 转读 MS
+  // Choice 1: 转读 MS (全款自费分支 vs TA 助教减免分支)
   const msPivotChoice = rejectEvent.choices[0];
   const richStudent = { ...plainStudent, cash: 12 };
   assert(msPivotChoice.condition ? msPivotChoice.condition(richStudent) : false, '有学费可转读 MS');
@@ -2492,6 +2493,11 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(msRes.is_master === true, '转为硕士身份');
   assert(msRes.story_flags?.phd_reapply_ready === true, '打上硕士毕业二战 PhD 标记');
   assert(msPivotChoice.nextEventId === 'us_master_year1', '进入硕士第一年');
+
+  const modestStudent = { ...plainStudent, cash: 5 };
+  const modestRes = msPivotChoice.effect(modestStudent);
+  assert(modestRes.cash === 2, 'TA 助教贷款自付 $3w 读硕');
+  assert(modestRes.is_master === true, 'TA 助教转为硕士身份');
 
   // 3. 硕士毕业二战 PhD 享受 phd_reapply_ready 加成
   const msGrad = { ...generateInitialState(nextCujSeed()), is_master: true, school: 'ucb', leetcode: 70, story_flags: { phd_reapply_ready: true }, status: 'playing' } as GameState;

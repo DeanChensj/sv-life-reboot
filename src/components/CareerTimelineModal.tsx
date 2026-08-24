@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { GameState } from '../types';
 import { useFocusTrap } from '../utils/useFocusTrap';
+import { getCompanyProfile } from '../data/companyProfiles';
 
 interface CareerTimelineModalProps {
   gameState: GameState;
@@ -819,10 +820,22 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                   <span>职场成就</span>
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-zinc-100">
-                  {gameState.level || '待业'} @ {gameState.company ? gameState.company.toUpperCase() : '未入职'}
+                  {gameState.job_type === 'startup_founder'
+                    ? `${gameState.level || 'CEO & Founder'} @ 科技初创`
+                    : gameState.job_type === 'trader'
+                    ? '独立交易员 @ 美股与衍生品市场'
+                    : gameState.job_type === 'unemployed' || gameState.laid_off
+                    ? '待业与求职期 @ 硅谷'
+                    : `${gameState.level || 'SDE'} @ ${gameState.company ? (getCompanyProfile(gameState.company)?.timelineName || gameState.company.toUpperCase()) : '硅谷科技企业'}`}
                 </div>
                 <div className="text-xs text-zinc-400">
-                  当前年薪总包 ${gameState.tc.toFixed(1)}w，算法储备 LeetCode {gameState.leetcode} 分
+                  {gameState.job_type === 'startup_founder'
+                    ? `初创估值 $${gameState.company_valuation || 500}w，创始人津贴 $${gameState.tc.toFixed(1)}w/年`
+                    : gameState.job_type === 'trader'
+                    ? `全职独立操盘，证券股票持仓 $${(gameState.stocks || 0).toFixed(1)}w`
+                    : gameState.job_type === 'unemployed' || gameState.laid_off
+                    ? `算法储备 LeetCode ${gameState.leetcode} 分，积极备战跳槽与重返职场`
+                    : `当前年薪总包 $${gameState.tc.toFixed(1)}w，算法储备 LeetCode ${gameState.leetcode} 分`}
                 </div>
               </div>
 

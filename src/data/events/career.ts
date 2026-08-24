@@ -1734,7 +1734,8 @@ export const careerEvents: Record<string, GameEvent> = {
           return {
             // Rescue TC tracks the retained level (was a flat 22 = new-grad band,
             // since tc is 0 at layoff — a former L6 shouldn't be rescued at $22w).
-            tc: getLevelScaledTC(22, s.level ?? (s.is_phd ? 'L4' : 'L3')),
+            tc: getLevelScaledTC(22, hopTargetLevel(s)),
+            level: hopTargetLevel(s),
             company: rescue.company,
             job_type: 'big_tech',
             laid_off: false,
@@ -1750,7 +1751,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)',
         effect: (s) => {
           const pass = s.leetcode >= 45 || gameRandom() < 0.55;
-          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const targetLvl = hopTargetLevel(s);
           const newTC = getLevelScaledTC(22, targetLvl);
           return pass
             ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: `【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)，成功延续 OPT 身份！` }
@@ -1778,7 +1779,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)',
         effect: (s) => {
           const pass = s.leetcode >= 55 || gameRandom() < 0.50;
-          const targetLvl = s.level || (s.is_phd ? 'L4' : 'L3');
+          const targetLvl = hopTargetLevel(s);
           const newTC = getLevelScaledTC(24, targetLvl);
           return pass
             ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 15), visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'], message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${targetLvl} · 年薪 ${newTC}w) 并成功办理工签 Transfer 保住合法身份！` }

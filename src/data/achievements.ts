@@ -138,6 +138,86 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: 'fun',
     description: '炒末日期权或土狗币血本无归，成为华尔街绿油油的韭菜。',
     hint: '暗号：在股市极高风险操作中亏光本金。'
+  },
+  {
+    id: 'zhuanma_miracle',
+    title: '逆风翻盘·转码神话',
+    icon: 'zap',
+    category: 'ending',
+    description: '非 CS 专业背景出身，凭借自学或 Bootcamp 刷题逆袭斩获大厂 Offer 并成功达成 FIRE！',
+    hint: '暗号：转码选手成功上岸大厂并通关。'
+  },
+  {
+    id: 'dynasty_legend',
+    title: '硅谷百亿传奇 ($3000w+)',
+    icon: 'crown',
+    category: 'wealth',
+    description: '资产净值突破 $3,000 万美元，受封硅谷教父/百亿传奇，缔造科技宗族！',
+    hint: '暗号：净资产突破 $3,000w 美元。'
+  },
+  {
+    id: 'luxury_fire',
+    title: '奢华级财务自由 ($1500w)',
+    icon: 'crown',
+    category: 'wealth',
+    description: '达成 $1,500w 奢华级 FIRE，游艇会所自由，开启不设上限的人生探索！',
+    hint: '暗号：净资产突破 $1,500w 美元。'
+  },
+  {
+    id: 'acqui_hire_exit',
+    title: '巨头全资收购 (Acqui-hire)',
+    icon: 'rocket',
+    category: 'ending',
+    description: '初创团队被科技巨头高溢价收购，创始人股权套现并受聘为大厂 Staff+ 架构师！',
+    hint: '暗号：作为创始人接受科技巨头溢价并购 (Acqui-hire)。'
+  },
+  {
+    id: 'grind_god',
+    title: '卷王之王·双黄蛋连升',
+    icon: 'zap',
+    category: 'milestone',
+    description: '凭借极致抗压与连年 EE 顶级考评，打破年资限制实现职场光速跳升！',
+    hint: '暗号：年度考评获得 EE 评级或持【卷王之王】特质晋升 Staff+。'
+  },
+  {
+    id: 'cats_and_dogs',
+    title: '湾区猫狗双全',
+    icon: 'heart',
+    category: 'fun',
+    description: '后院同时拥有猫咪和狗狗，达成湾区中产居家幸福感天花板！',
+    hint: '暗号：同时领养猫咪与狗狗。'
+  },
+  {
+    id: 'icc_survivor',
+    title: 'ICC 绝地求生',
+    icon: 'award',
+    category: 'milestone',
+    description: '在 60 天工签遣返危机中通过 ICC 外包挂靠逆境生还，并凭借算法功底重返大厂！',
+    hint: '暗号：曾在 ICC 外包挂靠并成功重返大厂。'
+  },
+  {
+    id: 'ambulance_survivor',
+    title: '美国天价账单幸存者',
+    icon: 'activity',
+    category: 'fun',
+    description: '遭遇急救车或 ICU 天价自费账单洗礼后依然顽强存活！',
+    hint: '暗号：遭遇急救车或 ICU 事件并渡过危机。'
+  },
+  {
+    id: 'milpitas_bento_minimalist',
+    title: 'Milpitas 挂壁极简生活',
+    icon: 'mountain',
+    category: 'fun',
+    description: '在 RSU 暴跌或极简挂壁生活中通过小红书 VLOG 或消费降级实现逆风翻盘！',
+    hint: '暗号：渡过 RSU 归属崖暴跌或拍小红书 VLOG。'
+  },
+  {
+    id: 'sqqq_short_king',
+    title: '熊市做空战神 (SQQQ)',
+    icon: 'trending-up',
+    category: 'wealth',
+    description: '在宏观大盘熊市中凭借 SQQQ 反向 ETF 与长债对冲，逆势大赚！',
+    hint: '暗号：在熊市中作为 Day Trader 选择做空避险策略获利。'
   }
 ];
 
@@ -237,16 +317,54 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('l8_principal_architect')) newlyUnlocked.push('l8_principal_architect');
   }
 
-  // Gate on durable flags set in the gamble's win/loss effects. (Was
-  // `currentEventId === 'stock_market_annual_gamble' && msg.includes(...)`, but
-  // currentEventId has already advanced by the time achievements are checked, so
-  // these three were permanently unobtainable.)
   if (state.story_flags?.wsb_wolf_win) {
     if (unlockAchievement('wall_street_wolf')) newlyUnlocked.push('wall_street_wolf');
   }
 
   if (state.story_flags?.wsb_leek) {
     if (unlockAchievement('wsb_leek')) newlyUnlocked.push('wsb_leek');
+  }
+
+  // 10 New Achievements Logic:
+  if ((state.story_flags?.zhuanma_landed || state.story_flags?.non_cs_background || state.story_flags?.zhuanma_origin) && state.status === 'win') {
+    if (unlockAchievement('zhuanma_miracle')) newlyUnlocked.push('zhuanma_miracle');
+  }
+
+  const netWorth = state.cash + (state.stocks || 0);
+  if (netWorth >= 3000 || state.story_flags?.milestone_3000w) {
+    if (unlockAchievement('dynasty_legend')) newlyUnlocked.push('dynasty_legend');
+  }
+
+  if (netWorth >= 1500 || state.story_flags?.milestone_1500w) {
+    if (unlockAchievement('luxury_fire')) newlyUnlocked.push('luxury_fire');
+  }
+
+  if (state.story_flags?.acqui_hire_done) {
+    if (unlockAchievement('acqui_hire_exit')) newlyUnlocked.push('acqui_hire_exit');
+  }
+
+  if (state.story_flags?.last_perf_rating === 'EE') {
+    if (unlockAchievement('grind_god')) newlyUnlocked.push('grind_god');
+  }
+
+  if (state.has_cat && state.has_dog) {
+    if (unlockAchievement('cats_and_dogs')) newlyUnlocked.push('cats_and_dogs');
+  }
+
+  if (state.story_flags?.icc_survivor || (state.company !== 'icc' && state.story_flags?.icc_hired)) {
+    if (unlockAchievement('icc_survivor')) newlyUnlocked.push('icc_survivor');
+  }
+
+  if (state.story_flags?.ambulance_survived || state.story_flags?.icu_crisis_survived) {
+    if (unlockAchievement('ambulance_survivor')) newlyUnlocked.push('ambulance_survivor');
+  }
+
+  if (state.story_flags?.rsu_cliff_done) {
+    if (unlockAchievement('milpitas_bento_minimalist')) newlyUnlocked.push('milpitas_bento_minimalist');
+  }
+
+  if (state.story_flags?.sqqq_win || (state.job_type === 'trader' && state.macro_economy === 'bear' && state.status === 'win')) {
+    if (unlockAchievement('sqqq_short_king')) newlyUnlocked.push('sqqq_short_king');
   }
 
   return newlyUnlocked;

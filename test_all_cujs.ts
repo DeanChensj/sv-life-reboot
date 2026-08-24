@@ -1,4 +1,5 @@
 import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb } from './src/data/events';
+import { ACHIEVEMENTS, checkAndUnlockAchievements } from './src/data/achievements';
 import { GameState, Choice } from './src/types';
 import { HOUSING_NAMES } from './src/constants/gameConstants';
 import { applyStateTransition } from './src/utils/stateTransitions';
@@ -2794,6 +2795,56 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert((st.story_flags as Record<string, unknown>)?.last_home_visit_year !== undefined, '留守也设冷却');
 
   console.log('✅ CUJ 53 Passed\n');
+}
+
+// CUJ 54: Achievement Codex triggers and integrity
+{
+  console.log('--- [CUJ 54] Achievement Codex triggers and integrity ---');
+  assert(ACHIEVEMENTS.length === 27, `ACHIEVEMENTS codex has 27 total achievements (actual: ${ACHIEVEMENTS.length})`);
+
+  const base = generateInitialState();
+
+  // 1. 转码神话
+  const zmWin = checkAndUnlockAchievements({ ...base, status: 'win', story_flags: { zhuanma_landed: true } });
+  assert(zmWin.includes('zhuanma_miracle'), 'zhuanma_miracle unlocks when non-cs switcher reaches win');
+
+  // 2. 硅谷百亿传奇
+  const dynastyWin = checkAndUnlockAchievements({ ...base, cash: 3100, status: 'win' });
+  assert(dynastyWin.includes('dynasty_legend'), 'dynasty_legend unlocks when net worth >= 3000w');
+
+  // 3. 奢华级财务自由
+  const luxuryWin = checkAndUnlockAchievements({ ...base, cash: 1600, status: 'win' });
+  assert(luxuryWin.includes('luxury_fire'), 'luxury_fire unlocks when net worth >= 1500w');
+
+  // 4. 巨头全资收购 (Acqui-hire)
+  const acquiWin = checkAndUnlockAchievements({ ...base, story_flags: { acqui_hire_done: true } });
+  assert(acquiWin.includes('acqui_hire_exit'), 'acqui_hire_exit unlocks when acqui_hire_done flag is set');
+
+  // 5. 卷王之王
+  const grindWin = checkAndUnlockAchievements({ ...base, story_flags: { last_perf_rating: 'EE' } });
+  assert(grindWin.includes('grind_god'), 'grind_god unlocks when last_perf_rating is EE');
+
+  // 6. 猫狗双全
+  const petWin = checkAndUnlockAchievements({ ...base, has_cat: true, has_dog: true });
+  assert(petWin.includes('cats_and_dogs'), 'cats_and_dogs unlocks when having both cat and dog');
+
+  // 7. ICC 绝地求生
+  const iccWin = checkAndUnlockAchievements({ ...base, company: 'google', story_flags: { icc_hired: true } });
+  assert(iccWin.includes('icc_survivor'), 'icc_survivor unlocks when hopping from ICC to big tech');
+
+  // 8. 天价账单幸存者
+  const ambWin = checkAndUnlockAchievements({ ...base, story_flags: { icu_crisis_survived: true } });
+  assert(ambWin.includes('ambulance_survivor'), 'ambulance_survivor unlocks when icu_crisis_survived is set');
+
+  // 9. Milpitas 挂壁
+  const cliffWin = checkAndUnlockAchievements({ ...base, story_flags: { rsu_cliff_done: true } });
+  assert(cliffWin.includes('milpitas_bento_minimalist'), 'milpitas_bento_minimalist unlocks when rsu_cliff_done is set');
+
+  // 10. SQQQ 熊市做空战神
+  const sqqqWin = checkAndUnlockAchievements({ ...base, story_flags: { sqqq_win: true } });
+  assert(sqqqWin.includes('sqqq_short_king'), 'sqqq_short_king unlocks when sqqq_win is set');
+
+  console.log('✅ CUJ 54 Passed\n');
 }
 
 console.log(`\n======================================================`);

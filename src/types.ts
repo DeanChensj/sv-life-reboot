@@ -50,6 +50,16 @@ export interface StoryFlags {
   milestone_800w?: boolean;
   milestone_1500w?: boolean;
   milestone_3000w?: boolean;
+  acqui_hire_done?: boolean;
+  icc_hired?: boolean;
+  icc_survivor?: boolean;
+  ambulance_survived?: boolean;
+  sqqq_win?: boolean;
+  rsu_cliff_done?: boolean;
+  wsb_wolf_win?: boolean;
+  wsb_leek?: boolean;
+  crypto_whale_win?: boolean;
+  icu_crisis_survived?: boolean;
   raj_alignment_seen?: boolean;
   raj_meet_year?: number;
   raj_ally?: boolean;

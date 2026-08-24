@@ -281,6 +281,7 @@ export const startupEvents: Record<string, GameEvent> = {
             company_valuation: 0,
             health: Math.max(0, s.health - 2),
             network: Math.min(100, (s.network || 0) + 8),
+            story_flags: { ...(s.story_flags || {}), acqui_hire_done: true },
             message: `【成功被科技巨头并购】Google/Meta 科技巨头以溢价全资收购了你们团队！扣除 VC 清算优先权后，创始人分得 $${payout}w 现金，并受聘为大厂 ${newLevel} 架构师 (TC $${newTc}w)！`
           };
         },

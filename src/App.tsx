@@ -796,8 +796,8 @@ export default function App() {
         </div>
 
         {/* Layer 2: Status Badges (Health, Level, Visa, Green Card, Quick Actions) */}
-        <div className="flex items-center justify-between gap-1.5 w-full pt-1 border-t border-zinc-900/80">
-          <div className="flex flex-1 min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 pr-1">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 w-full pt-1 border-t border-zinc-900/80">
+          <div className="flex flex-wrap min-w-0 items-center gap-1.5 py-0.5 pr-1">
             {/* Health Tag */}
             <span className={`flex items-center gap-1 font-bold text-[11px] shrink-0 px-2 py-0.5 rounded-md border tabular-nums ${
               gameState.health >= 70 

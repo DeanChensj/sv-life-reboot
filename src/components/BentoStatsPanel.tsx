@@ -32,7 +32,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
       {/* Header Title Section */}
       <div className="mb-4 sm:mb-5 relative">
-        <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-zinc-800/60">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-1.5 border-b border-zinc-800/60">
           <div className="flex items-center gap-1.5 shrink-0 min-w-0">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
             <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase whitespace-nowrap">

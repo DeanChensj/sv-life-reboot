@@ -140,7 +140,7 @@ export const startupEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
       {
-        text: '【死磕产品 PMF 与企业大单】带领全员冲刺 ARR 经常性收入并拿下企业采购 (对症:客户流失)',
+        text: '【死磕产品 PMF 与企业大单】带领全员攻坚核心功能，冲刺 ARR 并拿下企业采购合同',
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => {
           const onPoint = s.founder_situation === 'churn';
@@ -153,14 +153,14 @@ export const startupEvents: Record<string, GameEvent> = {
             company_valuation: newVal,
             ...(onPoint ? { founder_situation: undefined } : {}),
             message: onPoint
-              ? `【对症下药·成功止血】正值客户流失当口，你带队死磕 PMF 与企业大单，续约率触底反弹、ARR 破 $80w！按 SaaS/AI 行业 ARR 估值倍数，公司总估值大幅修复 +$${gain}w (跃升至 $${newVal}w)！`
+              ? `【力挽狂澜·成功止血】正值客户流失当口，你带队死磕 PMF 与企业大单，续约率触底反弹、ARR 破 $80w！按 SaaS/AI 行业 ARR 估值倍数，公司总估值大幅修复 +$${gain}w (跃升至 $${newVal}w)！`
               : `【ARR 稳步破 $50w 美元 · 估值大涨】经过半年高强度产品迭代与上门攻坚，公司拿下多家科技企业采购合同！按 SaaS/AI 行业 10x ARR 估值倍数，公司总估值增加 $${gain}w (跃升至 $${newVal}w)，实现微利造血与创始人分红！`
           };
         },
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【TechCrunch 巅峰演讲与病毒式公关】登上顶级科技峰会做 Live Demo 引爆全球热度 (对症:估值停滞)',
+        text: '【TechCrunch 巅峰演讲与公关】登上顶级科技峰会做 Live Demo，引爆行业与资本关注度',
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => {
           const onPoint = s.founder_situation === 'valuation_stall';
@@ -173,14 +173,14 @@ export const startupEvents: Record<string, GameEvent> = {
             company_valuation: newVal,
             ...(onPoint ? { founder_situation: undefined } : {}),
             message: onPoint
-              ? `【对症下药·重夺聚光灯】正值估值停滞期，你一场技惊四座的 Live Demo 登上 Hacker News 首页并引爆媒体热度，资本市场重新追捧，公司估值大幅跃升至 $${newVal}w！`
+              ? `【重夺聚光灯·估值飙升】正值估值停滞期，你一场技惊四座的 Live Demo 登上 Hacker News 首页并引爆媒体热度，资本市场重新追捧，公司估值大幅跃升至 $${newVal}w！`
               : `【Live Demo 技惊全场！】你在 TechCrunch Disrupt 上的演讲登上 Hacker News 首页，吸引了上千名早期极客用户注册体验，公司估值提升至 $${newVal}w！`
           };
         },
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【高举高打招聘】重金从 Meta/Google 挖掘架构师补齐工程团队 (对症:线上事故)',
+        text: '【高举高打招聘架构师】重金从一线大厂挖角资深大牛，重构底层系统补齐工程短板',
         costBadge: '花费 $8w',
         condition: (s) => s.cash >= 8,
         effect: (s) => {
@@ -196,7 +196,7 @@ export const startupEvents: Record<string, GameEvent> = {
               leetcode: Math.min(100, s.leetcode + 6),
               ...(onPoint ? { founder_situation: undefined } : {}),
               message: onPoint
-                ? `【对症下药·稳住系统】正值线上事故频发，你重金请来的大厂资深架构师重构了底层服务，故障率骤降、SLA 达标，交付提速带动公司估值强劲修复至 $${newVal}w！`
+                ? `【稳住系统·交付提速】正值线上事故频发，你重金请来的大厂资深架构师重构了底层服务，故障率骤降、SLA 达标，交付提速带动公司估值强劲修复至 $${newVal}w！`
                 : `【核心架构师加盟】大厂 Senior 大牛加盟后研发出高效的 AI 底层服务，产品交付速度明显提升，公司估值提升至 $${newVal}w！`
             };
           } else {

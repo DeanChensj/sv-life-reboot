@@ -783,6 +783,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   assert(settleMsg({ company: 'meta', job_type: 'big_tech' }).includes('Meta'), 'meta -> Meta');
   assert(settleMsg({ job_type: 'startup' }).includes('创业公司'), 'startup -> 创业公司');
   assert(settleMsg({ job_type: 'startup_founder' }).includes('创业找融资'), 'startup_founder -> 创业找融资');
+  assert(settleMsg({ job_type: 'startup_founder', macro_economy: 'neutral' }).includes('【初创运营】'), 'startup_founder in neutral economy includes 【初创运营】');
   assert(settleMsg({ job_type: 'ai_research', company: 'openai' }).includes('前沿 AI 实验室'), 'ai_research -> 前沿 AI 实验室 (not 养老大厂)');
   assert(settleMsg({ job_type: 'big_tech', transferred_to_ai: true }).includes('大厂前沿 AI 大模型组'), 'transferred_to_ai -> AI 大模型组 (not 养老大厂)');
   assert(settleMsg({ job_type: 'big_tech', company: 'google' }).includes('养老大厂'), 'plain big_tech -> 养老大厂');

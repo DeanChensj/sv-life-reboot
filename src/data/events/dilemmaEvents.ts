@@ -88,43 +88,76 @@ export const dilemmaEvents: Record<string, GameEvent> = {
     description: '一个能一战成名的核心项目，是当年手把手带你入行的老 mentor 和你一起做的。年底评审只有一个升职名额，而你恰好握着能把主要功劳都算到自己头上的话语权。踩着恩人上位，还是把机会让给他？',
     choices: [
       {
-        text: '【独吞功劳抢下升职】独吞核心架构功劳，抢下升职名额 (背弃提携恩情)',
-        condition: (s) => {
-          const norm = normalizeLevel(s.level, s);
-          return employed(s) && (norm === 'L3' || norm === 'L4' || !s.level);
-        },
+        text: '【独吞功劳冲击升职】独吞核心架构功劳，争取升职名额 (背弃提携恩情)',
+        condition: (s) => employed(s) && (s.last_promo_age !== s.age),
         effect: (s): Partial<GameState> => {
           const norm = normalizeLevel(s.level, s) || (s.is_phd ? 'L4' : 'L3');
           let nextLevel: string = norm;
-          let tcIncrease = 5;
+          let tcIncrease = 1.5;
+          let isPromo = false;
+          let reqPassed = false;
+          let reqDesc = '';
+
           if (norm === 'L3') {
-            nextLevel = 'L4';
-            tcIncrease = 4.5;
+            reqPassed = s.leetcode >= 30 && (s.impact || 0) >= 3;
+            reqDesc = '晋升 L4 需算法>=30 且 产出>=3';
+            if (reqPassed) {
+              nextLevel = 'L4';
+              tcIncrease = 4.5;
+              isPromo = true;
+            }
           } else if (norm === 'L4') {
-            nextLevel = 'L5 (Senior)';
-            tcIncrease = 6.5;
+            reqPassed = s.leetcode >= 45 && (s.impact || 0) >= 8;
+            reqDesc = '晋升 L5 Senior 需算法>=45 且 产出>=8';
+            if (reqPassed) {
+              nextLevel = 'L5 (Senior)';
+              tcIncrease = 6.5;
+              isPromo = true;
+            }
+          } else if (norm === 'L5 (Senior)') {
+            reqPassed = s.leetcode >= 60 && (s.impact || 0) >= 16;
+            reqDesc = '晋升 L6 Staff 需算法>=60 且 产出>=16';
+            if (reqPassed) {
+              nextLevel = 'L6 (Staff)';
+              tcIncrease = 12.0;
+              isPromo = true;
+            }
           }
 
-          const isPromo = nextLevel !== norm;
           const mentor: NPCState = s.npcs?.mentor
             ? { ...s.npcs.mentor, status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' }
             : { name: '老 Mentor', role: 'mentor', status: 'departed', note: '被你抢功后心灰意冷离职的老恩师' };
-          return {
-            tc: s.tc + tcIncrease,
-            level: nextLevel,
-            last_promo_age: isPromo ? s.age : s.last_promo_age,
-            network: Math.max(0, (s.network || 10) - 6),
-            charm: Math.max(0, (s.charm || 10) - 1),
-            health: Math.max(0, s.health - 4),
-            impact: addImpact(s, 10),
-            npcs: { ...(s.npcs || {}), mentor },
-            story_flags: { ...(s.story_flags || {}), credit_grabbed: true },
-            message: isPromo
-              ? `你在评审会上把关键决策都包装成了自己的功劳，如愿抢下升职名额晋升至 ${nextLevel}！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。`
-              : '你在评审会上把关键决策都包装成了自己的功劳，如愿抢下顶格绩效加薪 (+$5.0w TC)！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。',
-          };
+
+          if (isPromo) {
+            return {
+              tc: s.tc + tcIncrease,
+              level: nextLevel,
+              last_promo_age: s.age,
+              network: Math.max(0, (s.network || 10) - 6),
+              charm: Math.max(0, (s.charm || 10) - 1),
+              health: Math.max(0, s.health - 4),
+              impact: addImpact(s, 8),
+              npcs: { ...(s.npcs || {}), mentor },
+              story_flags: { ...(s.story_flags || {}), credit_grabbed: true },
+              message: `你在评审会上把关键决策与架构设计都包装成了自己的功劳，凭借过硬的技术与产出底子（算法 ${s.leetcode} / 产出 ${s.impact || 0}），如愿抢下升职名额晋升至 ${nextLevel}！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。`,
+            };
+          } else {
+            return {
+              tc: s.tc + tcIncrease,
+              level: norm,
+              network: Math.max(0, (s.network || 10) - 8),
+              charm: Math.max(0, (s.charm || 10) - 2),
+              health: Math.max(0, s.health - 6),
+              impact: addImpact(s, 3),
+              npcs: { ...(s.npcs || {}), mentor },
+              story_flags: { ...(s.story_flags || {}), credit_grabbed: true },
+              message: `你在评审会上试图将核心架构据为己有冲击晋升，但在答辩环节被晋升委员会深挖底层细节与跨组落地，暴露出硬实力与业务积累不足（${reqDesc}，当前算法 ${s.leetcode} / 产出 ${s.impact || 0}），升职提报被当场否决！你仅拿到项目奖金 (+$${tcIncrease.toFixed(1)}w TC)，而老前辈也看清了你的为人愤而离职，在组内落得两头皆空。`,
+            };
+          }
         },
-        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)') ? 'promo_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.last_promo_age === s.age && (s.level === 'L4' || s.level === 'L5 (Senior)')
+          ? 'promo_celebration'
+          : (s.last_promo_age === s.age && s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s))),
       },
       {
         text: '【功劳让给恩师 Mentor】把主要功劳让给 Mentor，成全恩人 (放弃升职)',

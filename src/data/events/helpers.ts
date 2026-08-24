@@ -474,8 +474,11 @@ export const midYearEventRouter = (s: GameState): string => {
         // Exclude O-1: the PERM-reset-on-hop penalty (stateTransitions) exempts O-1, so the
         // dilemma's "跳槽→绿卡进度清零" cost would be a no-op for O-1 holders.
         if (!isPermanentVisa(s.visa) && s.visa !== '无' && s.visa !== 'O1 (杰出人才)' && !s.is_phd && gcMidPerm && !sig.dilemma_toxic_boss_gc_hostage_seen && gameRandom() < 0.3) return 'dilemma_toxic_boss_gc_hostage';
-        // ② 独吞功劳 vs 提携恩情：中层最纠结。
-        if ((lvl === 'L4' || lvl === 'L5 (Senior)' || lvl === 'L6 (Staff)') && !sig.dilemma_credit_grab_mentor_seen && gameRandom() < 0.3) return 'dilemma_credit_grab_mentor';
+        // ② 独吞功劳 vs 提携恩情：中层最纠结（当年未晋升且已在岗至少 1 年方可触发，防同年双重晋升）。
+        const normLvl = normalizeLevel(lvl, s);
+        const isEligibleCreditGrabLvl = normLvl === 'L3' || normLvl === 'L4' || normLvl === 'L5 (Senior)';
+        const justPromoted = s.last_promo_age === s.age;
+        if (isEligibleCreditGrabLvl && !justPromoted && !sig.dilemma_credit_grab_mentor_seen && gameRandom() < 0.3) return 'dilemma_credit_grab_mentor';
 
         // 中后期系统性危机 (midGameCrisisEvents.ts, T2 破坏性)：一局各一次，能真正抹掉收入/职级。
         // ① 整组被 AI 砍：2024+ 大模型时代的系统性裁撤。② 中年 ageism：40+ 的性价比之殇。

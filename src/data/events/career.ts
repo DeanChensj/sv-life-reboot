@@ -974,58 +974,6 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
 
-      // 2. 【按部就班 · 稳健 WLB (60分及格线)】 — coasting: 完成本职、准时下班、养生回血，年度考评稳拿 ME。
-      {
-        text: '【按部就班 · 稳健 WLB】完成本职需求及格线 (Meets Bar)，准时打卡下班、养生回血',
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
-        hideIfUnavailable: true,
-        effect: (s) => {
-          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          const lastPromoAge = s.last_promo_age ?? (s.age - 1);
-          const yearsInGrade = s.age - lastPromoAge;
-
-          // 自然晋升只到 L4 (及格线内成熟); L5 Senior 及以上不再靠按部就班自然给, 必须通过【疯狂内卷】冲刺。
-          if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
-            return {
-              mid_year: true, season_stage: 'h1',
-              level: 'L4', tc: s.tc + 3.5, last_promo_age: s.age,
-              impact: addImpact(s, 4),
-              health: Math.min(100, s.health + 12), leetcode: Math.min(100, s.leetcode + 2),
-              story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
-              message: '【稳健及格·水到渠成升 L4】在按部就班完成本职需求的同时，凭借扎实的日常工程交付水到渠成晋升 L4 工程师！总包调升 +$3.5w！',
-            };
-          }
-
-          const wlbChillMessages = [
-            '【按部就班 · 稳健及格】你准时打卡下班、拒绝内耗，高质量完成了 Sprint 范围内的既定需求 (Meets Bar 60分及格)。体能与精神完全恢复满格！',
-            '【拒绝内卷 · 惬意生活】面对复杂的跨组撕逼你果断按时下班，把精力留给健身与生活，身心恢复到最佳状态，平稳拿到本年度目标考评。',
-            '【平稳交付 · 零事故】线上服务集群平稳运行，你在优雅完成日常任务的同时，每天下午在园区草坪散步，体能完全回满！',
-          ];
-          const chillMsg = wlbChillMessages[Math.floor(gameRandom() * wlbChillMessages.length)];
-
-          return {
-            mid_year: true, season_stage: 'h1',
-            health: Math.min(100, s.health + 14),
-            leetcode: Math.min(100, s.leetcode + 2),
-            impact: addImpact(s, 2),
-            story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
-            message: chillMsg,
-          };
-        },
-        nextEventId: (s) => (s.last_promo_age === s.age && s.level === 'L4' ? 'promo_celebration' : h1ToH2Router(s)),
-      },
-      {
-        text: '【申请内部转组 · 换道破局】逃离 Toxic 组 / 投奔前沿 AI / 换养老支持组 (改变后续赛道)',
-        // 3-year cooldown: internal mobility isn't a yearly toy — prevents farming the
-        // ai_core +impact / free PIP-clear every single year.
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && (!s.story_flags?.last_transfer_year || (s.year - Number(s.story_flags.last_transfer_year)) >= 3),
-        hideIfUnavailable: true,
-        effect: (s) => ({
-          story_flags: { ...(s.story_flags || {}), annual_action: 'transfer' },
-          message: '你提交了内部转组申请，HR 与 Internal Mobility 系统向你展示了当前开放的转组去向：',
-        }),
-        nextEventId: 'internal_team_transfer',
-      },
       {
         text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
         condition: (s) => s.job_type === 'startup' && !s.laid_off,
@@ -1072,7 +1020,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       // 3. 【常规年度重心】 (点击后进入年中/年底结算)
       {
-        text: '【年度重心：疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
+        text: '【疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
@@ -1139,7 +1087,7 @@ export const careerEvents: Record<string, GameEvent> = {
         },
       },
       {
-        text: '【年度重心：刷题跳槽】闭关刷题备战，海投湾区各大厂/独角兽发起社招面试',
+        text: '【刷题跳槽】闭关刷题备战，海投湾区各大厂/独角兽发起社招面试',
         condition: (s) => !s.laid_off && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           const isKingOfRoll = s.trait_title === '卷王之王';
@@ -1246,8 +1194,60 @@ export const careerEvents: Record<string, GameEvent> = {
           return h1ToH2Router(s);
         },
       },
+      // 稳健 WLB (60分及格线) 与 内部转组:排在核心冲刺 (内卷/刷题) 之后、情境动作之前。
       {
-        text: '【年度重心：拓展副业】探索第二曲线 (微型SaaS/专家顾问/自媒体/实体合伙)',
+        text: '【按部就班 · 稳健 WLB】完成本职需求及格线 (Meets Bar)，准时打卡下班、养生回血',
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const lastPromoAge = s.last_promo_age ?? (s.age - 1);
+          const yearsInGrade = s.age - lastPromoAge;
+
+          // 自然晋升只到 L4 (及格线内成熟); L5 Senior 及以上不再靠按部就班自然给, 必须通过【疯狂内卷】冲刺。
+          if (curLevel === 'L3' && ((yearsInGrade >= 2 && s.leetcode >= 30) || (yearsInGrade >= 1 && s.leetcode >= 40))) {
+            return {
+              mid_year: true, season_stage: 'h1',
+              level: 'L4', tc: s.tc + 3.5, last_promo_age: s.age,
+              impact: addImpact(s, 4),
+              health: Math.min(100, s.health + 12), leetcode: Math.min(100, s.leetcode + 2),
+              story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
+              message: '【稳健及格·水到渠成升 L4】在按部就班完成本职需求的同时，凭借扎实的日常工程交付水到渠成晋升 L4 工程师！总包调升 +$3.5w！',
+            };
+          }
+
+          const wlbChillMessages = [
+            '【按部就班 · 稳健及格】你准时打卡下班、拒绝内耗，高质量完成了 Sprint 范围内的既定需求 (Meets Bar 60分及格)。体能与精神完全恢复满格！',
+            '【拒绝内卷 · 惬意生活】面对复杂的跨组撕逼你果断按时下班，把精力留给健身与生活，身心恢复到最佳状态，平稳拿到本年度目标考评。',
+            '【平稳交付 · 零事故】线上服务集群平稳运行，你在优雅完成日常任务的同时，每天下午在园区草坪散步，体能完全回满！',
+          ];
+          const chillMsg = wlbChillMessages[Math.floor(gameRandom() * wlbChillMessages.length)];
+
+          return {
+            mid_year: true, season_stage: 'h1',
+            health: Math.min(100, s.health + 14),
+            leetcode: Math.min(100, s.leetcode + 2),
+            impact: addImpact(s, 2),
+            story_flags: { ...(s.story_flags || {}), annual_action: 'wlb' },
+            message: chillMsg,
+          };
+        },
+        nextEventId: (s) => (s.last_promo_age === s.age && s.level === 'L4' ? 'promo_celebration' : h1ToH2Router(s)),
+      },
+      {
+        text: '【申请内部转组 · 换道破局】逃离 Toxic 组 / 投奔前沿 AI / 换养老支持组 (改变后续赛道)',
+        // 3-year cooldown: internal mobility isn't a yearly toy — prevents farming the
+        // ai_core +impact / free PIP-clear every single year.
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && (!s.story_flags?.last_transfer_year || (s.year - Number(s.story_flags.last_transfer_year)) >= 3),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          story_flags: { ...(s.story_flags || {}), annual_action: 'transfer' },
+          message: '你提交了内部转组申请，HR 与 Internal Mobility 系统向你展示了当前开放的转组去向：',
+        }),
+        nextEventId: 'internal_team_transfer',
+      },
+      {
+        text: '【拓展副业】探索第二曲线 (微型SaaS/专家顾问/自媒体/实体合伙)',
         condition: (s) => !s.laid_off && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.story_flags?.side_hustle_canceled,
         effect: () => ({ message: '你梳理了自己的核心技能与业余时间，准备在硅谷拓展属于自己的第二曲线副业！' }),
         nextEventId: 'side_hustle_hub',
@@ -1260,7 +1260,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
       // --- 年度主线重心 (续)：投资 / 社交 / 躺平 (与上方 内卷 / 刷题 / 副业 同属年度精力分配) ---
       {
-        text: '【年度重心：投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
+        text: '【投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
         condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
@@ -1270,7 +1270,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'stock_market_annual_gamble',
       },
       {
-        text: '【年度重心：活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
+        text: '【活跃社交】参加派对聚会，扩充人脉与寻觅良缘',
         condition: (s) => true,
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
@@ -1279,17 +1279,6 @@ export const careerEvents: Record<string, GameEvent> = {
           message: '你把今年的精力都花在了社交上，颜值打扮都有所提升。'
         }),
         nextEventId: (s) => !s.is_married ? 'dating_market' : h1ToH2Router(s),
-      },
-      {
-        text: '【年度重心：佛系躺平】宅家打游戏养生，不管世事',
-        condition: (_s) => true,
-        effect: (s) => ({
-          mid_year: true, season_stage: 'h1',
-          health: Math.min(100, s.health + 18),
-          leetcode: Math.max(0, s.leetcode - 8),
-          message: '这一年你彻底躺平摸鱼，除了完成最低限度工作外就是打黑神话悟空。身体逐渐恢复了生机，但由于长期不写硬核代码，你的算法手感与面试反应明显下滑！'
-        }),
-        nextEventId: h1ToH2Router,
       },
 
       // --- 生活与资产：置业安家 (首付达标时可见，完成后返回工作重心) ---

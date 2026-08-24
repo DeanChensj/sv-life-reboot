@@ -1193,7 +1193,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 {
   console.log('--- [CUJ 20] Impact progression reachability (anti dead-gate) ---');
   const sprint = events['sv_daily_life'].choices.find((c) => c.text.includes('疯狂内卷'))!;
-  const rest20 = events['sv_daily_life'].choices.find((c) => c.text.includes('佛系躺平'))!;
+  const rest20 = events['sv_daily_life'].choices.find((c) => c.text.includes('按部就班'))!;
   const settle = events['sv_year_end_settlement'].choices[0];
   const TRIALS = 100;
   // HEALTH-MANAGED play (rest when health is low) — NOT suicide-grinding every year. The old
@@ -1229,7 +1229,7 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   // and is sustainable.
   const research = events['sv_daily_life'].choices.find((c) => c.text.includes('主导顶会 Paper'));
   assert(!!research, 'ai_research has a dedicated efficient impact action (主导顶会 Paper)');
-  const rest = events['sv_daily_life'].choices.find((c) => c.text.includes('佛系躺平'))!;
+  const rest = events['sv_daily_life'].choices.find((c) => c.text.includes('按部就班'))!;
   let rReached = 0;
   for (let t = 0; t < TRIALS; t++) {
     let s: GameState = {

@@ -1798,6 +1798,7 @@ export const careerEvents: Record<string, GameEvent> = {
           job_type: 'startup',
           health: Math.max(0, s.health - 10),
           visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'],
+          story_flags: { ...(s.story_flags || {}), icc_hired: true },
           message: '外包中介连夜为你开具了紧急 Offer 办理了工签 Transfer！虽然总包大打折扣，但你的 60 天遣返警报成功解除！'
         }),
         nextEventId: h1ToH2Router,

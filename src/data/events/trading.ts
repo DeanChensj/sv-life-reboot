@@ -283,6 +283,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               mid_year: true, season_stage: 'h1', tc: 0,
               cash: parseFloat((s.cash + gain).toFixed(1)),
               health: Math.max(0, s.health - 5),
+              story_flags: { ...(s.story_flags || {}), sqqq_win: true },
               message: ` 逆势封神！熊市中反向 ETF 与避险长债齐飞,你在别人割肉时反手做空大赚 +$${gain.toFixed(1)}w 美元!`
             };
           } else if (s.macro_economy === 'bull') {

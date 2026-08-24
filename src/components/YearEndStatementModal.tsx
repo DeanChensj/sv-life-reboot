@@ -77,21 +77,21 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
               ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 animate-pulse'
               : 'bg-sky-500/10 border-sky-500/30 text-sky-300'
           }`}>
-            <div className="flex items-center gap-2.5">
-              <span className="text-lg">
-                {gameState.story_flags.last_perf_rating === 'EE' ? '🌟' : gameState.story_flags.last_perf_rating === 'NI' ? '⚠️' : '✅'}
-              </span>
-              <div>
-                <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">
-                  ANNUAL PERFORMANCE REVIEW (年度绩效考评)
-                </div>
-                <div className="font-bold text-sm text-zinc-100">
-                  {gameState.story_flags.last_perf_rating === 'EE'
-                    ? 'Exceeds Expectations (卓越 · 顶格激励)'
-                    : gameState.story_flags.last_perf_rating === 'NI'
-                    ? 'Needs Improvement (待改进 · 亮起 PIP 预警)'
-                    : 'Meets Expectations (符合预期 · 60分及格)'}
-                </div>
+            <div>
+              <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">
+                ANNUAL PERFORMANCE REVIEW (年度绩效考评)
+              </div>
+              <div className="font-bold text-sm text-zinc-100">
+                {gameState.story_flags.last_perf_rating === 'EE'
+                  ? 'Exceeds Expectations (卓越 · 顶格激励)'
+                  : gameState.story_flags.last_perf_rating === 'NI'
+                  ? 'Needs Improvement (待改进 · 亮起 PIP 预警)'
+                  : 'Meets Expectations (符合预期 · 60分及格)'}
+                {typeof gameState.story_flags.last_perf_raise === 'number' && (
+                  <span className="ml-1.5 font-normal opacity-90">
+                    {gameState.story_flags.last_perf_raise > 0 ? `· 调薪 +${gameState.story_flags.last_perf_raise.toFixed(1)}w TC` : '· 无调薪'}
+                  </span>
+                )}
               </div>
             </div>
             <span className={`px-2.5 py-1 rounded-full text-xs font-bold font-mono ${

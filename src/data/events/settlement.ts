@@ -393,19 +393,17 @@ export const settlementEvents: Record<string, GameEvent> = {
               // 不应被 Math.min(cap,...) 反向倒扣 TC(那会边涨薪文案边掉薪)。
               const raiseTo = (amt: number) => Math.max(s.tc, Math.min(levelCap, parseFloat((s.tc + amt).toFixed(1))));
 
+              // Perf review is surfaced entirely in the year-end statement's dedicated
+              // banner (rating + raise below), so it no longer bloats the event-feedback
+              // text (meritMsg is left for the founder branch only).
               if (perfRating === 'EE') {
                 const baseRefresh = newEconomy === 'bull' ? 3.0 : newEconomy === 'bear' ? 1.0 : 2.0;
-                const refreshAmt = parseFloat((baseRefresh * impactAmtMult).toFixed(1));
-                updatedTC = raiseTo(refreshAmt);
-                meritMsg = `【年度考评 · EE 卓越】年度 PSC 考评斩获 Exceeds Expectations！凭借卓越交付拿到 Merit 调薪与大额 RSU Refresh (+${(updatedTC - s.tc).toFixed(1)}w TC)！`;
+                updatedTC = raiseTo(parseFloat((baseRefresh * impactAmtMult).toFixed(1)));
               } else if (perfRating === 'ME') {
                 const baseRefresh = newEconomy === 'bull' ? 1.5 : newEconomy === 'bear' ? 0.5 : 1.0;
-                const refreshAmt = parseFloat((baseRefresh * Math.min(1.0, impactAmtMult)).toFixed(1));
-                updatedTC = raiseTo(refreshAmt);
-                meritMsg = `【年度考评 · ME 符合预期】稳定达成 Meets Expectations (60分及格线)，完成本职的同时守住了身心，拿到常规调薪 (+${(updatedTC - s.tc).toFixed(1)}w TC)！`;
-              } else {
-                meritMsg = `【年度考评 · NI 待改进】Manager 约谈指出你本年度交付不足、明显掉队 (Needs Improvement)，团队亮起 PIP 预警红灯，无奖金调薪，建议尽快内部转组或跳槽自救！`;
+                updatedTC = raiseTo(parseFloat((baseRefresh * Math.min(1.0, impactAmtMult)).toFixed(1)));
               }
+              // NI: no raise (updatedTC stays s.tc).
             } else if (s.job_type === 'startup_founder' && !s.laid_off) {
               if (newEconomy === 'bull') {
                 meritMsg = '【初创运营】初创团队业务在牛市大环境中健康增长，公司产品顺利推进！';
@@ -441,6 +439,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               side_hustle_canceled: false,
               // Annual Perf Review outcome + reset this year's action so it can't carry over.
               last_perf_rating: perfRating,
+              last_perf_raise: perfRating ? parseFloat((updatedTC - s.tc).toFixed(1)) : undefined,
               annual_action: undefined,
               // Only NI (as an employee) keeps a PIP warning; non-employee years (founder/
               // trader/unemployed) clear it so it can't linger stale into a later comeback.

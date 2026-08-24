@@ -76,6 +76,7 @@ export interface StoryFlags {
   annual_action?: 'sprint' | 'wlb' | 'transfer' | 'hop'; // 本年度职场重心选择 (每年结算后重置)
   team_focus?: 'ai_core' | 'wlb_tools'; // 内部转组后的赛道 (驱动后续 H1 事件走向;TPM 待 #32)
   last_perf_rating?: 'EE' | 'ME' | 'NI'; // 最近一次年度考评评级
+  last_perf_raise?: number; // 该次考评带来的调薪额 (w TC),用于账单横幅展示
   pip_warning?: boolean; // NI 考评触发的 PIP 预警红灯 (次年更易 NI，EE/ME 恢复则清除)
   [key: string]: unknown;
 }

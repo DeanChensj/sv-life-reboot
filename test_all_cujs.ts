@@ -2892,6 +2892,13 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   const qualifiedNext = typeof ev.choices[0].nextEventId === 'function' ? ev.choices[0].nextEventId({ ...qualifiedBase, ...qualified } as GameState) : ev.choices[0].nextEventId;
   assert(qualifiedNext === 'promo_celebration', 'Successful promo routes to promo_celebration');
 
+  // 3b. L3 -> L4 is a near-automatic entry-level promo: leetcode bar only, NO impact requirement
+  //     (mirrors hopTargetLevel, which only gates impact at L6+). Regression guard.
+  const l3Base: GameState = { ...base, level: 'L3', leetcode: 30, impact: 0 };
+  const l3Promo = ev.choices[0].effect(l3Base) as Partial<GameState>;
+  assert(l3Promo.level === 'L4', 'L3 with leetcode>=30 promotes to L4 even at impact 0 (no impact bar)');
+  assert(l3Promo.last_promo_age === l3Base.age, 'L3->L4 stamps last_promo_age on success');
+
   // 4. Giving credit to mentor retains mentor as ally
   const generous = ev.choices[1].effect(base) as Partial<GameState>;
   assert(generous.npcs?.mentor?.status === 'ally', 'Giving credit makes mentor an ally');

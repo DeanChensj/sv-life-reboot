@@ -99,8 +99,10 @@ export const dilemmaEvents: Record<string, GameEvent> = {
           let reqDesc = '';
 
           if (norm === 'L3') {
-            reqPassed = s.leetcode >= 30 && (s.impact || 0) >= 3;
-            reqDesc = '晋升 L4 需算法>=30 且 产出>=3';
+            // L3→L4 是准自动的入门级晋升,只看基本技术竞争力,不设 impact 门槛
+            // (与 hopTargetLevel 一致:impact 门槛从 L6 Staff 才开始)。
+            reqPassed = s.leetcode >= 30;
+            reqDesc = '晋升 L4 需算法>=30';
             if (reqPassed) {
               nextLevel = 'L4';
               tcIncrease = 4.5;

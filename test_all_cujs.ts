@@ -2847,6 +2847,58 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 54 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 55: Credit grab dilemma integrity (anti-same-year-promo & leetcode/impact bar)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 55] Credit grab dilemma: anti-same-year promo & tech bar verification ---');
+  const ev = events['dilemma_credit_grab_mentor'];
+  assert(!!ev, 'dilemma_credit_grab_mentor event exists');
+  assert(ev.choices.length === 2, 'dilemma_credit_grab_mentor has 2 choices');
+
+  const base: GameState = {
+    ...generateInitialState(),
+    age: 26,
+    last_promo_age: 25,
+    level: 'L4',
+    job_type: 'big_tech',
+    company: 'meta',
+    tc: 28.5,
+    leetcode: 30,
+    impact: 4,
+    health: 70,
+  } as GameState;
+
+  // 1. Cannot grab credit in the same year as a promotion
+  const sameYearPromoState: GameState = { ...base, age: 25, last_promo_age: 25 };
+  assert(ev.choices[0].condition!(sameYearPromoState) === false, 'Credit grab choice disabled if just promoted this year');
+
+  // 2. Under-qualified candidate (L4 attempting L5 with low leetcode/impact)
+  const underqualified = ev.choices[0].effect(base) as Partial<GameState>;
+  assert(underqualified.level === 'L4', 'Underqualified candidate is not promoted to L5');
+  assert(underqualified.last_promo_age !== base.age, 'Failed promo does not stamp last_promo_age');
+  assert((underqualified.tc as number) < base.tc + 3, 'Failed promo receives only project bonus');
+  assert(underqualified.npcs?.mentor?.status === 'departed', 'Mentor departs on credit grab attempt');
+  const underqualifiedNext = typeof ev.choices[0].nextEventId === 'function' ? ev.choices[0].nextEventId({ ...base, ...underqualified } as GameState) : ev.choices[0].nextEventId;
+  assert(underqualifiedNext !== 'promo_celebration', 'Failed promo does not route to promo_celebration');
+
+  // 3. Qualified candidate (L4 attempting L5 with leetcode >= 45 and impact >= 8)
+  const qualifiedBase: GameState = { ...base, leetcode: 50, impact: 10 };
+  const qualified = ev.choices[0].effect(qualifiedBase) as Partial<GameState>;
+  assert(qualified.level === 'L5 (Senior)', 'Qualified candidate is promoted to L5 (Senior)');
+  assert(qualified.last_promo_age === qualifiedBase.age, 'Successful promo stamps last_promo_age');
+  assert((qualified.tc as number) >= qualifiedBase.tc + 6, 'Successful promo gets senior TC jump');
+  assert(qualified.npcs?.mentor?.status === 'departed', 'Mentor departs on successful credit grab');
+  const qualifiedNext = typeof ev.choices[0].nextEventId === 'function' ? ev.choices[0].nextEventId({ ...qualifiedBase, ...qualified } as GameState) : ev.choices[0].nextEventId;
+  assert(qualifiedNext === 'promo_celebration', 'Successful promo routes to promo_celebration');
+
+  // 4. Giving credit to mentor retains mentor as ally
+  const generous = ev.choices[1].effect(base) as Partial<GameState>;
+  assert(generous.npcs?.mentor?.status === 'ally', 'Giving credit makes mentor an ally');
+
+  console.log('✅ CUJ 55 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {
@@ -2855,4 +2907,5 @@ if (failedAssertions === 0) {
   console.error(`❌ ${failedAssertions} ASSERTIONS FAILED!`);
   process.exit(1);
 }
+
 

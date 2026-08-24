@@ -169,12 +169,7 @@ export const settlementEvents: Record<string, GameEvent> = {
              companyMsg = ' 【休假恢复】充沛的休息与离职休假让你的身心彻底康复大复活 (健康 +15)。';
            }
            
-           let petHealthBoost = 0;
-           let petMsg = '';
-           if (s.has_pet) {
-             petHealthBoost = 2;
-             petMsg = ` 【宠物陪伴】家里的${s.pet_name || '宠物'}每天治愈着你的心神 (健康 +2)。`;
-           }
+           const petHealthBoost = s.has_pet ? 2 : 0;
 
            // Day 1 CPT 学业负担:白天全职写代码、晚上/周末应付水硕课程与作业,精力被持续透支 (健康 -4)。
            let day1CptHealthHit = 0;
@@ -575,7 +570,6 @@ export const settlementEvents: Record<string, GameEvent> = {
                 gcMsg,
                 day1CptMsg,
                 iccMsg,
-                petMsg,
                 autoStockSellMsg,
                 economyMsg,
               ].map(m => (m ? m.trim() : '')).filter(Boolean).join('\n'),

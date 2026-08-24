@@ -1992,15 +1992,19 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 {
   console.log('--- [CUJ 37] Coasting WLB 封顶 L4 + 年度考评 EE/ME/NI ---');
   const coast = events['sv_daily_life'].choices.find((c) => c.text.includes('按部就班'))!;
-  assert(!!coast, 'sv_daily_life 有【按部就班 · 稳健 WLB】选项');
+  assert(!!coast, 'sv_daily_life 有【按部就班】选项');
+  assert(!coast.text.includes('· 稳健 WLB'), '【按部就班】标题不再冗余携带“· 稳健 WLB”');
 
-  // 满资历高算法 L4 走按部就班,不能自然升到 L5(必须内卷);且设 annual_action=wlb。
+  // 满资历高算法 L4 走按部就班,不能自然升到 L5(必须内卷);且设 annual_action=wlb，且不白送算法和产出。
   const l4Ripe = (over: Partial<GameState>): GameState => ({
     ...generateInitialState(), job_type: 'big_tech', company: 'google', level: 'L4',
     leetcode: 100, age: 40, last_promo_age: 30, health: 90, tc: 40, status: 'playing', ...over,
   } as GameState);
   for (let i = 0; i < 30; i++) {
-    assert(coast.effect(l4Ripe({})).level !== 'L5 (Senior)', '按部就班不能自然把 L4 升到 L5');
+    const res = coast.effect(l4Ripe({}));
+    assert(res.level !== 'L5 (Senior)', '按部就班不能自然把 L4 升到 L5');
+    assert(res.leetcode === undefined, '按部就班不白送算法 LeetCode');
+    assert(res.impact === undefined, '按部就班不白送突破性业务产出 Impact');
   }
   assert((coast.effect(l4Ripe({})).story_flags as Record<string, unknown> | undefined)?.annual_action === 'wlb', '按部就班设 annual_action=wlb');
 

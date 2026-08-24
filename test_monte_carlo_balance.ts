@@ -45,7 +45,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     let chosen: Choice;
     if (currentEventId === 'sv_daily_life') {
       if (state.health < 60) {
-        const healChoice = validChoices.find(c => c.text.includes('躺平') || c.text.includes('WLB') || c.text.includes('火人节'));
+        const healChoice = validChoices.find(c => c.text.includes('躺平') || c.text.includes('按部就班') || c.text.includes('养生') || c.text.includes('火人节'));
         chosen = healChoice || validChoices[0];
       } else if (state.leetcode < 40) {
         const grindChoice = validChoices.find(c => c.text.includes('刷题跳槽') || c.text.includes('疯狂内卷'));

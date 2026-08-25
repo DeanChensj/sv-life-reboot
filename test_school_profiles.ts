@@ -16,20 +16,20 @@ const check = (name: string, got: unknown, want: unknown) => {
 const mkStudent = (over: Partial<GameState>): GameState =>
   ({ ...generateInitialState(), job_type: undefined, ...over } as unknown as GameState);
 
-// 1. Undergrad label checks (CS ranking ladder: Top4 / Top30 / Top100 / 国内)
-check('undergrad label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu' })).companyLabel, 'CMU (Top 4)');
-check('undergrad label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb' })).companyLabel, '理工大U (Top 30)');
-check('undergrad label state', getJobDisplayInfo(mkStudent({ school: 'state' })).companyLabel, 'SJSU (州立)');
+// 1. Undergrad label checks (CS ranking ladder: CMU / 理工大U / SJSU / 国内 985/211)
+check('undergrad label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu' })).companyLabel, 'CMU');
+check('undergrad label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb' })).companyLabel, '理工大U');
+check('undergrad label state', getJobDisplayInfo(mkStudent({ school: 'state' })).companyLabel, 'SJSU');
 check('undergrad label cn', getJobDisplayInfo(mkStudent({ school: 'cn' })).companyLabel, '国内 985/211');
 
 // 2. Master label checks
-check('master label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_master: true })).companyLabel, 'CMU CS 硕士');
-check('master label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_master: true })).companyLabel, '大U CS 硕士');
-check('master label state', getJobDisplayInfo(mkStudent({ school: 'state', is_master: true })).companyLabel, 'SJSU CS 硕士');
+check('master label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_master: true })).companyLabel, 'CMU');
+check('master label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_master: true })).companyLabel, '理工大U');
+check('master label state', getJobDisplayInfo(mkStudent({ school: 'state', is_master: true })).companyLabel, 'SJSU');
 
 // 3. PhD lab label checks
-check('phd lab cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_phd: true })).companyLabel, 'CMU 博士实验室');
-check('phd lab ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_phd: true })).companyLabel, '大U 博士实验室');
+check('phd lab cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_phd: true })).companyLabel, 'CMU');
+check('phd lab ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_phd: true })).companyLabel, '理工大U');
 
 // School opening stat bonuses (differentiation) — locked so a rebalance is deliberate.
 check('cmu leetcodeBonus', SCHOOL_PROFILES.cmu.leetcodeBonus, 7);

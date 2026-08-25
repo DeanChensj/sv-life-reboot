@@ -1,4 +1,4 @@
-import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb } from './src/data/events';
+import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb, pickCollegeEvent, collegeNextStage } from './src/data/events';
 import { ACHIEVEMENTS, checkAndUnlockAchievements } from './src/data/achievements';
 import { COMPANY_PROFILES } from './src/data/companyProfiles';
 import { GameState, Choice } from './src/types';
@@ -1451,7 +1451,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Student HUD derivation
   let jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.companyHeaderLabel === '就读院校', 'HUD shows 就读院校');
-  assert(jobInfo.companyLabel === '理工大U (Top 30)', 'HUD displays 理工大U (Top 30)');
+  assert(jobInfo.companyLabel === '理工大U', 'HUD displays 理工大U');
   assert(jobInfo.levelHeaderLabel === '在读学位', 'HUD shows 在读学位');
   assert(jobInfo.levelLabel === '本科在读', 'HUD displays 本科在读');
 
@@ -1486,7 +1486,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Master Student HUD derivation
   jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.levelLabel === '硕士在读', 'HUD displays 硕士在读');
-  assert(jobInfo.companyLabel === '大U CS 硕士', 'HUD displays 大U CS 硕士');
+  assert(jobInfo.companyLabel === '理工大U', 'HUD displays 理工大U');
 
   // 5. Master Year 1: Complete Master's Studies
   res = stepChoice(state, 'us_master_year1', 0); // 加急刷题
@@ -3036,6 +3036,72 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert((eliteEff.message || '').includes('【校友黑手党直通】'), 'Elite referral shows 校友黑手党 message');
 
   console.log('✅ CUJ 57 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 58: College Event Deduplication & oncePerLife Integrity
+// Verify that all 12 college random events have oncePerLife=true, that seen
+// events are excluded from subsequent college event pools, and that HUD school
+// labels are unified and concise (e.g. CMU/理工大U/SJSU across undergrad/grad).
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 58] College Event Deduplication & Concise School Labels ---');
+  const collegePool = [
+    'college_hackathon_boom', 'college_gpa_crisis', 'college_business_pitch', 'college_spring_gala',
+    'college_dorm_roommate', 'college_road_trip', 'college_internship_grind', 'college_heartbreak',
+    'college_health_scare', 'college_side_gig', 'college_culture_shock', 'college_viral_moment',
+  ];
+
+  // 1. Verify every college event is marked oncePerLife
+  for (const id of collegePool) {
+    assert(events[id]?.oncePerLife === true, `College event ${id} has oncePerLife=true`);
+  }
+
+  // 2. Verify state transition sets ${id}_seen automatically
+  const s0 = generateInitialState(nextCujSeed());
+  const choice = events['college_gpa_crisis'].choices[0];
+  const eff = typeof choice.effect === 'function' ? choice.effect(s0) : choice.effect || {};
+  const transitionRes = applyStateTransition(s0, eff, { eventId: 'college_gpa_crisis' });
+  assert(hasSeen(transitionRes.nextState, 'college_gpa_crisis') === true, 'college_gpa_crisis automatically marked seen');
+
+  // 3. Verify pickCollegeEvent excludes seen events
+  // Seed with 11 of the 12 events marked seen; the 12th must be the only candidate if picked.
+  const seenFlags: Record<string, boolean> = {};
+  for (let i = 0; i < collegePool.length - 1; i++) {
+    seenFlags[`${collegePool[i]}_seen`] = true;
+  }
+  const almostFullState: GameState = {
+    ...s0,
+    story_flags: seenFlags,
+  } as GameState;
+
+  // Run pickCollegeEvent 50 times — it should only ever return the remaining event or collegeNextStage
+  const lastEvent = collegePool[collegePool.length - 1];
+  const nextStage = collegeNextStage(almostFullState);
+  for (let i = 0; i < 50; i++) {
+    const picked = pickCollegeEvent(almostFullState);
+    assert(picked === lastEvent || picked === nextStage, `pickCollegeEvent only picks remaining unvisited event (${lastEvent}) or next stage (${nextStage})`);
+  }
+
+  // When all 12 events are seen, pickCollegeEvent must always return next stage
+  seenFlags[`${lastEvent}_seen`] = true;
+  const allSeenState: GameState = {
+    ...s0,
+    story_flags: seenFlags,
+  } as GameState;
+  for (let i = 0; i < 20; i++) {
+    assert(pickCollegeEvent(allSeenState) === nextStage, 'pickCollegeEvent returns next stage when all college events seen');
+  }
+
+  // 4. Verify HUD school labels are concise across degrees
+  const cmuUndergrad = getJobDisplayInfo({ ...s0, school: 'cmu', is_master: false, is_phd: false, job_type: undefined } as GameState);
+  const cmuMaster = getJobDisplayInfo({ ...s0, school: 'cmu', is_master: true, is_phd: false, job_type: undefined } as GameState);
+  const cmuPhd = getJobDisplayInfo({ ...s0, school: 'cmu', is_master: false, is_phd: true, job_type: undefined } as GameState);
+  assert(cmuUndergrad.companyLabel === 'CMU', 'CMU undergrad HUD shows CMU');
+  assert(cmuMaster.companyLabel === 'CMU', 'CMU master HUD shows CMU');
+  assert(cmuPhd.companyLabel === 'CMU', 'CMU PhD HUD shows CMU');
+
+  console.log('✅ CUJ 58 Passed\n');
 }
 
 console.log(`\n======================================================`);

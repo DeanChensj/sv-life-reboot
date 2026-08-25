@@ -880,6 +880,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'college_hackathon_boom': {
     id: 'college_hackathon_boom',
+    oncePerLife: true,
     title: '【校园突发】全美 Hackathon AI 助手爆发',
     description: '校园阶段，你组队参加全美大学黑客松。主评委是 Stanford 博士、AI 开源先锋 Alex 师兄，以及大厂总监 Dave。比赛倒计时 2 小时，你们的项目因为并发逻辑出现卡顿！',
     choices: [
@@ -924,6 +925,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'college_gpa_crisis': {
     id: 'college_gpa_crisis',
+    oncePerLife: true,
     title: '【校园突发】地狱级 Hard 课 (Curves 打分)',
     description: '教授出了地狱级期末试题，全班平均分只有 35 分！曲线打分决定你的 GPA 生死。',
     choices: [
@@ -942,6 +944,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'college_business_pitch': {
     id: 'college_business_pitch',
+    oncePerLife: true,
     title: '【校园突发】校内商业 Pitch 创投大赛',
     description: '在校园创投大赛上，你面对几位来自硅谷沙丘路 (Sand Hill Road) VC 的合伙人展示商业模型推介！',
     choices: [
@@ -960,6 +963,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
   'college_spring_gala': {
     id: 'college_spring_gala',
+    oncePerLife: true,
     title: '【校园突发】春季草坪音乐节与后台偶遇',
     description: '春季草坪音乐节盛大开启！作为音乐节吉他手演完后，你在后台擦汗时遇到了一位赞赏你琴技的心动同学...',
     choices: [
@@ -978,6 +982,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_dorm_roommate': {
      id: 'college_dorm_roommate',
+     oncePerLife: true,
      title: '【校园突发】宿舍室友的显卡矿场',
      description: '你的印度室友 Raj 半夜偷偷用宿舍电费跑 6 张 4090 挖矿/训模型，房间热得像桑拿房，跳闸把你的作业进度也搞没了。',
      choices: [
@@ -996,6 +1001,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_road_trip': {
      id: 'college_road_trip',
+     oncePerLife: true,
      title: '【校园突发】春假 1 号公路自驾',
      description: '春假到了！室友们租了辆车，喊你一起沿加州 1 号公路自驾去 LA / 拉斯维加斯浪一圈。可是下周就是期中考。',
      choices: [
@@ -1015,6 +1021,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_internship_grind': {
      id: 'college_internship_grind',
+     oncePerLife: true,
      title: '【校园突发】大二逆袭抢到大厂实习',
      description: '你竟然在大二就海投中了一个硅谷大厂的暑期实习 Offer！Mentor 暗示：好好干，转正 Return Offer 有戏。',
      choices: [
@@ -1033,6 +1040,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_heartbreak': {
      id: 'college_heartbreak',
+     oncePerLife: true,
      title: '【校园突发】异地恋的最后一通电话',
      description: '交往了两年的对象在电话那头说：“我们……还是算了吧。太平洋两岸的时差和距离，我撑不住了。” 你在深夜的宿舍楼道里久久没能说出话。',
      choices: [
@@ -1052,6 +1060,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_health_scare': {
      id: 'college_health_scare',
+     oncePerLife: true,
      title: '【校园突发】Red Bull 猝倒进急诊',
      description: '连续通宵赶 due 加灌了五罐 Red Bull 后，你在机房心悸眼前发黑，被同学送进了校医院急诊。医生严肃警告你：再这么熬，命都要没了。',
      choices: [
@@ -1070,6 +1079,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_side_gig': {
      id: 'college_side_gig',
+     oncePerLife: true,
      title: '【校园突发】课余打工赚生活费',
      description: '生活费有点紧，你决定找份课余兼职补贴一下。摆在你面前有两个选择。',
      choices: [
@@ -1088,6 +1098,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_culture_shock': {
      id: 'college_culture_shock',
+     oncePerLife: true,
      title: '【校园突发】第一个感恩节',
      description: '感恩节假期，宿舍楼空了大半，本地同学都回家过节。你的美国室友热情地邀请你去他家吃火鸡大餐，可你有点社恐，也担心英语跟不上。',
      choices: [
@@ -1106,6 +1117,7 @@ export const initializationEvents: Record<string, GameEvent> = {
 
    'college_viral_moment': {
      id: 'college_viral_moment',
+     oncePerLife: true,
      title: '【校园突发】一条推文半夜爆火',
      description: '你随手发的一条吐槽“湾区码农悲惨生活”的段子/AI 梗图在 X (Twitter) 和小红书上一夜爆火，涨粉几万，连科技大 V 都转发了！',
      choices: [

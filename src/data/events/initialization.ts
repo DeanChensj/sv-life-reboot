@@ -133,36 +133,44 @@ export const initializationEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【美本 · 生化环材】天天配试剂做实验，跑毒逃离天坑实验室 (抗压极强/零代码基础)',
+        costBadge: '本科尾费 $5w',
+        // 拿到美国学位并非白得:补收一笔场外本科尾费(低于直接 CS 本科,因是非科班且大头场外已付),
+        // 消除"免费拿美国学位+F1"相对直接本科的不对称。
         effect: (s) => ({
+          cash: Math.max(0, s.cash - 5),
           has_us_degree: true,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
           health: Math.min(100, s.health + 8),
           leetcode: Math.max(0, s.leetcode - 4),
           story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us', zhuanma_major: 'bio_chem' },
-          message: '在生物/化学实验室里吸了四年试剂，你彻底下定决心逃离天坑，投身代码的世界！',
+          message: '在生物/化学实验室里吸了四年试剂，你彻底下定决心逃离天坑，投身代码的世界（结清了最后一学期学费 $5w）！',
         }),
         nextEventId: 'zhuanma_decision',
       },
       {
         text: '【美本 · 商科/社科】商科文科求职内卷，转战科技赛道',
+        costBadge: '本科尾费 $5w',
         effect: (s) => ({
+          cash: Math.max(0, s.cash - 5),
           has_us_degree: true,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
           charm: Math.min(s.max_charm ?? 25, s.charm + 4),
           network: Math.min(100, (s.network || 10) + 8),
           story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us', zhuanma_major: 'business_humanities' },
-          message: '商科与文科求职竞争残酷，你带着出色的情商与沟通能力，毅然决定转战硅谷技术赛道！',
+          message: '商科与文科求职竞争残酷，你带着出色的情商与沟通能力，毅然决定转战硅谷技术赛道（结清了最后一学期学费 $5w）！',
         }),
         nextEventId: 'zhuanma_decision',
       },
       {
         text: '【美本 · 机械/电子/数理】理工硬核背景，高数线代功底扎实跨界转码',
+        costBadge: '本科尾费 $5w',
         effect: (s) => ({
+          cash: Math.max(0, s.cash - 5),
           has_us_degree: true,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
           leetcode: Math.min(100, s.leetcode + 10),
           story_flags: { ...(s.story_flags || {}), non_cs_background: true, zhuanma_origin: 'us', zhuanma_major: 'hard_engineering' },
-          message: '凭借硬核的工科数学功底，你学起数据结构和算法飞快，决心跨界成为软件工程师！',
+          message: '凭借硬核的工科数学功底，你学起数据结构和算法飞快，决心跨界成为软件工程师（结清了最后一学期学费 $5w）！',
         }),
         nextEventId: 'zhuanma_decision',
       },
@@ -728,13 +736,13 @@ export const initializationEvents: Record<string, GameEvent> = {
       },
       {
         text: '【无抵押留学贷款 + TA 助教】申请美国 CS 硕士，自力更生逆袭 (需评估算法/背景)',
-        costBadge: '首期 $2w',
+        costBadge: '首期 $3w',
         reqBadge: '需算法与 GPA 评估',
         effect: (s) => {
           const loanPass = (s.leetcode >= 18) || (gameRandom() < 0.40 + (s.luck / 200));
           if (loanPass) {
             return { 
-              cash: Math.max(0, s.cash - 2), 
+              cash: Math.max(0, s.cash - 3), 
               visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', 
               school: 'state',
               has_us_degree: true,
@@ -799,11 +807,11 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'us_master_year1',
       },
       {
-        text: '【申请留学贷款赴美读硕】凭算法与 GPA 申请无抵押留学贷款 (首期 $2w)',
-        costBadge: '首期 $2w',
-        condition: (s) => s.cash >= 2,
+        text: '【申请留学贷款赴美读硕】凭算法与 GPA 申请无抵押留学贷款 (首期 $3w)',
+        costBadge: '首期 $3w',
+        condition: (s) => s.cash >= 3,
         effect: (s) => ({
-          cash: s.cash - 2,
+          cash: s.cash - 3,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
           school: 'state',
           has_us_degree: true,
@@ -1320,10 +1328,11 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'cn_work_mid',
       },
       {
-        text: '【申请美硕】拿着积蓄申请美国 CS 硕士 (顺利赴美)',
-        condition: (s) => s.cash >= 4,
+        text: '【申请美硕】拿着积蓄申请美国 CS 硕士 (州立性价比项目 · 顺利赴美)',
+        costBadge: '花费 $5w',
+        condition: (s) => s.cash >= 5,
         effect: (s) => ({
-          cash: s.cash - 4,
+          cash: s.cash - 5,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
           company: undefined,
           job_type: undefined,
@@ -1400,10 +1409,11 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'us_master_year1',
       },
       {
-        text: '【全款申请美硕】手握大厂积蓄，申请美国 CS 硕士深造',
-        condition: (s) => s.cash >= 4,
+        text: '【全款申请美硕】手握大厂积蓄，申请美国 CS 硕士深造 (州立性价比项目)',
+        costBadge: '花费 $5w',
+        condition: (s) => s.cash >= 5,
         effect: (s) => ({
-          cash: s.cash - 4,
+          cash: s.cash - 5,
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)',
           company: undefined,
           job_type: undefined,
@@ -1452,13 +1462,13 @@ export const initializationEvents: Record<string, GameEvent> = {
           job_type: undefined,
           level: undefined,
           tc: 0,
-          school: 'cmu',
+          school: 'state',
           has_us_degree: true,
           is_master: true,
           leetcode: Math.min(100, s.leetcode + 15),
           age: s.age + 1,
           year: s.year + 1,
-          message: '带着十万美金积蓄与大厂资深架构经验，你飞赴北美名校读研！深厚的工程底子让你在求职市场所向披靡！'
+          message: '带着十万美金积蓄与大厂资深架构经验，你飞赴北美州立名校读研！深厚的工程底子让你在求职市场所向披靡！'
         }),
         nextEventId: 'us_master_year1',
       },
@@ -1532,7 +1542,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const pass = (s.leetcode >= 20) || (gameRandom() < 0.50 + (s.luck / 200));
           return pass
-            ? { cash: Math.max(0, s.cash - 2), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', school: 'state', has_us_degree: true, is_master: true, age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
+            ? { cash: Math.max(0, s.cash - 3), visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'F1 (学生)', school: 'state', has_us_degree: true, is_master: true, age: s.age, health: Math.min(100, s.health + 20), message: ' 申请成功！凭借在国内大厂积累的工程项目经历，你顺利通过无抵押贷款审核与 Master 录取，开启赴美新生活！' }
             : { health: s.health - 10, message: ' 申请被拒！留学贷款机构与校方评估认为你负债风险过高，贷款未获批准。你只能留在本地继续调养或打工。' };
         },
         nextEventId: (s: GameState) => s.is_master ? 'us_master_year1' : ((s.level?.includes('资深') || s.level?.includes('Tech Lead')) ? 'cn_work_late' : 'cn_work_mid')

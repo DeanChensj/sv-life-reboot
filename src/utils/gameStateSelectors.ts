@@ -166,13 +166,7 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
     companyClassName = 'text-purple-300 bg-purple-500/10 border-purple-500/20 font-bold';
   } else if (!state.job_type) {
     const profile = getSchoolProfile(state.school);
-    if (state.is_phd) {
-      companyLabel = profile?.phdLabLabel || '北美顶尖 AI 实验室';
-    } else if (state.is_master) {
-      companyLabel = profile?.masterLabel || '北美 CS 硕士';
-    } else {
-      companyLabel = profile?.undergradLabel || ((state.school === 'cn' || !state.has_us_degree) ? '国内重点高校' : '北美本科高校');
-    }
+    companyLabel = profile?.undergradLabel || ((state.school === 'cn' || !state.has_us_degree) ? '国内重点高校' : '北美高校');
     companyClassName = profile?.className || 'text-sky-300 bg-sky-500/10 border-sky-500/20 font-bold';
   }
 

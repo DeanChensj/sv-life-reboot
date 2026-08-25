@@ -52,8 +52,6 @@ export interface StoryFlags {
   milestone_3000w?: boolean;
   acqui_hire_done?: boolean;
   icc_hired?: boolean;
-  icc_survivor?: boolean;
-  ambulance_survived?: boolean;
   sqqq_win?: boolean;
   rsu_cliff_done?: boolean;
   wsb_wolf_win?: boolean;

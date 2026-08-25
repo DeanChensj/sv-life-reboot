@@ -351,11 +351,11 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('cats_and_dogs')) newlyUnlocked.push('cats_and_dogs');
   }
 
-  if (state.story_flags?.icc_survivor || (state.company !== 'icc' && state.story_flags?.icc_hired)) {
+  if (state.company !== 'icc' && state.story_flags?.icc_hired) {
     if (unlockAchievement('icc_survivor')) newlyUnlocked.push('icc_survivor');
   }
 
-  if (state.story_flags?.ambulance_survived || state.story_flags?.icu_crisis_survived) {
+  if (state.story_flags?.icu_crisis_survived) {
     if (unlockAchievement('ambulance_survivor')) newlyUnlocked.push('ambulance_survivor');
   }
 

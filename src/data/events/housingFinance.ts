@@ -172,7 +172,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         // Foreclosure recovers real buyer equity only — nothing if parents funded it
         // (closes the parents-buy → default-sell free-cash exploit). Also stop the
         // phantom ADU rent: clear has_adu_rented and remove the ADU income portion.
-        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: Math.max(0, (s.rental_income || 0) - 1.5), health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
+        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0), health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -180,7 +180,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         condition: (s) => s.cash >= 100 && s.job_type !== 'startup_founder',
         // Selling ADDS home equity (was subtracting $50w while keeping the house).
         // Actually liquidate the home and start the FOUNDER path (not the employee event).
-        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: Math.max(0, (s.rental_income || 0) - 1.5), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, tc: 6, level: undefined, company: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
+        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, tc: 6, level: undefined, company: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
         nextEventId: 'founder_annual_strategy',
       }
     ]

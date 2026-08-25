@@ -474,8 +474,8 @@ export function applyStateTransition(
     newState.message = context.customMessage + gcHopNote + liquidationNote;
   } else {
     const extraNotes = gcHopNote + liquidationNote;
-    if (extraNotes && newState.message) {
-      newState.message = newState.message + extraNotes;
+    if (extraNotes) {
+      newState.message = (newState.message || '') + extraNotes;
     }
   }
 

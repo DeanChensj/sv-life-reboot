@@ -161,7 +161,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
         </div>
 
         {/* 2. Green Card Progress Bar (Visible during immigration phase) */}
-        {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || gameState.visa === '公民' || (gameState.job_type && gameState.job_type !== 'unemployed')) && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId) && (
+        {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || gameState.visa === '公民' || (gameState.job_type && gameState.job_type !== 'unemployed' && gameState.job_type !== 'cn_tech')) && !['choose_trait', 'choose_year', 'choose_school', 'end'].includes(currentEventId) && (
           <div className="col-span-2 md:col-span-4 bg-zinc-900/95 border border-emerald-500/30 p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden shadow-lg backdrop-blur-xl">
             <div className="flex flex-row justify-between items-center mb-2">
               <div className="text-emerald-400 text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-[0.18em] flex items-center gap-1.5">

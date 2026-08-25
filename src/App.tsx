@@ -700,7 +700,7 @@ export default function App() {
                   });
                 }
 
-                const isHousePurchase = Boolean(nextState.housing_name && nextState.housing_name !== gameState.housing_name && nextState.housing_name.includes('独立屋') || nextState.housing_name?.includes('豪宅'));
+                const isHousePurchase = Boolean(nextState.housing_name && nextState.housing_name !== gameState.housing_name && (nextState.housing_name.includes('独立屋') || nextState.housing_name.includes('豪宅')));
                 triggerDopamineFeedback(pills, isHousePurchase ? 'gold_celebration' : 'none');
 
                 setGameState(nextState);
@@ -822,7 +822,7 @@ export default function App() {
             </span>
 
             {/* Green Card Progress Tag (Mobile HUD) */}
-            {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed')) && (
+            {((gameState.gc_progress || 0) > 0 || gameState.visa === '绿卡' || (gameState.job_type && gameState.job_type !== 'unemployed' && gameState.job_type !== 'cn_tech')) && (
               <span className="flex items-center gap-1.5 font-bold text-[10px] text-emerald-300 shrink-0 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30 tabular-nums">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 GC: {gameState.visa === '绿卡' ? '100%' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}%`}

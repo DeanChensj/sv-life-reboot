@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import type { GameState } from '../types';
 import { useFocusTrap } from '../utils/useFocusTrap';
 import { getCompanyProfile } from '../data/companyProfiles';
+import { isOwnedHousing } from '../constants/gameConstants';
 
 interface CareerTimelineModalProps {
   gameState: GameState;
@@ -869,7 +870,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                 </div>
                 <div className="text-xs text-zinc-400">
                   {gameState.rental_income && gameState.rental_income > 0 
-                    ? `拥有被动租金流 +$${gameState.rental_income}w/年，名下房产: ${(gameState.investment_properties || []).length + (gameState.has_housing ? 1 : 0)} 套`
+                    ? `拥有被动租金流 +$${gameState.rental_income}w/年，名下房产: ${(gameState.investment_properties || []).length + (isOwnedHousing(gameState.housing_name) ? 1 : 0)} 套`
                     : '目前依靠流动现金与证券投资'}
                 </div>
               </div>

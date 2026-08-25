@@ -84,7 +84,7 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
 
   // 1. Numeric & Field Polyfills for legacy v0/v1 saves
   const sanitizedCash = typeof rawState.cash === 'number' && !isNaN(rawState.cash) ? rawState.cash : fallbackState.cash;
-  const sanitizedStocks = typeof rawState.stocks === 'number' && !isNaN(rawState.stocks) ? rawState.stocks : 0;
+  const sanitizedStocks = typeof rawState.stocks === 'number' && !isNaN(rawState.stocks) ? Math.max(0, rawState.stocks) : 0;
   const sanitizedHealth = typeof rawState.health === 'number' && !isNaN(rawState.health) ? Math.max(0, Math.min(100, rawState.health)) : fallbackState.health;
   const sanitizedLeetcode = typeof rawState.leetcode === 'number' && !isNaN(rawState.leetcode) ? Math.max(0, Math.min(100, rawState.leetcode)) : 0;
   // max_charm must be sanitized FIRST so it can safely serve as the charm ceiling.
@@ -95,7 +95,7 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
   const sanitizedAge = typeof rawState.age === 'number' && !isNaN(rawState.age) ? rawState.age : 18;
   const sanitizedYear = typeof rawState.year === 'number' && !isNaN(rawState.year) ? rawState.year : 2018;
   const sanitizedWinThreshold = typeof rawState.win_threshold === 'number' && !isNaN(rawState.win_threshold) ? rawState.win_threshold : 500;
-  const sanitizedLuck = typeof rawState.luck === 'number' && !isNaN(rawState.luck) ? Math.max(0, Math.min(100, rawState.luck)) : fallbackState.luck;
+  const sanitizedLuck = typeof rawState.luck === 'number' && !isNaN(rawState.luck) ? Math.max(0, Math.min(99, rawState.luck)) : fallbackState.luck;
   const sanitizedRent = typeof rawState.rent === 'number' && !isNaN(rawState.rent) ? Math.max(0, rawState.rent) : fallbackState.rent;
   const sanitizedGcProgress = typeof rawState.gc_progress === 'number' && !isNaN(rawState.gc_progress) ? Math.max(0, Math.min(5, rawState.gc_progress)) : fallbackState.gc_progress;
   const sanitizedVisa = typeof rawState.visa === 'string' && VALID_VISAS.has(rawState.visa) ? rawState.visa : fallbackState.visa;

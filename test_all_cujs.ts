@@ -1450,7 +1450,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // Verify Student HUD derivation
   let jobInfo = getJobDisplayInfo(state);
   assert(jobInfo.companyHeaderLabel === '就读院校', 'HUD shows 就读院校');
-  assert(jobInfo.companyLabel === '理工大U (Top 30)', 'HUD displays 理工大U (Top 30)');
+  assert(jobInfo.companyLabel === '理工大U', 'HUD displays 理工大U');
   assert(jobInfo.levelHeaderLabel === '在读学位', 'HUD shows 在读学位');
   assert(jobInfo.levelLabel === '本科在读', 'HUD displays 本科在读');
 

@@ -388,15 +388,15 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【不再唯唯诺诺】不再唯唯诺诺，开始在职场上重拳出击',
+        text: '【不再唯唯诺诺】手握绿卡重拳出击，硬刚组会抢占核心项目主导权 (进入职场政治)',
         condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
-        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '你拿着身份特权不再受气，在组会上直接反驳不合理的 Deadline。' }),
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', charm: Math.min(s.max_charm ?? 25, s.charm + 3), message: '【重拳出击】你拿着永久身份底气不再受气，在组会上直接硬刚不合理 Deadline 并主导核心技术方案，开始在职场政治中角逐话语权！' }),
         nextEventId: 'office_politics',
       },
       {
-        text: '【彻底摆烂】彻底摆烂，佛系上班',
+        text: '【彻底躺平摸鱼】掌握职场太极与神仙 WLB，领满薪水享受加州阳光 (健康 +30 · 现金 +10w)',
         condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
-        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '你开始掌握精湛的职场太极，每天做最少的工作拿足额工资，把精力花在周末去 Tahoe 滑雪上。' }),
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, age: s.age + 2, message: '【神仙 WLB】你彻底参透了职场太极真谛，每天做最轻松的活、领足额薪水与股票，周末去 Tahoe 滑雪与加州冲浪，身心大回血！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {

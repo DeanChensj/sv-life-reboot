@@ -23,13 +23,13 @@ check('undergrad label state', getJobDisplayInfo(mkStudent({ school: 'state' }))
 check('undergrad label cn', getJobDisplayInfo(mkStudent({ school: 'cn' })).companyLabel, '国内 985/211');
 
 // 2. Master label checks
-check('master label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_master: true })).companyLabel, 'CMU CS 硕士');
-check('master label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_master: true })).companyLabel, '大U CS 硕士');
-check('master label state', getJobDisplayInfo(mkStudent({ school: 'state', is_master: true })).companyLabel, 'SJSU CS 硕士');
+check('master label cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_master: true })).companyLabel, 'CMU');
+check('master label ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_master: true })).companyLabel, '理工大U');
+check('master label state', getJobDisplayInfo(mkStudent({ school: 'state', is_master: true })).companyLabel, 'SJSU');
 
 // 3. PhD lab label checks
-check('phd lab cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_phd: true })).companyLabel, 'CMU 博士实验室');
-check('phd lab ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_phd: true })).companyLabel, '大U 博士实验室');
+check('phd lab cmu', getJobDisplayInfo(mkStudent({ school: 'cmu', is_phd: true })).companyLabel, 'CMU');
+check('phd lab ucb', getJobDisplayInfo(mkStudent({ school: 'ucb', is_phd: true })).companyLabel, '理工大U');
 
 // School opening stat bonuses (differentiation) — locked so a rebalance is deliberate.
 check('cmu leetcodeBonus', SCHOOL_PROFILES.cmu.leetcodeBonus, 7);

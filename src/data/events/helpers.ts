@@ -213,7 +213,9 @@ export const pickCollegeEvent = (s: GameState): string => {
     'college_dorm_roommate', 'college_road_trip', 'college_internship_grind', 'college_heartbreak',
     'college_health_scare', 'college_side_gig', 'college_culture_shock', 'college_viral_moment',
   ];
-  return pool[Math.floor(gameRandom() * pool.length)];
+  const eligible = pool.filter((id) => !hasSeen(s, id));
+  if (eligible.length === 0) return collegeNextStage(s);
+  return eligible[Math.floor(gameRandom() * eligible.length)];
 };
 
 // Shared O1 (extraordinary-ability visa) approval probability, so every event that

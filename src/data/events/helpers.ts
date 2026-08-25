@@ -587,7 +587,12 @@ export const midYearEventRouter = (s: GameState): string => {
      }
      if (s.year >= 2024 && isCorporate && gameRandom() < 0.25) workEvents.push('ai_disruption_existential');
      if (isCorporate && gameRandom() < 0.25) workEvents.push('influencer_vp_drama');
-     if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && gameRandom() < 0.35) workEvents.push('high_level_reorg_domain_loss', 'midlife_management_pivot');
+      if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && gameRandom() < 0.35) {
+        workEvents.push('high_level_reorg_domain_loss');
+        // midlife_management_pivot 的前提是「年过 35 的中年危机」,故额外加 age 门禁,避免 28-33 岁被快速晋升的
+        // senior 吃到「35 岁中年危机」的假前提 (high_level_reorg_domain_loss 无年龄前提,不受此限)。
+        if (s.age >= 34) workEvents.push('midlife_management_pivot');
+      }
      if (s.visa === 'H1B (工签)' && !s.is_married && s.relationship_status !== 'married') workEvents.push('h1b_rfe_vs_parent_nag');
 
      // 宏观时代大事件（不带固定年份，按状态阶段触发）

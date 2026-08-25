@@ -949,14 +949,14 @@ export const careerEvents: Record<string, GameEvent> = {
 
           if (normLvl === 'L3') {
             // L3 升 L4 要求算法 >= 35 (达标且满 1 年晋升率极高，若满 2 年算法门槛可放宽至 30)
-            if (s.leetcode < 30 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (建议算法>=35)，建议多提升技术硬实力。' };
+            if (s.leetcode < 30 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (建议算法>=30)，建议多提升技术硬实力。' };
             const l3PassRate = 0.70 + coBonus + (s.leetcode / 200) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (gameRandom() < Math.min(0.95, l3PassRate) || yearsInGrade >= 2 || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 3.5, level: 'L4', impact: addImpact(s, 5), last_promo_age: s.age, message: isKingOfRoll ? '【卷王破格晋升】做题家底蕴彻底释放，你的 Perf 拿下顶格 EE 绩效轻松晋升至 L4！' : '恭喜！凭借过硬的算法功底与稳定交付，你顺利晋升为 L4 工程师！总包调薪 +$3.5w！' };
             }
           } else if (normLvl === 'L4') {
             // L4 升 L5 (Senior) 要求算法 >= 50 (资深工程师是硅谷终身职级 Terminal Level，多数人在 2~3 年内达成)
-            if (s.leetcode < 45 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别 (建议算法>=50)，独立项目主导深度需进一步沉淀。' };
+            if (s.leetcode < 45 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别 (建议算法>=45)，独立项目主导深度需进一步沉淀。' };
             const l4PassRate = 0.55 + coBonus + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 45 || yearsInGrade >= 3) && (gameRandom() < Math.min(0.90, l4PassRate) || (yearsInGrade >= 3 && s.leetcode >= 40) || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 6.0, level: 'L5 (Senior)', impact: addImpact(s, 7), last_promo_age: s.age, message: '轰动全组！你主导了核心子模块交付，顺利晋升为 L5 Senior 资深工程师！总包调薪 +$6.0w！' };
@@ -1867,16 +1867,18 @@ export const careerEvents: Record<string, GameEvent> = {
   'rto_wars': {
     id: 'rto_wars',
     title: '【考勤大战】RTO 强制回办公室与打卡风波',
-    description: 'CEO 突然宣布全员每周必须在办公室打卡 3 天，否则直接取消奖金甚至开除！你之前为了省房租偷偷搬到了便宜的外州/偏远地区，现在面临极大危机。',
+     description: 'CEO 突然宣布全员每周必须在办公室打卡 3 天，否则直接取消奖金甚至开除！疫情后不少人搬去便宜的外州/远郊远程办公，如今 RTO 大棒落下，你的通勤与居住安排都要重新盘算，一场考勤博弈在所难免。',
     choices: [
       {
-        text: '【搬回湾区租公寓】老老实实搬回湾区租昂贵的公寓 (房租重置为 $4w)',
+        text: '【回归湾区通勤】老老实实回到湾区就近租房/通勤，扛下高昂的居住成本 (房租至少 $4w)',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
-          rent: 4,
+          // 只上调不下调:已在昂贵湾区(房贷/高租)的玩家不会被"重置"成更低成本,
+          // 远程/远郊搬回的玩家则要承担至少 $4w 的湾区居住成本。
+          rent: Math.max(s.rent || 0, 4),
           health: s.health - 15,
           story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
-          message: '你极不情愿地回到了湾区，每个月的房租让你心如刀割，但至少保住了工作。'
+          message: '你重新安排了湾区的通勤与住处，每个月的居住成本让你心如刀割，但至少保住了工作。'
         }),
         nextEventId: h1ToH2Router
       },
@@ -2168,7 +2170,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router
       },
       {
-        text: '【甩锅大模型供应商】甩锅给大模型 API 供应商，申请专项赔偿 (消耗 $0.5w)',
+        text: '【甩锅大模型供应商】支付一笔补偿金把锅甩给大模型 API 供应商 (消耗 $0.5w)',
         condition: (s) => s.cash >= 0.5,
         effect: (s) => ({
           network: Math.max(0, (s.network || 0) - 2),
@@ -2844,7 +2846,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【战术跟进与留痕取证】在 Slack 回一句“Looking into it”，默默截图保存证据链',
         effect: (s) => ({
           health: Math.max(0, s.health - 2),
-          message: '【专业避坑与责任厘清】你深知盲目插手只会引发更大混乱。你慢条斯理地在群里跟进，同时保存了完整错误日志与未经代码评审的发布记录，周一复盘会上成功将责任撇得干干净净。'
+          network: (s.network || 0) + 2,
+          message: '【专业避坑与责任厘清】你深知盲目插手只会引发更大混乱。你慢条斯理地在群里跟进，同时保存了完整错误日志与未经代码评审的发布记录，周一复盘会上成功将责任撇得干干净净——顺带在管理层面前刷了一波"靠谱、有条理"的口碑。'
         }),
         nextEventId: h1ToH2Router
       },

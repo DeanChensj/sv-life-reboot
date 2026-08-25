@@ -59,7 +59,7 @@ export const companyEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = gameRandom() < Math.min(0.6, 0.35 + ((s.network || 10) / 100) * 0.5);
           return win
-            ? { tc: s.tc + 8, leetcode: Math.min(100, s.leetcode + 5), health: Math.max(0, s.health - 12), message: '你压中了风口！新方向拿下高层背书，你作为核心成员吃到了丰厚的股票刷新与影响力红利！' }
+            ? { tc: s.tc + 8, leetcode: Math.min(100, s.leetcode + 5), impact: addImpact(s, 6), health: Math.max(0, s.health - 12), message: '你压中了风口！新方向拿下高层背书，你作为核心成员吃到了丰厚的股票刷新与影响力红利！' }
             : { health: Math.max(0, s.health - 12), charm: Math.max(0, (s.charm || 10) - 1), message: '新方向半年后又被砍，你的产出打了水漂，白忙一场还落了一身疲惫。' };
         },
         nextEventId: h1ToH2Router,
@@ -159,7 +159,7 @@ export const companyEvents: Record<string, GameEvent> = {
           health: Math.max(0, s.health - 15),
           impact: addImpact(s, 14),
           story_flags: stampSeen(s, 'openai_launch_crunch', 1),
-          message: '你的 Demo 在发布会上惊艳全场，直播观看破千万！你一战成名，成了组里炙手可热的明星工程师，代价是熬到脱相。',
+          message: '你的 Demo 在发布会上惊艳全场，直播观看破千万！你一战成名，成了组里炙手可热的明星工程师，代价是熬到脱相——连续数周的通宵冲刺也冷落了身边人。',
         }),
         nextEventId: h1ToH2Router,
       },

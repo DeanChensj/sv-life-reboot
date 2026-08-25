@@ -26,10 +26,12 @@ export const levelEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【埋头把脏活累活做】埋头把脏活累活做到极致，用可靠度攒满老板与同事的信任',
+        // health 由 -8 降到 -5:与选项2(争取 own 模块)同等健康代价下,本项以 leetcode(+8)换取
+        // 选项2的 impact/charm,形成"刷题跳槽 vs 攒影响力"的真实取舍,不再是纯亏健康的劣选。
         effect: (s) => ({
           leetcode: Math.min(100, s.leetcode + 8),
           network: Math.min(100, (s.network || 10) + 4),
-          health: Math.max(0, s.health - 8),
+          health: Math.max(0, s.health - 5),
           message: '你把每一次 oncall 和每一个小 bug 都处理得干净利落，逐渐成了组里「靠谱」的代名词。老板开始把更重要的活交给你。',
         }),
         nextEventId: h1ToH2Router,

@@ -46,7 +46,7 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【天选之子】玄学护体，总能在关键时刻化险为夷，气运爆发。',
         // Drawback added: pure-luck build, no coding-skill edge (was leetcode +8, strictly upside).
-        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), network: 15, leetcode: Math.max(0, s.leetcode - 5), charm: s.charm + 5, win_threshold: 500 }),
+        effect: (s) => ({ trait_title: '天选之子', luck: Math.min(99, Math.max(s.luck + 18, 52)), network: 15, leetcode: Math.max(0, s.leetcode - 5), charm: Math.min(s.max_charm ?? 25, s.charm + 5), win_threshold: 500 }),
         nextEventId: 'choose_year',
       },
       {
@@ -216,7 +216,7 @@ export const initializationEvents: Record<string, GameEvent> = {
         reqBadge: '美本专属',
         condition: (s) => s.story_flags?.zhuanma_origin === 'us',
         effect: (s) => ({
-          cash: Math.max(0, s.cash - 2),
+          cash: Math.max(0, s.cash - 0.5),
           leetcode: Math.min(100, s.leetcode + 20),
           health: Math.max(0, s.health - 12),
           age: s.age + 2,
@@ -595,7 +595,7 @@ export const initializationEvents: Record<string, GameEvent> = {
   'us_undergrad_grad': {
     id: 'us_undergrad_grad',
     title: '【本科毕业】走出象牙塔与未来去向',
-    description: '四年过去了，你顺利从美国大学毕业，目前持有 OPT。现在是找工作还是继续深造？',
+    description: '四年过去了，你顺利从美国大学毕业，即将激活 OPT 实习身份。现在是找工作还是继续深造？',
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
       {
@@ -1217,7 +1217,7 @@ export const initializationEvents: Record<string, GameEvent> = {
   'us_master_grad': {
     id: 'us_master_grad',
     title: '【硕士毕业】秋招上岸与硅谷求职',
-    description: '你拿到了硕士学位，OPT 已经激活。现在必须在三个月内找到工作，否则就要被送中了。',
+    description: '你拿到了硕士学位，即将激活 OPT 实习身份。现在必须在三个月内找到工作，否则就要被送中了。',
     imageUrl: 'images/stanford_graduation.jpg',
     choices: [
       {

@@ -268,10 +268,12 @@ export const startupEvents: Record<string, GameEvent> = {
       {
         text: '【断臂求生：开源节流】挥泪裁撤非核心人员与非主营业务，收缩战线保住现金流',
         // The defensive cash-preservation play: extends runway (gains cash, low health
-        // cost) at the price of valuation. No longer a strict trap vs the growth options.
+        // cost) at the price of valuation. cash +8 (up from +3) so it genuinely reads as
+        // the "extend runway" cash leader — a real cash-vs-valuation trade rather than a
+        // build option that also happens to preserve more cash.
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
-          cash: parseFloat((s.cash + 3).toFixed(1)),
+          cash: parseFloat((s.cash + 8).toFixed(1)),
           company_valuation: Math.max(80, (s.company_valuation || 180) - 40),
           health: Math.max(0, s.health - 4),
           message: '你壮士断腕开源节流，挥泪解雇了一批非核心人员。虽然公司估值缩水、士气受挫，但账上现金流大大延长了生死线 Runway。'

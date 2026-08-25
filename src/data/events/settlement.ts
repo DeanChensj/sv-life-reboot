@@ -688,7 +688,7 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【继续生活 · 探索舒适 FIRE 目标 ($800w)】留在硅谷享受生活，配置不动产与高端资产',
-        condition: (s) => (s.cash + (s.stocks || 0)) < 800,
+        condition: (s) => (s.cash + (s.stocks || 0)) < 800 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
@@ -702,7 +702,7 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【登顶硅谷 · 冲刺奢华 FIRE 目标 ($1500w+)】追逐顶级独角兽与 Atherton 庄园',
-        condition: (s) => (s.cash + (s.stocks || 0)) < 1500,
+        condition: (s) => (s.cash + (s.stocks || 0)) < 1500 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
@@ -716,7 +716,7 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【硅谷传奇 · 冲刺百亿传奇目标 ($3000w+)】建立家族信托与创投基金，书写时代传奇',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 1500 && (s.cash + (s.stocks || 0)) < 3000,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1500 && (s.cash + (s.stocks || 0)) < 3000 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
@@ -730,7 +730,7 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【无界探索 · 漫游硅谷不设限】不设任何金钱目标，留在湾区尽情体验一切可能性',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 3000,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 3000 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
@@ -774,6 +774,20 @@ export const settlementEvents: Record<string, GameEvent> = {
           message: '【初心不改】你没有因为账户达到财务自由而停下脚步，继续作为 CEO 带领团队向着百亿独角兽与纳斯达克敲钟全力冲刺！'
         }),
         nextEventId: 'founder_annual_strategy',
+      },
+      {
+        // 交易员专属「继续」出口:通用继续选项已把 trader 排除,否则会被丢进打工人日常 hub。
+        text: '【继续操盘 · 冲刺更高净值】不收手，继续坐镇彭博终端，用交易把财富推向新高度！',
+        condition: (s) => s.job_type === 'trader',
+        effect: (s) => ({
+          has_reached_initial_fire: true,
+          last_fire_milestone_reached: Math.max(s.win_threshold, 500),
+          win_threshold: Math.max(s.win_threshold, 1500),
+          fire_tier: 'luxury',
+          health: Math.min(100, s.health + 15),
+          message: '【初心不改】账户达到财务自由也没让你离场，你继续坐镇交易席，向着更高的净值与传奇战绩全力冲刺！'
+        }),
+        nextEventId: 'trader_annual_strategy',
       }
     ]
   },

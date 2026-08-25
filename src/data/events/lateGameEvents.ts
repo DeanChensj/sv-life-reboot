@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { h1ToH2Router, addImpact } from './helpers';
+import { h1ToH2Router, addImpact, deductAssets, gameRandom } from './helpers';
 
 // 中后期 engagement 事件 — Late-game texture events (T2, NON-destructive first pass).
 // Purpose: kill the 32+「自动驾驶挂机」mid-game fatigue by giving the 33-55 window (and
@@ -65,7 +65,7 @@ export const lateGameEvents: Record<string, GameEvent> = {
         costBadge: '花费 $5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 5,
         effect: (s) => ({
-          cash: parseFloat((s.cash - 5).toFixed(1)),
+          ...deductAssets(s, 5),
           health: Math.min(100, s.health + 15),
           message: '你请了私教、做了全面体检、请了营养师定制餐。半年下来精气神脱胎换骨，体检各项指标全面回正，为后半生攒足了健康本钱。',
         }),
@@ -103,12 +103,22 @@ export const lateGameEvents: Record<string, GameEvent> = {
       {
         text: '【做天使】做天使 / Advisor，用资源与经验扶持后辈创业 (需现金 >= $20w · 实际投入 $3w)',
         condition: (s) => s.cash >= 20,
-        effect: (s) => ({
-          cash: parseFloat((s.cash - 3).toFixed(1)),
-          network: Math.min(100, (s.network || 10) + 6),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
-          message: '你以小额天使 + Advisor 身份加入了几个年轻团队。出钱出力出人脉，既回馈了行业，也把自己织进了更广的创业网络。',
-        }),
+        effect: (s) => {
+          // 天使投资 = 花钱买"影响力 + 眼光 + 潜在退出"。约 35% 概率押中一个后来起飞的团队,
+          // 分到一笔股权回报 (stocks +15),让它区别于免费的"带新人"纯人脉路线,不再被严格支配。
+          const hit = gameRandom() < 0.35;
+          return {
+            cash: parseFloat((s.cash - 3).toFixed(1)),
+            network: Math.min(100, (s.network || 10) + 6),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
+            luck: Math.min(99, (s.luck || 0) + 5),
+            impact: addImpact(s, 5),
+            ...(hit ? { stocks: (s.stocks || 0) + 15 } : {}),
+            message: hit
+              ? '你以小额天使 + Advisor 身份加入了几个年轻团队。其中一家几年后被巨头收购，你分到了一笔可观的股权回报——出钱出力，也押中了眼光。'
+              : '你以小额天使 + Advisor 身份加入了几个年轻团队。出钱出力出人脉，既回馈了行业，也把自己织进了更广的创业网络。',
+          };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {

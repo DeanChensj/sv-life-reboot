@@ -5,7 +5,7 @@ import { getTCBreakdown } from '../../utils/gameStateSelectors';
 export const macroNewsEvents: Record<string, GameEvent> = {
   'news_bull_market_start': {
     id: 'news_bull_market_start',
-    title: '【突发快讯】史诗级科技牛市狂飙开启！',
+    title: '【行情播报】史诗级科技牛市正当时！',
     description: '手机弹出华尔街日报推送："美联储意外宣布降息 50 个基点，纳斯达克指数创历史新高！各大 AI 独角兽宣布完成百亿融资！"\n\nBlind 上的跳槽包裹满天飞，连前台都在聊股票。硅谷的空气里充满了金钱的味道。',
     choices: [
       {
@@ -20,7 +20,7 @@ export const macroNewsEvents: Record<string, GameEvent> = {
 
   'news_bear_market_crash': {
     id: 'news_bear_market_crash',
-    title: '【突发快讯】资本凛冬与暴跌寒潮降临！',
+    title: '【行情播报】资本凛冬与暴跌寒潮笼罩！',
     description: '手机弹出 Bloomberg 推送："通胀超预期，美联储宣布暴力加息！纳斯达克单日暴跌 5%！"\n\n紧接着，Blind 上传出多个大厂即将冻结招聘 (Hiring Freeze) 甚至筹备万人大裁员的风声。硅谷的资本盛宴戛然而止。',
     choices: [
       {
@@ -91,11 +91,12 @@ export const macroNewsEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【低调防守苟住】少说话多干活，低调避开任何裁员风头',
+        text: '【低调防守苟住】少说话多干活，低调避开任何裁员风头，闲暇偷偷练内功',
         effect: (s) => ({
           health: Math.max(0, s.health - 4),
+          leetcode: Math.min(100, s.leetcode + 3),
           story_flags: { ...(s.story_flags || {}), macro_efficiency_seen: true },
-          message: '你在寒冬中默默完成日常 OKR，安然度过了本轮收缩周期。'
+          message: '你在寒冬中默默完成日常 OKR，安然度过了本轮收缩周期——顺手还把算法又刷了一遍，为下一轮机会攒本钱。'
         }),
         nextEventId: 'sv_year_end_settlement'
       }

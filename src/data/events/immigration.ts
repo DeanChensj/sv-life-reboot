@@ -305,13 +305,15 @@ export const immigrationEvents: Record<string, GameEvent> = {
          nextEventId: 'sv_daily_life',
        },
        {
-         text: '【红眼航班赴校】自费飞回学校本部完成线下考勤与课程打卡 (花费 $0.3w · 舟车劳顿)',
-         costBadge: '花费 $0.3w',
-         effect: (s) => ({
-           cash: Math.max(0, s.cash - 0.3),
-           health: Math.max(0, s.health - 8),
-           message: '【亲赴过检】你连夜飞回学校本部补齐线下课程与考勤记录,舟车劳顿身心俱疲,但抽检有惊无险地过关了 (健康 -8)。'
-         }),
+          text: '【红眼航班赴校】自费飞回学校本部完成线下考勤与课程打卡 (花费 $0.3w · 稳过)',
+          costBadge: '花费 $0.3w',
+          // 定位为"花点小钱买确定性":保证过检、无随机、健康代价低(-4)。与免费但更耗神(-6)
+          // 且有 15% 追加补件($1w)风险的自行申辩形成"现金换省心/低损耗"的真实取舍,不再被支配。
+          effect: (s) => ({
+            cash: Math.max(0, s.cash - 0.3),
+            health: Math.max(0, s.health - 4),
+            message: '【亲赴过检】你花钱飞回学校本部当面补齐了线下课程与考勤记录,虽有些奔波,但抽检干脆利落地一次过关,省心稳妥 (健康 -4)。'
+          }),
          nextEventId: 'sv_daily_life',
        },
        {

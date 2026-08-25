@@ -1721,10 +1721,12 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
     job_type: 'big_tech', company: 'apple', health: 70, cash: 10, leetcode: 50,
   } as GameState;
 
-  // Choice 0: Dyson air purifier at home -> safe cost, health drain <= 15
+  // Choice 0: free "cozy stay-home" fallback -> no cash cost, small comfort health gain
+  // (redesigned from a $0.3w/health-6 option that was strictly dominated by choice 2).
   const c0 = ev.choices[0].effect(base) as Partial<GameState>;
-  assert((c0.cash as number) < base.cash, 'Choice 0 deducts Dyson electricity cost');
-  assert(base.health - (c0.health as number) <= 15, 'Choice 0 health drop stays within <= 15');
+  assert(c0.cash === undefined, 'Choice 0 is free (no cash deduction)');
+  assert((c0.health as number) >= base.health, 'Choice 0 gives a small comfort health gain');
+  assert(Math.abs((c0.health as number) - base.health) <= 15, 'Choice 0 health swing stays within <= 15');
 
   // Choice 1: Workation to Hawaii -> cash cost, health boost
   const c1 = ev.choices[1].effect(base) as Partial<GameState>;

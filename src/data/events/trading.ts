@@ -589,19 +589,22 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【全量托管自动网格】将核心策略全量托管给 Python/AWS 自动交易网格系统，解放肉身',
+        // 去掉原先的 cash +3:反 burnout 的"自我关怀"选项不应还白送钱(否则成零成本严格优选)。
+        // 现定位为纯粹的休养生息(health/leetcode),与"通宵复盘"的高强度研究形成取舍。
         effect: (s) => ({
           health: Math.min(100, s.health + 10),
-          leetcode: s.leetcode + 4,
-          cash: parseFloat((s.cash + 3.0).toFixed(1)),
-          message: '【算法解放肉身】自动化网格交易脚本无缝接管，你不仅睡上了安稳觉，还自动捕获了 +$3.0w 波动收益！'
+          leetcode: Math.min(100, s.leetcode + 4),
+          message: '【算法解放肉身】自动化网格交易脚本无缝接管，你终于睡上了安稳觉，趁机养精蓄锐、补了补交易理论功课。'
         }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
         text: '【通宵复盘拆解财报】通宵复盘：拆解 10-K 年报与美股大宗交易 Dark Pool (暗池) 资金流',
+        // 提高研究回报(leetcode +8)并降低健康代价(-6):让"熬夜苦研"成为真正划算的技能交易,
+        // 而非相对自动网格的纯亏项。
         effect: (s) => ({
-          health: Math.max(0, s.health - 8),
-          leetcode: Math.min(100, s.leetcode + 6),
+          health: Math.max(0, s.health - 6),
+          leetcode: Math.min(100, s.leetcode + 8),
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
           message: '【深度研报收获】通宵研读让你发现了某半导体产业链的隐藏预期差，交易认知大幅进化！'
         }),

@@ -482,10 +482,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【挑战 V5 硬核路线】挑战 V5 难度黑点路线，体验攀岩硬核快感',
+        // 纯运动路线的独特边:比"搭讪"的失败兜底(health+20/charm+2)更高的 health 与一份"心流"luck,
+        // 让不想社交的玩家有明确理由选它,而非被搭讪的失败分支软支配。
         effect: (s) => ({
-          health: Math.min(100, s.health + 20),
+          health: Math.min(100, s.health + 25),
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
-          message: '你顶住了侧拉与脚尖 Hook 挂墙，成功 Top out 登顶！虽然前臂肌肉酸痛，但心理压力一扫而空，神清气爽！'
+          luck: Math.min(99, (s.luck || 0) + 5),
+          message: '你顶住了侧拉与脚尖 Hook 挂墙，成功 Top out 登顶！前臂酸痛，但攀爬时的极致专注让你进入心流，心理压力一扫而空，神清气爽、连手感与运气都好了起来！'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -768,7 +771,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【极限自选手选小费】冒着店员白眼风险，眯着眼精准点击极小字体 Custom Tip -> $0.50',
         // A $13 boba + tip is ~$13-16 = ~0.0013-0.0016w, not $1000-2000 (100x slip).
-        effect: (s) => ({ cash: Math.max(0, s.cash - 0.0013), message: '你捧着奶茶仓皇逃回车里，发现在停车场你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
+        // 给"抠门派"一份精打细算的小确幸(luck+1),与选项2"社交炫耀派"(charm+2)形成微型取舍。
+        effect: (s) => ({ cash: Math.max(0, s.cash - 0.0013), luck: Math.min(99, (s.luck || 0) + 1), message: '你捧着奶茶仓皇逃回车里，精打细算省下的小费让你有种莫名的胜利感。抬头却发现你的白色 Model Y 旁边停了另外四台一模一样的白色 Model Y，你按半天钥匙开错别人的车门。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -1298,16 +1302,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【17-Mile 极限跑山】下场 17-Mile 沿海公路体验极限跑山',
-        costBadge: '花费 $0.5w',
-        // Distinct payoff (charm + car-scene clout as luck) so it isn't just a
-        // worse version of the networking option for employed players.
+        text: '【17-Mile 极限跑山】开着自己的车下场 17-Mile 沿海公路体验极限跑山',
+        // 免费(开自己的车),主打气运/魅力的"玩乐派"路线:用大幅 luck + charm 与选项1的
+        // "职场人脉派"(tc/network/health)形成真实的 build 取舍,不再被严格支配。
         effect: (s) => ({
-          cash: Math.max(0, s.cash - 0.5),
           charm: Math.min(s.max_charm ?? 25, s.charm + 5),
-          luck: Math.min(99, s.luck + 3),
-          health: Math.max(0, s.health - 5),
-          message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪，还结识了一群玩改装的性情中人！'
+          luck: Math.min(99, s.luck + 8),
+          health: Math.max(0, s.health - 3),
+          message: '引擎轰鸣，推背感拉满！你在湾区跑车圈名声大噪，气运与魅力值双双爆表，还结识了一群玩改装的性情中人！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1770,13 +1772,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     description: '秋季干燥季降临，北加州山火导致湾区天空被染成末日般的深橙色，空气质量 AQI 瞬间爆表飙升至 300+！雪上加霜的是，电力公司 PG&E 为了“防止电线引燃山火”，宣布对整个湾区实行长达数天的「预防性轮流大停电 (Public Safety Power Shutoff)」。家里的冰箱停摆，空气里充斥着呛人的焦木味……',
     choices: [
       {
-        text: '【闭门不出，开满 4 台 Dyson 空气净化器并吃泡面】紧闭门窗，备足自热火锅硬抗加州风味空气',
-        costBadge: '花费 $0.3w',
-        condition: (s) => s.cash >= 0.3,
+        text: '【闭门不出，宅家囤自热火锅】紧闭门窗、拉帘点蜡烛，佛系宅家硬抗加州风味空气',
+        // 免费的"安逸宅家"低风险兜底:换来一点点居家松弛感(health/charm),与选项3"住公司通宵刷题"
+        // (leetcode)形成"躺平 vs 内卷"取舍,不再被选项3严格支配。
         effect: (s) => ({
-          cash: Math.max(0, s.cash - 0.3),
-          health: Math.max(0, s.health - 6),
-          message: '【重度宅家防烟】你紧闭门窗、拉死窗帘，在昏暗的蜡烛光下吃着自热火锅，听着净化器呼呼狂转。虽吸了几天二手烟灰，好在平稳度过了断电期 (花费 $0.3w, 健康 -6)。'
+          health: Math.min(100, s.health + 3),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
+          message: '【佛系宅家防烟】你紧闭门窗、拉死窗帘，在昏暗的蜡烛光下吃着自热火锅刷剧，听着净化器呼呼狂转。虽然哪也去不了，但难得的强制休假让你彻底放松了几天，气色都好了不少 (健康 +3)。'
         }),
         nextEventId: 'sv_year_end_settlement'
       },
@@ -1917,14 +1919,26 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【聘请加州律师打官司】主张当年出资权益与追加补偿，向家庭法庭提起诉讼',
-        costBadge: '诉讼费 $5w',
+        text: '【聘请加州律师打官司】主张当年出资权益与追加补偿，向家庭法庭提起诉讼 (胜诉概率低)',
+        costBadge: '诉讼费 $5w · 高风险',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 5,
-        effect: (s) => ({
-          ...deductAssets(s, 5),
-          health: Math.max(0, s.health - 12),
-          message: '加州家庭法庭无情驳回了你的诉求，判定当年的 50/50 分割协议具备终局效力。你白白烧掉了 $5w 律师费，气得胃疼！',
-        }),
+        effect: (s) => {
+          // ~15% 翻案:律师翻出当年出资的关键流水,争到一笔追加补偿。其余情形驳回,烧掉律师费。
+          // 给一个真实(虽小)的上行,让它区别于"必输的纯发泄",不再是被隐藏的确定性损失。
+          const win = gameRandom() < 0.15;
+          return win
+            ? {
+                ...deductAssets(s, 5),
+                stocks: (s.stocks || 0) + 25,
+                health: Math.max(0, s.health - 8),
+                message: '奇迹发生！律师翻出了当年你出资的关键银行流水，法庭判前任追加一笔可观的股权对价补偿。多年的意难平，终于兑现了一部分！',
+              }
+            : {
+                ...deductAssets(s, 5),
+                health: Math.max(0, s.health - 12),
+                message: '加州家庭法庭无情驳回了你的诉求，判定当年的 50/50 分割协议具备终局效力。你白白烧掉了 $5w 律师费，气得胃疼！',
+              };
+        },
         nextEventId: 'sv_year_end_settlement',
       },
       {

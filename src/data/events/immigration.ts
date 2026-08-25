@@ -394,9 +394,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'office_politics',
       },
       {
-        text: '【彻底躺平摸鱼】掌握职场太极与神仙 WLB，领满薪水享受加州阳光 (健康 +30 · 现金 +10w)',
+        text: '【彻底躺平摸鱼】掌握职场太极与神仙 WLB，领满薪水享受加州阳光 (健康 +20 · 现金 +10w)',
         condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
-        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 30), cash: s.cash + 10, message: '【神仙 WLB】你彻底参透了职场太极真谛，每天做最轻松的活、领足额薪水与股票，周末去 Tahoe 滑雪与加州冲浪，身心大回血！' }),
+        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 20), cash: s.cash + 10, message: '【神仙 WLB】你彻底参透了职场太极真谛，每天做最轻松的活、领足额薪水与股票，周末去 Tahoe 滑雪与加州冲浪，身心大回血！' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {

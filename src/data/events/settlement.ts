@@ -157,7 +157,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               else if (s.job_type === 'startup') { healthDrain = 3; companyMsg = ' 【职场健康】创业公司的发版节奏让你心力小耗 (健康 -3)。'; }
               else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 【职场健康】创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
              // AI labs (OpenAI/Anthropic MTS) are prestigious but intense — not a 养老大厂.
-             else if (s.job_type === 'ai_research') { healthDrain = 3; companyMsg = ' 【职场健康】前沿 AI 实验室的 AGI 军备竞赛节奏紧绷，但你站在技术浪潮之巅 (健康 -3)。'; }
+             else if (s.job_type === 'ai_research') { healthDrain = 6; companyMsg = ' 【职场健康】前沿 AI 实验室的 AGI 军备竞赛与算力集群连轴转消耗了体力 (健康 -6)。'; }
              // Internal transfer to a big-tech 前沿 AI 大模型组: still WLB, but AI-flavored (was
              // wrongly showing the generic "养老大厂" message since job_type stays 'big_tech').
              else if (s.transferred_to_ai) { healthDrain = -8; companyMsg = ' 【职场健康】大厂前沿 AI 大模型组：既享受神仙 WLB，又能接触顶尖架构，收获满满 (健康 +8)。'; }

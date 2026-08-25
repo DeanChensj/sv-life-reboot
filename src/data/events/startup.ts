@@ -372,7 +372,7 @@ export const startupEvents: Record<string, GameEvent> = {
   'ai_research_crisis': {
     id: 'ai_research_crisis',
     title: '【行业变革】AGI 浪潮与顶会前沿',
-    description: '最近 OpenAI 又发了新模型，你在实验室里的项目面临被降维打击的危险。',
+    description: '前沿 AGI 军备竞赛全面白热化，下一代大模型发布日新月异，你在团队中的核心项目面临巨大的顶会突围与极限交付压力。',
     choices: [
       {
         text: '【抢占先机写 Paper】抢占先机，连夜写 Paper 冲击顶会！',

@@ -500,10 +500,12 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【留任原厂】看好原厂股票与团队氛围，婉拒全部外部 Offer',
+        text: '【留任原厂 · 零压休整】婉拒全部外部 Offer，省下搬迁与面试折腾，把精力放回团队与生活',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
-        effect: () => ({
-          message: '你经过慎重考虑，决定婉拒外部机会，继续深耕原厂业务。'
+        effect: (s) => ({
+          health: Math.min(100, s.health + 12),
+          network: Math.min(100, (s.network || 0) + 2),
+          message: '你婉拒了外部机会，零搬迁、零 PERM 重置、零面试压力，把节奏交还给团队与生活。虽然没有借机涨薪，但身心得到充分休整 (健康 +12)。'
         }),
         nextEventId: h1ToH2Router,
       },
@@ -2396,12 +2398,15 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【功成身退的从容】在 Los Altos Hills 豪宅中惬意品茶，各大顶级猎头与 VC 趋之若鹜',
+        text: '【功成身退的从容】婉拒铺张庆功，以科技泰斗之尊笑看风云，坐等顾问邀约上门',
         condition: (s) => s.level === 'L8 (Principal)',
         effect: (s) => ({
-          health: Math.min(100, s.health + 30),
-          cash: s.cash + 10,
-          message: '你以科技泰斗之尊笑看风云。各大独角兽与 VC 抢着奉上顾问期权与咨询费，你已站在硅谷食物链的终极顶端！'
+          health: Math.min(100, s.health + 10),
+          cash: s.cash + 3,
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 8),
+          luck: Math.min(99, (s.luck || 20) + 12),
+          network: Math.min(99, (s.network || 10) + 10),
+          message: '你以科技泰斗之尊笑看风云，零铺张。各大独角兽与 VC 递来顾问期权与少量咨询费，你的行业声望与人脉进一步拉满！'
         }),
         nextEventId: h1ToH2Router,
       }

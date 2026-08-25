@@ -555,8 +555,9 @@ export const midYearEventRouter = (s: GameState): string => {
         workEvents.push('internal_tech_talk_viral');
       }
 
-      // Meta 专属 Tech Lead Manager 卷王挑战
-      if (s.company === 'meta') {
+      // Meta 专属 Tech Lead Manager 卷王挑战 —— 仅 L5 Senior (TLM 冲 L6 的阶段);L3/L4 会吃假前提,
+      // L6+ 已越过此坎,均不应触发。
+      if (s.company === 'meta' && normalizeLevel(s.level, s) === 'L5 (Senior)') {
         workEvents.push('meta_tlm');
       }
 

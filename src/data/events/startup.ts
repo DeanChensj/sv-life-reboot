@@ -396,12 +396,13 @@ export const startupEvents: Record<string, GameEvent> = {
     description: '创业初期和你一起在车库吃泡面的联合创始人兼 CTO 突然在周一早会摊牌：要求重签协议将股权提升至 50%，否则就带走核心模型架构去投奔竞对。',
     choices: [
       {
-        text: '【依法强硬回购股份】依法办事：依据最初签署的 4 年 Vesting 协议回购未行权股份，强硬止损',
+        text: '【依法强硬回购股份】依法办事：依据最初签署的 4 年 Vesting 协议回购未行权股份，独揽技术大权',
         effect: (s) => ({
           health: Math.max(0, s.health - 10),
-          company_valuation: Math.max(100, (s.company_valuation || 180) - 60),
-          leetcode: Math.min(100, s.leetcode + 4),
-          message: '【强硬换帅】你依照法律条款回购了对方股份。短期内虽经历代码交接阵痛，但成功捍卫了公司股权结构与治理底线！'
+          company_valuation: Math.max(100, (s.company_valuation || 180) - 40),
+          leetcode: Math.min(100, s.leetcode + 8),
+          impact: addImpact(s, 6),
+          message: '【强硬换帅·独扛大梁】你依照法律条款回购了对方股份，短期经历代码交接阵痛与估值折损，但你亲自啃下全部核心架构、独揽技术大权，硬实力与行业话语权 (Impact) 大涨！'
         }),
         nextEventId: 'sv_year_end_settlement',
       },

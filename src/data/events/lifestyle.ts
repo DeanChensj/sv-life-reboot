@@ -166,8 +166,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【聘顶级离婚律师】花 $10w 请湾区顶级离婚律师打官司争取权益 (仅限已婚 · 高风险)',
         costBadge: '律师费 $10w',
-        reqBadge: '需总资产 >= $15w',
-        condition: (s) => s.is_married === true && (s.cash + (s.stocks || 0)) >= 15,
+        reqBadge: '需总资产 >= $30w',
+        condition: (s) => s.is_married === true && (s.cash + (s.stocks || 0)) >= 30,
         effect: (s) => {
           const win = gameRandom() > 0.5;
           const ratio = win ? 0.9 : 0.6;

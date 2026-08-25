@@ -176,8 +176,8 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【卖房投身创业浪潮】感觉人生一眼望到头，卖房去创业！(需现金 >= $100w)',
-        condition: (s) => s.cash >= 100 && s.job_type !== 'startup_founder',
+        text: '【卖房投身创业浪潮】感觉人生一眼望到头，卖房去创业！(需总资产 >= $100w)',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 100 && s.job_type !== 'startup_founder',
         // Selling ADDS home equity (was subtracting $50w while keeping the house).
         // Actually liquidate the home and start the FOUNDER path (not the employee event).
         effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, tc: 6, level: undefined, company: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
@@ -193,14 +193,14 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     imageUrl: 'images/house.jpg',
     choices: [
       {
-        text: '【自住房改造】搭建后院 ADU 独立套间并出租 (耗费 $1.5w · 产生 +$1.2w/年 租金净流)',
-        costBadge: '花费 $1.5w',
-        condition: (s) => s.has_housing && !s.has_adu_rented && (s.cash + (s.stocks || 0)) >= 1.5 && isOwnedHousing(s.housing_name),
+        text: '【自住房改造】搭建后院 ADU 独立套间并出租 (建造 $12w · 产生 +$1.2w/年 租金净流)',
+        costBadge: '建造 $12w',
+        condition: (s) => s.has_housing && !s.has_adu_rented && (s.cash + (s.stocks || 0)) >= 12 && isOwnedHousing(s.housing_name),
         effect: (s) => ({
-          cash: s.cash - 1.5,
+          ...deductAssets(s, 12),
           has_adu_rented: true,
           rental_income: (s.rental_income || 0) + 1.2,
-          message: '【ADU 改造完成】你在后院建起了一套带独立卫浴的预制 ADU，挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$1.2w 净租金流！'
+          message: '【ADU 改造完成】你砸下 $12w 在后院建起一套带独立卫浴的预制 ADU（含设计、许可与施工），挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$1.2w 净租金流！'
         }),
         nextEventId: 'sv_year_end_settlement',
       },

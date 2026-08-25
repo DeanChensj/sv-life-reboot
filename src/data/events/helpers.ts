@@ -72,12 +72,12 @@ export const calculatePhdAdmitProb = (s: GameState, isMaster: boolean = false): 
 
 // 跳槽与社招定级：
 // 1. 无职级萌新/应届生按学历定级 (本科/硕士 L3, PhD L4)；
-// 2. 非标准职级映射 (OpenAI MTS 对应 L6 Staff/L5 Senior, Quant 对应 L6/L5, Founder 对应 L7/L6/L5)；
+// 2. 非标准职级映射 (OpenAI MTS 对应 L6 Staff/L5 Senior, Founder 对应 L7/L6/L5)；
 // 3. 被裁员失业的资深工程师社招再就业时平级录用 (Lateral)，保留其多年打拼积累的资历与职级；
 // 4. 在职跳槽者阶梯 +1，但升至 L6+ 需对应 impact (L6>=20, L7>=45, L8>=80)，否则平跳。
 const LADDER = ['L3', 'L4', 'L5 (Senior)', 'L6 (Staff)', 'L7 (Senior Staff)', 'L8 (Principal)'];
 
-// Map the player's CURRENT level — including non-standard titles (MTS/Quant/Founder/CN) —
+// Map the player's CURRENT level — including non-standard titles (MTS/Founder/CN) —
 // onto a Big-Tech ladder rung. Returns '' for a true new grad with no prior standing.
 const currentLadderRung = (s: GameState): string => {
   if (s.level && s.level !== '待业') {
@@ -91,7 +91,7 @@ const currentLadderRung = (s: GameState): string => {
   }
   if (!s.level || s.level === '待业' || (!s.job_start_age && s.level === '初级研发')) return '';
   let baseLevel = s.level;
-  if (baseLevel === 'MTS' || baseLevel === 'Quant') {
+  if (baseLevel === 'MTS') {
     baseLevel = (s.tc >= 60 || (s.impact || 0) >= 20) ? 'L6 (Staff)' : 'L5 (Senior)';
   } else if (baseLevel === 'CEO & Founder' || baseLevel === 'CTO & Co-Founder') {
     baseLevel = (s.impact || 0) >= 45 ? 'L7 (Senior Staff)' : (s.impact || 0) >= 20 ? 'L6 (Staff)' : 'L5 (Senior)';
@@ -161,10 +161,10 @@ export const resolveHopVisaTransition = (s: GameState): { visa: string; cashDelt
   return { visa: s.visa, cashDelta: 0, note: '' };
 };
 
-// impact 只对标准大厂/研究/量化阶梯有意义(founder/trader/unemployed 无此概念)。
+// impact 只对标准大厂/研究阶梯有意义(founder/trader/unemployed 无此概念)。
 export const isImpactCareer = (s: GameState): boolean =>
   s.job_type === 'big_tech' || s.job_type === 'ai_research' ||
-  s.job_type === 'quant' || s.job_type === 'cn_tech';
+  s.job_type === 'cn_tech';
 
 // ── 一生一次 (once-per-life) 事件的统一基座 ───────────────────────────────────────────────
 // 约定:事件 <id> 触发过一次 ⇔ story_flags[`${id}_seen`] === true。以下是唯一权威实现,取代此前
@@ -230,7 +230,6 @@ export const getLevelScaledTC = (baseL3TC: number, level?: string): number => {
   if (level === 'L6 (Staff)' || level === 'Staff' || level === 'MTS') return Math.min(78, Math.floor(baseL3TC * 3.1));
   if (level === 'L5 (Senior)' || level === 'L5') return Math.min(52, Math.floor(baseL3TC * 2.1));
   if (level === 'L4') return Math.min(34, Math.floor(baseL3TC * 1.4));
-  if (level === 'Quant') return Math.min(85, Math.floor(baseL3TC * 1.5));
   return Math.min(24, baseL3TC); // L3 or new grad
 };
 
@@ -452,12 +451,7 @@ export const midYearEventRouter = (s: GameState): string => {
        if (s.year >= 2024) aiPool.push('ai_disruption_existential');
        return gamePick(aiPool);
      }
-     if (s.job_type === 'quant') {
-       // 反 pool-starving：量化路径不再每年固定 quant_stress。
-       const quantPool = ['quant_stress', 'quant_stress', 'layoff_rumor'];
-       if (s.year >= 2024) quantPool.push('ai_disruption_existential');
-       return gamePick(quantPool);
-     }
+
 
      // 公司专属年度「标志事件」(companyEvents.ts)：每局至多触发一次，命中前 ~30%/年。
      // 直接 early-return（而非入池），既能精确控制概率，也让它成为该公司路径的年度里程碑；
@@ -505,7 +499,7 @@ export const midYearEventRouter = (s: GameState): string => {
          if (s.trait_title === '小镇做题家' && !sig.persona_impostor_syndrome_seen && gameRandom() < 0.3) return 'persona_impostor_syndrome';
 
          // 职级阶段「标志事件」(levelEvents.ts)：按 entry / senior / staff+ 三档各一局一次、命中前 ~30%/年。
-         // 注：trader/founder/startup/ai_research/quant 走各自专属分支已提前 return，此处仅覆盖标准大厂阶梯。
+         // 注：trader/founder/startup/ai_research 走各自专属分支已提前 return，此处仅覆盖标准大厂阶梯。
          const isEntryLvl = !lvl || lvl === 'L3' || lvl === 'L4' || lvl === '初级研发';
          const isSeniorLvl = lvl === 'L5 (Senior)' || lvl === 'L5';
          const isStaffPlusLvl = lvl === 'L6 (Staff)' || lvl === 'Staff' || lvl === 'L7 (Senior Staff)' || lvl === 'L7' || lvl === 'L8 (Principal)' || lvl === 'Principal' || lvl === 'Fellow';
@@ -587,7 +581,7 @@ export const midYearEventRouter = (s: GameState): string => {
      }
      if (s.year >= 2024 && isCorporate && gameRandom() < 0.25) workEvents.push('ai_disruption_existential');
      if (isCorporate && gameRandom() < 0.25) workEvents.push('influencer_vp_drama');
-      if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') && gameRandom() < 0.35) {
+      if (isCorporate && (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'MTS') && gameRandom() < 0.35) {
         workEvents.push('high_level_reorg_domain_loss');
         // midlife_management_pivot 的前提是「年过 35 的中年危机」,故额外加 age 门禁,避免 28-33 岁被快速晋升的
         // senior 吃到「35 岁中年危机」的假前提 (high_level_reorg_domain_loss 无年龄前提,不受此限)。
@@ -716,7 +710,7 @@ export const midYearEventRouter = (s: GameState): string => {
       lifeEvents.push('overemployed', 'blind_team_tea', 'zoom_camera_off_leetcode', 'team_offsite', 'vibe_coding_craze', 'ai_wrapper_startup');
       // ai_agent_startup is oncePerLife — gate injection so the +$15w seed can't re-fire.
       if (!s.story_flags?.ai_agent_startup_seen) lifeEvents.push('ai_agent_startup');
-      if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'Quant' || s.level === 'MTS') {
+      if (s.level === 'L5 (Senior)' || s.level === 'L6 (Staff)' || s.level === 'MTS') {
           lifeEvents.push('ex_1point3acres_expose');
       }
   }

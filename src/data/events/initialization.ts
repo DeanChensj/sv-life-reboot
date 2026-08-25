@@ -1715,7 +1715,7 @@ export const initializationEvents: Record<string, GameEvent> = {
   'phd_job_hunt': {
     id: 'phd_job_hunt',
     title: '【博士求职】降维打击与顶级 Offer 分层抉择',
-    description: '顶着 PhD 博士光环，你进入了硅谷人才市场。这不再是一般的初级码农招聘，而是分层走向前沿科学家、顶级量化或大厂核心研发。',
+    description: '顶着 PhD 博士光环，你进入了硅谷人才市场。这不再是一般的初级码农招聘，而是分层走向前沿 AI 科学家或大厂核心研发。',
     choices: [
       {
         text: '【申请 OpenAI / Anthropic】申请 OpenAI / Anthropic 核心研究员 (地狱面试 · 年薪 $80w · O-1 签证)',
@@ -1754,18 +1754,6 @@ export const initializationEvents: Record<string, GameEvent> = {
           visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)',
           message: '凭借扎实的博士科研功底，你免去了高压冲顶的风险，直接以 L4 职级入职科技大厂核心稳定组，享受 $32w 起薪与极佳的 WLB！'
         }),
-        nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
-      },
-      {
-        text: '【冲击华尔街 Quant Researcher】冲击华尔街 Quant Researcher 量化研究员 (年薪 $60w + 高额奖金)',
-        reqBadge: '需极高数理算法',
-        effect: (s) => {
-          const passProb = 0.22 + (s.leetcode >= 80 ? 0.25 : 0.05) + ((s.impact || 0) >= 15 ? 0.10 : 0) + (s.school === 'cmu' ? 0.15 : 0) + ((s.luck || 20) / 200);
-          const pass = gameRandom() < passProb;
-          return pass
-            ? { tc: 60, cash: s.cash + 25, impact: addImpact(s, 6), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', company: 'citadel', job_type: 'quant', level: 'Quant', message: '华尔街顶级对冲基金抢夺学术英才！Citadel 开出 $60w 顶配待遇与高额提成，聘请你为量化研究员！' }
-            : { tc: 32, cash: s.cash + 5, health: Math.max(0, s.health - 8), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'H1B (工签)', company: 'google', job_type: 'big_tech', level: 'L4', message: 'Quant 脑筋急转弯与高频随机过程面试太硬核了！未能拿到 Offer，转而调剂入职科技大厂 L4 研发。' };
-        },
         nextEventId: (s: GameState) => isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'
       }
     ]

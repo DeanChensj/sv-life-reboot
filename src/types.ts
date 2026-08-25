@@ -141,7 +141,7 @@ export interface GameState {
   // job_type:'big_tech' + a distinct `company` — never their own job_type. This
   // avoids the silent-fallback bug class where a company-as-job_type slips into
   // the wrong branch (e.g. TikTok counted as a 养老大厂).
-  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'quant' | 'unemployed' | 'trader' | 'startup_founder' | 'cn_tech';
+  job_type?: 'big_tech' | 'startup' | 'ai_research' | 'unemployed' | 'trader' | 'startup_founder' | 'cn_tech';
   company?: string;
   level?: string;
   max_level?: string; // 历史最高达到的技术职级 (如 L6 Staff, 创业/转Trader/待业后回归大厂不降级)

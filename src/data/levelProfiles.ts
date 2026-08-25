@@ -10,7 +10,7 @@
 //
 // This table centralizes: rank (for comparison), display label/className,
 // life-stage bucket, and the canonical promotion requirements. Non-standard
-// titles (MTS/Quant/Founder/国内研发) are folded onto the ladder via
+// titles (MTS/Founder/国内研发) are folded onto the ladder via
 // normalizeLevel(). Mirrors COMPANY_PROFILES / SCHOOL_PROFILES.
 // -----------------------------------------------------------------------------
 import type { GameState } from '../types';
@@ -94,9 +94,9 @@ const STATIC_ALIAS: Record<string, CareerLevel> = {
 };
 
 /**
- * Fold any level string — including non-standard titles (MTS/Quant/Founder/国内研发)
+ * Fold any level string — including non-standard titles (MTS/Founder/国内研发)
  * — onto a canonical CareerLevel. Returns null for a true new grad / non-corporate.
- * State-dependent titles (MTS/Quant/Founder) use tc/impact/tenure, mirroring the
+ * State-dependent titles (MTS/Founder) use tc/impact/tenure, mirroring the
  * former `currentLadderRung`.
  */
 export const normalizeLevel = (level?: string, s?: GameState): CareerLevel | null => {
@@ -104,7 +104,7 @@ export const normalizeLevel = (level?: string, s?: GameState): CareerLevel | nul
   if (STATIC_ALIAS[level]) return STATIC_ALIAS[level];
   const impact = s?.impact ?? 0;
   const tc = s?.tc ?? 0;
-  if (level === 'MTS' || level === 'Quant') {
+  if (level === 'MTS') {
     return (tc >= 60 || impact >= 20) ? 'L6 (Staff)' : 'L5 (Senior)';
   }
   if (level === 'CEO & Founder' || level === 'CTO & Co-Founder') {

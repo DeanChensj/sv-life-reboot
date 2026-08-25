@@ -376,45 +376,6 @@ export const tradingEvents: Record<string, GameEvent> = {
     ]
   },
 
-  'quant_stress': {
-    id: 'quant_stress',
-    title: '【量化博弈】华尔街高压博弈与策略干预',
-    description: '最近股市剧烈波动，你的量化策略出现了巨大的 Drawdown (回撤)。',
-    choices: [
-      {
-        text: '【手动干预加大杠杆】顶着强平线高压强行干预模型参数，在悬崖边缘豪赌巨额分红！',
-        // Jackpot cut from a degenerate $250w (which alone cleared FIRE) to a
-        // realistic top-quant bonus of $60w; the loss still fires you.
-        effect: (s) => {
-          const win = gameRandom() < 0.40;
-          return win 
-            ? { cash: s.cash + 60, health: Math.max(0, s.health - 15), message: ' 华尔街之狼！这波杠杆让你单月帮基金暴赚，老板亲手为你颁发了 $60w 美金的年终 Bonus 巨额支票！' }
-            : { cash: Math.max(0, s.cash - 15), health: Math.max(0, s.health - 15), laid_off: true, tc: 0, job_type: 'unemployed', message: '黑天鹅爆发！杠杆爆仓导致策略穿仓，不仅 Bonus 归零，你还收到了 HR 的解雇协议。' };
-        },
-        nextEventId: (s: GameState) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
-      },
-      {
-        text: '【相信数学策略模型】相信量化数学模型，不进行情绪化人工干预',
-        // 反软印钞机：原为无条件 +$15w 现金（每逢 quant_stress 稳拿，健康可回血 → 变相印钞）。
-        // 改为随宏观周期与运气小幅波动的「小额 Bonus」，可正可负、上限低，符合「求稳退守」定位。
-        effect: (s) => {
-          const base = s.macro_economy === 'bull' ? 5 : s.macro_economy === 'bear' ? -5 : 1;
-          const currentLuck = s.luck ?? 20;
-          const luckAdj = Math.floor((Math.min(60, currentLuck) - 30) / 12); // 约 -2 ~ +2
-          const pnl = Math.max(-6, Math.min(8, base + luckAdj));
-          return {
-            health: Math.max(0, s.health - 8),
-            cash: parseFloat((s.cash + pnl).toFixed(1)),
-            message: pnl >= 0
-              ? `你忍住了干预的冲动，策略慢慢回本，年底拿到了小幅 Bonus (+$${pnl}w)。`
-              : `你坚持不干预，但回撤未能及时收复，策略小幅亏损 (-$${Math.abs(pnl)}w)，好在没伤筋动骨。`,
-          };
-        },
-        nextEventId: h1ToH2Router,
-      }
-    ]
-  },
-
   'crypto_scam': {
     id: 'crypto_scam',
     title: '【投机诱惑】微信群里的财富密码与土狗币',

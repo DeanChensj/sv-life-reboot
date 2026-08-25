@@ -107,31 +107,6 @@ export const careerEvents: Record<string, GameEvent> = {
         },
       },
       {
-        text: '【挑战顶级量化基金 (Quant)】冲击天价量化交易核心团队 (地狱门槛: 需 CS四大 或 PhD)',
-        reqBadge: '仅限 CS四大/PhD',
-        condition: (s) => (s.school === 'cmu' || s.is_phd),
-        effect: (s) => {
-          const econBonus = s.macro_economy === 'bull' ? 0.15 : s.macro_economy === 'bear' ? -0.15 : 0;
-          let winRate = 0.15 + econBonus;
-          if (s.leetcode >= 75) winRate += 0.30;
-          else if (s.leetcode >= 60) winRate += 0.15;
-          if (s.school === 'cmu' && s.is_phd) winRate += 0.20;
-          winRate += (s.luck / 100) * 0.10;
-          // Floor so a bear-market low-leetcode attempt isn't a guaranteed 0% loss.
-          winRate = Math.max(0.05, winRate);
-
-          const pass = gameRandom() < winRate;
-          const lvl = s.level ? s.level : 'Quant';
-          return pass 
-            ? { tc: getLevelScaledTC(42, lvl), laid_off: false, cash: s.cash + 10, health: s.health - 15, job_type: 'quant', level: 'Quant', message: '凭顶尖名校与 PhD 学术背景！你击败了众多竞争者，拿下了顶级 Quant Fund 42w+ 包裹 Offer！' }
-            : { health: s.health - 12, message: '量化基金的随机微积分与高频对冲数学题太烧脑了，你的简历或面经遗憾落选...' };
-        },
-        nextEventId: (s: GameState) => {
-          if (s.job_type !== 'quant') return 'sv_year_end_settlement';
-          return isTemporaryOrStudentHousing(s) ? 'choose_housing' : h1ToH2Router(s);
-        },
-      },
-      {
         text: '【休养放空 / Gap Year 调整】暂不找工作！利用积蓄休养身心，享受慢生活 (需无身份倒计时压力或有存款)',
         condition: (s) => s.visa === '绿卡' || s.visa === '公民' || s.gc_stage === 'i485_pending' || s.cash >= 8,
         effect: (s) => ({
@@ -546,7 +521,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【砸钱申办 O-1 签证】找顶级律所申办 O-1 杰出人才签证 (需现金 >= $8w)',
         reqBadge: '需现金 >= $8w + 超凡背景/高Impact',
-        condition: (s) => (s.is_phd || s.job_type === 'ai_research' || (s.impact || 0) >= 20 || s.job_type === 'quant' || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
+        condition: (s) => (s.is_phd || s.job_type === 'ai_research' || (s.impact || 0) >= 20 || s.leetcode >= 85) && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => {
           const passProb = o1PassProb(s);
           const win = gameRandom() < passProb;
@@ -933,7 +908,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
-          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const curLevel = s.level || (s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const normLvl = normalizeLevel(curLevel, s) || (s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
@@ -1110,7 +1085,7 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         hideIfUnavailable: true,
         effect: (s) => {
-          const curLevel = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const curLevel = s.level || (s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
 
@@ -1459,7 +1434,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【稳扎稳打】加班抢项目 Impact (争取 L4 / L5 升职)',
         condition: (s) => {
           const isWorking = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
-          const cur = s.level || (s.job_type === 'quant' ? 'Quant' : s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          const cur = s.level || (s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           const norm = normalizeLevel(cur, s) || (s.is_phd ? 'L4' : 'L3');
           return isWorking && (norm === 'L3' || norm === 'L4');
         },

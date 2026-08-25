@@ -150,7 +150,6 @@ export const settlementEvents: Record<string, GameEvent> = {
               // fall through to the big_tech +10 default, which is correct for them.
               const companyProfile = getCompanyProfile(s.company);
               if (companyProfile?.yearEndHealth) { healthDrain = companyProfile.yearEndHealth.drain; companyMsg = companyProfile.yearEndHealth.msg; }
-              else if (s.job_type === 'quant') { healthDrain = 6; companyMsg = ' 【职场健康】高频交易的紧绷节奏消耗了体力 (健康 -6)。'; }
               // 全职 Day Trader 是自雇操盘手：没有带薪年假、盯盘精神高压。若无此分支会落入下方
               // 通用「带薪年假 健康+6」兜底（既文案错乱、又白送健康），属 job_type 分支缺失 bug。
               else if (s.job_type === 'trader') { healthDrain = 3; companyMsg = ' 【职场健康】全职操盘盯盘的精神高压与不规律作息消耗了体力 (健康 -3)。'; }
@@ -189,10 +188,10 @@ export const settlementEvents: Record<string, GameEvent> = {
            } else if (s.visa === 'H1B (工签)' || s.visa === 'O1 (杰出人才)' || s.visa === 'L1 (外派)' || s.visa === 'Day 1 CPT') {
               const isO1 = s.visa === 'O1 (杰出人才)';
               const isPhd = s.is_phd;
-               // Big-tech-tier sponsors for PERM (better green-card odds). All standard
-               // big-tech employers (google/meta/amazon/nvidia/tiktok/...) are job_type
-               // 'big_tech'; AI labs and quant sponsor at the same tier.
-               const isBigTech = s.job_type === 'big_tech' || s.job_type === 'ai_research' || s.job_type === 'quant';
+                // Big-tech-tier sponsors for PERM (better green-card odds). All standard
+                // big-tech employers (google/meta/amazon/nvidia/tiktok/...) are job_type
+                // 'big_tech'; AI labs sponsor at the same tier.
+                const isBigTech = s.job_type === 'big_tech' || s.job_type === 'ai_research';
 
               if (!s.job_type || s.job_type === 'unemployed' || s.laid_off) {
                  if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {
@@ -369,11 +368,9 @@ export const settlementEvents: Record<string, GameEvent> = {
                 'L6 (Staff)': 78,
                 'L7 (Senior Staff)': 120,
                 'L8 (Principal)': 220,
-                'Quant': 85
               };
               const norm = normalizeLevel(s.level, s);
-              // Quant 优先用其专属 85 cap (normalizeLevel 会把 Quant 折成 L5/L6,导致 'Quant' 档位死掉、量化被误封在 52/78)。
-              const curLevelKey = (s.job_type === 'quant') ? 'Quant' : (norm || (s.is_phd ? 'L4' : 'L3'));
+              const curLevelKey = norm || (s.is_phd ? 'L4' : 'L3');
               const levelCap = maxCapByLevel[curLevelKey] || 55;
               const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60); // impact 0→0.5x, 60+→1.5x
               // 调薪只增不减:已在/超过 level cap 的高薪玩家(如 OpenAI MTS tc=80 折算 L6 cap 78)

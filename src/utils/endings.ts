@@ -107,7 +107,7 @@ export function determineEnding(s: GameState): EndingResult {
         flavor: '你的资产突破 $3000w+，建立了家族信托与慈善基金会，成为了硅谷乃至全球科技界的殿堂级传奇。',
       };
     }
-    if (s.job_type === 'trader' || s.job_type === 'quant') {
+    if (s.job_type === 'trader') {
       return {
         id: 'wall_street_wolf', emoji: '🐺', title: '华尔街之狼 · 交易封神',
         subtitle: 'STATUS: FIRE (TRADER)', tone: 'triumph', rarity: 'SSR',

@@ -109,8 +109,7 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   } else if (state.level) {
     levelLabel = state.level;
   } else {
-    if (state.job_type === 'quant') levelLabel = 'Quant';
-    else if (state.job_type === 'ai_research') levelLabel = 'MTS';
+    if (state.job_type === 'ai_research') levelLabel = 'MTS';
     else if (state.job_type === 'cn_tech') levelLabel = '国内研发';
     else if (state.is_phd) levelLabel = 'L4';
     else levelLabel = 'L3';
@@ -151,9 +150,6 @@ export function getJobDisplayInfo(state: GameState): JobDisplayInfo {
   } else if (state.company === 'icc') {
     companyLabel = 'ICC 外包 (挂靠)';
     companyClassName = 'text-amber-400 bg-amber-950/40 border-amber-600/30 font-bold';
-  } else if (state.job_type === 'quant' || state.company === 'two_sigma' || state.company === 'citadel' || state.company === 'jane_street') {
-    companyLabel = state.company === 'citadel' ? 'Citadel' : state.company === 'jane_street' ? 'Jane Street' : state.company === 'two_sigma' ? 'Two Sigma' : 'Top Quant';
-    companyClassName = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20 font-bold';
   } else if (state.job_type === 'ai_research' || state.company === 'openai' || state.company === 'anthropic') {
     companyLabel = state.company === 'anthropic' ? 'Anthropic' : state.company === 'openai' ? 'OpenAI' : '前沿 AI 实验室';
     companyClassName = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 font-bold';
@@ -306,7 +302,7 @@ export interface TCBreakdown {
 
 /**
  * Pure calculation of annual TC Cash / RSU breakdown and taxes.
- * Standardizes compensation split across Big Tech, Meta/NVDA, TikTok, Startups, and Quants.
+ * Standardizes compensation split across Big Tech, Meta/NVDA, TikTok, Startups, and Traders.
  */
 export function getTCBreakdown(state: GameState): TCBreakdown {
   const preTaxTC = state.tc > 0 && !state.laid_off && state.job_type !== 'unemployed' ? state.tc : 0;
@@ -327,8 +323,8 @@ export function getTCBreakdown(state: GameState): TCBreakdown {
   let baseRatio = 0.55;
   let rsuRatio = 0.45;
 
-  // 1. High Cash / Bonus based roles: Quant, Trader, Domestic Tech, ICC
-  if (state.job_type === 'trader' || state.job_type === 'quant') {
+  // 1. High Cash / Bonus based roles: Trader, Domestic Tech, ICC
+  if (state.job_type === 'trader') {
     baseRatio = 0.85;
     rsuRatio = 0.15;
   } else if (state.job_type === 'cn_tech' || state.company === 'cn_big_tech' || state.company === 'icc') {

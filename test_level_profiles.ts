@@ -30,7 +30,7 @@ check('normalize Staff', normalizeLevel('Staff'), 'L6 (Staff)');
 check('normalize L5 short', normalizeLevel('L5'), 'L5 (Senior)');
 check('normalize Senior Staff', normalizeLevel('Senior Staff'), 'L7 (Senior Staff)');
 check('normalize 待业 -> null', normalizeLevel('待业'), null);
-// MTS/Quant depend on tc/impact
+// MTS depends on tc/impact
 check('normalize MTS high -> L6', normalizeLevel('MTS', { tc: 70, impact: 25 } as GameState), 'L6 (Staff)');
 check('normalize MTS low -> L5', normalizeLevel('MTS', { tc: 30, impact: 0 } as GameState), 'L5 (Senior)');
 check('normalize Founder high impact -> L7', normalizeLevel('CEO & Founder', { impact: 50 } as GameState), 'L7 (Senior Staff)');

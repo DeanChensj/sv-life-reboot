@@ -46,12 +46,12 @@ export interface SchoolProfile {
   choiceText: string;
   /** Flavor message upon enrollment */
   enrollMessage: string;
-  /** Whether the school counts as CS Top 4 / Top-Tier for Quant/Mafia network */
+  /** Whether the school counts as CS Top 4 / Top-Tier for elite alumni/Mafia network */
   isTopTierCS?: boolean;
 }
 
 export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
-  // CS Top 4:排名阶梯最顶,最贵、课业最累,但开局算法最强 + 解锁 Quant/校友内推。
+  // CS Top 4:排名阶梯最顶,最贵、课业最累,但开局算法最强 + 解锁顶尖大厂/校友内推。
   cmu: {
     slug: 'cmu',
     name: 'CMU (卡耐基梅隆)',
@@ -65,7 +65,7 @@ export const SCHOOL_PROFILES: Record<SchoolSlug, SchoolProfile> = {
     leetcodeBonus: 7,
     healthDelta: -8,
     defaultHousing: '四大 校内宿舍',
-    choiceText: '【北美 CS Top 4】Stanford / MIT / CMU / Berkeley：算法天花板、校友与 Quant 门路最广 (四年 $30w)',
+    choiceText: '【北美 CS Top 4】Stanford / MIT / CMU / Berkeley：算法天花板、校友与顶尖大厂/AI 实验室门路最广 (四年 $30w)',
     enrollMessage: '你步入了世界计算机最高学府，准备迎接魔鬼课业。',
     isTopTierCS: true,
   },
@@ -137,7 +137,7 @@ export const getSchoolProfile = (school?: string): SchoolProfile | undefined => 
 };
 
 /**
- * Check if the school qualifies as a top-tier CS target for Quant / Mafia referrals.
+ * Check if the school qualifies as a top-tier CS target for elite alumni / Mafia referrals.
  */
 export const isTopTierCSSchool = (school?: string): boolean => {
   if (!school) return false;

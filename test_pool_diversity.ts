@@ -70,9 +70,6 @@ assertDiverse('big_tech', sampleH1({ job_type: 'big_tech', company: 'google', le
 // startup：过去每年必 startup_crisis（且必失业），现为加权池
 assertDiverse('startup', sampleH1({ job_type: 'startup', company: 'AI Startup', level: 'Senior', tc: 24, age: 29, visa: '绿卡', year: 2025 }), 2);
 
-// quant：过去每年必 quant_stress
-assertDiverse('quant', sampleH1({ job_type: 'quant', company: 'Citadel', level: 'Quant', tc: 60, age: 30, visa: '绿卡', year: 2025 }), 2);
-
 // ai_research / OpenAI：过去每年必 ai_research_crisis（openai 标志事件为一次性，样本里会被 seen 挡住，故这里不置 flag）
 assertDiverse('ai_research', sampleH1({ job_type: 'ai_research', company: 'OpenAI', level: 'MTS', tc: 75, age: 30, visa: '绿卡', year: 2025 }), 2);
 

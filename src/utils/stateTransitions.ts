@@ -274,7 +274,7 @@ export function applyStateTransition(
       });
     } else {
       const legacyCompNames: Record<string, string> = {
-        openai: 'OpenAI', citadel: 'Citadel (城堡)',
+        openai: 'OpenAI',
         cn_big_tech: '国内一线互联网大厂', icc: 'ICC 外包公司',
       };
       const compKey = normalizedEffect.company || newState.company || prevState.company;
@@ -282,7 +282,6 @@ export function applyStateTransition(
         ? (getCompanyProfile(compKey)?.timelineName || legacyCompNames[compKey] || compKey.toUpperCase())
         : (targetJobType === 'cn_tech' ? '国内一线互联网大厂'
           : targetJobType === 'ai_research' ? '前沿 AI 实验室'
-          : targetJobType === 'quant' ? '华尔街量化基金'
           : targetJobType === 'startup' ? '硅谷高成长初创'
           : '硅谷科技企业');
       const lvl = normalizedEffect.level || newState.level || prevState.level || (targetJobType === 'cn_tech' ? '国内研发' : 'SDE');

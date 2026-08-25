@@ -787,7 +787,6 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
     return stepChoice(st, 'sv_year_end_settlement', 0).nextState.message || '';
   };
   assert(settleMsg({ company: 'tiktok', job_type: 'big_tech' }).includes('字节'), 'TikTok -> 字节 (not 养老大厂)');
-  assert(settleMsg({ job_type: 'quant' }).includes('高频交易'), 'quant -> 高频交易');
   assert(settleMsg({ job_type: 'big_tech', company: 'nvidia' }).includes('英伟达'), 'nvidia -> 英伟达 (not generic +6)');
   assert(settleMsg({ job_type: 'big_tech', company: 'amazon' }).includes('亚麻'), 'amazon -> 亚麻 PIP (not 养老大厂)');
   assert(settleMsg({ company: 'meta', job_type: 'big_tech' }).includes('Meta'), 'meta -> Meta');
@@ -2996,7 +2995,7 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 {
   console.log('--- [CUJ 57] Streamlined Job Hunt Routes (Unified Onsite & Referral) ---');
   const jobHunt = events['job_hunt'];
-  assert(jobHunt.choices.length === 7, 'job_hunt has 7 streamlined choices');
+  assert(jobHunt.choices.length === 6, 'job_hunt has 6 streamlined choices (quant career path removed)');
 
   // Choice 0: Onsite gauntlet route
   const c0 = jobHunt.choices[0];

@@ -1815,8 +1815,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【大厂顶级 PPO 医保兜底】出示大厂高阶医保卡，触发年度 OOP Max 自付上限抵扣天价账单',
         costBadge: '自付 $0.3w',
-        condition: (s) => (s.job_type === 'big_tech' || s.job_type === 'ai_research' || s.job_type === 'quant' || ['google', 'meta', 'apple', 'amazon', 'nvidia', 'tiktok', 'microsoft', 'cisco', 'oracle', 'robinhood'].includes(s.company || '')) && !s.laid_off,
-        reqBadge: '需大厂/量化/AI实验室在职',
+        condition: (s) => (s.job_type === 'big_tech' || s.job_type === 'ai_research' || ['google', 'meta', 'apple', 'amazon', 'nvidia', 'tiktok', 'microsoft', 'cisco', 'oracle', 'robinhood'].includes(s.company || '')) && !s.laid_off,
+        reqBadge: '需大厂/AI实验室在职',
         effect: (s) => {
           const assets = deductAssets(s, 0.3);
           return {

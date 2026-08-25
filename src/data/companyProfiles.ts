@@ -132,7 +132,7 @@ export const COMPANY_PROFILES: Record<BigTechCompany, CompanyProfile> = {
 
 /**
  * Look up a company's profile. Returns undefined for non-big-tech / narrative
- * company strings (openai, citadel, cn_big_tech, icc, 'OmniAgent AI', …), which
+ * company strings (openai, cn_big_tech, icc, 'OmniAgent AI', …), which
  * are handled by their own job_type-primary branches.
  */
 export const getCompanyProfile = (company?: string): CompanyProfile | undefined => {

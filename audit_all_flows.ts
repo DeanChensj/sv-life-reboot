@@ -232,10 +232,10 @@ const eventsSource = [
 
 // Extract all event IDs in router event-pool arrays. Besides the top-level
 // workEvents/lifeEvents arrays, the job-specific routers build local weighted
-// pools (quantPool / aiPool / startupPool …) with `const xxxPool = [...]` and
-// `xxxPool.push(...)`, then `return gamePick(pool)`. Those literals are just as
-// deterministically reachable as workEvents.push(...), so recognize any
-// `<name>Pool` array/push too — otherwise quant_stress / ai_research_crisis show
+ // pools (aiPool / startupPool …) with `const xxxPool = [...]` and
+ // `xxxPool.push(...)`, then `return gamePick(pool)`. Those literals are just as
+ // deterministically reachable as workEvents.push(...), so recognize any
+ // `<name>Pool` array/push too — otherwise ai_research_crisis / startup_crisis show
 // up as probabilistic false-positive orphans depending on gameRandom ordering.
 const routerEventRegex = /(?:workEvents|lifeEvents|\w*Pool)\.push\(([^)]+)\)|const\s+(?:workEvents|lifeEvents|\w*Pool)\s*=\s*\[([^\]]+)\]/g;
 let match: RegExpExecArray | null;

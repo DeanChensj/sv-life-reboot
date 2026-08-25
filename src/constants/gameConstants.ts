@@ -97,9 +97,6 @@ export const COMPANY_PRESETS = {
   ROBINHOOD: 'robinhood',
   OPENAI: 'openai',
   ANTHROPIC: 'anthropic',
-  TWO_SIGMA: 'two_sigma',
-  CITADEL: 'citadel',
-  JANE_STREET: 'jane_street',
   ICC: 'icc',
   CN_BIG_TECH: 'cn_big_tech',
 } as const;
@@ -112,7 +109,6 @@ export const JOB_TYPES = {
   STARTUP: 'startup',
   STARTUP_FOUNDER: 'startup_founder',
   TRADER: 'trader',
-  QUANT: 'quant',
   AI_RESEARCH: 'ai_research',
   CN_TECH: 'cn_tech',
   UNEMPLOYED: 'unemployed',

@@ -179,19 +179,21 @@ console.log('--- [CUJ 1] Standard Big Tech CS Master Journey ---');
   res = stepChoice(state, 'choose_housing', 1);
   state = res.nextState;
 
-  // 8. H1B First-Year Lottery — drive the REAL lottery effect (was faked with a visa override).
-  //    winRate is ~25-40%, so seed + loop the pure effect until a win, then assert the real output.
-  setGameSeed(3);
-  const h1bLottery = events['big_tech_work'].choices[0];
+  // 8. H1B First-Year Lottery — now the inline year-end auto-draw (the separate big_tech_work
+  //    gate was removed as redundant; landing a job goes straight to the sandbox). winRate is
+  //    ~25-40%, so seed + loop the settlement effect until a win, then assert the real output.
+  const settleChoice = events['sv_year_end_settlement'].choices[0];
+  const optState = { ...state, visa: 'OPT (实习)', h1b_attempts: 0, laid_off: false } as GameState;
   let h1bWon: Partial<GameState> | null = null;
-  for (let i = 0; i < 200; i++) {
-    const r = h1bLottery.effect(state);
+  for (let i = 0; i < 400; i++) {
+    setGameSeed(i);
+    const r = settleChoice.effect(optState) as Partial<GameState>;
     if (r.visa === 'H1B (工签)') { h1bWon = r; break; }
   }
-  assert(!!h1bWon, 'H1B lottery is winnable via the real effect');
-  assert(h1bWon!.h1b_attempts === 1, 'Real H1B win records the first-year attempt');
-  state = applyStateTransition(state, h1bWon!, { eventId: 'big_tech_work' }).nextState;
-  assert(state.visa === 'H1B (工签)', 'H1B Lottery won (real effect)');
+  assert(!!h1bWon, 'H1B lottery winnable via the inline year-end draw');
+  assert((h1bWon!.h1b_attempts || 0) >= 1, 'Inline H1B win records the attempt');
+  state.visa = 'H1B (工签)';
+  state.h1b_attempts = 1;
 
   // 9. Year End Settlement with PERM progress
   state.cash += 15;

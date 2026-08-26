@@ -290,9 +290,9 @@ export const settlementEvents: Record<string, GameEvent> = {
 
             if (!alreadyDrewThisYear && (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.company !== 'cn_big_tech') {
               newAttempts += 1;
-              // Consistent with the first-attempt odds (career.ts big_tech_work) and
-              // realistic H1B lottery rates (~25-40%); was 0.40-0.65 base which made
-              // later attempts EASIER than the first and the 3-strike crisis unreachable.
+              // This inline year-end draw is now the sole H1B lottery (the separate big_tech_work
+              // event was removed as redundant). Realistic rates (~25-40%); was 0.40-0.65 base
+              // which made later attempts EASIER than the first and the 3-strike crisis unreachable.
               const baseWinRate = s.difficulty_title === '简单难度' ? 0.35 : s.difficulty_title === '困难难度' ? 0.20 : 0.27;
               const winRate = baseWinRate + (s.luck / 100) * 0.15;
               const win = gameRandom() < winRate;
@@ -601,14 +601,6 @@ export const settlementEvents: Record<string, GameEvent> = {
           const onTempWorkVisa = s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)';
           if ((s.job_type === 'unemployed' || s.laid_off) && onTempWorkVisa) {
             return 'layoff_hit';
-          }
-
-          // 第一年 H1B 抽签下沉:应届生落地大厂后直接进沙盘(见 choose_housing 不再前置 big_tech_work),
-          // 满一年后的年终,第一次 H1B 抽签作为年度事件弹出。H1B 选项会置 h1b_attempts,故只弹一次;
-          // 后续抽签/危机由 h1b_final_crisis 等既有机制接管。
-          if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && !s.h1b_attempts && !s.laid_off
-              && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.job_type !== 'trader') {
-            return 'big_tech_work';
           }
 
           // Role-specific annual hub: founders/traders don't share the generic sv_daily_life

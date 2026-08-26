@@ -842,7 +842,7 @@ export const h1ToH2Router = (s: GameState): string => {
 // 年中职场动作(跳槽入职 / H1B 抽签 / 签证自救)完成后的统一落点。
 // 若本年度决策已经做过 (season_stage === 'h1',由 sv_daily_life 的年度选项置位、年终结算清空),
 // 则经 h1ToH2Router 向前推进、消耗当年,严禁回落 sv_daily_life —— 否则玩家可在同一年内再做一次
-// 年度动作(典型:F1/OPT 应届生跳槽入职→选房→big_tech_work 后又回日常面板二次跳槽,#2 哨兵实测)。
+// 年度动作(典型:F1/OPT 应届生跳槽入职→选房→日常面板后又想同年二次跳槽,#2 哨兵实测)。
 // 仅在开局「首次入职」(season_stage 尚未置位) 时才回 sv_daily_life,开启人生第一年的日常规划。
 export const afterCareerAction = (s: GameState): string =>
   s.season_stage === 'h1' ? h1ToH2Router(s) : 'sv_daily_life';

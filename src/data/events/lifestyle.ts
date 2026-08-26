@@ -51,6 +51,97 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (_s) => ({}),
         nextEventId: 'dating_market',
       },
+      {
+        text: '【德扑私局 · 创投博弈】受邀参加 Palo Alto 创投圈德州扑克局，在牌桌上切磋算力与心理博弈',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.5 || (s.network || 0) >= 20,
+        effect: (_s) => ({}),
+        nextEventId: 'poker_home_game',
+      },
+    ],
+  },
+
+  'poker_home_game': {
+    id: 'poker_home_game',
+    oncePerLife: true,
+    title: '【周末私局】硅谷创投圈德州扑克局',
+    description: '周末你受邀来到 Palo Alto 一栋隐秘豪宅的车库德扑局。牌桌上坐着沙丘路 VC 合伙人、量化基金 Quant、大厂 Staff 架构师与 AI 创业老炮。洗牌机沙沙作响，几巡盲注试探后，底池迅速被推高。',
+    choices: [
+      {
+        text: '【GTO 纯数理算牌】精确计算底池赔率与 EV 期望值，稳扎稳打收割冲动对手 (买入 $0.3w)',
+        costBadge: '买入 $0.3w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.3,
+        effect: (s) => {
+          // 盘感/EV 直觉加成:全职交易员出身有优势。(quant 职业线与 citadel/two_sigma 等已移除,
+          // 不再引用那些死概念;高 leetcode 的数理功底也已计入 winProb。)
+          const isMarketsPro = s.job_type === 'trader';
+          const winProb = Math.min(0.80, 0.55 + (s.leetcode / 300) + (isMarketsPro ? 0.15 : 0));
+          const win = gameRandom() < winProb;
+          const deducted = deductAssets(s, 0.3);
+          return win
+            ? {
+                cash: deducted.cash + 0.8,
+                stocks: deducted.stocks,
+                leetcode: Math.min(100, s.leetcode + 1),
+                network: Math.min(100, (s.network || 10) + 2),
+                message: '【数理执行】你严格执行 GTO 策略，精准计算每一个 EV 决策，稳扎稳打净赢 +$0.5w 筹码 (LeetCode +1 · Network +2)！'
+              }
+            : {
+                cash: deducted.cash,
+                stocks: deducted.stocks,
+                message: '【Bad Beat 爆冷】尽管数学期望值完全正确，但河牌圈被对手一张单张 Outs 绝杀，输掉 $0.3w 买入。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【心理战 River 抓诈唬】深码 All-in！极限抓对手偷鸡 (买入 $0.5w · 约 50% 胜率)',
+        costBadge: '买入 $0.5w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.5,
+        effect: (s) => {
+          const winProb = Math.min(0.75, 0.45 + (Math.min(25, s.charm) / 100) + (Math.min(50, s.luck) / 250));
+          const win = gameRandom() < winProb;
+          const deducted = deductAssets(s, 0.5);
+          return win
+            ? {
+                cash: deducted.cash + 1.7,
+                stocks: deducted.stocks,
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
+                network: Math.min(100, (s.network || 10) + 3),
+                message: '【神级抓诈唬】面对满池 All-in，你凭借微表情果断跟注抓到纯诈唬！净赢 +$1.2w 巨额底池，博得全场喝彩 (Charm +1 · Network +3)！'
+              }
+            : {
+                cash: deducted.cash,
+                stocks: deducted.stocks,
+                health: Math.max(0, s.health - 3),
+                message: '【踢到铁板】对手并没有在偷鸡，亮出坚果牌。你输掉了 $0.5w 买入，心态受挫略感郁闷 (健康 -3)。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【威士忌与行业社交】佛系小注，主要跟同行喝酒闲聊、打听大厂招聘风向 (花费 $0.1w)',
+        costBadge: '花费 $0.1w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.1,
+        effect: (s) => {
+          const deducted = deductAssets(s, 0.1);
+          return {
+            cash: deducted.cash,
+            stocks: deducted.stocks,
+            network: Math.min(100, (s.network || 10) + 3),
+            health: Math.min(100, s.health + 2),
+            message: '【牌桌外交】你在牌桌上谈笑风生，打听到了几家大厂内部的转组与招聘风向 (Network +3 · 健康 +2)！'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【只看不打 · 场边观摩】不买入下注，只在场边喝免费饮品、看各路神仙打架 (免费)',
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 10) + 1),
+          message: '【场边看戏】你在场边观摩了一晚各路高手的博弈，喝着免费饮品听了不少硅谷八卦 (Network +1)。'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
     ],
   },
 

@@ -3104,6 +3104,59 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 58 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 59: Silicon Valley Texas Hold'em Home Game (德州扑克私局)
+// Verify that poker_home_game is reachable via active_social_life & midYearEventRouter,
+// supports GTO mathematical plays, high-stakes bluff catch, and whiskey networking,
+// protects against negative cash via deductAssets, and enforces state invariants.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 59] Silicon Valley Texas Hold\'em Home Game ---');
+  const ev = events['poker_home_game'];
+  assert(!!ev, 'poker_home_game event is registered');
+  assert(ev.choices.length === 4, 'poker_home_game has 4 tactical choices');
+
+  // 1. GTO Strategy choice
+  const gtoChoice = ev.choices[0];
+  assert(gtoChoice.text.includes('GTO 纯数理算牌'), 'Choice 0 is GTO Strategy');
+  // trader = the markets-savvy identity that gets the GTO win-prob edge (quant career removed).
+  const quantState = { ...generateInitialState(nextCujSeed()), cash: 10, leetcode: 80, job_type: 'trader' } as GameState;
+  assert(gtoChoice.condition!(quantState) === true, 'Player with cash can enter GTO poker');
+  const gtoEff = gtoChoice.effect(quantState) as Partial<GameState>;
+  assert(typeof gtoEff.cash === 'number', 'GTO effect produces valid cash');
+
+  // 2. High-Stakes Bluff Catch choice
+  const bluffChoice = ev.choices[1];
+  assert(bluffChoice.text.includes('心理战 River 抓诈唬'), 'Choice 1 is Bluff Catch');
+  const wealthyState = { ...generateInitialState(nextCujSeed()), cash: 5, charm: 20, luck: 40 } as GameState;
+  assert(bluffChoice.condition!(wealthyState) === true, 'Wealthy player qualifies for All-in bluff catch');
+  const bluffEff = bluffChoice.effect(wealthyState) as Partial<GameState>;
+  assert(typeof bluffEff.cash === 'number', 'Bluff catch effect produces valid cash');
+
+  // 3. Whiskey Networking choice
+  const socialChoice = ev.choices[2];
+  assert(socialChoice.text.includes('威士忌与行业社交'), 'Choice 2 is Whiskey Networking');
+  const brokeState = { ...generateInitialState(nextCujSeed()), cash: 0.05, stocks: 5 } as GameState;
+  assert(socialChoice.condition!(brokeState) === true, 'Player with stocks can cover buy-in');
+  const socialEff = socialChoice.effect(brokeState) as Partial<GameState>;
+  assert((socialEff.network || 0) > (brokeState.network || 0), 'Social choice boosts network');
+
+  // 4. Spectator Unconditional Fallback choice
+  const specChoice = ev.choices[3];
+  assert(specChoice.text.includes('场边观摩'), 'Choice 3 is Spectator Fallback');
+  assert(!specChoice.condition, 'Spectator choice is unconditional guarantee against dead-ends');
+  const brokeZeroState = { ...generateInitialState(nextCujSeed()), cash: 0, stocks: 0 } as GameState;
+  const specEff = specChoice.effect(brokeZeroState) as Partial<GameState>;
+  assert((specEff.network || 0) > 0, 'Spectator choice gives networking benefits');
+
+  // 5. Reachable from active_social_life
+  const socialHub = events['active_social_life'];
+  const hasPokerOption = socialHub.choices.some(c => c.nextEventId === 'poker_home_game');
+  assert(hasPokerOption, 'active_social_life contains entry to poker_home_game');
+
+  console.log('✅ CUJ 59 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

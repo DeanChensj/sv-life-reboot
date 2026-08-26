@@ -2694,8 +2694,8 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   const transfer = events['internal_team_transfer'];
   const aiChoice = transfer.choices.find((c) => c.text.includes('前沿 AI'))!;
-  const wlbChoice = transfer.choices.find((c) => c.text.includes('养老'))!;
-  assert(transfer.choices.length === 2, 'TPM 已移除,转组只剩 AI核心 / 养老支持 两个去向');
+  const wlbChoice = transfer.choices.find((c) => c.text.includes('低压'))!;
+  assert(transfer.choices.length === 2, 'TPM 已移除,转组只剩 核心攻坚 / 低压支持 两个去向');
 
   const aiRes = aiChoice.effect({ ...emp, story_flags: { pip_warning: true } } as GameState);
   assert((aiRes.story_flags as Record<string, unknown>)?.team_focus === 'ai_core', 'AI 组置 team_focus=ai_core');

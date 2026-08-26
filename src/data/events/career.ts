@@ -3506,6 +3506,94 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
     ],
+  },
+
+  // 低压支持组(team_focus:wlb_tools)的招牌逆境:没有 PIP/裁员刀光,但组织动荡(重组/外包/裁撤)
+  // 频发 —— 给"安全但天花板低"的赛道补上一个真实的「不稳定」下行。安全选项恒在,无死局/无 game_over。
+  'support_org_reorg': {
+    id: 'support_org_reorg',
+    title: '【组织动荡】低压组被并入 / 外包风波',
+    description: '一纸重组邮件：你所在的低压后台/工具组被整建制并入其它部门，部分职能甚至要外包给 vendor。没有 PIP 与裁员的刀光，但你的 domain 说没就没，又得重新证明自己的位置。',
+    choices: [
+      {
+        text: '【平级并入新组，业务从头再来】接受重组，跟着残余 domain 平移到新团队',
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          impact: Math.max(0, (s.impact || 0) - 5),
+          health: Math.max(0, s.health - 3),
+          message: '你平级并入了新团队，过往积累的 domain 影响力大半清零，又要从头刷存在感。好在饭碗还在，节奏依旧不紧。'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【借组织动荡跳去核心攻坚组】既然要动，不如搏一把换到高曝光核心线',
+        reqBadge: '算法 ≥ 35',
+        condition: (s) => s.leetcode >= 35,
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          transferred_to_ai: true,
+          tc: s.tc + 1,
+          impact: addImpact(s, 3),
+          health: Math.max(0, s.health - 6),
+          story_flags: { ...(s.story_flags || {}), team_focus: 'ai_core' },
+          message: '你抓住重组的窗口主动申请转岗，成功挤进了公司最核心的攻坚业务线！曝光度与上限陡增，但从此告别养生节奏。'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【消极等一波 N+package】反正低压，索性躺着看会不会轮到自己拿赔偿',
+        effect: (s) => {
+          const cut = gameRandom() < 0.35;
+          return cut
+            ? { mid_year: true, season_stage: 'h1', cash: s.cash + 8, tc: 0, laid_off: true, job_type: 'unemployed' as const, company: undefined, health: Math.max(0, s.health - 4), message: '这波真轮到你了——不过 N+ 大礼包 (+$8w) 到账，你体面地被"优化"，转身重新找工作。' }
+            : { mid_year: true, season_stage: 'h1', cash: s.cash + 2, health: Math.min(100, s.health + 3), message: '虚惊一场，重组的刀没落到你头上，还发了一笔留任小红包 (+$2w)，继续摸鱼。' };
+        },
+        nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
+      },
+    ],
+  },
+
+  // 核心攻坚组(team_focus:ai_core)的招牌逆境:高曝光=高政治。路线之争 + 抢功 —— 给"高上限"赛道补上
+  // 一个真实的「政治修罗场」下行,和低压组的「组织动荡」形成对照。三选项覆盖 硬刚/站队/埋头 三种玩法。
+  'ai_org_politics': {
+    id: 'ai_org_politics',
+    title: '【核心修罗场】路线之争与抢功政治',
+    description: '核心攻坚组高曝光也高危：两位 Director 为技术路线明争暗斗，你的项目成了站队筹码；隔壁组还惦记着把你的核心模块抢过去写进他们的 promo packet。',
+    choices: [
+      {
+        text: '【硬刚路线之争 · 抢核心项目主导权】在架构评审会上正面开战，争夺话语权',
+        effect: (s) => {
+          const win = gameRandom() < Math.min(0.7, 0.35 + (s.leetcode / 300) + ((s.network || 10) / 300));
+          return win
+            ? { mid_year: true, season_stage: 'h1', impact: addImpact(s, 10), tc: s.tc + 3, charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), health: Math.max(0, s.health - 6), message: '你在架构评审会上以数据和 demo 正面碾压，拿下核心项目主导权，高层背书加身，影响力大涨！' }
+            : { mid_year: true, season_stage: 'h1', impact: Math.max(0, (s.impact || 0) - 6), health: Math.max(0, s.health - 8), message: '政治斗争败下阵来，你的核心模块被隔壁组抢走写进了他们的 promo，你沦为背景板，元气大伤。' };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【向 VP 靠拢站队】审时度势选边站，用汇报与关系经营换取庇护',
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          network: Math.min(100, (s.network || 10) + 5),
+          impact: addImpact(s, 2),
+          health: Math.max(0, s.health - 4),
+          message: '你敏锐地押注了赢面更大的一方，虽没直接抢到项目，但站对了队、攒下政治资本与靠山。'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【专注技术不站队】埋头把活干好，不掺和办公室政治',
+        effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
+          leetcode: Math.min(100, s.leetcode + 6),
+          impact: Math.max(0, (s.impact || 0) - 3),
+          health: Math.max(0, s.health - 2),
+          message: '你两耳不闻窗外事，技术精进了一截，但不站队让你在核心组的政治版图里被边缘化，影响力悄悄缩水。'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
   }
 };
 

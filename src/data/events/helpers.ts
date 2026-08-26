@@ -616,9 +616,12 @@ export const midYearEventRouter = (s: GameState): string => {
       if (teamFocus === 'ai_core' && isCorporate) {
         if (!s.story_flags?.open_source_breakout_seen) workEvents.push('open_source_breakout');
         if (!s.story_flags?.internal_tech_talk_viral_seen) workEvents.push('internal_tech_talk_viral');
+        // 招牌逆境:高曝光核心组=政治修罗场 (路线之争/抢功),加权入池让 ai_core 更常卷入政治。
+        workEvents.push('ai_org_politics', 'ai_org_politics');
       }
-      // 养老支持组:远离 PIP / 裁员 / 线上危机,回归平稳日常 (低压低上限)。
+      // 低压支持组:远离 PIP / 裁员 / 线上危机 (低压低上限),但组织动荡 (重组/外包/裁撤) 是其招牌不稳定风险。
       if (teamFocus === 'wlb_tools') {
+        if (gameRandom() < 0.30) return 'support_org_reorg';
         const chill = workEvents.filter((e) => !['friday_pip', 'layoff_rumor', 'stock_crash', 'ai_disruption_existential', 'friday_p0_outage_crisis', 'agent_hallucination_prod_disaster'].includes(e));
         return gamePick(chill.length ? chill : ['snack_perks_downgrade']);
       }

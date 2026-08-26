@@ -9,6 +9,61 @@ interface WarReportModalProps {
   onClose: () => void;
 }
 
+// 毒舌墓志铭:按结局 + 关键状态生成一句"人生诊断/锐评",是让人忍不住转发的那支口红。
+function getEpitaph(s: GameState, endingId: string, tone: string): string {
+  const age = s.age ?? 30;
+  const lc = s.leetcode ?? 0;
+  const MAP: Record<string, string> = {
+    zhuanma_washout: `刷了 ${lc} 道题也没能转码上岸——有些路，天赋是要收费的。`,
+    deported: '来时一箱行李一个梦，走时行李还在，梦被退了签。',
+    burnout: '长眠于此：一位把公司 OKR 照得比自己命还亮的社畜。',
+    startup_ruin: '他曾无限接近改变世界，直到账户余额先改变了他。',
+    bankruptcy: '打败他的从来不是硅谷，是硅谷的房价。',
+    game_over_generic: '湾区这道副本他没能通关，但至少，他来过、拼过。',
+    unicorn_founder: `${age} 岁敲钟那天，他再也不用回复"这需求今天能上吗"。`,
+    silicon_dynasty: '财富自由后他最大的烦恼，是家族信托该选哪家私行。',
+    wall_street_wolf: '他用一手冷血的仓位管理，把"搏一搏"搏成了自由。',
+    ai_academic: '他终于把 Reviewer 2 熬成了自己论文的引用数。',
+    tech_totem: 'L8 登顶那年他才发现，山顶的风景主要是更多的会。',
+    real_estate_mogul: '他不再靠工资活着——他靠的是三套投资房的租客。',
+    atherton_lord: 'Atherton 的草坪大到，再也听不见 Slack 的提示音。',
+    fire_comfortable: `${age} 岁他卸载了闹钟，也卸载了 Slack，潇洒退场。`,
+    fire_basic: '攒够 $500w 那天，他平静地点了"辞职"，没有一丝留恋。',
+    cn_hermit: '绕地球一圈，他发现最香的还是家门口那碗面。',
+    homecoming: '他把 H-1B 还给了 USCIS，把自己还给了家乡。',
+    settled_family: '没暴富也没暴毙，一张绿卡一个家——已赢过大多数人。',
+    zen_hermit: '他终于想通：卷赢了所有人，却把自己弄丢了。',
+    middle_class: '硅谷没让他一夜暴富，但给了他一份体面的平凡。',
+  };
+  if (MAP[endingId]) return MAP[endingId];
+  if (tone === 'triumph') return '在硅谷这道地狱副本里，他笑到了最后。';
+  if (tone === 'content') return '没大富大贵，但在湾区平稳落地——这本身就是胜利。';
+  return '硅谷记得每一个拼过命的人，哪怕结局并不圆满。';
+}
+
+// 人设标签:一串"晒人设"的浓缩标签,和墓志铭一起构成可炫耀的诊断书。
+function getPersonaTags(s: GameState): string[] {
+  const tags: string[] = [];
+  if (s.trait_title) tags.push(s.trait_title);
+  const jt = s.job_type;
+  if (jt === 'startup_founder') tags.push('创始人 CEO');
+  else if (jt === 'trader') tags.push('全职操盘手');
+  else if (jt === 'ai_research') tags.push('AI 研究员');
+  else if (jt === 'cn_tech') tags.push('国内大厂');
+  else if (jt === 'unemployed' || !jt) tags.push('待业中');
+  else if (s.level) tags.push(s.level.replace(/[()（）]/g, ' ').replace(/\s+/g, ' ').trim());
+  if (s.status === 'win') tags.push(`${s.age ?? 30}岁 FIRE`);
+  else if (s.status === 'retired') tags.push(`${s.age ?? 30}岁 退休`);
+  else tags.push(`奋斗至 ${s.age ?? 30}岁`);
+  if (s.visa === '公民') tags.push('天生赢家');
+  else if (s.visa === '绿卡') tags.push('绿卡上岸');
+  else if (s.visa === 'H1B (工签)') tags.push('H1B 未上岸');
+  else if (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') tags.push('签证飘摇');
+  if ((s.leetcode ?? 0) >= 80) tags.push('算法神仙');
+  else if ((s.leetcode ?? 0) >= 60) tags.push('刷题老炮');
+  return tags;
+}
+
 export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -21,17 +76,17 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set high resolution canvas dimensions (800 x 1200)
+    // Set high resolution canvas dimensions (800 x 1260; +60 for the persona-tags strip)
     canvas.width = 800;
-    canvas.height = 1200;
+    canvas.height = 1260;
 
     // Background Gradient (Dark Cyberpunk / Silicon Valley Theme)
-    const bgGradient = ctx.createLinearGradient(0, 0, 0, 1200);
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, 1260);
     bgGradient.addColorStop(0, '#09090b');
     bgGradient.addColorStop(0.5, '#18181b');
     bgGradient.addColorStop(1, '#09090b');
     ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, 800, 1200);
+    ctx.fillRect(0, 0, 800, 1260);
 
     // Classified ending drives the headline + palette (triumph/content/tragedy).
     const ending = determineEnding(gameState);
@@ -43,12 +98,12 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     orbGradient.addColorStop(0, primaryColorAlpha);
     orbGradient.addColorStop(1, 'transparent');
     ctx.fillStyle = orbGradient;
-    ctx.fillRect(0, 0, 800, 1200);
+    ctx.fillRect(0, 0, 800, 1260);
 
     // Card Outer Border
     ctx.strokeStyle = '#27272a';
     ctx.lineWidth = 4;
-    ctx.strokeRect(30, 30, 740, 1140);
+    ctx.strokeRect(30, 30, 740, 1200);
 
     // Top Header - Title
     ctx.font = '900 42px sans-serif';
@@ -79,10 +134,10 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     ctx.fillStyle = isPositive ? (ending.tone === 'triumph' ? '#34d399' : '#fbbf24') : '#f87171';
     ctx.fillText(`${ending.emoji} ${ending.title}`, 95, 235);
 
-    // Wrap long message text
-    ctx.font = '500 18px sans-serif';
-    ctx.fillStyle = '#a1a1aa';
-    const msg = gameState.message || '硅谷风云变幻，你在这里留下了独特的足迹。';
+    // 毒舌墓志铭 (savage epitaph) — the shareable one-liner verdict, replaces the generic message.
+    ctx.font = 'italic 500 18px sans-serif';
+    ctx.fillStyle = '#d4d4d8';
+    const msg = getEpitaph(gameState, ending.id, ending.tone);
     const words = msg.split('');
     let line = '';
     let y = 275;
@@ -102,6 +157,29 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
       }
     }
     if (y <= 310) ctx.fillText(line, 95, y);
+
+    // 人设标签条 (persona tag chips) — a strip of "flex your build" tags under the summary box.
+    const tags = getPersonaTags(gameState).slice(0, 5);
+    ctx.textAlign = 'left';
+    ctx.font = '700 16px sans-serif';
+    let tagX = 70;
+    const tagY = 348;
+    const tagH = 40;
+    for (const t of tags) {
+      const w = ctx.measureText(t).width + 32;
+      if (tagX + w > 730) break; // one clean row; drop overflow
+      // pill background + border in the ending's palette
+      ctx.beginPath();
+      ctx.roundRect(tagX, tagY, w, tagH, 20);
+      ctx.fillStyle = primaryColorAlpha;
+      ctx.fill();
+      ctx.strokeStyle = primaryColor;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = primaryColor;
+      ctx.fillText(t, tagX + 16, tagY + 26);
+      tagX += w + 12;
+    }
 
     // Main Attributes Grid
     const drawStatBox = (x: number, y: number, w: number, h: number, label: string, val: string, color: string) => {
@@ -124,16 +202,16 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
     // True all-time peak TC (falls back to current tc for legacy saves without max_tc).
     const peakTC = Math.max(gameState.max_tc || 0, gameState.tc || 0).toFixed(1);
 
-    drawStatBox(70, 360, 315, 110, '最终净资产 (NET WORTH)', `$${finalCash}w`, '#34d399');
-    drawStatBox(415, 360, 315, 110, '峰值年薪总包 (TC)', `$${peakTC}w`, '#f4f4f5');
+    drawStatBox(70, 420, 315, 110, '最终净资产 (NET WORTH)', `$${finalCash}w`, '#34d399');
+    drawStatBox(415, 420, 315, 110, '峰值年薪总包 (TC)', `$${peakTC}w`, '#f4f4f5');
 
-    drawStatBox(70, 490, 315, 110, 'LEETCODE 解题量', `${gameState.leetcode ?? 0} 题`, '#fbbf24');
-    drawStatBox(415, 490, 315, 110, '存活年龄 / 奋斗时长', `${gameState.age ?? 18} 岁 / 奋斗 ${Math.max(1, (gameState.age || 18) - 17)} 年`, '#a78bfa');
+    drawStatBox(70, 550, 315, 110, 'LEETCODE 解题量', `${gameState.leetcode ?? 0} 题`, '#fbbf24');
+    drawStatBox(415, 550, 315, 110, '存活年龄 / 奋斗时长', `${gameState.age ?? 18} 岁 / 奋斗 ${Math.max(1, (gameState.age || 18) - 17)} 年`, '#a78bfa');
 
     // Medals Section Header
     ctx.font = '700 20px monospace';
     ctx.fillStyle = '#f4f4f5';
-    ctx.fillText('[ACHIEVED_MEDALS] 生涯成就荣誉勋章', 70, 650);
+    ctx.fillText('[ACHIEVED_MEDALS] 生涯成就荣誉勋章', 70, 710);
 
     const medals: { tag: string; title: string; desc: string; rarity: 'SSR' | 'SR' | 'R'; color: string }[] = [];
     
@@ -156,7 +234,7 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
 
     // 限制最多渲染前 4 枚高稀有度勋章，防止底部溢出重叠
     const displayMedals = medals.slice(0, 4);
-    let medalY = 680;
+    let medalY = 740;
     displayMedals.forEach((m) => {
       ctx.fillStyle = '#18181b';
       ctx.fillRect(70, medalY, 660, 65);
@@ -185,24 +263,24 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
 
     // Footer - Branding & QR code simulation
     ctx.fillStyle = '#18181b';
-    ctx.fillRect(70, 1020, 660, 110);
+    ctx.fillRect(70, 1080, 660, 110);
     ctx.strokeStyle = '#3f3f46';
     ctx.lineWidth = 1;
-    ctx.strokeRect(70, 1020, 660, 110);
+    ctx.strokeRect(70, 1080, 660, 110);
 
     ctx.font = '700 20px sans-serif';
     ctx.fillStyle = '#f4f4f5';
-    ctx.fillText('硅谷人生重启 (SV Life Reboot)', 95, 1060);
+    ctx.fillText('硅谷人生重启 (SV Life Reboot)', 95, 1120);
     ctx.font = '400 14px monospace';
     ctx.fillStyle = '#71717a';
-    ctx.fillText('扫描或搜索加入湾区打工人模拟挑战', 95, 1090);
+    ctx.fillText('扫描或搜索加入湾区打工人模拟挑战', 95, 1150);
 
     // QR Code Box Placeholder
     ctx.fillStyle = '#27272a';
-    ctx.fillRect(630, 1035, 80, 80);
+    ctx.fillRect(630, 1095, 80, 80);
     ctx.font = '900 24px monospace';
     ctx.fillStyle = '#10b981';
-    ctx.fillText('SV', 655, 1083);
+    ctx.fillText('SV', 655, 1143);
 
     // Export Data URL
     setDataUrl(canvas.toDataURL('image/png'));

@@ -1020,11 +1020,6 @@ export default function App() {
                         </span>
                         
                         <div className="flex flex-wrap gap-2 items-center">
-                          {isLimitedOpp && (
-                             <span className="text-xs px-2.5 py-1 rounded-md font-bold tracking-wide bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                               本年限定 · 限今年
-                             </span>
-                          )}
                           {costMatch && (
                              <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
                                 {costMatch}

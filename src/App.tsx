@@ -9,7 +9,6 @@ import { applyStateTransition } from './utils/stateTransitions';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './utils/saveMigration';
 import { determineEnding } from './utils/endings';
 import { getJobDisplayInfo } from './utils/gameStateSelectors';
-import { getActiveAnnualOpportunity } from './data/events/helpers';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DopamineFeedback, type DopaminePill, type ScreenEffectType } from './components/DopamineFeedback';
 
@@ -954,25 +953,6 @@ export default function App() {
 
                   <p className="text-zinc-400 mb-5 md:mb-10 text-[15px] sm:text-base md:text-xl leading-relaxed">{currentEvent.description}</p>
 
-                  {currentEventId === 'sv_daily_life' && (() => {
-                    const opp = getActiveAnnualOpportunity(gameState);
-                    if (!opp) return null;
-                    return (
-                      <div className="mb-5 md:mb-8 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-4 md:p-5">
-                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                          <span className="text-amber-400 font-bold text-sm md:text-base tracking-wide">◆ 本年湾区限定</span>
-                          <span className="text-zinc-100 font-bold text-sm md:text-base">· {opp.label}</span>
-                          {opp.taken && (
-                            <span className="ml-auto text-[11px] md:text-xs text-zinc-500 border border-zinc-700 rounded-full px-2 py-0.5">本年已把握</span>
-                          )}
-                        </div>
-                        <p className="text-zinc-400 text-[13px] md:text-sm leading-relaxed">
-                          {opp.blurb}{opp.taken ? '' : '　—　限今年，错过再等一轮。'}
-                        </p>
-                      </div>
-                    );
-                  })()}
-
                   <div className="flex flex-col space-y-2.5 md:space-y-4">
                     {currentEvent.choices
                       .filter((choice) => {
@@ -985,6 +965,8 @@ export default function App() {
                       .map((choice, idx) => {
                       const isAvailable = !choice.condition || choice.condition(gameState);
                       const isSSR = choice.text.includes('隐藏款') || choice.text.includes('SSR');
+                      // 本年限定机遇:直接高亮这条选项本身(每年只轮出一个),不再另起横幅重复信息。
+                      const isLimitedOpp = choice.text.includes('限时机遇');
                       
                       // Precise badge extraction (prioritize Choice.costBadge / Choice.reqBadge if defined)
                       const costMatch = choice.costBadge || choice.text.match(/\((?:消耗|花费|每年|成本|折抵|实付|首付|出资|学费|自付|垫资).*?\)/)?.[0]?.slice(1, -1);
@@ -1018,6 +1000,8 @@ export default function App() {
                         className={`group w-full text-left px-4 py-3 md:px-6 md:py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 cursor-pointer ${
                           isSSR
                             ? 'bg-gradient-to-r from-amber-950/70 via-yellow-900/50 to-amber-950/70 border-amber-400/90 shadow-[0_0_20px_rgba(245,158,11,0.35)] hover:border-yellow-300 hover:shadow-[0_0_30px_rgba(250,204,21,0.55)] hover:bg-amber-900/60 active:scale-[0.98]'
+                            : isLimitedOpp && isAvailable
+                              ? 'bg-gradient-to-r from-amber-500/10 to-zinc-900 border-amber-500/40 hover:border-amber-400/70 hover:bg-amber-900/20 active:scale-[0.98]'
                             : isAvailable 
                               ? 'bg-zinc-900 border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/80 active:scale-[0.98]' 
                               : 'bg-zinc-950/50 border-zinc-800/50 opacity-50 cursor-not-allowed'
@@ -1026,6 +1010,7 @@ export default function App() {
                         <span className={`font-medium text-[15px] sm:text-base md:text-lg transition-colors flex items-center gap-2.5 ${
                           isSSR
                             ? 'text-amber-200 group-hover:text-yellow-200 font-extrabold tracking-wide drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]'
+                            : isLimitedOpp && isAvailable ? 'text-amber-200 group-hover:text-amber-100 font-bold'
                             : isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'
                         }`}>
                           <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 shrink-0 group-hover:border-emerald-500/40 group-hover:text-zinc-200">
@@ -1035,6 +1020,11 @@ export default function App() {
                         </span>
                         
                         <div className="flex flex-wrap gap-2 items-center">
+                          {isLimitedOpp && (
+                             <span className="text-xs px-2.5 py-1 rounded-md font-bold tracking-wide bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                               本年限定 · 限今年
+                             </span>
+                          )}
                           {costMatch && (
                              <span className={`text-xs px-2.5 py-1 rounded-md font-semibold tracking-wide ${isAvailable ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'bg-zinc-800 text-zinc-500'}`}>
                                 {costMatch}

@@ -603,6 +603,14 @@ export const settlementEvents: Record<string, GameEvent> = {
             return 'layoff_hit';
           }
 
+          // 第一年 H1B 抽签下沉:应届生落地大厂后直接进沙盘(见 choose_housing 不再前置 big_tech_work),
+          // 满一年后的年终,第一次 H1B 抽签作为年度事件弹出。H1B 选项会置 h1b_attempts,故只弹一次;
+          // 后续抽签/危机由 h1b_final_crisis 等既有机制接管。
+          if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && !s.h1b_attempts && !s.laid_off
+              && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'startup_founder' && s.job_type !== 'trader') {
+            return 'big_tech_work';
+          }
+
           // Role-specific annual hub: founders/traders don't share the generic sv_daily_life
           // focus panel — their proper "pick your year" panel is their own strategy hub. Route
           // them straight there (literal, so audit_all_flows can statically see reachability),

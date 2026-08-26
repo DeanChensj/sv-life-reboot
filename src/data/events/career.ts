@@ -503,8 +503,8 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'big_tech_work': {
     id: 'big_tech_work',
-    title: '【大厂打工】开启大厂打工生涯',
-    description: '你正式开启了职场生涯，成为了光荣的湾区码农。接下来要面临第一道坎：H1B 抽签。',
+    title: '【H1B 抽签季】达摩克利斯之剑落下',
+    description: '入职大厂满一年，OPT 的沙漏一格格漏下——湾区码农的第一道生死坎来了：H1B 抽签。中签则身份无忧，落空则继续在 STEM OPT 延期里悬着。',
     imageUrl: 'images/h1b_lottery_win.jpg',
     choices: [
       {

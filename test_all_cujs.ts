@@ -3119,7 +3119,8 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   // 1. GTO Strategy choice
   const gtoChoice = ev.choices[0];
   assert(gtoChoice.text.includes('GTO 纯数理算牌'), 'Choice 0 is GTO Strategy');
-  const quantState = { ...generateInitialState(nextCujSeed()), cash: 10, leetcode: 80, company: 'citadel', level: 'Quant' } as GameState;
+  // trader = the markets-savvy identity that gets the GTO win-prob edge (quant career removed).
+  const quantState = { ...generateInitialState(nextCujSeed()), cash: 10, leetcode: 80, job_type: 'trader' } as GameState;
   assert(gtoChoice.condition!(quantState) === true, 'Player with cash can enter GTO poker');
   const gtoEff = gtoChoice.effect(quantState) as Partial<GameState>;
   assert(typeof gtoEff.cash === 'number', 'GTO effect produces valid cash');

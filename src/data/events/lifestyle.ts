@@ -71,8 +71,10 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         costBadge: '买入 $0.3w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 0.3,
         effect: (s) => {
-          const isQuant = s.job_type === 'trader' || s.company === 'citadel' || s.company === 'two_sigma' || s.company === 'jane_street' || s.level === 'Quant';
-          const winProb = Math.min(0.80, 0.55 + (s.leetcode / 300) + (isQuant ? 0.15 : 0));
+          // 盘感/EV 直觉加成:全职交易员出身有优势。(quant 职业线与 citadel/two_sigma 等已移除,
+          // 不再引用那些死概念;高 leetcode 的数理功底也已计入 winProb。)
+          const isMarketsPro = s.job_type === 'trader';
+          const winProb = Math.min(0.80, 0.55 + (s.leetcode / 300) + (isMarketsPro ? 0.15 : 0));
           const win = gameRandom() < winProb;
           const deducted = deductAssets(s, 0.3);
           return win

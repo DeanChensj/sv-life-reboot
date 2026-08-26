@@ -5,6 +5,10 @@ import { gameRandom } from './src/utils/random';
 
 console.log('🎰 === 启动蒙特卡洛数值平衡与寿命保障自动化门禁 (Monte Carlo Balance CI) ===\n');
 
+// Probability a senior, leetcode-satisfied big_tech bot leans into 向上管理·攒政治资本.
+// Default 0.4 exercises the action for ongoing CI coverage; set POLITICS_P=0 for an A/B baseline.
+const POLITICS_P = Number(process.env.POLITICS_P ?? '0.4');
+
 function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_healer', seed: number): {
   status: 'win' | 'game_over' | 'playing' | 'retired';
   age: number;
@@ -13,6 +17,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
   cause?: string;
   hopsAttempted: number;
   hopsSucceeded: number;
+  level: string;
 } {
   // #1 种子复现:seed 作为 customSeed 传入,generateInitialState 内部 setGameSeed(seed),使开局面板
   // 与全程 gameRandom() 消耗完全确定(外部单独 setGameSeed 会被无参重播覆盖,见 helpers.ts)。
@@ -44,12 +49,19 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
 
     let chosen: Choice;
     if (currentEventId === 'sv_daily_life') {
+      const politics = validChoices.find(c => c.text.includes('向上管理'));
+      const isSenior = /L5|L6|L7|L8|Senior|Staff|Principal/.test(state.level || '');
       if (state.health < 60) {
         const healChoice = validChoices.find(c => c.text.includes('躺平') || c.text.includes('按部就班') || c.text.includes('养生') || c.text.includes('火人节'));
         chosen = healChoice || validChoices[0];
       } else if (state.leetcode < 40) {
         const grindChoice = validChoices.find(c => c.text.includes('刷题跳槽') || c.text.includes('疯狂内卷'));
         chosen = grindChoice || validChoices[0];
+      } else if (isSenior && politics && state.leetcode >= 50 && gameRandom() < POLITICS_P) {
+        // Stress-test 向上管理·攒政治资本: a senior, leetcode-satisfied big_tech player leans into
+        // the political track ~40% of years. Validates it can't buy over-promotion — the leetcode
+        // drain (-5) fights the L6-L8 leetcode gate (65-80) and the promo roll is min()-capped.
+        chosen = politics;
       } else if (state.tc < 50 && gameRandom() < 0.6) {
         const hopChoice = validChoices.find(c => c.text.includes('刷题跳槽'));
         const sprintChoice = validChoices.find(c => c.text.includes('疯狂内卷'));
@@ -181,6 +193,7 @@ function simulateGame(strategy: 'balanced' | 'smart_tech_worker' | 'roll_king_he
     cause,
     hopsAttempted,
     hopsSucceeded,
+    level: state.level || '',
   };
 }
 
@@ -193,6 +206,7 @@ let winAges: number[] = [];
 let totalHopsAttempted = 0;
 let totalHopsSucceeded = 0;
 const causes: Record<string, number> = {};
+let reachedL6 = 0, reachedL7 = 0, reachedL8 = 0;
 
 for (let i = 0; i < TOTAL_RUNS; i++) {
   // #1 种子复现:每局用确定性 seed=i,使整个门禁 100% 可复现(不再受运行间随机波动影响,
@@ -209,6 +223,9 @@ for (let i = 0; i < TOTAL_RUNS; i++) {
   causes[res.cause || 'other'] = (causes[res.cause || 'other'] || 0) + 1;
   totalHopsAttempted += res.hopsAttempted;
   totalHopsSucceeded += res.hopsSucceeded;
+  if (/L6|Staff/.test(res.level) || /L7|L8|Principal/.test(res.level)) reachedL6++;
+  if (/L7|L8|Principal/.test(res.level)) reachedL7++;
+  if (/L8|Principal/.test(res.level)) reachedL8++;
 }
 
 const winRateNum = (wins / TOTAL_RUNS) * 100;
@@ -221,7 +238,8 @@ console.log(`📊 蒙特卡洛测试样本数: ${TOTAL_RUNS} 局`);
 console.log(`  - 玩家平均寿命: ${avgAgeNum.toFixed(1)} 岁 (基准范围: 35.0 ~ 55.0 岁)`);
 console.log(`  - FIRE 通关平均年龄: ${avgWinAgeNum.toFixed(1)} 岁 (基准范围: 33.0 ~ 45.0 岁)`);
 console.log(`  - 跳槽面试通过率: ${hopSuccessRateNum.toFixed(1)}% (基准范围: 50.0% ~ 75.0%)`);
-console.log(`  - 终局结局分布:`, causes);
+  console.log(`  - 终局结局分布:`, causes);
+  console.log(`  - 高级职级达成 (占比): L6+ ${(reachedL6 / TOTAL_RUNS * 100).toFixed(1)}% · L7+ ${(reachedL7 / TOTAL_RUNS * 100).toFixed(1)}% · L8 ${(reachedL8 / TOTAL_RUNS * 100).toFixed(1)}%`);
 
 let hasError = false;
 

@@ -51,6 +51,101 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (_s) => ({}),
         nextEventId: 'dating_market',
       },
+      {
+        text: '【德扑私局 · 创投博弈】受邀参加 Palo Alto 创投圈德州扑克局，在牌桌上切磋算力与心理博弈',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.5 || (s.network || 0) >= 20,
+        effect: (_s) => ({}),
+        nextEventId: 'poker_home_game',
+      },
+    ],
+  },
+
+  'poker_home_game': {
+    id: 'poker_home_game',
+    oncePerLife: true,
+    title: '【周末私局】硅谷创投圈德州扑克局',
+    description: '周末你受邀来到 Palo Alto 一栋隐秘豪宅的车库德扑局。牌桌上坐着沙丘路 VC 合伙人、量化基金 Quant、大厂 Staff 架构师与 AI 创业老炮。洗牌机沙沙作响，几巡盲注试探后，底池迅速被推高。',
+    choices: [
+      {
+        text: '【GTO 纯数理算牌】精确计算底池赔率与 EV 期望值，稳扎稳打收割冲动对手 (买入 $0.5w)',
+        costBadge: '买入 $0.5w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.5,
+        effect: (s) => {
+          const isQuant = s.job_type === 'trader' || s.company === 'citadel' || s.company === 'two_sigma' || s.company === 'jane_street' || s.level === 'Quant';
+          const winProb = Math.min(0.85, 0.55 + (s.leetcode / 250) + (isQuant ? 0.20 : 0));
+          const win = gameRandom() < winProb;
+          const deducted = deductAssets(s, 0.5);
+          return win
+            ? {
+                cash: deducted.cash + 3.0,
+                stocks: deducted.stocks,
+                leetcode: Math.min(100, s.leetcode + 3),
+                network: Math.min(100, (s.network || 10) + 4),
+                message: '【数理大师】你如冷酷的机器般严格执行 GTO 策略，精准计算每一个 EV 决策，把几位上头的创投大佬底池蚕食殆尽，稳稳净赢 +$2.5w 筹码！几位量化同行被你的严谨算力折服，主动要了你的联系方式 (Network +4)！'
+              }
+            : {
+                cash: deducted.cash,
+                stocks: deducted.stocks,
+                leetcode: Math.min(100, s.leetcode + 1),
+                message: '【Bad Beat 爆冷】尽管你的数学期望值完全正确，但河牌圈被对手一张单张 Outs 绝杀（Bad Beat）。虽然输了 $0.5w 买入，但严谨的决策复盘让你对概率博弈有了更深的体悟。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【心理战 River 抓诈唬】深码 All-in！凭借过人魄力与微表情洞察极限抓对手偷鸡 (买入 $1w)',
+        costBadge: '买入 $1w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1.0,
+        effect: (s) => {
+          const winProb = Math.min(0.85, 0.40 + (Math.min(25, s.charm) / 60) + (Math.min(50, s.luck) / 150));
+          const win = gameRandom() < winProb;
+          const deducted = deductAssets(s, 1.0);
+          return win
+            ? {
+                cash: deducted.cash + 7.0,
+                stocks: deducted.stocks,
+                charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+                network: Math.min(100, (s.network || 10) + 8),
+                impact: addImpact(s, 5),
+                message: '【神级 Bluff Catch·全场轰动】面对沙丘路 VC 合伙人的满池 Over-bet All-in，你盯视对方三秒，精准读出对方的慌乱并果断跟注（Hero Call）！底牌翻开抓到纯诈唬！全场起立欢呼！你不仅净赢 $6w 巨额底池，更让投资人和大厂高管对你的心理魄力刮目相看 (Network +8 · Impact +5)！'
+              }
+            : {
+                cash: deducted.cash,
+                stocks: deducted.stocks,
+                health: Math.max(0, s.health - 5),
+                network: Math.min(100, (s.network || 10) + 3),
+                message: '【踢到铁板】对手并没有在偷鸡，手里亮出了坚果（Nuts）。你输掉了 $1w 买入，但你敢打敢拼的牌桌风采依然赢得了大家的尊重与交情。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【威士忌与行业社交】佛系小注，主要给大佬倒单麦威士忌、打听各大厂 AI 战略与裁员内幕 (花费 $0.1w)',
+        costBadge: '花费 $0.1w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 0.1,
+        effect: (s) => {
+          const deducted = deductAssets(s, 0.1);
+          return {
+            cash: deducted.cash,
+            stocks: deducted.stocks,
+            network: Math.min(100, (s.network || 10) + 7),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+            health: Math.min(100, s.health + 4),
+            message: '【牌桌外交家】你在牌桌上游刃有余、谈笑风生，结识了一圈资深架构师与创始人，打听到了几家大厂内部的转组内幕与招聘风向，满载而归 (Network +7)！'
+          };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【只看不打 · 场边观摩】不买入下注，只在场边喝免费饮品、看各路神仙打架学套路 (免费)',
+        effect: (s) => ({
+          network: Math.min(100, (s.network || 10) + 4),
+          leetcode: Math.min(100, s.leetcode + 1),
+          health: Math.min(100, s.health + 3),
+          message: '【场边偷师】你在场边观摩了整晚高水准博弈，认真复盘各路大佬的 EV 决策与心理战，偷学了不少牌桌套路与行业八卦 (Network +4)！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
     ],
   },
 

@@ -671,21 +671,45 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：硬核破圈】考取 Palo Alto 机场固定翼私人飞行员执照 (PPL) ($2.5w)',
-        condition: (s) => isOpportunityActiveThisYear(s, 'opp_pilot_license') && s.cash >= 2.5 && s.last_limited_opp_year !== s.year,
+        // 真·机遇(替换浮夸的飞行执照):big_tech 内部孵化器 0→1 立项。pitch 抢名额,赌一把。
+        text: '【限时机遇：内部孵化器立项】公司开放 0→1 内部孵化名额，你带点子去 pitch 抢立项',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_incubator') && s.job_type === 'big_tech' && !s.laid_off && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const win = gameRandom() < Math.min(0.7, 0.3 + (s.leetcode / 300) + ((s.impact || 0) / 200) + ((s.network || 10) / 300));
+          return win
+            ? { mid_year: true, season_stage: 'h1', last_limited_opp_year: s.year, tc: s.tc + 2, impact: addImpact(s, 10), health: Math.max(0, s.health - 6), story_flags: { ...(s.story_flags || {}), last_incubator_year: s.year }, message: '【立项成功】你的 pitch 打动了评委会，拿到 headcount 与预算亲手孵化一个 0→1 项目！高层能见度与影响力大涨（但从此背上交付压力）。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：' }
+            : { mid_year: true, season_stage: 'h1', last_limited_opp_year: s.year, leetcode: Math.min(100, s.leetcode + 3), health: Math.max(0, s.health - 4), story_flags: { ...(s.story_flags || {}), last_incubator_year: s.year }, message: '【立项惜败】孵化名额竞争激烈，你的提案遗憾出局，但打磨 pitch 与原型的过程让你技术见识长进不少。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：' };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        // 真·机遇(替换浮夸的私人飞行):抢风口 reskill。带成功率——踩中风口大赚,没踩中也长了底子。
+        text: '【限时机遇：抢风口 reskill】新技术浪潮爆发，你自费报训练营恶补想吃到风口红利 ($1.5w)',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_reskill_wave') && s.cash >= 1.5 && !!s.job_type && s.job_type !== 'unemployed' && s.last_limited_opp_year !== s.year,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const caught = gameRandom() < Math.min(0.75, 0.45 + (s.leetcode / 400) + ((s.luck || 20) / 400));
+          return caught
+            ? { mid_year: true, season_stage: 'h1', last_limited_opp_year: s.year, cash: s.cash - 1.5, leetcode: Math.min(100, s.leetcode + 12), impact: addImpact(s, 6), tc: s.tc + 1, health: Math.max(0, s.health - 4), story_flags: { ...(s.story_flags || {}), last_reskill_year: s.year }, message: '【踩中风口】你抢先补齐了最热的技能栈，恰好赶上业务转向，成了组里稀缺的风口人才，技术与影响力双丰收！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：' }
+            : { mid_year: true, season_stage: 'h1', last_limited_opp_year: s.year, cash: s.cash - 1.5, leetcode: Math.min(100, s.leetcode + 5), health: Math.max(0, s.health - 4), story_flags: { ...(s.story_flags || {}), last_reskill_year: s.year }, message: '【风口没吃到】训练营结业时热度已过，新技能一时没用武之地，但底子还是扎实了几分，不算白学。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：' };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        // 真·机遇(替换浮夸的赛道日):startup 员工的期权 Tender Offer 套现窗口。现金给得克制(只兑一角)。
+        text: '【限时机遇：期权 Tender Offer】公司开放老股回购窗口，早期期权终于能兑现一角',
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_tender_offer') && s.job_type === 'startup' && !s.laid_off && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
+          mid_year: true, season_stage: 'h1',
           last_limited_opp_year: s.year,
-          cash: s.cash - 2.5,
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
-          luck: Math.min(99, (s.luck || 20) + 6),
-          story_flags: {
-            ...(s.story_flags || {}),
-            has_pilot_license: true
-          },
-          message: '【考取飞行执照】你成功通过 FAA 单飞考核拿到了私人飞行员执照！周末开着塞斯纳俯瞰金门大桥，在湾区社交圈名声大噪！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
+          cash: s.cash + 5,
+          health: Math.min(100, s.health + 3),
+          story_flags: { ...(s.story_flags || {}), last_tender_year: s.year },
+          message: '【落袋一角】赶上公司老股 Tender Offer 回购窗口，你卖掉一小部分早期期权，把纸面财富兑现了 +$5w，给生活添了点确定性（大头继续押未来 exit）。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
         }),
-        nextEventId: 'sv_daily_life',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【限时机遇：科技狂欢】前往内华达沙漠参加火人节 (Burning Man) 极客大迁徙 ($1.2w)',
@@ -796,22 +820,6 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：自然疗愈】前往 Yosemite 优胜美地极限徒步，远离 Slack 消息彻底养生回血',
-        condition: (s) => isOpportunityActiveThisYear(s, 'opp_yosemite_heal') && s.health < 80 && s.last_limited_opp_year !== s.year,
-        hideIfUnavailable: true,
-        effect: (s) => ({
-          last_limited_opp_year: s.year,
-          health: Math.min(100, s.health + 16),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-          story_flags: {
-            ...(s.story_flags || {}),
-            last_yosemite_year: s.year
-          },
-          message: '【优胜美地洗肺】登顶半穹顶 (Half Dome)！清脆的瀑布声与高山森林让你洗尽了硅谷职场的心灵内耗，身体机能全面回血！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
-        }),
-        nextEventId: 'sv_daily_life',
-      },
-      {
         text: '【限时机遇：天使跟投】前同事明星 AI 团队启动 Seed 轮，以天使投资人身份入局 ($10w)',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_angel_invest') && s.cash >= 10 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
@@ -840,25 +848,6 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         nextEventId: 'sv_daily_life',
       },
-      {
-        text: '【限时机遇：赛道竞速】带爱车参加 Laguna Seca 赛道日 GT 极限竞速与名流聚会 ($1.8w)',
-        condition: (s) => isOpportunityActiveThisYear(s, 'opp_laguna_seca') && s.cash >= 1.8 && (s.car === 'porsche' || s.car === 'cybertruck') && s.last_limited_opp_year !== s.year,
-        hideIfUnavailable: true,
-        effect: (s) => ({
-          last_limited_opp_year: s.year,
-          cash: s.cash - 1.8,
-          health: Math.min(100, s.health + 10),
-          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
-          luck: Math.min(99, (s.luck || 20) + 8),
-          story_flags: {
-            ...(s.story_flags || {}),
-            last_laguna_year: s.year
-          },
-          message: '【极限竞速狂飙】在 Laguna Seca 标志性的螺旋弯道留下胎印！极速推背感清空了所有压力，更在 VIP Paddock 结识了一圈超跑车友！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
-        }),
-        nextEventId: 'sv_daily_life',
-      },
-
       {
         text: '【初创生死发版】通宵配合 VC 尽调与产品上线，为公司千万级融资做技术背书',
         condition: (s) => s.job_type === 'startup' && !s.laid_off,

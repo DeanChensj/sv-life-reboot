@@ -1344,21 +1344,22 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
 // CUJ 21: Limited Opportunities Lifecycle, Once-Per-Life Invariants & Cooldown Rotation
 {
   console.log('--- [CUJ 21] Limited Opportunities Lifecycle & Cooldowns ---');
-  const pilotChoice = events['sv_daily_life'].choices.find((c) => c.text.includes('飞行员执照'))!;
-  assert(!!pilotChoice, 'PPL pilot license opportunity exists');
+  // Once-per-life invariant tested via the foreclosure deal (deterministically sets
+  // bought_foreclosure_house). (PPL pilot license opp was removed as an off-flavor 新贵 item.)
+  const forecloseChoice = events['sv_daily_life'].choices.find((c) => c.text.includes('法拍'))!;
+  assert(!!forecloseChoice, 'foreclosure investment opportunity exists');
 
-  // 1. Once-per-life invariant: taking the pilot license grants has_pilot_license flag
   const basePilot: GameState = {
     ...generateInitialState(nextCujSeed()),
     cash: 50, stocks: 0, health: 100, charm: 10, luck: 20, age: 28, year: 2026, status: 'playing'
   } as GameState;
-  const pilotEff = pilotChoice.effect(basePilot);
-  assert(pilotEff.story_flags?.has_pilot_license === true, 'Pilot license grants has_pilot_license flag');
+  const forecloseEff = forecloseChoice.effect(basePilot);
+  assert(forecloseEff.story_flags?.bought_foreclosure_house === true, 'Foreclosure deal grants bought_foreclosure_house flag');
 
-  const afterPilot: GameState = { ...basePilot, ...pilotEff };
-  // isOpportunityActiveThisYear must never activate pilot license once completed
-  assert(isOpportunityActiveThisYear(afterPilot, 'opp_pilot_license') === false, 'Completed PPL is never active again');
-  assert(isOpportunityCompleted(afterPilot, 'opp_pilot_license') === true, 'isOpportunityCompleted accurately identifies PPL status');
+  const afterPilot: GameState = { ...basePilot, ...forecloseEff };
+  // isOpportunityActiveThisYear must never activate a completed once-per-life opp again
+  assert(isOpportunityActiveThisYear(afterPilot, 'opp_foreclosure_deal') === false, 'Completed foreclosure is never active again');
+  assert(isOpportunityCompleted(afterPilot, 'opp_foreclosure_deal') === true, 'isOpportunityCompleted accurately identifies foreclosure status');
 
   // 2. Cooldown check: GTC cannot trigger in consecutive years
   const gtcChoice = events['sv_daily_life'].choices.find((c) => c.text.includes('GTC'))!;

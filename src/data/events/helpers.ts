@@ -915,21 +915,20 @@ export function resolveNextEventId(
 export const ANNUAL_OPPORTUNITY_KEYS = [
   'opp_cursor_hunt',
   'opp_treehacks',
-  'opp_pilot_license',
+  'opp_incubator',
   'opp_burning_man',
   'opp_sand_hill_salon',
   'opp_gtc_nvidia',
   'opp_zero_day_bounty',
   'opp_viral_ai_video',
   'opp_foreclosure_deal',
-  'opp_yosemite_heal',
+  'opp_reskill_wave',
   'opp_angel_invest',
-  'opp_laguna_seca',
+  'opp_tender_offer',
 ] as const;
 
 // Checks if a one-in-a-lifetime opportunity has been permanently completed
 export function isOpportunityCompleted(s: GameState, oppKey: string): boolean {
-  if (oppKey === 'opp_pilot_license') return Boolean(s.story_flags?.has_pilot_license);
   if (oppKey === 'opp_cursor_hunt') return Boolean(s.story_flags?.cursor_hunt_joined);
   if (oppKey === 'opp_foreclosure_deal') return Boolean(s.story_flags?.bought_foreclosure_house || s.investment_properties?.includes('东湾法拍翻新独立屋'));
   return false;
@@ -951,14 +950,17 @@ export function isOpportunityInCooldown(s: GameState, oppKey: string): boolean {
   if (oppKey === 'opp_gtc_nvidia' && typeof flags.last_gtc_year === 'number') {
     return curYear - flags.last_gtc_year < 2;
   }
-  if (oppKey === 'opp_yosemite_heal' && typeof flags.last_yosemite_year === 'number') {
-    return curYear - flags.last_yosemite_year < 2;
-  }
   if (oppKey === 'opp_angel_invest' && typeof flags.last_angel_invest_year === 'number') {
     return curYear - flags.last_angel_invest_year < 2;
   }
-  if (oppKey === 'opp_laguna_seca' && typeof flags.last_laguna_year === 'number') {
-    return curYear - flags.last_laguna_year < 2;
+  if (oppKey === 'opp_incubator' && typeof flags.last_incubator_year === 'number') {
+    return curYear - flags.last_incubator_year < 2;
+  }
+  if (oppKey === 'opp_reskill_wave' && typeof flags.last_reskill_year === 'number') {
+    return curYear - flags.last_reskill_year < 2;
+  }
+  if (oppKey === 'opp_tender_offer' && typeof flags.last_tender_year === 'number') {
+    return curYear - flags.last_tender_year < 2;
   }
   return false;
 }

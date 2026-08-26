@@ -9,6 +9,7 @@ import { applyStateTransition } from './utils/stateTransitions';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './utils/saveMigration';
 import { determineEnding } from './utils/endings';
 import { getJobDisplayInfo } from './utils/gameStateSelectors';
+import { getActiveAnnualOpportunity } from './data/events/helpers';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DopamineFeedback, type DopaminePill, type ScreenEffectType } from './components/DopamineFeedback';
 
@@ -952,7 +953,26 @@ export default function App() {
                   )}
 
                   <p className="text-zinc-400 mb-5 md:mb-10 text-[15px] sm:text-base md:text-xl leading-relaxed">{currentEvent.description}</p>
-                  
+
+                  {currentEventId === 'sv_daily_life' && (() => {
+                    const opp = getActiveAnnualOpportunity(gameState);
+                    if (!opp) return null;
+                    return (
+                      <div className="mb-5 md:mb-8 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-4 md:p-5">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className="text-amber-400 font-bold text-sm md:text-base tracking-wide">◆ 本年湾区限定</span>
+                          <span className="text-zinc-100 font-bold text-sm md:text-base">· {opp.label}</span>
+                          {opp.taken && (
+                            <span className="ml-auto text-[11px] md:text-xs text-zinc-500 border border-zinc-700 rounded-full px-2 py-0.5">本年已把握</span>
+                          )}
+                        </div>
+                        <p className="text-zinc-400 text-[13px] md:text-sm leading-relaxed">
+                          {opp.blurb}{opp.taken ? '' : '　—　限今年，错过再等一轮。'}
+                        </p>
+                      </div>
+                    );
+                  })()}
+
                   <div className="flex flex-col space-y-2.5 md:space-y-4">
                     {currentEvent.choices
                       .filter((choice) => {

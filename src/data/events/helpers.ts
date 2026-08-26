@@ -960,23 +960,54 @@ export function isOpportunityInCooldown(s: GameState, oppKey: string): boolean {
   return false;
 }
 
+// The single annual opportunity surfaced this year (deterministic rotation by
+// year+age, smart-skipping permanently-completed / in-cooldown ones). Single source
+// of truth for both the gated choices and the "本年限定" UI banner. Returns null only
+// if every opportunity is completed/in-cooldown.
+export const getActiveAnnualOpportunityKey = (s: GameState): string | null => {
+  const total = ANNUAL_OPPORTUNITY_KEYS.length;
+  const baseSeed = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2));
+  let idx = baseSeed % total;
+  let attempts = 0;
+  while ((isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[idx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[idx])) && attempts < total) {
+    idx = (idx + 1) % total;
+    attempts++;
+  }
+  const key = ANNUAL_OPPORTUNITY_KEYS[idx];
+  if (isOpportunityCompleted(s, key) || isOpportunityInCooldown(s, key)) return null;
+  return key;
+};
+
 export function isOpportunityActiveThisYear(s: GameState, oppKey: string): boolean {
   // If permanently completed or in active cooldown, never activate
   if (isOpportunityCompleted(s, oppKey) || isOpportunityInCooldown(s, oppKey)) return false;
-
-  const total = ANNUAL_OPPORTUNITY_KEYS.length;
-  const baseSeed = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2));
-
-  // Find the single active opportunity for this year (smart-skips completed/in-cooldown)
-  let activeIdx = baseSeed % total;
-  let attempts = 0;
-  while ((isOpportunityCompleted(s, ANNUAL_OPPORTUNITY_KEYS[activeIdx]) || isOpportunityInCooldown(s, ANNUAL_OPPORTUNITY_KEYS[activeIdx])) && attempts < total) {
-    activeIdx = (activeIdx + 1) % total;
-    attempts++;
-  }
-
-  return oppKey === ANNUAL_OPPORTUNITY_KEYS[activeIdx];
+  return oppKey === getActiveAnnualOpportunityKey(s);
 }
+
+// UI-facing display copy for the "本年限定" banner (pure presentation; no game logic).
+export const ANNUAL_OPPORTUNITY_DISPLAY: Record<string, { label: string; blurb: string }> = {
+  opp_cursor_hunt: { label: 'AI 初创团队挖角', blurb: '前沿 AI 初创合伙人发来直通终面邀请，赌一把加入早期核心团队。' },
+  opp_treehacks: { label: '斯坦福 TreeHacks 黑客松', blurb: '组队通宵刷 Demo 冲全场总冠军，赢天使支票。' },
+  opp_pilot_license: { label: '考私人飞行员执照 (PPL)', blurb: '在 Palo Alto 机场考 PPL，周末开塞斯纳俯瞰金门大桥，破圈社交。' },
+  opp_burning_man: { label: '火人节极客大迁徙', blurb: '奔赴黑石城沙漠洗涤精神内耗，结识一批硅谷前沿极客。' },
+  opp_sand_hill_salon: { label: '沙丘路天使沙龙', blurb: '受邀 Sand Hill Road 闭门投资人沙龙，拓顶层人脉与行业内幕。' },
+  opp_gtc_nvidia: { label: 'Nvidia GTC 朝圣', blurb: '抢 VIP 票进场见黄仁勋，求职与投资获强运加持。' },
+  opp_zero_day_bounty: { label: 'Zero-Day 漏洞赏金', blurb: '深挖大厂基础设施高危漏洞，搏一笔 Bug Bounty 奖金。' },
+  opp_viral_ai_video: { label: 'AI 测评自媒体爆款', blurb: '肝一条 AI 开源模型深度测评视频，冲顶流赚赞助。' },
+  opp_foreclosure_deal: { label: '东湾法拍捡漏', blurb: '法拍独栋房超低折扣拿下，吃稳健被动租金现金流。' },
+  opp_yosemite_heal: { label: '优胜美地洗肺养生', blurb: '登顶半穹顶，远离 Slack 彻底回血。' },
+  opp_angel_invest: { label: '明星 AI 团队天使跟投', blurb: '前同事 Seed 轮，以天使身份入局搏估值暴涨。' },
+  opp_laguna_seca: { label: 'Laguna Seca 赛道日', blurb: '带爱车下场 GT 极限竞速，Paddock 结识超跑车友。' },
+};
+
+// Resolve this year's banner opportunity for the UI (label/blurb + whether already taken).
+export const getActiveAnnualOpportunity = (s: GameState): { key: string; label: string; blurb: string; taken: boolean } | null => {
+  const key = getActiveAnnualOpportunityKey(s);
+  if (!key) return null;
+  const disp = ANNUAL_OPPORTUNITY_DISPLAY[key];
+  if (!disp) return null;
+  return { key, label: disp.label, blurb: disp.blurb, taken: s.last_limited_opp_year === s.year };
+};
 
 // Checks if the player is still living in a temporary student dorm, lab, overseas home, or ICC bunk
 export const isTemporaryOrStudentHousing = (s: GameState): boolean => {

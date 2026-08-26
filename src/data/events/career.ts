@@ -901,11 +901,28 @@ export const careerEvents: Record<string, GameEvent> = {
         },
         // 发出推进信号,由 resolveNextEventId 季度状态机统一插入 H1→H2→结算(与其它年度动作一致,
         // 避免旧写法 midYearEventRouter(s) 直接产出 H1 事件后状态机再插一个 → 双 H1)。
-        nextEventId: (s) => h1ToH2Router(s),
-      },
-      // 3. 【常规年度重心】 (点击后进入年中/年底结算)
-      {
-        text: '【疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
+         nextEventId: (s) => h1ToH2Router(s),
+       },
+       // 【向上管理 · 攒政治资本】big_tech 专属年度招式:把一年花在向上管理而非写代码上,换软实力
+       // (charm/network — Staff+ 晋升与内推的门槛),但技术手生 (leetcode-5) 且政治内耗 (health-5)。
+       // 刻意不加 impact/tc(不产出可见业绩)。晋升 roll 对 charm/network 有 min() 硬顶、且 leetcode 门槛
+       // (65-80) 不因此降低,故买不来 L6+ 晋升——它只是资深"政治线"的差异化打法,而非速升捷径。
+       {
+         text: '【向上管理 · 攒政治资本】少写代码，多做 1:1 与汇报，经营向上管理与跨组关系',
+         condition: (s) => s.job_type === 'big_tech' && !s.laid_off,
+         effect: (s) => ({
+           mid_year: true, season_stage: 'h1',
+           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+           network: Math.min(100, (s.network || 10) + 5),
+           leetcode: Math.max(0, s.leetcode - 5),
+           health: Math.max(0, s.health - 5),
+           message: '【向上管理】你把这一年的精力从硬产出转向经营关系：精修 perf packet、勤刷 1:1、在跨组会议上刷脸拉盟友。政治资本(魅力与人脉)稳步累积，但久疏算法手也生了，办公室政治本身也颇为内耗。'
+         }),
+         nextEventId: (s) => h1ToH2Router(s),
+       },
+       // 3. 【常规年度重心】 (点击后进入年中/年底结算)
+       {
+         text: '【疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');

@@ -953,7 +953,7 @@ export default function App() {
 
                   <p className="text-zinc-400 mb-5 md:mb-10 text-[15px] sm:text-base md:text-xl leading-relaxed">{currentEvent.description}</p>
 
-                  <div className="flex flex-col space-y-2.5 md:space-y-4">
+                  <div className="flex flex-col space-y-2.5 md:space-y-4" data-testid="choices">
                     {currentEvent.choices
                       .filter((choice) => {
                         const isAvailable = !choice.condition || choice.condition(gameState);
@@ -995,6 +995,7 @@ export default function App() {
                       return (
                       <button
                         key={idx}
+                        data-testid="choice-btn"
                         onClick={() => isAvailable && !isCoolingDown && handleChoice(choice)}
                         disabled={!isAvailable || isCoolingDown}
                         className={`group w-full text-left px-4 py-3 md:px-6 md:py-5 rounded-2xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 cursor-pointer ${

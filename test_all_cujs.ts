@@ -3274,6 +3274,56 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 61 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 62: Founder equity dilution & ownership-based exit payout
+// Verify that:
+// 1. Exit cash = valuation × retained equity% (IPO) / × equity% × 0.6 (acqui-hire).
+// 2. A missing founder_equity_pct (old save / never raised) is treated as 90%.
+// 3. Each funding round dilutes ownership (pre_seed→seed = round(90×0.52)=47%).
+// 4. A fully-blitzed exit IPO stays near the old flat-7% baseline (FIRE not inflated).
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 62] Founder Equity Dilution & Ownership-based Exit Payout ---');
+  const founderHub = events['founder_annual_strategy'];
+  const fundChoice = founderHub.choices.find(c => c.text.includes('沙丘路'))!;
+  const exitEv = events['founder_exit_event'];
+  const ipoChoice = exitEv.choices.find(c => c.text.includes('IPO'))!;
+  const acqChoice = exitEv.choices.find(c => c.text.includes('Acqui-hire'))!;
+  assert(!!fundChoice && !!ipoChoice && !!acqChoice, 'founder raise / IPO / acqui-hire choices exist');
+
+  // 1. IPO cash = valuation × equity%
+  const exitEq7 = { ...generateInitialState(nextCujSeed()), job_type: 'startup_founder', founder_stage: 'exit', company_valuation: 15000, founder_equity_pct: 7, cash: 20, status: 'playing' } as GameState;
+  const ipoEff = ipoChoice.effect(exitEq7) as Partial<GameState>;
+  assert(ipoEff.status === 'win', 'IPO exit is a WIN');
+  assert(Math.round((ipoEff.cash || 0) - 20) === Math.round(15000 * 0.07), 'IPO cash = valuation × equity%');
+
+  // 2. Missing equity field defaults to 90%
+  const noEqField = { ...generateInitialState(nextCujSeed()), job_type: 'startup_founder', founder_stage: 'exit', company_valuation: 3000, cash: 20, status: 'playing' } as GameState;
+  const ipoDefault = ipoChoice.effect(noEqField) as Partial<GameState>;
+  assert(Math.round((ipoDefault.cash || 0) - 20) === Math.round(3000 * 0.90), 'missing founder_equity_pct defaults to 90%');
+
+  // 3. Acqui-hire = valuation × equity% × 0.6 (below IPO pro-rata)
+  const acqEff = acqChoice.effect(exitEq7) as Partial<GameState>;
+  assert(Math.round((acqEff.cash || 0) - 20) === Math.round(15000 * 0.07 * 0.6), 'acqui-hire = valuation × equity% × 0.6');
+
+  // 4. Each raise dilutes ownership: pre_seed → seed = round(90 × 0.52) = 47%
+  let raiseState = { ...generateInitialState(nextCujSeed()), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, network: 60, charm: 20, cash: 20, status: 'playing' } as GameState;
+  let advanced = false;
+  for (let k = 0; k < 5000; k++) {
+    const e = fundChoice.effect(raiseState) as Partial<GameState>;
+    if (e.founder_stage === 'seed') { raiseState = { ...raiseState, ...e } as GameState; advanced = true; break; }
+  }
+  assert(advanced, 'a seed raise is reachable');
+  assert(raiseState.founder_equity_pct === Math.round(90 * 0.52), 'seed raise dilutes 90% → 47%');
+  assert((raiseState.founder_equity_pct || 90) < 90, 'raising strictly dilutes founder ownership');
+
+  // 5. Blitz-to-exit IPO is not inflated beyond the old flat-7% (~$1050w) baseline
+  const blitzCash = (ipoChoice.effect(exitEq7) as Partial<GameState>).cash! - 20;
+  assert(blitzCash <= 1100, 'blitz-to-exit IPO stays near the old ~1050w baseline (FIRE-neutral)');
+
+  console.log('✅ CUJ 62 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

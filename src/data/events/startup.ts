@@ -43,6 +43,25 @@ function founderValMsg(eco: GameState['macro_economy'], cur: number, newVal: num
   return `但资本寒冬下市场情绪低迷，公司估值原地踏步 (维持 $${newVal}w)。`;
 }
 
+// Founder equity dilution. Ownership starts at ~90% (option pool + co-founder split) and each
+// raise dilutes it. Exit cash = valuation × equity%, so blitzscaling to a huge valuation is NOT
+// strictly dominant — each round trades a higher valuation for a smaller slice, and a lean
+// founder who exits early at a lower valuation but higher ownership stays competitive. Old saves
+// without the field are treated as 90% (no migration needed).
+const FOUNDER_START_EQUITY = 90;
+// Per-round retained fraction (dilution = 1 - keep). Tuned so a fully-blitzed pre_seed→exit
+// founder lands near the old flat-7% exit payout (FIRE-neutral), while early exits keep far more.
+const EQUITY_KEEP: Record<string, number> = {
+  seed: 0.52,       // pre_seed → seed raise   (90% → ~47%)
+  series_a: 0.52,   // seed → Series A         (~47% → ~24%)
+  series_b: 0.54,   // Series A → Series B     (~24% → ~13%)
+  exit: 0.54,       // Series B → terminal / Pre-IPO round (~13% → ~7%)
+  yc: 0.93,         // YC batch (~7% dilution for the classic 7% deal)
+};
+const founderEquity = (s: GameState): number => s.founder_equity_pct ?? FOUNDER_START_EQUITY;
+const diluteEquity = (s: GameState, keep: number): number =>
+  Math.max(2, Math.round(founderEquity(s) * keep));
+
 export const startupEvents: Record<string, GameEvent> = {
   'startup_crisis': {
     id: 'startup_crisis',
@@ -100,48 +119,56 @@ export const startupEvents: Record<string, GameEvent> = {
           if (pass) {
             if (stage === 'pre_seed') {
               const newVal = Math.max((s.company_valuation || 0) + 400, 600);
+              const eq = diluteEquity(s, EQUITY_KEEP.seed);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'seed',
                 company_valuation: newVal,
+                founder_equity_pct: eq,
                 cash: parseFloat((s.cash + 4).toFixed(1)),
                 tc: 10,
                 health: Math.max(0, s.health - 4),
-                message: `【种子轮领投】凭借扎实的原型 Demo，顶级天使基金领投 $100w 支票（估值 $${newVal}w）！公司获得 18 个月跑道，创始人津贴调升至 $10w！`
+                message: `【种子轮领投】凭借扎实的原型 Demo，顶级天使基金领投 $100w 支票（估值 $${newVal}w）！公司获得 18 个月跑道，创始人津贴调升至 $10w。融资摊薄后你的持股稀释至 ${eq}%。`
               };
             } else if (stage === 'seed') {
               const newVal = Math.max((s.company_valuation || 0) + 1600, 2200);
+              const eq = diluteEquity(s, EQUITY_KEEP.series_a);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'series_a',
                 company_valuation: newVal,
+                founder_equity_pct: eq,
                 cash: parseFloat((s.cash + 8).toFixed(1)),
                 tc: 16,
                 health: Math.max(0, s.health - 6),
-                message: `【突破 A 轮死亡谷】经过残酷的 Series A 筛选，一线 VC 领投 $350w（估值 $${newVal}w）！公司完成 PMF 突破，创始人津贴提升至 $16w！`
+                message: `【突破 A 轮死亡谷】经过残酷的 Series A 筛选，一线 VC 领投 $350w（估值 $${newVal}w）！公司完成 PMF 突破，创始人津贴提升至 $16w。A 轮摊薄后你的持股稀释至 ${eq}%。`
               };
             } else if (stage === 'series_a') {
               const newVal = Math.max((s.company_valuation || 0) + 5000, 7500);
+              const eq = diluteEquity(s, EQUITY_KEEP.series_b);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'series_b',
                 company_valuation: newVal,
+                founder_equity_pct: eq,
                 cash: parseFloat((s.cash + 18).toFixed(1)),
                 tc: 24,
                 health: Math.max(0, s.health - 8),
-                message: `【B 轮超级融资】红杉与 A16Z 联合领投，公司估值冲上 $${newVal}w 美元！ARR 突破 $800w，准独角兽地位确立！`
+                message: `【B 轮超级融资】红杉与 A16Z 联合领投，公司估值冲上 $${newVal}w 美元！ARR 突破 $800w，准独角兽地位确立！B 轮摊薄后你的持股稀释至 ${eq}%。`
               };
             } else {
               // series_b (or already at exit): advance to exit; never DROP valuation.
               const newVal = Math.max((s.company_valuation || 0) + 7500, 15000);
+              const eq = diluteEquity(s, EQUITY_KEEP.exit);
               return {
                 mid_year: true, season_stage: 'h1',
                 founder_stage: 'exit',
                 company_valuation: newVal,
+                founder_equity_pct: eq,
                 cash: parseFloat((s.cash + 30).toFixed(1)),
                 tc: 30,
                 health: Math.max(0, s.health - 8),
-                message: `【终局轮/Pre-IPO】主权基金与顶级 Crossover 基金入场，公司估值突破 $${newVal}w，独角兽地位坐实，只待敲钟或并购！`
+                message: `【终局轮/Pre-IPO】主权基金与顶级 Crossover 基金入场，公司估值突破 $${newVal}w，独角兽地位坐实，只待敲钟或并购！终局轮摊薄后你的持股稀释至 ${eq}%。`
               };
             }
           } else {
@@ -295,14 +322,17 @@ export const startupEvents: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: (s) => {
           const val = s.company_valuation || 3000;
-          const isHuge = val >= 6000;
-          const founderCash = parseFloat((Math.max(isHuge ? 350 : 220, Math.round(val * 0.07))).toFixed(1));
+          const eq = founderEquity(s);
+          // Founder cash = valuation × retained ownership%. Replaces the old flat 7% proxy so
+          // multi-round dilution actually bites: a lean founder who IPO'd at Series B with more
+          // equity can out-earn a blitzer who diluted to a sliver chasing a bigger valuation.
+          const founderCash = parseFloat(Math.max(30, Math.round(val * eq / 100)).toFixed(1));
           return {
             status: 'win',
             founder_stage: 'exit',
             company_valuation: val,
             cash: parseFloat((s.cash + founderCash).toFixed(1)),
-            message: `【纳斯达克挂牌敲钟！】随着金色钟声在时代广场敲响，公司正式挂牌上市！扣除 VC 稀释后创始人股权套现 $${founderCash}w 美元现金，达成传奇 IPO 终局！`
+            message: `【纳斯达克挂牌敲钟！】随着金色钟声在时代广场敲响，公司正式挂牌上市！你手中 ${eq}% 的股权按 $${val}w 估值套现 $${founderCash}w 美元现金，达成传奇 IPO 终局！`
           };
         },
         nextEventId: 'end',
@@ -313,7 +343,9 @@ export const startupEvents: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: (s) => {
           const val = s.company_valuation || 400;
-          const payout = val >= 5000 ? 160 : (val >= 2000 ? 95 : (val >= 800 ? 55 : 30));
+          const eq = founderEquity(s);
+          // Acqui-hire pays ~60% of pro-rata (liquidation preference + fire-sale discount vs IPO).
+          const payout = parseFloat(Math.max(12, Math.round(val * eq / 100 * 0.6)).toFixed(1));
           const isHigh = val >= 3000;
           const newLevel = isHigh ? 'L7 (Senior Staff)' : 'L6 (Staff)';
           const newTc = isHigh ? 68 : 52;
@@ -659,14 +691,16 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【接受 YC 孵化 Deal】接受 YC Deal：出让 7% 股权，加入 Batch 冲刺 Demo Day',
         effect: (s) => {
           const newVal = (s.company_valuation || 180) + 400;
+          const eq = diluteEquity(s, EQUITY_KEEP.yc);
           return {
             mid_year: true, season_stage: 'h1',
             cash: parseFloat((s.cash + 6).toFixed(1)),
             network: Math.min(100, (s.network || 0) + 10),
             charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
             company_valuation: newVal,
+            founder_equity_pct: eq,
             health: Math.max(0, s.health - 6),
-            message: `【YC 加持】你在 Demo Day 面对上千投资人路演，公司估值跃升至 $${newVal}w！虽然稀释了 7% 股权，但拿到了顶级校友网络与后续融资的敲门砖！`
+            message: `【YC 加持】你在 Demo Day 面对上千投资人路演，公司估值跃升至 $${newVal}w！接受 YC 的 7% 股权 Deal 后你的持股稀释至 ${eq}%，但拿到了顶级校友网络与后续融资的敲门砖！`
           };
         },
         nextEventId: 'sv_year_end_settlement',

@@ -166,6 +166,9 @@ export interface GameState {
   startup_tenure?: number; // 初创公司入职年限 (前2年不办PERM)
   founder_stage?: 'pre_seed' | 'seed' | 'series_a' | 'series_b' | 'exit';
   company_valuation?: number; // 公司估值 (万美元)
+  // 创始人当前持股比例 (%)。每轮融资按阶段稀释;退场套现 = 估值 × 持股%。缺省视为 90%
+  // (留了期权池/联创),老存档无此字段时运行时按 90% 兜底,无需迁移。
+  founder_equity_pct?: number;
   // 创业者年度核心痛点信号 (Phase 2 读牌→对症):每年由年终结算抛出,需在 founder_annual_strategy
   // 用对症 remedy 化解 (估值停滞→演讲 / 客户流失→死磕PMF / 线上事故→招架构师),否则年终估值受拖累。
   founder_situation?: 'valuation_stall' | 'churn' | 'outage';

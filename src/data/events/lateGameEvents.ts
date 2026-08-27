@@ -101,7 +101,9 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【做天使】做天使 / Advisor，用资源与经验扶持后辈创业 (需现金 >= $20w · 实际投入 $3w)',
+        text: '【做天使】做天使 / Advisor，用资源与经验扶持后辈创业',
+        reqBadge: '需现金 >= $20w',
+        costBadge: '投入 $3w',
         condition: (s) => s.cash >= 20,
         effect: (s) => {
           // 天使投资 = 花钱买"影响力 + 眼光 + 潜在退出"。约 35% 概率押中一个后来起飞的团队,
@@ -140,7 +142,8 @@ export const lateGameEvents: Record<string, GameEvent> = {
     description: '你早已越过 FIRE 线，钱不再是问题。真正的问题变成了：接下来这几十年，你想怎么过？',
     choices: [
       {
-        text: '【环游世界】环游世界 Gap Year：把攒了半辈子的诗与远方一次走个够 (花现金 $5w)',
+        text: '【环游世界】环游世界 Gap Year：把攒了半辈子的诗与远方一次走个够',
+        costBadge: '花费 $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => ({
           cash: parseFloat((s.cash - 5).toFixed(1)),
@@ -151,7 +154,9 @@ export const lateGameEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【投身慈善】投身慈善 / 成立开源基金会，把财富转化为影响力 (需现金 >= $20w · 捐赠 $10w)',
+        text: '【投身慈善】投身慈善 / 成立开源基金会，把财富转化为影响力',
+        reqBadge: '需现金 >= $20w',
+        costBadge: '捐赠 $10w',
         condition: (s) => s.cash >= 20,
         effect: (s) => ({
           cash: parseFloat((s.cash - 10).toFixed(1)),

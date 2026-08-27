@@ -125,7 +125,7 @@ export const careerEvents: Record<string, GameEvent> = {
         },
       },
       {
-        text: '【转型全职 Day Trader 操盘】凭借 $50w 本金与自由身全职炒股操盘 (需美籍/绿卡 + 现金>=50w)',
+        text: '【转型全职 Day Trader 操盘】凭借 $50w 本金与自由身全职炒股操盘',
         reqBadge: '需美籍/绿卡 + 现金 >= $50w',
         condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50,
         effect: (_s) => ({
@@ -139,7 +139,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup (需美籍/绿卡/O1 或 现金>=45w)',
+        text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup',
         reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
         condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'startup_founder',
         effect: (s) => {
@@ -854,14 +854,14 @@ export const careerEvents: Record<string, GameEvent> = {
 
           if (normLvl === 'L3') {
             // L3 升 L4 要求算法 >= 35 (达标且满 1 年晋升率极高，若满 2 年算法门槛可放宽至 30)
-            if (s.leetcode < 30 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的代码产出与算法基础还不够扎实 (建议算法>=30)，建议多提升技术硬实力。' };
+            if (s.leetcode < 30 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 0.5, message: 'Manager 指出你的日常代码产出与算法基础还不够扎实，建议先在工程与算法基本功上多做沉淀。' };
             const l3PassRate = 0.70 + coBonus + (s.leetcode / 200) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 30 || yearsInGrade >= 2) && (gameRandom() < Math.min(0.95, l3PassRate) || yearsInGrade >= 2 || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - drain), tc: s.tc + 3.5, level: 'L4', impact: addImpact(s, 5), last_promo_age: s.age, message: isKingOfRoll ? '【卷王破格晋升】做题家底蕴彻底释放，你的 Perf 拿下顶格 EE 绩效轻松晋升至 L4！' : '恭喜！凭借过硬的算法功底与稳定交付，你顺利晋升为 L4 工程师！总包调薪 +$3.5w！' };
             }
           } else if (normLvl === 'L4') {
             // L4 升 L5 (Senior) 要求算法 >= 50 (资深工程师是硅谷终身职级 Terminal Level，多数人在 2~3 年内达成)
-            if (s.leetcode < 45 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还不到 Senior 级别 (建议算法>=45)，独立项目主导深度需进一步沉淀。' };
+            if (s.leetcode < 45 && yearsInGrade < 2) return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 1.0, message: '晋升委员会认为你的技术深度还未达到 Senior 水平，核心模块攻坚与独立主导能力仍需进一步沉淀。' };
             const l4PassRate = 0.55 + coBonus + (s.leetcode / 250) + ((s.charm || 10) * 0.01) + (isKingOfRoll ? 0.20 : 0) + (yearsInGrade >= 2 ? 0.25 : 0);
             if (yearsInGrade >= 1 && (s.leetcode >= 45 || yearsInGrade >= 3) && (gameRandom() < Math.min(0.90, l4PassRate) || (yearsInGrade >= 3 && s.leetcode >= 40) || isKingOfRoll)) {
               return { mid_year: true, season_stage: 'h1', health: Math.max(0, s.health - (drain + 2)), tc: s.tc + 6.0, level: 'L5 (Senior)', impact: addImpact(s, 7), last_promo_age: s.age, message: '轰动全组！你主导了核心子模块交付，顺利晋升为 L5 Senior 资深工程师！总包调薪 +$6.0w！' };
@@ -1075,7 +1075,8 @@ export const careerEvents: Record<string, GameEvent> = {
 
       // --- 年度主线重心 (续)：投资 / 社交 / 躺平 (与上方 内卷 / 刷题 / 副业 同属年度精力分配) ---
       {
-        text: '【投资理财】研究美股财报与大盘，寻找重仓暴富机会 (需现金 >= $15w)',
+        text: '【投资理财】研究美股财报与大盘，寻找重仓暴富机会',
+        reqBadge: '需现金 >= $15w',
         condition: (s) => s.cash >= 15 && s.job_type !== 'trader',
         effect: (s) => ({
           mid_year: true, season_stage: 'h1',
@@ -1108,7 +1109,7 @@ export const careerEvents: Record<string, GameEvent> = {
 
       // --- 职业转型：离职去全职操盘 / 创业 (需身份/资金门槛) ---
       {
-        text: '【离职全职 Day Trader】凭 $50w 本金与美籍/绿卡自由身全职操盘 (需美籍/绿卡 + 现金>=50w)',
+        text: '【离职全职 Day Trader】凭 $50w 本金与美籍/绿卡自由身全职操盘',
         reqBadge: '需美籍/绿卡 + 现金 >= $50w',
         condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50 && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (_s) => ({
@@ -1122,7 +1123,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资 (需美籍/绿卡/O1 或 现金>=45w办理O1创业工签)',
+        text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资',
         reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
         condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
@@ -1313,7 +1314,7 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【实体投资 · Fremont/Cupertino 华人奶茶烘焙店合伙】(需 现金>=5w · 博取被动分红)',
+        text: '【实体投资 · Fremont/Cupertino 华人奶茶烘焙店合伙】合伙入股热门商圈餐饮门店，博取被动分红',
         reqBadge: '需现金 >= $5w',
         condition: (s) => s.cash >= 5,
         effect: (s) => {

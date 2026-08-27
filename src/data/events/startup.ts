@@ -516,7 +516,7 @@ export const startupEvents: Record<string, GameEvent> = {
       },
       {
         // Cash-fueled price war — a real gamble that needs runway and can backfire.
-        text: '【贴身价格战】烧钱免费增值血拼，用补贴死守市场份额 (需现金 >= $6w)',
+        text: '【贴身价格战】烧钱免费增值血拼，用补贴死守市场份额',
         costBadge: '烧钱 $6w',
         condition: (s) => s.cash >= 6,
         hideIfUnavailable: true,

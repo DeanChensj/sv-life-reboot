@@ -3159,6 +3159,52 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 59 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 60: Big Tech Sabbatical (5-Year Tenure) & Covered Call Option Strategy
+// Verify that:
+// 1. Sabbatical appears strictly for Big Tech employees with company tenure >= 5 years,
+//    is once per life, restores health to 100, and does NOT loop back to sv_daily_life.
+// 2. Covered Call in stock_market_annual_gamble generates premium and handles call-away risk.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 60] Big Tech Sabbatical & Covered Call Option Strategy ---');
+  
+  // 1. Sabbatical Opportunity in sv_daily_life
+  const dailyHub = events['sv_daily_life'];
+  const sabbaticalChoice = dailyHub.choices.find(c => c.text.includes('Sabbatical'));
+  assert(!!sabbaticalChoice, 'Sabbatical choice is registered in sv_daily_life');
+
+  const juniorBigTech = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', age: 26, job_start_age: 24, status: 'playing' } as GameState;
+  assert(sabbaticalChoice!.condition!(juniorBigTech) === false, 'Big tech employee with 2y tenure cannot take sabbatical');
+
+  const senior5yBigTech = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', age: 29, job_start_age: 24, status: 'playing', health: 40 } as GameState;
+  assert(sabbaticalChoice!.condition!(senior5yBigTech) === true, 'Big tech employee with 5y tenure CAN take sabbatical');
+
+  const sabbaticalEff = sabbaticalChoice!.effect(senior5yBigTech) as Partial<GameState>;
+  assert(sabbaticalEff.health === 100, 'Sabbatical restores health to 100');
+  assert(sabbaticalEff.story_flags?.sabbatical_taken === true, 'Sabbatical sets sabbatical_taken flag');
+  assert(sabbaticalChoice!.nextEventId !== 'sv_daily_life', 'Sabbatical does not return to sv_daily_life');
+
+  const alreadyTakenState = { ...senior5yBigTech, story_flags: { sabbatical_taken: true } } as GameState;
+  assert(sabbaticalChoice!.condition!(alreadyTakenState) === false, 'Sabbatical cannot be taken twice in one lifetime');
+
+  // 2. Covered Call in stock_market_annual_gamble
+  const stockGamble = events['stock_market_annual_gamble'];
+  const coveredCallChoice = stockGamble.choices.find(c => c.text.includes('Covered Call'));
+  assert(!!coveredCallChoice, 'Covered Call choice is registered in stock_market_annual_gamble');
+
+  const poorStockState = { ...generateInitialState(nextCujSeed()), stocks: 5, cash: 10 } as GameState;
+  assert(coveredCallChoice!.condition!(poorStockState) === false, 'Player with < $20w stocks cannot sell covered calls');
+
+  const richStockState = { ...generateInitialState(nextCujSeed()), stocks: 40, cash: 10, macro_economy: 'neutral' } as GameState;
+  assert(coveredCallChoice!.condition!(richStockState) === true, 'Player with >= $20w stocks can sell covered calls');
+
+  const ccEff = coveredCallChoice!.effect(richStockState) as Partial<GameState>;
+  assert((ccEff.cash || 0) > richStockState.cash, 'Covered Call increases cash via premium');
+
+  console.log('✅ CUJ 60 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

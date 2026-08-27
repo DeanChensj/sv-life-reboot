@@ -1,4 +1,4 @@
-import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb, pickCollegeEvent, collegeNextStage } from './src/data/events';
+import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, getActiveAnnualOpportunityKey, calculatePhdAdmitProb, pickCollegeEvent, collegeNextStage } from './src/data/events';
 import { ACHIEVEMENTS, checkAndUnlockAchievements } from './src/data/achievements';
 import { COMPANY_PROFILES } from './src/data/companyProfiles';
 import { GameState, Choice } from './src/types';
@@ -3187,6 +3187,21 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   const alreadyTakenState = { ...senior5yBigTech, story_flags: { sabbatical_taken: true } } as GameState;
   assert(sabbaticalChoice!.condition!(alreadyTakenState) === false, 'Sabbatical cannot be taken twice in one lifetime');
+
+  // Verify Sabbatical exclusively occupies the annual opportunity slot
+  assert(getActiveAnnualOpportunityKey(senior5yBigTech) === 'opp_sabbatical', 'Sabbatical takes exclusive priority in annual opportunity slot');
+  assert(isOpportunityActiveThisYear(senior5yBigTech, 'opp_sabbatical') === true, 'Sabbatical is active');
+  assert(isOpportunityActiveThisYear(senior5yBigTech, 'opp_cursor_hunt') === false, 'Other opportunities are suppressed during Sabbatical year');
+
+  // Sabbatical is a limited-time window (tenure 5–6): year 6 still eligible, but at tenure 7 it
+  // has EXPIRED — miss the window and it's gone, and the exclusive slot is released so other
+  // opportunities return (suppression capped at 2 years).
+  const year6BigTech = { ...senior5yBigTech, age: 30, job_start_age: 24 } as GameState; // tenure 6
+  assert(sabbaticalChoice!.condition!(year6BigTech) === true, 'Sabbatical still available at tenure 6 (within window)');
+  const expiredBigTech = { ...senior5yBigTech, age: 31, job_start_age: 24 } as GameState; // tenure 7
+  assert(sabbaticalChoice!.condition!(expiredBigTech) === false, 'Sabbatical EXPIRES past the 2-year window (tenure 7)');
+  const expiredSlot = getActiveAnnualOpportunityKey(expiredBigTech);
+  assert(expiredSlot !== 'opp_sabbatical' && expiredSlot !== null, 'Expired Sabbatical releases the exclusive slot back to the normal opportunity rotation');
 
   // 2. Covered Call in stock_market_annual_gamble
   const stockGamble = events['stock_market_annual_gamble'];

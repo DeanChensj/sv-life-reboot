@@ -1,4 +1,4 @@
-import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, calculatePhdAdmitProb, pickCollegeEvent, collegeNextStage } from './src/data/events';
+import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, resolveNextEventId, hopTargetLevel, hopIsPromotion, isOpportunityActiveThisYear, isOpportunityCompleted, isOpportunityInCooldown, getActiveAnnualOpportunityKey, calculatePhdAdmitProb, pickCollegeEvent, collegeNextStage } from './src/data/events';
 import { ACHIEVEMENTS, checkAndUnlockAchievements } from './src/data/achievements';
 import { COMPANY_PROFILES } from './src/data/companyProfiles';
 import { GameState, Choice } from './src/types';
@@ -3187,6 +3187,11 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 
   const alreadyTakenState = { ...senior5yBigTech, story_flags: { sabbatical_taken: true } } as GameState;
   assert(sabbaticalChoice!.condition!(alreadyTakenState) === false, 'Sabbatical cannot be taken twice in one lifetime');
+
+  // Verify Sabbatical exclusively occupies the annual opportunity slot
+  assert(getActiveAnnualOpportunityKey(senior5yBigTech) === 'opp_sabbatical', 'Sabbatical takes exclusive priority in annual opportunity slot');
+  assert(isOpportunityActiveThisYear(senior5yBigTech, 'opp_sabbatical') === true, 'Sabbatical is active');
+  assert(isOpportunityActiveThisYear(senior5yBigTech, 'opp_cursor_hunt') === false, 'Other opportunities are suppressed during Sabbatical year');
 
   // 2. Covered Call in stock_market_annual_gamble
   const stockGamble = events['stock_market_annual_gamble'];

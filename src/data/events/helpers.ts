@@ -971,11 +971,18 @@ export function isOpportunityInCooldown(s: GameState, oppKey: string): boolean {
   return false;
 }
 
+// Checks if the player is eligible for the 5-year Big Tech Sabbatical opportunity
+export const isSabbaticalEligible = (s: GameState): boolean =>
+  s.job_type === 'big_tech' && !s.laid_off && (s.age - (s.job_start_age || s.age)) >= 5 && !s.story_flags?.sabbatical_taken;
+
 // The single annual opportunity surfaced this year (deterministic rotation by
 // year+age, smart-skipping permanently-completed / in-cooldown ones). Single source
 // of truth for both the gated choices and the "本年限定" UI banner. Returns null only
 // if every opportunity is completed/in-cooldown.
 export const getActiveAnnualOpportunityKey = (s: GameState): string | null => {
+  // If player is eligible for the 5-year Big Tech Sabbatical, Sabbatical takes exclusive priority
+  if (isSabbaticalEligible(s)) return 'opp_sabbatical';
+
   const total = ANNUAL_OPPORTUNITY_KEYS.length;
   const baseSeed = Math.abs(((s.year || 2026) * 5 + (s.age || 25) * 2));
   let idx = baseSeed % total;
@@ -990,6 +997,7 @@ export const getActiveAnnualOpportunityKey = (s: GameState): string | null => {
 };
 
 export function isOpportunityActiveThisYear(s: GameState, oppKey: string): boolean {
+  if (oppKey === 'opp_sabbatical') return isSabbaticalEligible(s);
   // If permanently completed or in active cooldown, never activate
   if (isOpportunityCompleted(s, oppKey) || isOpportunityInCooldown(s, oppKey)) return false;
   return oppKey === getActiveAnnualOpportunityKey(s);

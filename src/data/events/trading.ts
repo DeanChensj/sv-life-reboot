@@ -79,6 +79,33 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
+        text: '【卖 Covered Call 备兑期权】卖出持仓股票虚值看涨期权，吃权利金利息 (需持有股票 >= $20w)',
+        costBadge: '需股票 >= $20w',
+        condition: (s) => (s.stocks || 0) >= 20,
+        effect: (s) => {
+          const bullMarket = s.macro_economy === 'bull';
+          const callAwayProb = bullMarket ? 0.60 : 0.25;
+          const calledAway = gameRandom() < callAwayProb;
+          const premium = Math.min(5, Math.max(1.5, Math.floor((s.stocks || 20) * 0.04 * 10) / 10)); // 4% premium: $1.5w - $5.0w
+          
+          if (calledAway) {
+            const calledStocks = Math.min(s.stocks || 20, 20); // 卖飞 $20w 股票
+            return {
+              cash: s.cash + premium + calledStocks,
+              stocks: Math.max(0, (s.stocks || 0) - calledStocks),
+              health: Math.max(0, s.health - 3),
+              message: `【股票被 Call 走】正股暴涨击穿行权价！你如期收下 $${premium}w 权利金，但 $${calledStocks}w 核心股票被强制按约定行权卖出折现！看着股票继续暴涨，你拍断大腿 (股票变现 +$${calledStocks}w · 权利金 +$${premium}w)！`
+            };
+          } else {
+            return {
+              cash: s.cash + premium,
+              message: `【稳收权利金】股价平稳波动未破行权价，你安全收下 $${premium}w 权利金现金流，且持仓一股没少！期权吃利息真香！`
+            };
+          }
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
         text: '【按兵不动维持仓位】按兵不动：维持目前的仓位组合进入年终结算',
         effect: (s) => ({
           message: '你决定什么都不做，做时间的朋友，静静等待跨年的钟声。'

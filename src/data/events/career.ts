@@ -506,6 +506,27 @@ export const careerEvents: Record<string, GameEvent> = {
     title: '【硅谷日常】年度行动面板与策略规划',
     description: '又是新的一年。每年湾区都会涌现出不同的限时行业机遇，合理分配你的精力吧！',
     choices: [
+      // 0. 【大厂满5年专属限时机遇：Sabbatical 停薪留职环球放空】在同一大厂连续任职满 5 年必出、一生一次、直接推进赛季并大幅回血
+      {
+        text: '【限时机遇：大厂 Sabbatical 环球放空】在当前大厂任职满 5 年，申请为期半年的停薪留职放空旅行 (一生一次 · 耗资 $1.5w)',
+        costBadge: '花费 $1.5w · 必休半年',
+        condition: (s) => s.job_type === 'big_tech' && !s.laid_off && (s.age - (s.job_start_age || s.age)) >= 5 && !s.story_flags?.sabbatical_taken,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          mid_year: true,
+          season_stage: 'h1',
+          last_limited_opp_year: s.year,
+          health: 100,
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          cash: Math.max(0, s.cash - 1.5),
+          story_flags: {
+            ...(s.story_flags || {}),
+            sabbatical_taken: true
+          },
+          message: '【Sabbatical 环球放空】在大厂连续耕耘满 5 年，你申请了为期半年的 Sabbatical 停薪留职。从冰岛极光到巴厘岛冲浪，你彻底清空了 Slack 告警与 Oncall 噩梦，精神与体力瞬间回满到 100 分 (健康拉满至 100 · 魅力 +3)！'
+        }),
+        nextEventId: h1ToH2Router,
+      },
       // 1. 【每年专属动态轮替机遇池】 (每年动态激活 1~2 个专属限时奇遇)
       {
         text: '【限时机遇：AI 初创团队挖角】收到前沿 AI 初创公司合伙人发来的直通终面邀请',

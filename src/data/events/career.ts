@@ -510,7 +510,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【限时机遇：大厂 Sabbatical 环球放空】在当前大厂任职满 5 年，申请为期半年的停薪留职放空旅行 (一生一次 · 耗资 $1.5w)',
         costBadge: '花费 $1.5w · 必休半年',
-        condition: (s) => s.job_type === 'big_tech' && !s.laid_off && (s.age - (s.job_start_age || s.age)) >= 5 && !s.story_flags?.sabbatical_taken,
+        condition: (s) => s.job_type === 'big_tech' && !s.laid_off && (s.age - (s.job_start_age || s.age)) >= 5 && !s.story_flags?.sabbatical_taken && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
           mid_year: true,

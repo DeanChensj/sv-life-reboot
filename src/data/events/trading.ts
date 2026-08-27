@@ -389,6 +389,18 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
+        // Dramatic interactive terminal — mirrors the founder's 终局退场 → founder_exit_event.
+        // Gated at comfortable-FIRE assets so it's the "封神" exit, not basic retirement.
+        text: '【终局退场 · 封神】资产已成气候，评估成立独立基金 / 家族办公室，从操盘手晋升资本家',
+        reqBadge: '需总资产 >= $800w',
+        condition: (s) => s.job_type === 'trader' && (s.cash + (s.stocks || 0)) >= 800,
+        hideIfUnavailable: true,
+        effect: () => ({
+          message: '你关掉六块盯盘屏，泡上一杯手冲，第一次认真思考：是时候把“个人操盘”升级成一份能穿越牛熊的资本事业了。'
+        }),
+        nextEventId: 'trader_exit_event',
+      },
+      {
         text: '【止盈金盆洗手】退出 Day Trading 波动江湖，重新面试大厂寻求稳健年薪',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => ({
@@ -399,6 +411,46 @@ export const tradingEvents: Record<string, GameEvent> = {
           message: '你决定结束个人操盘手生涯，落袋为安，带着充沛的本金重新开启大厂求职！'
         }),
         nextEventId: 'job_hunt',
+      }
+    ]
+  },
+
+  'trader_exit_event': {
+    id: 'trader_exit_event',
+    title: '【操盘手终局】从个人交易者到资本封神',
+    description: '多年血雨腥风的 K 线厮杀后，你的账户已成气候。站在资本的顶点，你决定如何为这段传奇操盘生涯落子收官：',
+    choices: [
+      {
+        text: '【成立独立量化对冲基金 Fund I】在沙丘路挂牌自己的对冲基金，晋升为掌管数亿美元的基金教父',
+        reqBadge: '需总资产 >= $1500w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1500,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          status: 'win',
+          story_flags: { ...(s.story_flags || {}), trader_exit_fund: true },
+          message: '【基金教父封神】你在沙丘路正式挂牌成立量化对冲基金 Fund I，凭借传奇般的历史 Sharpe 曲线，首期便募得数亿美元 LP 资金。你不再是那个熬夜盯盘的散户，而是掌管资本、制定规则的人——交易生涯封神！'
+        }),
+        nextEventId: 'end',
+      },
+      {
+        text: '【设立家族办公室 Family Office】把资产装进家族信托与家办，聘专业团队打理，实现财富永续与代际传承',
+        reqBadge: '需总资产 >= $800w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 800,
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          status: 'win',
+          story_flags: { ...(s.story_flags || {}), trader_exit_family_office: true },
+          message: '【家族办公室 · 财富永续】你金盆洗手，设立了自己的家族办公室 (Family Office)，把亲手赚下的财富交给专业团队做全球资产配置与税务筹划。从此告别盯盘焦虑，财富穿越牛熊、代际传承——你活成了别人眼里的“老钱”。'
+        }),
+        nextEventId: 'end',
+      },
+      {
+        text: '【再战江湖 · 继续操盘】封神时刻还没到，重新坐回六屏交易台，继续在市场里厮杀',
+        effect: () => ({
+          mid_year: true, season_stage: 'h1',
+          message: '你合上了成立基金的文件——市场的肾上腺素还在召唤你。你重新坐回交易台，继续这场没有终局的博弈。'
+        }),
+        nextEventId: h1ToH2Router,
       }
     ]
   },

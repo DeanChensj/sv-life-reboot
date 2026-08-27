@@ -739,7 +739,8 @@ export const midYearEventRouter = (s: GameState): string => {
         'founder_runway_cash_crunch',
         'founder_hacker_house_hackathon',
         'founder_yc_batch',
-        'founder_enterprise_whale'
+        'founder_enterprise_whale',
+        'founder_giant_competitor_siege'
       );
   }
 

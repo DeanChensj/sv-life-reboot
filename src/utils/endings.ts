@@ -107,6 +107,22 @@ export function determineEnding(s: GameState): EndingResult {
         flavor: '你的资产突破 $3000w+，建立了家族信托与慈善基金会，成为了硅谷乃至全球科技界的殿堂级传奇。',
       };
     }
+    // Trader dramatic-exit endings (via trader_exit_event) take precedence over the
+    // generic wall_street_wolf FIRE title — a legendary interactive finale earns its own screen.
+    if (s.story_flags?.trader_exit_fund) {
+      return {
+        id: 'quant_fund_godfather', emoji: '🏦', title: 'Sand Hill 量化教父 · 独立基金封神',
+        subtitle: 'STATUS: FIRE (FUND I)', tone: 'triumph', rarity: 'UR',
+        flavor: '你在沙丘路挂牌了自己的量化对冲基金 Fund I，从熬夜盯盘的散户，晋升为掌管数亿美元、制定规则的基金教父。',
+      };
+    }
+    if (s.story_flags?.trader_exit_family_office) {
+      return {
+        id: 'family_office_oldmoney', emoji: '🏛️', title: '家族办公室 · 财富永续老钱',
+        subtitle: 'STATUS: FIRE (FAMILY OFFICE)', tone: 'triumph', rarity: 'SSR',
+        flavor: '你设立了自己的家族办公室，把亲手赚下的财富交给专业团队打理，穿越牛熊、代际传承——活成了别人眼里的“老钱”。',
+      };
+    }
     if (s.job_type === 'trader') {
       return {
         id: 'wall_street_wolf', emoji: '🐺', title: '华尔街之狼 · 交易封神',

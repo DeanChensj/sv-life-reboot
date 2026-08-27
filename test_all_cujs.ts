@@ -3205,6 +3205,75 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 60 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 61: Founder giant-competitor siege (random crisis) & Trader interactive finale
+// Verify that:
+// 1. founder_giant_competitor_siege is a registered crisis event whose choices all
+//    resolve (route to year-end settlement), and every choice's effect is safe.
+// 2. trader_annual_strategy exposes a 终局退场 choice gated at >= $800w total assets,
+//    routing to trader_exit_event.
+// 3. trader_exit_event's Fund I (>=$1500w) and Family Office (>=$800w) both WIN and set
+//    their distinguishing story_flags; "continue" does NOT win; and determineEnding maps
+//    each flag to its dedicated ending.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 61] Founder Competitor Siege & Trader Interactive Finale ---');
+
+  // 1. Founder giant competitor siege crisis event
+  const siege = events['founder_giant_competitor_siege'];
+  assert(!!siege, 'founder_giant_competitor_siege is registered');
+  assert(siege.choices.length >= 2, 'siege offers multiple strategic responses');
+  const founderState = { ...generateInitialState(nextCujSeed()), job_type: 'startup_founder', company_valuation: 600, founder_stage: 'seed', cash: 20, status: 'playing' } as GameState;
+  for (const c of siege.choices) {
+    if (c.condition && !c.condition(founderState)) continue;
+    const eff = c.effect(founderState) as Partial<GameState>;
+    assert(typeof eff.message === 'string' && eff.message.length > 0, 'siege choice yields a message');
+    const next = typeof c.nextEventId === 'function' ? c.nextEventId(founderState) : c.nextEventId;
+    assert(next === 'sv_year_end_settlement', 'siege choice routes to year-end settlement');
+  }
+
+  // 2. Trader interactive finale entry choice in trader_annual_strategy
+  const traderHub = events['trader_annual_strategy'];
+  const exitEntry = traderHub.choices.find(c => c.text.includes('终局退场'));
+  assert(!!exitEntry, 'trader_annual_strategy exposes a 终局退场 finale choice');
+  const midTrader = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 300, stocks: 300, status: 'playing' } as GameState; // 600w total
+  assert(exitEntry!.condition!(midTrader) === false, 'finale hidden below $800w total assets');
+  const richTrader = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 500, stocks: 500, status: 'playing' } as GameState; // 1000w total
+  assert(exitEntry!.condition!(richTrader) === true, 'finale available at >= $800w total assets');
+  assert(exitEntry!.nextEventId === 'trader_exit_event', 'finale entry routes to trader_exit_event');
+
+  // 3. trader_exit_event terminal choices
+  const exitEvent = events['trader_exit_event'];
+  assert(!!exitEvent, 'trader_exit_event is registered');
+  const fundChoice = exitEvent.choices.find(c => c.text.includes('Fund I'));
+  const familyChoice = exitEvent.choices.find(c => c.text.includes('Family Office'));
+  const continueChoice = exitEvent.choices.find(c => c.text.includes('再战江湖'));
+  assert(!!fundChoice && !!familyChoice && !!continueChoice, 'exit event has fund / family-office / continue choices');
+
+  const at800 = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 400, stocks: 400, status: 'playing' } as GameState; // 800w
+  const at1500 = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 800, stocks: 700, status: 'playing' } as GameState; // 1500w
+  assert(fundChoice!.condition!(at800) === false, 'Fund I hidden below $1500w');
+  assert(fundChoice!.condition!(at1500) === true, 'Fund I available at >= $1500w');
+  assert(familyChoice!.condition!(at800) === true, 'Family Office available at >= $800w');
+
+  const fundEff = fundChoice!.effect(at1500) as Partial<GameState>;
+  assert(fundEff.status === 'win', 'Fund I exit is a WIN');
+  assert(fundEff.story_flags?.trader_exit_fund === true, 'Fund I sets trader_exit_fund flag');
+  const famEff = familyChoice!.effect(at800) as Partial<GameState>;
+  assert(famEff.status === 'win', 'Family Office exit is a WIN');
+  assert(famEff.story_flags?.trader_exit_family_office === true, 'Family Office sets trader_exit_family_office flag');
+  const contEff = continueChoice!.effect(at1500) as Partial<GameState>;
+  assert(contEff.status !== 'win', 'Continue does NOT win');
+
+  // determineEnding maps the finale flags to their dedicated endings
+  const fundEnding = determineEnding({ ...at1500, status: 'win', story_flags: { trader_exit_fund: true } } as GameState);
+  assert(fundEnding.id === 'quant_fund_godfather', 'Fund I flag yields quant_fund_godfather ending');
+  const famEnding = determineEnding({ ...at800, status: 'win', story_flags: { trader_exit_family_office: true } } as GameState);
+  assert(famEnding.id === 'family_office_oldmoney', 'Family Office flag yields family_office_oldmoney ending');
+
+  console.log('✅ CUJ 61 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

@@ -438,6 +438,78 @@ export const startupEvents: Record<string, GameEvent> = {
     ]
   },
 
+  'founder_giant_competitor_siege': {
+    id: 'founder_giant_competitor_siege',
+    title: '【降维打击】巨头深夜发布免费开源同款竞品',
+    description: 'Meta / Google 在深夜的开发者大会上突然甩出与你几乎完全同款的模型能力，并宣布永久免费开源。一夜之间你的付费客户集体在群里质问“为什么我们不直接用免费的”，续约电话被打爆——这是几乎每个硅谷 AI 创始人都躲不过的生死噩梦。',
+    choices: [
+      {
+        // The classic survival play: retreat into a vertical the giant won't bother serving.
+        text: '【转型垂直纵深】放弃通用赛道，All-in 巨头看不上的强监管垂直行业 (医疗/法务/合规) 深水区',
+        effect: (s) => {
+          const cur = s.company_valuation || 180;
+          const win = gameRandom() < 0.62;
+          return win
+            ? {
+                company_valuation: cur + 200,
+                leetcode: Math.min(100, s.leetcode + 6),
+                impact: addImpact(s, 8),
+                health: Math.max(0, s.health - 8),
+                message: `【错位竞争成功】你砍掉通用功能、扎进巨头懒得碰的强监管垂直行业，反而攒下一批黏性极高的企业死忠客户，估值不降反升至 $${cur + 200}w！`
+              }
+            : {
+                company_valuation: Math.max(80, cur - 120),
+                leetcode: Math.min(100, s.leetcode + 4),
+                health: Math.max(0, s.health - 12),
+                message: '【转型阵痛】垂直赛道的 Domain Know-how 壁垒比想象中更高，团队在重构与重新获客中消耗巨大，估值一度承压回撤，但你保住了核心团队与方向。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        // Open-source counter: give away the core, monetize enterprise hosting/support.
+        text: '【开源反击】自己也开源核心，靠企业级私有化部署与 SLA 技术支持收费，抢开发者心智',
+        effect: (s) => {
+          const cur = s.company_valuation || 180;
+          return {
+            company_valuation: cur + 80,
+            network: Math.min(100, (s.network || 0) + 6),
+            impact: addImpact(s, 10),
+            health: Math.max(0, s.health - 7),
+            cash: Math.max(0, parseFloat((s.cash - 1).toFixed(1))),
+            message: `【开发者生态反扑】你抢先把核心框架开源、把商业模式切到企业私有化部署与 SLA 支持，GitHub Star 暴涨、开发者社区倒向你，公关与生态影响力 (Impact) 大增（估值 $${cur + 80}w）！`
+          };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        // Cash-fueled price war — a real gamble that needs runway and can backfire.
+        text: '【贴身价格战】烧钱免费增值血拼，用补贴死守市场份额 (需现金 >= $6w)',
+        costBadge: '烧钱 $6w',
+        condition: (s) => s.cash >= 6,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const cur = s.company_valuation || 180;
+          const win = gameRandom() < 0.45;
+          return win
+            ? {
+                cash: parseFloat((s.cash - 6).toFixed(1)),
+                company_valuation: cur + 150,
+                health: Math.max(0, s.health - 10),
+                message: `【血拼守住基本盘】你用真金白银的补贴与免费额度死死咬住核心客户，硬扛过巨头第一波冲击，市场份额守住、估值企稳回升至 $${cur + 150}w！`
+              }
+            : {
+                cash: parseFloat((s.cash - 6).toFixed(1)),
+                company_valuation: Math.max(80, cur - 100),
+                health: Math.max(0, s.health - 14),
+                message: '【烧钱打了水漂】和市值万亿的巨头拼免费，你的补贴像扔进太平洋。$6w 现金烧光、Runway 骤缩，估值与士气双双受挫。'
+              };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
   'founder_vc_term_sheet_ghost': {
     id: 'founder_vc_term_sheet_ghost',
     title: '【沙丘路惊魂】周日晚 11 点 VC 撤回 Term Sheet',

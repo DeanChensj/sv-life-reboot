@@ -176,7 +176,8 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【卖房投身创业浪潮】感觉人生一眼望到头，卖房去创业！(需总资产 >= $100w)',
+        text: '【卖房投身创业浪潮】感觉人生一眼望到头，卖房去创业！',
+        reqBadge: '需总资产 >= $100w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 100 && s.job_type !== 'startup_founder',
         // Selling ADDS home equity (was subtracting $50w while keeping the house).
         // Actually liquidate the home and start the FOUNDER path (not the employee event).

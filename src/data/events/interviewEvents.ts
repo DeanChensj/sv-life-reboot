@@ -86,7 +86,7 @@ function resolveGauntlet(s: GameState, addPts: number, healthDelta: number, flav
       hop_applied_count: targetCompanies.length,
       hop_offers: wonOffers,
       story_flags: flags,
-      message: `${flavor}两轮鏖战下来（综合表现评分 ${total}/4），你凭借出色的现场发挥与扎实的代码功底，成功斩获了 ${names} 的正式录用 Offer！请选择入职去向：`,
+      message: `${flavor}两轮鏖战下来，你凭借出色的现场发挥与扎实的代码功底，成功斩获了 ${names} 的正式录用 Offer！请选择入职去向：`,
     };
   }
   return {
@@ -95,7 +95,7 @@ function resolveGauntlet(s: GameState, addPts: number, healthDelta: number, flav
     hop_applied_count: targetCompanies.length,
     hop_offers: [],
     story_flags: flags,
-    message: `${flavor}两轮综合评分 ${total}/4，由于岗位竞争激烈或临场发挥略有遗憾，未能进入最终录用名单。好在硬核终面让你积累了宝贵的实战经验，技术底子更加扎实！`,
+    message: `${flavor}两轮鏖战下来，由于岗位竞争激烈或临场细节略有遗憾，未能进入最终录用名单。好在硬核终面让你积累了宝贵的实战经验，技术底子更加扎实！`,
   };
 }
 

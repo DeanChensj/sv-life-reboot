@@ -1440,7 +1440,8 @@ export const initializationEvents: Record<string, GameEvent> = {
         nextEventId: 'us_master_year1',
       },
       {
-        text: '【跨国 L1 调动申请】凭借资深大厂背景申请硅谷总部岗位 (需算法 >= 60)',
+        text: '【跨国 L1 调动申请】凭借资深大厂背景申请硅谷总部岗位',
+        reqBadge: '需算法 >= 60',
         condition: (s) => s.leetcode >= 60,
         effect: (s) => ({
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'L1 (外派)',

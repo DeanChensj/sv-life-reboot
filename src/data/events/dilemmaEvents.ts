@@ -96,13 +96,11 @@ export const dilemmaEvents: Record<string, GameEvent> = {
           let tcIncrease = 1.5;
           let isPromo = false;
           let reqPassed = false;
-          let reqDesc = '';
 
           if (norm === 'L3') {
             // L3→L4 是准自动的入门级晋升,只看基本技术竞争力,不设 impact 门槛
             // (与 hopTargetLevel 一致:impact 门槛从 L6 Staff 才开始)。
             reqPassed = s.leetcode >= 30;
-            reqDesc = '晋升 L4 需算法>=30';
             if (reqPassed) {
               nextLevel = 'L4';
               tcIncrease = 4.5;
@@ -110,7 +108,6 @@ export const dilemmaEvents: Record<string, GameEvent> = {
             }
           } else if (norm === 'L4') {
             reqPassed = s.leetcode >= 45 && (s.impact || 0) >= 8;
-            reqDesc = '晋升 L5 Senior 需算法>=45 且 产出>=8';
             if (reqPassed) {
               nextLevel = 'L5 (Senior)';
               tcIncrease = 6.5;
@@ -118,7 +115,6 @@ export const dilemmaEvents: Record<string, GameEvent> = {
             }
           } else if (norm === 'L5 (Senior)') {
             reqPassed = s.leetcode >= 60 && (s.impact || 0) >= 16;
-            reqDesc = '晋升 L6 Staff 需算法>=60 且 产出>=16';
             if (reqPassed) {
               nextLevel = 'L6 (Staff)';
               tcIncrease = 12.0;
@@ -141,7 +137,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
               impact: addImpact(s, 8),
               npcs: { ...(s.npcs || {}), mentor },
               story_flags: { ...(s.story_flags || {}), credit_grabbed: true },
-              message: `你在评审会上把关键决策与架构设计都包装成了自己的功劳，凭借过硬的技术与产出底子（算法 ${s.leetcode} / 产出 ${s.impact || 0}），如愿抢下升职名额晋升至 ${nextLevel}！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。`,
+              message: `你在评审会上把关键决策与架构设计都包装成了自己的功劳，凭借过硬的技术底子与项目交付，如愿抢下升职名额晋升至 ${nextLevel}！但组里都看在眼里，那位提携过你的前辈默默递了离职信——这笔人情债，你欠下了。`,
             };
           } else {
             return {
@@ -153,7 +149,7 @@ export const dilemmaEvents: Record<string, GameEvent> = {
               impact: addImpact(s, 3),
               npcs: { ...(s.npcs || {}), mentor },
               story_flags: { ...(s.story_flags || {}), credit_grabbed: true },
-              message: `你在评审会上试图将核心架构据为己有冲击晋升，但在答辩环节被晋升委员会深挖底层细节与跨组落地，暴露出硬实力与业务积累不足（${reqDesc}，当前算法 ${s.leetcode} / 产出 ${s.impact || 0}），升职提报被当场否决！你仅拿到项目奖金 (+$${tcIncrease.toFixed(1)}w TC)，而老前辈也看清了你的为人愤而离职，在组内落得两头皆空。`,
+              message: `你在评审会上试图将核心架构据为己有冲击晋升，但在答辩环节被晋升委员会深挖底层细节与跨组落地，暴露出技术深度与架构掌控力不足，升职提报被当场否决！你仅拿到项目奖金 (+$${tcIncrease.toFixed(1)}w TC)，而老前辈也看清了你的为人愤而离职，在组内落得两头皆空。`,
             };
           }
         },

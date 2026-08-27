@@ -79,7 +79,7 @@ export const tradingEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【卖 Covered Call 备兑期权】卖出持仓股票虚值看涨期权，吃权利金利息 (需持有股票 >= $20w)',
+        text: '【卖 Covered Call 备兑期权】卖出持仓股票虚值看涨期权，吃权利金利息',
         costBadge: '需股票 >= $20w',
         condition: (s) => (s.stocks || 0) >= 20,
         effect: (s) => {

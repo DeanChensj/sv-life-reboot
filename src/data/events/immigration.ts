@@ -205,7 +205,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.visa === '绿卡' ? 'post_green_card' : 'sv_year_end_settlement',
       },
       {
-        text: '【重金商婚自救】支付 $8w 现金找地下中介匹配公民商婚 (需现金 >= $8w, 极高风险)',
+        text: '【重金商婚自救】找地下中介匹配公民商婚维持身份 (极高风险)',
         costBadge: '花费 $8w',
         reqBadge: '高风险',
         condition: (s) => (!s.relationship_status || s.relationship_status === 'single') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.scam_marriage_failed,
@@ -239,7 +239,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: (s: GameState) => s.status === 'game_over' ? 'end' : (s.visa === '绿卡' ? 'post_green_card' : 'h1b_fallback_options'),
       },
       {
-        text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作 (消耗 $1.5w)',
+        text: '【学业自救】紧急注册 Day 1 CPT 大学维持合法学生身份并继续工作',
         costBadge: '花费 $1.5w',
         condition: (s) => s.cash >= 1.5 && s.visa !== '绿卡' && s.visa !== '公民',
         effect: (s) => ({
@@ -250,7 +250,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【砸重金急办 O-1 签证】找顶级律所加急办理 O-1 杰出人才签证 (需现金 >= $8w，限 PhD 或硬核背景)',
+        text: '【砸重金急办 O-1 签证】找顶级律所加急办理 O-1 杰出人才签证',
         costBadge: '花费 $8w',
         reqBadge: '需 PhD、高 Impact 或硬核背景',
         condition: (s) => (s.is_phd || (s.impact || 0) >= 20 || s.leetcode >= 85 || s.job_type === 'ai_research') && s.cash >= 8 && s.visa !== '绿卡' && s.visa !== '公民' && !s.story_flags?.o1_denied_this_year,

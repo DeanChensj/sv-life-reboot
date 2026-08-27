@@ -508,9 +508,9 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       // 0. 【大厂满5年专属限时机遇：Sabbatical 停薪留职环球放空】在同一大厂连续任职满 5 年必出、一生一次、直接推进赛季并大幅回血
       {
-        text: '【限时机遇：大厂 Sabbatical 环球放空】在当前大厂任职满 5 年，申请为期半年的停薪留职放空旅行 (一生一次 · 耗资 $1.5w)',
+        text: '【限时机遇：大厂 Sabbatical 环球放空】在当前大厂任职满 5 年，申请为期半年的停薪留职放空旅行 (一生一次)',
         costBadge: '花费 $1.5w · 必休半年',
-        condition: (s) => s.job_type === 'big_tech' && !s.laid_off && (s.age - (s.job_start_age || s.age)) >= 5 && !s.story_flags?.sabbatical_taken && s.last_limited_opp_year !== s.year,
+        condition: (s) => isOpportunityActiveThisYear(s, 'opp_sabbatical') && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
           mid_year: true,
@@ -568,7 +568,8 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【限时机遇：黑客松夺冠】组队参加斯坦福 TreeHacks 极客马拉松 ($0.5w)',
+        text: '【限时机遇：黑客松夺冠】组队参加斯坦福 TreeHacks 极客马拉松',
+        costBadge: '报名费 $0.5w',
         condition: (s) => s.age <= 36 && isOpportunityActiveThisYear(s, 'opp_treehacks') && s.cash >= 0.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
@@ -609,7 +610,8 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         // 真·机遇(替换浮夸的私人飞行):抢风口 reskill。带成功率——踩中风口大赚,没踩中也长了底子。
-        text: '【限时机遇：抢风口 reskill】新技术浪潮爆发，你自费报训练营恶补想吃到风口红利 ($1.5w)',
+        text: '【限时机遇：抢风口 reskill】新技术浪潮爆发，自费报训练营恶补技术吃到风口红利',
+        costBadge: '学费 $1.5w',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_reskill_wave') && s.cash >= 1.5 && !!s.job_type && s.job_type !== 'unemployed' && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
@@ -636,7 +638,8 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
       {
-        text: '【限时机遇：科技狂欢】前往内华达沙漠参加火人节 (Burning Man) 极客大迁徙 ($1.2w)',
+        text: '【限时机遇：科技狂欢】前往内华达沙漠参加火人节 (Burning Man) 极客大迁徙',
+        costBadge: '花费 $1.2w',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_burning_man') && s.cash >= 1.2 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -654,7 +657,8 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：沙丘路私享会】受邀参加 Sand Hill Road 闭门华人天使投资人沙龙 ($1.0w)',
+        text: '【限时机遇：沙丘路私享会】受邀参加 Sand Hill Road 闭门华人天使投资人沙龙',
+        costBadge: '门票 $1.0w',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_sand_hill_salon') && (s.cash + (s.stocks || 0)) >= 150 && s.cash >= 1.0 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -672,7 +676,8 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：硅谷朝圣】抢购 Nvidia GTC 大会 VIP 门票进场见黄仁勋 ($1.5w)',
+        text: '【限时机遇：硅谷朝圣】抢购 Nvidia GTC 大会 VIP 门票进场见黄仁勋',
+        costBadge: 'VIP门票 $1.5w',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_gtc_nvidia') && s.cash >= 1.5 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -701,7 +706,8 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：自媒体爆款】深度测评爆火 AI 开源模型并发布顶流视频 ($0.8w)',
+        text: '【限时机遇：自媒体爆款】深度测评爆火 AI 开源模型并发布顶流视频',
+        costBadge: '制作成本 $0.8w',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_viral_ai_video') && s.cash >= 0.8 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {
@@ -727,7 +733,8 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：捡漏投资房】参与东湾法拍独栋房捡漏拍卖 (首付 $20w · 获稳健被动租金)',
+        text: '【限时机遇：捡漏投资房】参与东湾法拍独栋房捡漏拍卖，获取稳健被动租金',
+        costBadge: '首付 $20w',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_foreclosure_deal') && (s.cash + (s.stocks || 0)) >= 20 && (s.rental_income || 0) < 10 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => ({
@@ -744,7 +751,8 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_daily_life',
       },
       {
-        text: '【限时机遇：天使跟投】前同事明星 AI 团队启动 Seed 轮，以天使投资人身份入局 ($10w)',
+        text: '【限时机遇：天使跟投】前同事明星 AI 团队启动 Seed 轮，以天使投资人身份入局',
+        costBadge: '出资 $10w',
         condition: (s) => isOpportunityActiveThisYear(s, 'opp_angel_invest') && s.cash >= 10 && s.last_limited_opp_year !== s.year,
         hideIfUnavailable: true,
         effect: (s) => {

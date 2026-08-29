@@ -847,7 +847,9 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
           const curLevel = s.level || (s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
-          const normLvl = normalizeLevel(curLevel, s) || (s.is_phd ? 'L4' : 'L3');
+          // Fall back to the all-time peak rank before hitting the L3 floor: an unmapped job
+          // title must never silently demote a senior (this path WRITES a new level).
+          const normLvl = normalizeLevel(curLevel, s) || normalizeLevel(s.max_level, s) || (s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           const isKingOfRoll = s.trait_title === '卷王之王';

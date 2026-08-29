@@ -257,7 +257,21 @@ export default function App() {
       const target = e.target as HTMLElement;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
 
-      if (showWelcome || showWarReport || showAchievementCodex || showCareerTimeline || isShopOpen || isMobileStatsOpen) {
+      // The year-end settlement modal is rendered by its own condition (not one of the
+      // showX flags), so it MUST be treated as a blocking modal here too. Otherwise hotkeys
+      // fire behind it — pressing `s` opens the shop over it, and buying a house switches
+      // currentEventId, unmounting the modal so the settlement (age+1/year+1/expenses) never
+      // runs: unlimited free years without aging.
+      const isSettlementOpen = currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing';
+
+      // Space/Enter is the settlement modal's own "continue" affordance — handle it first.
+      if (isSettlementOpen && (e.key === ' ' || e.key === 'Enter')) {
+        e.preventDefault();
+        handleYearEndContinue();
+        return;
+      }
+
+      if (isSettlementOpen || showWelcome || showWarReport || showAchievementCodex || showCareerTimeline || isShopOpen || isMobileStatsOpen) {
         if (e.key === 'Escape') {
           if (isMobileStatsOpen) setIsMobileStatsOpen(false);
           else if (isShopOpen) setIsShopOpen(false);
@@ -268,16 +282,9 @@ export default function App() {
             setShowWelcome(false);
             safeStorage.setItem('sv_life_welcome_seen', 'true');
           }
+          // NOTE: the settlement modal is deliberately NOT escapable — it must be resolved.
         }
         return;
-      }
-
-      if (e.key === ' ' || e.key === 'Enter') {
-        if (currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing') {
-          e.preventDefault();
-          handleYearEndContinue();
-          return;
-        }
       }
 
       if (['1', '2', '3', '4', '5', '6'].includes(e.key)) {
@@ -644,6 +651,15 @@ export default function App() {
               gameState={gameState}
               onClose={() => setIsShopOpen(false)}
               onTriggerEvent={(eventId) => {
+                // Defense in depth: never navigate away while the year-end settlement is
+                // pending. Switching currentEventId unmounts the settlement modal, so the
+                // whole settlement (age+1 / year+1 / expenses) would be skipped — an
+                // unlimited-free-years exploit. The shop can still be reached by mouse via
+                // the achievement toast, which paints above the modal.
+                if (currentEventId === 'sv_year_end_settlement' && gameState.status === 'playing') {
+                  setIsShopOpen(false);
+                  return;
+                }
                 setCurrentEventId(eventId);
               }}
               onBuy={(effect, msg) => {

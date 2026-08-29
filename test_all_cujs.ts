@@ -8,6 +8,7 @@ import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBrea
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
 import { setGameSeed, gameRandom } from './src/utils/random';
 import { determineEnding } from './src/utils/endings';
+import { normalizeLevel, getLevelRank } from './src/data/levelProfiles';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
@@ -3337,6 +3338,83 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(blitzCash <= 1100, 'blitz-to-exit IPO stays near the old ~1050w baseline (FIRE-neutral)');
 
   console.log('✅ CUJ 62 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 63: P0 regression locks (from the codebase bug hunt)
+// 1. FIRE lockout: every "keep going" option must leave last_fire_milestone_reached STRICTLY
+//    BELOW the new win_threshold, or the settlement gate (last_fire < win_threshold) can never
+//    fire again and the player can never win — the founder/trader options set both from the
+//    same value, which collapsed them at win_threshold >= 1500.
+// 2. 疯狂内卷 must never DEMOTE: '早期核心成员' (and any unmapped title) must not fall back to
+//    L3 and write a level below the player's historical peak.
+// 3. The property-tax lawyer appeal must be gated on its WORST case ($4w), not the $1w retainer.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 63] P0 Regression Locks ---');
+
+  // 1. FIRE re-prompt must stay reachable after every keep-going option, at every tier.
+  const fireHub = events['fire_milestone_choice'];
+  const keepGoing = fireHub.choices.filter(c => /继续|无畏追梦|无界探索|登顶|冲刺/.test(c.text));
+  assert(keepGoing.length >= 3, 'fire_milestone_choice exposes multiple keep-going options');
+  let checkedKeepGoing = 0;
+  for (const tier of [500, 800, 1500, 3000]) {
+    for (const jt of ['big_tech', 'startup_founder', 'trader'] as const) {
+      const s = {
+        ...generateInitialState(nextCujSeed()),
+        job_type: jt, status: 'playing',
+        cash: tier, stocks: 0, win_threshold: tier,
+        last_fire_milestone_reached: 0,
+      } as GameState;
+      for (const c of keepGoing) {
+        if (c.condition && !c.condition(s)) continue;
+        const eff = c.effect(s) as Partial<GameState>;
+        if (eff.status === 'win') continue; // terminal退休 options are fine
+        const newWin = eff.win_threshold ?? s.win_threshold;
+        const newLast = eff.last_fire_milestone_reached ?? s.last_fire_milestone_reached ?? 0;
+        checkedKeepGoing++;
+        assert(
+          newLast < newWin,
+          `keep-going "${c.text.slice(0, 16)}" at tier ${tier}/${jt}: last_fire (${newLast}) must stay < win_threshold (${newWin}), else FIRE is locked out forever`,
+        );
+      }
+    }
+  }
+  assert(checkedKeepGoing > 0, 'at least one keep-going option was actually exercised');
+
+  // 2. 疯狂内卷 must not demote an unmapped senior title.
+  assert(normalizeLevel('早期核心成员', { impact: 25, tc: 70 } as GameState) !== null, "'早期核心成员' maps to a real ladder level (no silent L3 fallback)");
+  const grind = events['sv_daily_life'].choices.find(c => c.text.includes('疯狂内卷'));
+  assert(!!grind, '疯狂内卷 choice exists');
+  const exSenior = {
+    ...generateInitialState(nextCujSeed()),
+    job_type: 'startup', company: 'startup', level: '早期核心成员',
+    max_level: 'L7 (Senior Staff)', impact: 50, tc: 80, leetcode: 70,
+    age: 36, last_promo_age: 33, status: 'playing', health: 80,
+  } as GameState;
+  for (let k = 0; k < 200; k++) {
+    const eff = grind!.effect(exSenior) as Partial<GameState>;
+    if (eff.level) {
+      assert(getLevelRank(eff.level, exSenior) >= getLevelRank('L6 (Staff)', exSenior),
+        `疯狂内卷 must never demote an ex-L7 early-core-member (got ${eff.level})`);
+    }
+  }
+
+  // 3. Property-tax lawyer appeal gated on the $4w worst case, with no dead asset band.
+  const taxEvent = events['property_supplemental_tax_hike'];
+  const lawyer = taxEvent.choices.find(c => c.text.includes('律师'));
+  assert(!!lawyer, 'lawyer appeal choice exists');
+  const poorOwner = { ...generateInitialState(nextCujSeed()), cash: 2, stocks: 0, has_housing: true, status: 'playing' } as GameState;
+  assert(lawyer!.condition!(poorOwner) === false, 'lawyer appeal hidden below its $4w worst case (was a bankruptcy trap gated at >= $1w)');
+  const okOwner = { ...generateInitialState(nextCujSeed()), cash: 5, stocks: 0, has_housing: true, status: 'playing' } as GameState;
+  assert(lawyer!.condition!(okOwner) === true, 'lawyer appeal available at >= $4w');
+  for (const assets of [0, 1, 2, 3, 3.5, 4, 10]) {
+    const st = { ...generateInitialState(nextCujSeed()), cash: assets, stocks: 0, has_housing: true, status: 'playing' } as GameState;
+    const avail = taxEvent.choices.filter(c => !c.condition || c.condition(st));
+    assert(avail.length > 0, `property tax event still offers a choice at $${assets}w assets`);
+  }
+
+  console.log('✅ CUJ 63 Passed\n');
 }
 
 console.log(`\n======================================================`);

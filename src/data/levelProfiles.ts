@@ -110,6 +110,11 @@ export const normalizeLevel = (level?: string, s?: GameState): CareerLevel | nul
   if (level === 'CEO & Founder' || level === 'CTO & Co-Founder') {
     return impact >= 45 ? 'L7 (Senior Staff)' : impact >= 20 ? 'L6 (Staff)' : 'L5 (Senior)';
   }
+  // AI-startup early core member (career.ts poach). Without this it fell through to null and
+  // callers defaulted to 'L3', so 疯狂内卷 "promoted" an ex-L7 down to L4 with celebratory copy.
+  if (level === '早期核心成员') {
+    return (tc >= 60 || impact >= 20) ? 'L6 (Staff)' : 'L5 (Senior)';
+  }
   if (level === '国内研发') {
     const tenure = s ? (s.age - (s.job_start_age || s.age)) : 0;
     return tenure >= 2 ? 'L4' : 'L3';

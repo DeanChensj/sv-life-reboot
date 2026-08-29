@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { gameRandom } from '../utils/random';
+import { createPRNG } from '../utils/random';
 
 export interface DopaminePill {
   id: string;
@@ -20,20 +20,25 @@ interface DopamineFeedbackProps {
 }
 
 export const DopamineFeedback: React.FC<DopamineFeedbackProps> = ({ pills, screenEffect }) => {
-  // Generate deterministic particles for confetti when gold celebration is active
+  // Confetti particles. These MUST NOT draw from the shared game PRNG: this ran 216
+  // gameRandom() draws per celebration during render, so a purely cosmetic effect perturbed
+  // every subsequent game roll, diverged dev/prod under StrictMode, and desynced the fuzz /
+  // monte-carlo harnesses from the shipped random stream. Use a throwaway local PRNG instead
+  // (seeded off the clock, so confetti still varies without touching the game stream).
   const confettiParticles = useMemo(() => {
     if (screenEffect !== 'gold_celebration' && screenEffect !== 'blue_promotion') return [];
     const colors = screenEffect === 'gold_celebration' 
       ? ['#fbbf24', '#f59e0b', '#10b981', '#34d399', '#f43f5e', '#a855f7', '#38bdf8']
       : ['#38bdf8', '#818cf8', '#c084fc', '#34d399', '#60a5fa'];
-    
+    const rand = createPRNG(Date.now());
+
     return Array.from({ length: 36 }).map((_, i) => {
-      const left = gameRandom() * 100;
-      const animDelay = gameRandom() * 0.8;
-      const animDuration = 2.0 + gameRandom() * 1.5;
-      const size = 6 + gameRandom() * 8;
-      const driftX = (gameRandom() - 0.5) * 200;
-      const rot = (gameRandom() - 0.5) * 1080;
+      const left = rand() * 100;
+      const animDelay = rand() * 0.8;
+      const animDuration = 2.0 + rand() * 1.5;
+      const size = 6 + rand() * 8;
+      const driftX = (rand() - 0.5) * 200;
+      const rot = (rand() - 0.5) * 1080;
       const color = colors[i % colors.length];
       const isCircle = i % 3 === 0;
 

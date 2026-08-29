@@ -5,6 +5,13 @@ import { HOUSING_NAMES, isOwnedHousing, liquidateStocksToCover } from '../../con
 import { getCompanyProfile } from '../companyProfiles';
 import { normalizeLevel } from '../levelProfiles';
 
+// Stepped FIRE targets. The settlement gate re-prompts only when
+// `last_fire_milestone_reached < win_threshold`, so a "keep going" option MUST record the tier
+// just ACHIEVED and raise win_threshold to a STRICTLY higher one. Setting both from the same
+// value collapses them and locks the player out of ever winning again.
+const FIRE_TIERS = [500, 800, 1500, 3000, 99999];
+const nextFireTarget = (cur: number): number => FIRE_TIERS.find((t) => t > cur) ?? 99999;
+
 export const settlementEvents: Record<string, GameEvent> = {
   'sv_year_end_settlement': {
     id: 'sv_year_end_settlement',
@@ -744,8 +751,8 @@ export const settlementEvents: Record<string, GameEvent> = {
         condition: (s) => (s.cash + (s.stocks || 0)) >= 200 && s.job_type !== 'startup_founder',
         effect: (s) => ({
           has_reached_initial_fire: true,
-          last_fire_milestone_reached: Math.max(s.win_threshold, 500),
-          win_threshold: Math.max(s.win_threshold, 1500),
+          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, s.win_threshold),
+          win_threshold: nextFireTarget(s.win_threshold),
           fire_tier: 'luxury',
           job_type: 'startup_founder',
           founder_stage: 'pre_seed',
@@ -764,8 +771,8 @@ export const settlementEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => ({
           has_reached_initial_fire: true,
-          last_fire_milestone_reached: Math.max(s.win_threshold, 500),
-          win_threshold: Math.max(s.win_threshold, 1500),
+          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, s.win_threshold),
+          win_threshold: nextFireTarget(s.win_threshold),
           fire_tier: 'luxury',
           health: Math.min(100, s.health + 15),
           message: '【初心不改】你没有因为账户达到财务自由而停下脚步，继续作为 CEO 带领团队向着百亿独角兽与纳斯达克敲钟全力冲刺！'
@@ -778,8 +785,8 @@ export const settlementEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'trader',
         effect: (s) => ({
           has_reached_initial_fire: true,
-          last_fire_milestone_reached: Math.max(s.win_threshold, 500),
-          win_threshold: Math.max(s.win_threshold, 1500),
+          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, s.win_threshold),
+          win_threshold: nextFireTarget(s.win_threshold),
           fire_tier: 'luxury',
           health: Math.min(100, s.health + 15),
           message: '【初心不改】账户达到财务自由也没让你离场，你继续坐镇交易席，向着更高的净值与传奇战绩全力冲刺！'

@@ -367,9 +367,14 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【聘请律师申诉减税】聘请 Property Tax Appeal 律师写申诉辩护书 (花费 $1w)',
-        costBadge: '花费 $1w',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 1,
+        text: '【聘请律师申诉减税】聘请 Property Tax Appeal 律师写申诉辩护书',
+        costBadge: '花费 $1w · 败诉共 $4w',
+        reqBadge: '需总资产 >= $4w',
+        // Gate on the WORST case ($3w tax + $1w lawyer), not just the $1w retainer: this was
+        // gated at >= 1, so a homeowner with $1–4w who lost the appeal went straight to
+        // bankruptcy game-over. (>= 3 keeps the full-pay option, < 3 keeps the deferral
+        // option, so raising this leaves no asset band without a choice.)
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 4,
         effect: (s) => {
           const win = gameRandom() < 0.5;
           return win

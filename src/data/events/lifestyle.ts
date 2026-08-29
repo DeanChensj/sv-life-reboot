@@ -1,6 +1,6 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, gameRandom, deductAssets, addImpact, hopTargetLevel } from './helpers';
-import { HOUSING_NAMES } from '../../constants/gameConstants';
+import { HOUSING_NAMES, isOwnedHousing } from '../../constants/gameConstants';
 
 export const lifestyleEvents: Record<string, GameEvent> = {
   // 「经营人际」枢纽:朋友/社区人人可选;单身/未婚多一个「相亲·推进感情」入口 (→ dating_market),
@@ -465,17 +465,29 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement'
       },
       {
-        text: '【抢学区房鸡娃】买 Fremont 10 分学区房，报名卡内基梅隆机器人夏令营 (消耗 $15w 现金)',
+        text: '【搬进学区鸡娃】搬进 Fremont 10 分学区，报名卡内基梅隆机器人夏令营',
+        costBadge: '花费 $15w',
         condition: (s) => s.cash >= 15,
-        effect: (s) => ({
-          cash: s.cash - 15,
-          health: s.health - 10,
-          has_child: true,
-          rent: s.housing_name === HOUSING_NAMES.ATHERTON ? 0 : 4.5,
-          has_housing: true,
-          housing_name: s.housing_name === HOUSING_NAMES.ATHERTON ? HOUSING_NAMES.ATHERTON : HOUSING_NAMES.FREMONT_10_DISTRICT,
-          message: '你步入了湾区老爹鸡娃正轨！社区邻居全是高强度卷 AMC10 的硅谷大佬，每天陪娃解题虽然辛苦但充实。'
-        }),
+        // $15w buys the school-district move + camp fees — NOT a deed. This used to hand
+        // non-homeowners an OWNED Fremont house for $15w while buy_house charges $65w.
+        // Existing owners relocate to the 10-point district; renters rent there.
+        effect: (s) => {
+          const alreadyOwns = isOwnedHousing(s.housing_name);
+          const isAtherton = s.housing_name === HOUSING_NAMES.ATHERTON;
+          return {
+            cash: s.cash - 15,
+            health: s.health - 10,
+            has_child: true,
+            rent: isAtherton ? 0 : (alreadyOwns ? 4.5 : 5.5),
+            has_housing: alreadyOwns,
+            housing_name: isAtherton
+              ? HOUSING_NAMES.ATHERTON
+              : (alreadyOwns ? HOUSING_NAMES.FREMONT_10_DISTRICT : HOUSING_NAMES.FREMONT),
+            message: alreadyOwns
+              ? '你把家搬进了 Fremont 10 分学区！社区邻居全是高强度卷 AMC10 的硅谷大佬，每天陪娃解题虽然辛苦但充实。'
+              : '你咬牙在 Fremont 顶级学区租下一套房、交齐了夏令营学费。房子是租的，但学区是真的——社区邻居全是卷 AMC10 的硅谷大佬。'
+          };
+        },
         nextEventId: 'sv_year_end_settlement'
       }
     ]

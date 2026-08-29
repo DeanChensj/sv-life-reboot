@@ -136,9 +136,19 @@ export const settlementEvents: Record<string, GameEvent> = {
            // Dual-income household: a married player's spouse contributes annual
            // post-tax income, tiered by partner_type (mirrors the one-shot marriage
            // bonus at dating_market). Previously married players got $0 extra cash flow.
-           const spouseIncome = s.is_married
+           // A paid sham marriage ('sham') is a green-card transaction, not a household: it
+           // must NOT pay spouse income. It used to fall through to the `6` default, turning a
+           // one-off $8w fee into $6w/year for life.
+           const spouseIncome = (s.is_married && s.partner_type !== 'sham')
              ? (s.partner_type === 'vc' ? 15 : s.partner_type === 'founder' ? 12 : s.partner_type === 'engineer' ? 10 : s.partner_type === 'artist' ? 3 : 6)
              : 0;
+           // Sham marriages dissolve once they've served their purpose (2 years). No community-
+           // property split — there was never a shared household to divide.
+           const shamYear = s.story_flags?.sham_marriage_year as number | undefined;
+           const shamExpired = s.partner_type === 'sham' && typeof shamYear === 'number' && (s.year - shamYear) >= 2;
+           const shamDivorceMsg = shamExpired
+             ? ' 【商婚解约】两年之期已到，名义配偶按约定签字离婚、办完手续便再无联系。你恢复单身,身份已尘埃落定。'
+             : '';
            const netIncome = postTaxBase + rentalIncome + spouseIncome - totalExpense;
            const liq = liquidateStocksToCover(s.cash + netIncome, currentStocks);
            const finalCash = liq.cash;
@@ -156,7 +166,12 @@ export const settlementEvents: Record<string, GameEvent> = {
               // branch below. 养老厂 (google/apple/oracle/…) have no table override and
               // fall through to the big_tech +10 default, which is correct for them.
               const companyProfile = getCompanyProfile(s.company);
-              if (companyProfile?.yearEndHealth) { healthDrain = companyProfile.yearEndHealth.drain; companyMsg = companyProfile.yearEndHealth.msg; }
+              // An internal transfer to the AI core org is an explicit player choice and must
+              // outrank the employer default table. This branch used to sit BELOW it, so at
+              // meta/nvidia/tiktok/amazon/robinhood the transfer never took effect: the same
+              // action gave +8 health at Google but -8 at TikTok, with the wrong message.
+              if (s.transferred_to_ai) { healthDrain = -8; companyMsg = ' 【职场健康】大厂前沿 AI 大模型组：既享受神仙 WLB，又能接触顶尖架构，收获满满 (健康 +8)。'; }
+              else if (companyProfile?.yearEndHealth) { healthDrain = companyProfile.yearEndHealth.drain; companyMsg = companyProfile.yearEndHealth.msg; }
               // 全职 Day Trader 是自雇操盘手：没有带薪年假、盯盘精神高压。若无此分支会落入下方
               // 通用「带薪年假 健康+6」兜底（既文案错乱、又白送健康），属 job_type 分支缺失 bug。
               else if (s.job_type === 'trader') { healthDrain = 3; companyMsg = ' 【职场健康】全职操盘盯盘的精神高压与不规律作息消耗了体力 (健康 -3)。'; }
@@ -164,9 +179,7 @@ export const settlementEvents: Record<string, GameEvent> = {
               else if (s.job_type === 'startup_founder') { healthDrain = 4; companyMsg = ' 【职场健康】创业找融资与管理团队的压力让你略感身心紧绷 (健康 -4)。'; }
              // AI labs (OpenAI/Anthropic MTS) are prestigious but intense — not a 养老大厂.
              else if (s.job_type === 'ai_research') { healthDrain = 6; companyMsg = ' 【职场健康】前沿 AI 实验室的 AGI 军备竞赛与算力集群连轴转消耗了体力 (健康 -6)。'; }
-             // Internal transfer to a big-tech 前沿 AI 大模型组: still WLB, but AI-flavored (was
-             // wrongly showing the generic "养老大厂" message since job_type stays 'big_tech').
-             else if (s.transferred_to_ai) { healthDrain = -8; companyMsg = ' 【职场健康】大厂前沿 AI 大模型组：既享受神仙 WLB，又能接触顶尖架构，收获满满 (健康 +8)。'; }
+
              else if (s.job_type === 'big_tech') { healthDrain = -10; companyMsg = ' 【职场健康】养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
              else if (s.job_type === 'cn_tech' || s.company === 'cn_big_tech') { healthDrain = 6; companyMsg = ' 【职场健康】国内大厂的高强度业务开发消耗了精力 (健康 -6)。'; }
              else { healthDrain = -6; companyMsg = ' 【职场健康】充沛的带薪年假与规律作息让你的体力得到恢复 (健康 +6)。'; }
@@ -419,6 +432,9 @@ export const settlementEvents: Record<string, GameEvent> = {
               ...(s.story_flags || {}),
               ...(alreadyDrewThisYear ? {} : { last_h1b_lottery_year: s.year }),
               o1_denied_this_year: false,
+              // Per-year crisis latch: without this reset a single denied RFE routed EVERY
+              // later year (success included) into the paid emergency panel, forever.
+              h1b_rfe_denied: false,
               exit_deliberated: false,
               scam_marriage_failed: false,
               side_hustle_canceled: false,
@@ -541,6 +557,15 @@ export const settlementEvents: Record<string, GameEvent> = {
               year_seg: undefined, // 清零季度事件机相位,确保下一年从 H1 重新开始 (防跨年残留导致跳过 H1/H2)
               age: s.age + 1, 
               year: s.year + 1,
+              // Per-transition marker — must not persist across years, or "did I hop THIS
+              // year?" checks (e.g. the double-hop guard in h1ToH2Router) stay true forever.
+              is_new_job: false,
+              // Sham marriage auto-dissolves at the 2-year mark (no asset split).
+              ...(shamExpired ? {
+                is_married: false,
+                relationship_status: 'single' as const,
+                partner_type: undefined,
+              } : {}),
               founder_situation: nextFounderSituation,
               company_valuation: founderValuation,
               visa: newVisa,
@@ -576,6 +601,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                 gcMsg,
                 day1CptMsg,
                 iccMsg,
+                shamDivorceMsg,
                 autoStockSellMsg,
                 economyMsg,
               ].map(m => (m ? m.trim() : '')).filter(Boolean).join('\n'),

@@ -129,7 +129,8 @@ export interface GameState {
   network: number; // 人脉/关系网 0-100
   is_married: boolean;
   relationship_status?: RelationshipStatus;
-  partner_type?: 'engineer' | 'artist' | 'vc' | 'founder' | 'random';
+  // 'sham' = 付费商婚(绿卡工具人):不产生配偶收入,且满 2 年后在年终结算自动离婚
+  partner_type?: 'engineer' | 'artist' | 'vc' | 'founder' | 'random' | 'sham';
   has_child?: boolean;
   win_threshold: number;
   has_reached_initial_fire?: boolean; // 是否已达成过初始阶段 FIRE 目标

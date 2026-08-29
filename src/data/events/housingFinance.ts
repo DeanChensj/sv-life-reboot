@@ -435,6 +435,10 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
           has_housing: false,
           housing_name: HOUSING_NAMES.NORMAL_SHARED,
           rent: 2.0,
+          // Selling the house must also end the ADU tenancy — both sibling sell branches do
+          // this. Omitting it left phantom rent coming in from a house you no longer own.
+          has_adu_rented: false,
+          rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0),
           cash: s.cash + (s.parents_helped_house ? 0 : 25),
           health: Math.min(100, s.health + 8),
           message: s.parents_helped_house

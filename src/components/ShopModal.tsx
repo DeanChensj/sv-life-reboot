@@ -109,12 +109,15 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* ADU / House Hacking */}
               <button
-                disabled={!isHomeowner || gameState.has_adu_rented || totalAssets < 1.5}
+                disabled={!isHomeowner || gameState.has_adu_rented || totalAssets < 12}
                 onClick={() => onBuy({
-                  cash: gameState.cash - 1.5,
+                  // Price-matched to the housingFinance ADU event ($12w for the same
+                  // +$1.2w/yr). The shop was still on the stale $1.5w price — an ~80% annual
+                  // yield — while the other three investment properties were already aligned.
+                  cash: gameState.cash - 12,
                   has_adu_rented: true,
                   rental_income: (gameState.rental_income || 0) + 1.2,
-                }, '【ADU 改造出租】你改造了后院独立套间并出租给大厂实习生！每年被动收入 +$1.2w！')}
+                }, '【ADU 改造出租】你砸下 $12w 改造了后院独立套间并出租给大厂实习生！每年被动收入 +$1.2w！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="flex justify-between items-center">
@@ -125,7 +128,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                   {gameState.has_adu_rented 
                     ? '[已完成] 已完成改造并持续收租中' 
                     : isHomeowner 
-                      ? '改造费用: $1.5w | 将自住房次卧/后院独立 ADU 挂牌招租' 
+                      ? '改造费用: $12w | 将自住房次卧/后院独立 ADU 挂牌招租' 
                       : '需先拥有一套湾区自住房'}
                 </div>
               </button>

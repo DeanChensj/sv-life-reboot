@@ -98,17 +98,10 @@ export function determineEnding(s: GameState): EndingResult {
         flavor: '你在纳斯达克敲响了那口钟。从沙丘路的一份 BP 到万众瞩目的敲钟人，你改写了自己的命运。',
       };
     }
-    // Dynasty wealth ($3000w+) is UR — checked before the SSR identity endings so a
-    // dynasty-tier trader/PhD/L8/landlord isn't silently downgraded (rarest-first).
-    if (assets >= 3000 || s.fire_tier === 'dynasty') {
-      return {
-        id: 'silicon_dynasty', emoji: '🏛️', title: '硅谷百亿巨擘 · 家族传奇',
-        subtitle: 'STATUS: FIRE (DYNASTY)', tone: 'triumph', rarity: 'UR',
-        flavor: '你的资产突破 $3000w+，建立了家族信托与慈善基金会，成为了硅谷乃至全球科技界的殿堂级传奇。',
-      };
-    }
-    // Trader dramatic-exit endings (via trader_exit_event) take precedence over the
-    // generic wall_street_wolf FIRE title — a legendary interactive finale earns its own screen.
+    // Trader dramatic-exit endings (via trader_exit_event). Like unicorn_founder above, these
+    // are an EXPLICIT player-chosen finale, so they outrank the generic wealth-tier cards —
+    // including silicon_dynasty. (They used to sit after it and were silently shadowed for any
+    // trader who reached $3000w before cashing out, which is most of them.)
     if (s.story_flags?.trader_exit_fund) {
       return {
         id: 'quant_fund_godfather', emoji: '🏦', title: 'Sand Hill 量化教父 · 独立基金封神',
@@ -121,6 +114,15 @@ export function determineEnding(s: GameState): EndingResult {
         id: 'family_office_oldmoney', emoji: '🏛️', title: '家族办公室 · 财富永续老钱',
         subtitle: 'STATUS: FIRE (FAMILY OFFICE)', tone: 'triumph', rarity: 'SSR',
         flavor: '你设立了自己的家族办公室，把亲手赚下的财富交给专业团队打理，穿越牛熊、代际传承——活成了别人眼里的“老钱”。',
+      };
+    }
+    // Dynasty wealth ($3000w+) is UR — checked before the SSR identity endings so a
+    // dynasty-tier trader/PhD/L8/landlord isn't silently downgraded (rarest-first).
+    if (assets >= 3000 || s.fire_tier === 'dynasty') {
+      return {
+        id: 'silicon_dynasty', emoji: '🏛️', title: '硅谷百亿巨擘 · 家族传奇',
+        subtitle: 'STATUS: FIRE (DYNASTY)', tone: 'triumph', rarity: 'UR',
+        flavor: '你的资产突破 $3000w+，建立了家族信托与慈善基金会，成为了硅谷乃至全球科技界的殿堂级传奇。',
       };
     }
     if (s.job_type === 'trader') {

@@ -3417,6 +3417,107 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 63 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 64: P1 regression locks (second bug-hunt batch)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 64] P1 Regression Locks ---');
+
+  // 1. Sham marriage pays NO spouse income and auto-divorces after 2 years.
+  const shamState = {
+    ...generateInitialState(nextCujSeed()),
+    job_type: 'big_tech', company: 'google', level: 'L4', tc: 30, cash: 50,
+    is_married: true, relationship_status: 'married', partner_type: 'sham',
+    year: 2030, age: 30, status: 'playing', visa: '绿卡',
+    story_flags: { sham_marriage_year: 2030 },
+  } as GameState;
+  const settleChoice = events['sv_year_end_settlement'].choices[0];
+  const y1 = settleChoice.effect(shamState) as Partial<GameState>;
+  assert(y1.is_married !== false, 'sham marriage survives its first year');
+  const shamState2 = { ...shamState, year: 2032 } as GameState; // 2 years elapsed
+  const y3 = settleChoice.effect(shamState2) as Partial<GameState>;
+  assert(y3.is_married === false && y3.partner_type === undefined, 'sham marriage auto-divorces after 2 years');
+  // Income check: a sham spouse must earn strictly less than a 'random' spouse.
+  const realSpouse = { ...shamState, partner_type: 'random' } as GameState;
+  const shamCash = (settleChoice.effect(shamState) as Partial<GameState>).cash ?? 0;
+  const realCash = (settleChoice.effect(realSpouse) as Partial<GameState>).cash ?? 0;
+  assert(shamCash < realCash, 'sham marriage yields no spouse income (was $6w/yr forever via the default branch)');
+
+  // 2. Trader finale endings outrank silicon_dynasty at dynasty-tier wealth.
+  const richFund = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 3200, stocks: 0, status: 'win', story_flags: { trader_exit_fund: true } } as GameState;
+  assert(determineEnding(richFund).id === 'quant_fund_godfather', 'Fund I finale is not shadowed by silicon_dynasty at $3000w+');
+  const richFO = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 3200, stocks: 0, status: 'win', story_flags: { trader_exit_family_office: true } } as GameState;
+  assert(determineEnding(richFO).id === 'family_office_oldmoney', 'Family Office finale is not shadowed by silicon_dynasty at $3000w+');
+
+  // 3. transferred_to_ai must take effect at EVERY big-tech company, not just the ones with no
+  // employer health-table override. (It used to sit below the table, so at meta/nvidia/tiktok/
+  // amazon/robinhood the transfer silently did nothing: same action, +8 health at Google but
+  // -8 at TikTok.) Post-fix the transfer outcome is uniform across employers, and at the
+  // high-pressure shops it's strictly better than not transferring.
+  const xferHealth: number[] = [];
+  for (const co of ['google', 'meta', 'nvidia', 'tiktok', 'amazon']) {
+    const base = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: co, level: 'L5 (Senior)', tc: 40, cash: 50, age: 30, year: 2030, status: 'playing', visa: '绿卡', health: 60 } as GameState;
+    const plain = settleChoice.effect(base) as Partial<GameState>;
+    const xfer = settleChoice.effect({ ...base, transferred_to_ai: true } as GameState) as Partial<GameState>;
+    xferHealth.push(xfer.health ?? 0);
+    if (co !== 'google') {
+      assert((xfer.health ?? 0) > (plain.health ?? 0), `transferred_to_ai must beat the harsh ${co} drain (got ${xfer.health} vs ${plain.health})`);
+    }
+  }
+  assert(new Set(xferHealth).size === 1, `transferred_to_ai must give the same AI-core outcome at every employer (got ${xferHealth.join('/')})`);
+
+  // 4. Career-transition options consume the year (mid_year set) so H1/H2 aren't skipped.
+  const panel = events['sv_daily_life'];
+  const richCitizen = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', visa: '绿卡', cash: 80, tc: 40, leetcode: 60, status: 'playing', age: 32 } as GameState;
+  for (const kw of ['离职全职 Day Trader', '离职全职 AI/科技创业']) {
+    const c = panel.choices.find(ch => ch.text.includes(kw));
+    assert(!!c, `panel exposes "${kw}"`);
+    if (c!.condition && !c!.condition(richCitizen)) continue;
+    const eff = c!.effect(richCitizen) as Partial<GameState>;
+    assert(eff.mid_year === true, `"${kw}" must set mid_year or the transition year skips H1+H2`);
+  }
+
+  // 5. post_green_card must never burn a whole year silently.
+  const pgc = events['post_green_card'];
+  const gcState = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', visa: '绿卡', cash: 400, tc: 40, status: 'playing', age: 34 } as GameState;
+  for (const c of pgc.choices) {
+    if (c.condition && !c.condition(gcState)) continue;
+    const eff = c.effect(gcState) as Partial<GameState>;
+    const next = typeof c.nextEventId === 'function' ? c.nextEventId({ ...gcState, ...eff } as GameState) : c.nextEventId;
+    const consumesYear = eff.mid_year === true;
+    assert(consumesYear || next !== 'sv_year_end_settlement',
+      `post_green_card "${c.text.slice(0, 14)}" routes straight to settlement without mid_year — the year has no panel and no H1/H2`);
+  }
+
+  // 6. RFE denial latch is cleared annually (a past denial must not route future years).
+  const rfeCleared = settleChoice.effect({
+    ...generateInitialState(nextCujSeed()),
+    job_type: 'big_tech', company: 'google', level: 'L4', tc: 30, cash: 40,
+    visa: 'H1B (工签)', age: 30, year: 2030, status: 'playing',
+    story_flags: { h1b_rfe_denied: true },
+  } as GameState) as Partial<GameState>;
+  assert(rfeCleared.story_flags?.h1b_rfe_denied === false, 'h1b_rfe_denied is reset each year (was a permanent latch into the paid emergency panel)');
+
+  // 7. Short sale clears the ADU tenancy (no phantom rent on a house you sold).
+  const shortSale = events['mortgage_default_crisis'].choices.find(c => c.text.includes('Short Sale'));
+  assert(!!shortSale, 'short sale choice exists');
+  const owner = { ...generateInitialState(nextCujSeed()), has_housing: true, housing_name: HOUSING_NAMES.FREMONT, has_adu_rented: true, rental_income: 1.2, cash: 20, status: 'playing' } as GameState;
+  const ssEff = shortSale!.effect(owner) as Partial<GameState>;
+  assert(ssEff.has_housing === false && ssEff.has_adu_rented === false, 'short sale ends the ADU tenancy with the house');
+  assert((ssEff.rental_income ?? 0) < 1.2, 'short sale removes the ADU rent');
+
+  // 8. 鸡娃 must not hand a non-homeowner a free owned house.
+  const kidChoice = events['dink_or_kids']?.choices.find(c => c.text.includes('学区'))
+    || Object.values(events).flatMap(e => e.choices || []).find(c => c.text.includes('学区') && c.text.includes('鸡娃'));
+  if (kidChoice) {
+    const renter = { ...generateInitialState(nextCujSeed()), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, cash: 40, status: 'playing' } as GameState;
+    const kEff = kidChoice.effect(renter) as Partial<GameState>;
+    assert(kEff.has_housing !== true, '学区房鸡娃 must not gift ownership to a renter for $15w (buy_house costs $65w)');
+  }
+
+  console.log('✅ CUJ 64 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

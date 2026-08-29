@@ -16,7 +16,19 @@ export function createPRNG(seed: number): () => number {
   };
 }
 
-let activePRNG = createPRNG(currentSeed);
+// The GLOBAL generator keeps its mulberry32 state in a module variable (rather than hidden in
+// a closure) so it can be snapshotted into the save file and restored on load. Without that,
+// every reload rewound the stream to offset 0: the same upcoming rolls could be replayed by
+// save-scumming, and the "deterministic run" contract was false.
+let prngState: number = currentSeed >>> 0;
+
+/** Advances the global mulberry32 stream by one step. */
+function stepGlobal(): number {
+  prngState = (prngState + 0x6D2B79F5) >>> 0;
+  let t = Math.imul(prngState ^ (prngState >>> 15), 1 | prngState);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
 
 /**
  * Sets the global seed for reproducible game runs, fuzzing, and Monte Carlo tests.
@@ -26,8 +38,23 @@ export function setGameSeed(seed: number | string): number {
     ? hashStringToSeed(seed)
     : (seed >>> 0);
   currentSeed = numericSeed;
-  activePRNG = createPRNG(currentSeed);
+  prngState = numericSeed >>> 0;
   return currentSeed;
+}
+
+/**
+ * Snapshot of how far the global stream has advanced. Persist alongside the seed so a reload
+ * resumes the stream instead of restarting it.
+ */
+export function getPRNGState(): number {
+  return prngState >>> 0;
+}
+
+/** Restores a stream position captured by getPRNGState(). */
+export function setPRNGState(state: number): void {
+  if (typeof state === 'number' && !isNaN(state)) {
+    prngState = state >>> 0;
+  }
 }
 
 /**
@@ -42,7 +69,7 @@ export function getGameSeed(): number {
  * Can be seeded for 100% deterministic replays.
  */
 export function gameRandom(): number {
-  return activePRNG();
+  return stepGlobal();
 }
 
 /**

@@ -4,6 +4,7 @@ import { generateInitialState, events, resolveNextEventId, impactTier } from './
 import { BentoStatsPanel } from './components/BentoStatsPanel';
 import { checkAndUnlockAchievements, ACHIEVEMENTS } from './data/achievements';
 import { sound } from './utils/sound';
+import { getPRNGState, setPRNGState } from './utils/random';
 import { safeStorage } from './utils/safeStorage';
 import { applyStateTransition } from './utils/stateTransitions';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './utils/saveMigration';
@@ -38,6 +39,11 @@ const loadInitialGameData = (): {
   try {
     const parsed = JSON.parse(raw);
     const migrated = migrateSaveData(parsed);
+    // Resume the RNG stream where it left off (older saves have no rngState and keep the
+    // legacy seed-only behaviour that migrateSaveData already applied).
+    if (typeof parsed?.rngState === 'number') {
+      setPRNGState(parsed.rngState);
+    }
     if (events[migrated.currentEventId]) {
       return migrated;
     }
@@ -133,6 +139,9 @@ export default function App() {
         hasUnlockedShopToast,
         hasSeenBuyHouseToast,
         hasOpenedShop,
+        // Where the RNG stream currently is. Persisting only the seed rewound the stream to
+        // offset 0 on every reload, so reloading replayed the same upcoming rolls (save-scum).
+        rngState: getPRNGState(),
       };
       safeStorage.setItem(STORAGE_KEYS.GAME_SAVE, JSON.stringify(saveData));
     };

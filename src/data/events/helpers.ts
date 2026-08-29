@@ -889,7 +889,13 @@ export function resolveNextEventId(
     // 已完成的跳槽 (job_hop_market 签约/Match/婉拒) 就是当年的重大职业事件:直接收束到年终结算,
     // 不再注入后续季度职场事件。否则机器会在同年继续注入 H1/H2 职场事件 (startup_crisis / overemployed),
     // 而它们又经 job_hunt 绕回 job_hop_market,造成「同年反复跳槽」的同回合死循环 (fuzz SEED=5532)。
-    if (sourceEventId === 'job_hop_market') {
+    // A hop that is ALSO a promotion detours through a promo-celebration event first, which
+    // overwrote sourceEventId and defeated this guard — so the year got an extra H1+H2, and an
+    // H1 layoff could loop back into job_hop_market (the very SEED=5532 case above). Catch the
+    // celebrations too, but only when this turn actually changed jobs (is_new_job), so an
+    // ORGANIC promotion still gets its normal quarter events.
+    const promoCelebrations = ['l6_staff_celebration', 'l7_senior_staff_celebration', 'l8_principal_celebration'];
+    if (sourceEventId === 'job_hop_market' || (!!sourceEventId && promoCelebrations.includes(sourceEventId) && newState.is_new_job)) {
       return { finalState: { ...newState, year_seg: undefined }, nextEventId: 'sv_year_end_settlement' };
     }
     const seg = newState.year_seg || 0;

@@ -48,7 +48,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
                 gc_stage: 'approved',
                 is_married: true,
                 relationship_status: 'married',
-                message: '【商婚侥幸成功】你支付了 $8w 现金通过中介办妥了婚姻绿卡，彻底化解了身份危机！'
+                partner_type: 'sham',
+                story_flags: { ...(s.story_flags || {}), sham_marriage_year: s.year },
+                message: '【商婚侥幸成功】你支付了 $8w 现金通过中介办妥了婚姻绿卡，彻底化解了身份危机！这段婚姻只是一纸交易——对方不会与你共同生活，也不会有任何家庭收入。'
               };
             } else if (roll < 0.70) {
               return {
@@ -126,7 +128,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const survive = gameRandom() < 0.85;
           return survive
-            ? { health: Math.max(0, s.health - 8), visa: s.visa, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！虽然熬了几个通宵，但身份稳了。' }
+            ? { health: Math.max(0, s.health - 8), visa: s.visa, story_flags: { ...(s.story_flags || {}), h1b_rfe_denied: false }, message: '你用极具创造性的学术废话打动了移民局官员，成功保住了 H1B 身份！虽然熬了几个通宵，但身份稳了。' }
             : { health: Math.max(0, s.health - 10), story_flags: { ...(s.story_flags || {}), h1b_rfe_denied: true }, message: '移民局最终驳回了你的 RFE 答复，H1B 身份岌岌可危！你被迫紧急寻找其他身份自救方案！' };
         },
         nextEventId: (s) => (s.story_flags?.h1b_rfe_denied ? 'h1b_fallback_options' : h1ToH2Router(s)),
@@ -138,7 +140,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const ignoredOk = gameRandom() < 0.65;
           return ignoredOk
-            ? { health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1), message: '你把 RFE 抛诸脑后，跟老妈吐槽一通后耳根神奇清静了半年，律所也帮你压线补交了材料，有惊无险。' }
+            ? { health: Math.min(100, s.health + 5), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1), story_flags: { ...(s.story_flags || {}), h1b_rfe_denied: false }, message: '你把 RFE 抛诸脑后，跟老妈吐槽一通后耳根神奇清静了半年，律所也帮你压线补交了材料，有惊无险。' }
             : { health: Math.max(0, s.health - 5), story_flags: { ...(s.story_flags || {}), h1b_rfe_denied: true }, message: '你对 RFE 置之不理，结果错过了补件窗口，H1B 身份告急，只能紧急寻找其他自救方案！' };
         },
         nextEventId: (s) => (s.story_flags?.h1b_rfe_denied ? 'h1b_fallback_options' : h1ToH2Router(s)),
@@ -219,7 +221,9 @@ export const immigrationEvents: Record<string, GameEvent> = {
               gc_stage: 'approved',
               is_married: true,
               relationship_status: 'married',
-              message: '【商婚侥幸成功】你支付了 $8w 现金成功通过了移民局婚绿面试，绝地求生拿到临时绿卡！'
+              partner_type: 'sham',
+              story_flags: { ...(s.story_flags || {}), sham_marriage_year: s.year },
+              message: '【商婚侥幸成功】你支付了 $8w 现金成功通过了移民局婚绿面试，绝地求生拿到临时绿卡！这段婚姻只是一纸交易——对方不会与你共同生活，也不会有任何家庭收入。'
             };
           } else if (roll < 0.70) {
             return {
@@ -338,13 +342,16 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【全款买下 Atherton 豪宅】全款拿下 Atherton 顶级学区豪宅！(消耗 $300w · 可用股票抵扣)',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 300,
-        effect: (s) => ({ ...deductAssets(s, 300), visa: s.visa === VISA_STATUS.CITIZEN ? VISA_STATUS.CITIZEN : VISA_STATUS.GREEN_CARD, gc_progress: 5, gc_stage: 'approved', rent: 0, has_housing: true, housing_name: HOUSING_NAMES.ATHERTON, charm: Math.min(s.max_charm ?? 25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
-        nextEventId: 'sv_year_end_settlement',
+        effect: (s) => ({ mid_year: true, season_stage: 'h1', ...deductAssets(s, 300), visa: s.visa === VISA_STATUS.CITIZEN ? VISA_STATUS.CITIZEN : VISA_STATUS.GREEN_CARD, gc_progress: 5, gc_stage: 'approved', rent: 0, has_housing: true, housing_name: HOUSING_NAMES.ATHERTON, charm: Math.min(s.max_charm ?? 25, s.charm + 15), health: 100, message: '你买下了传说中硅谷大佬们扎堆的 Atherton 豪宅！现在你周末可以在自己的大别野里开 Pool Party，享受真正的人生赢家生活！' }),
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【现场观望挑房】继续在 Open House 现场观望挑房 (回到日常行动)',
+        // A pure no-op: it costs nothing, so it hands the year back to the annual panel
+        // (as its own copy promises). It used to fall straight into settlement, silently
+        // burning the whole year with no panel and no H1/H2 events.
         effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', message: '你看了一圈全现金竞价的疯狂现场，决定再冷静观察观察宏观降息走向。' }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: 'sv_daily_life',
       },
       {
         text: '【搞副业炒股】搞副业炒股：梭哈英伟达 (NVDA)！',
@@ -352,10 +359,10 @@ export const immigrationEvents: Record<string, GameEvent> = {
           const winProb = 0.25 + (Math.min(45, s.luck) / 150);
           const win = gameRandom() < winProb;
           return win
-            ? { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
-            : { visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
+            ? { mid_year: true, season_stage: 'h1' as const, visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: s.cash + Math.min(120, Math.floor(s.cash * 0.6)), message: '皮衣黄刀法精准！英伟达业绩大超预期，你的股票投资获得了巨额收益！' }
+            : { mid_year: true, season_stage: 'h1' as const, visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', cash: Math.max(1, Math.floor(s.cash * 0.6)), health: s.health - 15, message: '买在了高位... 监管禁令导致大厂股票大幅回撤。' };
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【全职创业】辞职！凭大厂技术积累全职创办 AI Startup',
@@ -364,6 +371,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
           const success = s.leetcode >= 50 && gameRandom() < 0.3;
           return success
             ? { 
+                mid_year: true, season_stage: 'h1' as const,
                 visa: s.visa === '公民' ? '公民' : '绿卡', 
                 gc_progress: 5, 
                 gc_stage: 'approved', 
@@ -377,6 +385,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
                 message: '你带着前沿的 AI 架构理念获得了顶级风投领投！公司估值达 $3000w，你正式转型全职 Founder 开启创业征程！' 
               }
             : { 
+                mid_year: true, season_stage: 'h1' as const,
                 visa: s.visa === '公民' ? '公民' : '绿卡', 
                 gc_progress: 5, 
                 gc_stage: 'approved', 
@@ -385,7 +394,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
                 message: '创业前沿探索非常艰难，大模型算力成本高昂，在尝试几个 Demo 后你决定继续留在原厂积蓄实力。' 
               };
         },
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【不再唯唯诺诺】手握绿卡重拳出击，硬刚组会抢占核心项目主导权 (进入职场政治)',
@@ -396,8 +405,8 @@ export const immigrationEvents: Record<string, GameEvent> = {
       {
         text: '【彻底躺平摸鱼】掌握职场太极与神仙 WLB，领满薪水享受加州阳光 (健康 +20 · 现金 +10w)',
         condition: (s) => s.job_type !== 'startup_founder' && s.job_type !== 'trader' && s.job_type !== 'unemployed',
-        effect: (s) => ({ visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 20), cash: s.cash + 10, message: '【神仙 WLB】你彻底参透了职场太极真谛，每天做最轻松的活、领足额薪水与股票，周末去 Tahoe 滑雪与加州冲浪，身心大回血！' }),
-        nextEventId: 'sv_year_end_settlement',
+        effect: (s) => ({ mid_year: true, season_stage: 'h1', visa: s.visa === '公民' ? '公民' : '绿卡', gc_progress: 5, gc_stage: 'approved', health: Math.min(100, s.health + 20), cash: s.cash + 10, message: '【神仙 WLB】你彻底参透了职场太极真谛，每天做最轻松的活、领足额薪水与股票，周末去 Tahoe 滑雪与加州冲浪，身心大回血！' }),
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【全速扩张】绿卡彻底解除身份顾虑，全力带领公司冲刺下轮融资与商业化',

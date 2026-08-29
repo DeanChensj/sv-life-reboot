@@ -1123,6 +1123,9 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需美籍/绿卡 + 现金 >= $50w',
         condition: (s) => (s.visa === '绿卡' || s.visa === '公民') && s.cash >= 50 && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (_s) => ({
+          // Career transitions consume the year's action, so they MUST set mid_year — without
+          // it h1ToH2Router's master gate fails and the whole transition year skips H1 AND H2.
+          mid_year: true, season_stage: 'h1',
           job_type: 'trader',
           company: '全职 Day Trader',
           level: '全职 Trader',
@@ -1139,6 +1142,8 @@ export const careerEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
           return {
+            // Consumes the year's action — must set mid_year or this transition year skips H1+H2.
+            mid_year: true, season_stage: 'h1' as const,
             job_type: 'startup_founder',
             company: 'AI/科技 Startup',
             level: 'CEO & Founder',

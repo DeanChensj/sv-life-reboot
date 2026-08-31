@@ -371,3 +371,72 @@ export function getTCBreakdown(state: GameState): TCBreakdown {
     rsuTaxAmount,
   };
 }
+
+export interface AnnualCompensationResult extends TCBreakdown {
+  isMidYearChange: boolean;
+  startTc: number;
+  endTc: number;
+}
+
+/**
+ * Calculates the actual annual compensation earned during the calendar year.
+ * If a promotion, job hop, hiring, or layoff occurred mid-year, prorates
+ * compensation 50% for H1 (at start-of-year comp) and 50% for H2 (at end-of-year comp).
+ */
+export function getAnnualCompensation(state: GameState): AnnualCompensationResult {
+  const startTc = state.tc_start_of_year !== undefined ? state.tc_start_of_year : state.tc;
+  const startCompany = state.company_at_year_start !== undefined ? state.company_at_year_start : state.company;
+  const startJobType = state.job_type_at_year_start !== undefined ? state.job_type_at_year_start : state.job_type;
+  const startLaidOff = state.laid_off_at_year_start !== undefined ? Boolean(state.laid_off_at_year_start) : Boolean(state.laid_off);
+
+  const isSame = startTc === state.tc &&
+                 startCompany === state.company &&
+                 startJobType === state.job_type &&
+                 startLaidOff === Boolean(state.laid_off);
+
+  if (isSame) {
+    const direct = getTCBreakdown(state);
+    return {
+      ...direct,
+      isMidYearChange: false,
+      startTc: state.tc,
+      endTc: state.tc,
+    };
+  }
+
+  // Calculate H1 (first half of year, 6 months)
+  const h1State: GameState = {
+    ...state,
+    tc: startTc,
+    company: startCompany,
+    job_type: startJobType,
+    laid_off: startLaidOff,
+  };
+  const h1Breakdown = getTCBreakdown(h1State);
+
+  // Calculate H2 (second half of year, 6 months)
+  const h2Breakdown = getTCBreakdown(state);
+
+  const preTaxTC = parseFloat((0.5 * h1Breakdown.preTaxTC + 0.5 * h2Breakdown.preTaxTC).toFixed(2));
+  const preTaxBase = parseFloat((0.5 * h1Breakdown.preTaxBase + 0.5 * h2Breakdown.preTaxBase).toFixed(2));
+  const preTaxRSU = parseFloat((0.5 * h1Breakdown.preTaxRSU + 0.5 * h2Breakdown.preTaxRSU).toFixed(2));
+  const postTaxBase = parseFloat((0.5 * h1Breakdown.postTaxBase + 0.5 * h2Breakdown.postTaxBase).toFixed(2));
+  const postTaxRSU = parseFloat((0.5 * h1Breakdown.postTaxRSU + 0.5 * h2Breakdown.postTaxRSU).toFixed(2));
+  const taxAmount = parseFloat((0.5 * h1Breakdown.taxAmount + 0.5 * h2Breakdown.taxAmount).toFixed(2));
+  const rsuTaxAmount = parseFloat((0.5 * h1Breakdown.rsuTaxAmount + 0.5 * h2Breakdown.rsuTaxAmount).toFixed(2));
+  const taxRate = preTaxBase > 0 ? parseFloat((taxAmount / preTaxBase).toFixed(2)) : h2Breakdown.taxRate;
+
+  return {
+    preTaxTC,
+    preTaxBase,
+    preTaxRSU,
+    postTaxBase,
+    postTaxRSU,
+    taxRate,
+    taxAmount,
+    rsuTaxAmount,
+    isMidYearChange: true,
+    startTc,
+    endTc: state.tc,
+  };
+}

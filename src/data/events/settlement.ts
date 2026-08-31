@@ -1,6 +1,6 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
-import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { getTCBreakdown, getAnnualCompensation } from '../../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing, liquidateStocksToCover } from '../../constants/gameConstants';
 import { getCompanyProfile } from '../companyProfiles';
 import { normalizeLevel } from '../levelProfiles';
@@ -126,7 +126,7 @@ export const settlementEvents: Record<string, GameEvent> = {
            }
            
            // Standardized compensation split (Cash & RSU)
-           const tcInfo = getTCBreakdown(s);
+           const tcInfo = getAnnualCompensation(s);
            const postTaxBase = tcInfo.postTaxBase;
            const postTaxRSU = tcInfo.postTaxRSU;
            
@@ -577,6 +577,10 @@ export const settlementEvents: Record<string, GameEvent> = {
               cash: finalCash,
               stocks: currentStocks,
               tc: updatedTC,
+              tc_start_of_year: updatedTC,
+              company_at_year_start: s.company,
+              job_type_at_year_start: s.job_type,
+              laid_off_at_year_start: iccCrackdown ? true : Boolean(s.laid_off),
               // 影响力「条件衰减」：只有【本年没有交付/没涨 impact】才 -4(真躺平才过气);
               // 本年有交付(impact 高于上次结算基线)则不衰减,保留全部产出。这样「卷一年→歇一年
               // 保命」的可持续打法也能净攒 impact 冲 L6+,而纯躺平者仍逐年归零卡级。

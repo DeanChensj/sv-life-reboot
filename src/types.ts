@@ -148,6 +148,10 @@ export interface GameState {
   max_level?: string; // 历史最高达到的技术职级 (如 L6 Staff, 创业/转Trader/待业后回归大厂不降级)
   job_start_age?: number;
   last_promo_age?: number;
+  tc_start_of_year?: number; // 当年年初的起始 TC (用于年中跳槽/升职时按半年折算实发薪酬与股票)
+  company_at_year_start?: string; // 当年年初的雇主 (用于年中跳槽时上半年 compSplit 拆分)
+  job_type_at_year_start?: 'big_tech' | 'startup' | 'ai_research' | 'unemployed' | 'trader' | 'startup_founder' | 'cn_tech';
+  laid_off_at_year_start?: boolean;
   h1b_attempts?: number;
   h1b_tenure?: number; // H1B 签证累计已使用年数 (上限 6 年, 需 I-140 获批方可无限延期)
   imageUrl?: string;

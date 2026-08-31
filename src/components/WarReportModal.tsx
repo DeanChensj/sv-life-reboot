@@ -61,6 +61,9 @@ function getPersonaTags(s: GameState): string[] {
   else if (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') tags.push('签证飘摇');
   if ((s.leetcode ?? 0) >= 80) tags.push('算法神仙');
   else if ((s.leetcode ?? 0) >= 60) tags.push('刷题老炮');
+  // How you behaved in a deep drawdown says more about a trader than the P&L does.
+  if (s.story_flags?.trader_cut_losses) tags.push('铁血止损');
+  else if (s.story_flags?.trader_averaged_down_win) tags.push('抄底赌徒');
   return tags;
 }
 

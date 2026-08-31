@@ -2,6 +2,55 @@ import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 
+// ---------------------------------------------------------------------------
+// Trader: the market READ is a forecast, not an oracle.
+//
+// The dashboard's macro badge (狂暴大牛市/裁员大熊市/正常震荡期) used to BE the payoff input, so
+// the full-time trader loop degenerated into a lookup table printed on screen: bull→重仓龙头,
+// bear→做空, neutral→量化. Every year after the first was mechanical.
+//
+// A trade now resolves against the regime the year ACTUALLY delivers, which diverges from the
+// read ~28% of the time. The read is still the best information available (~72% reliable), so
+// reading it stays correct play — it just isn't free money, and the robust strategies (对冲 /
+// 量化) earn their keep as plays that don't fall apart when the call is wrong.
+const REGIME_SURPRISE_CHANCE = 0.28;
+
+export type MarketRegime = 'bull' | 'bear' | 'neutral';
+
+export function resolveTradeRegime(s: GameState): { regime: MarketRegime; surprised: boolean } {
+  const read = (s.macro_economy || 'neutral') as MarketRegime;
+  if (gameRandom() >= REGIME_SURPRISE_CHANCE) return { regime: read, surprised: false };
+  // The year defies the read: bull/bear cool off or flip outright; a neutral read breaks either way.
+  const alt: Record<MarketRegime, MarketRegime[]> = {
+    bull: ['neutral', 'bear'],
+    bear: ['neutral', 'bull'],
+    neutral: ['bull', 'bear'],
+  };
+  const options = alt[read];
+  return { regime: options[Math.floor(gameRandom() * options.length)], surprised: true };
+}
+
+/** Flavor clause telling the player their read was wrong (empty when it held). */
+export function regimeSurpriseMsg(read: MarketRegime | undefined, actual: MarketRegime, surprised: boolean): string {
+  if (!surprised) return '';
+  const actualLabel: Record<MarketRegime, string> = { bull: '单边上涨', bear: '恐慌下杀', neutral: '横盘震荡' };
+  const readLabel: Record<MarketRegime, string> = { bull: '大牛市', bear: '大熊市', neutral: '震荡市' };
+  return ` 【行情打脸】年初你研判是${readLabel[(read || 'neutral') as MarketRegime]}，市场却走出了${actualLabel[actual]}行情。`;
+}
+
+/** A drawdown deep enough to trigger the tilt/discipline crisis chain. */
+const DRAWDOWN_TRIGGER = 12;
+
+// After a trade resolves: a deep loss THIS year detours into the drawdown crisis (the trader's
+// answer to the founder's pain-point panel) instead of silently moving on. A single red number
+// becomes a decision about discipline — average down, cut the loss, or step away.
+export const traderPostTradeRouter = (s: GameState): string => {
+  if (s.story_flags?.trader_drawdown_year === s.year && !s.story_flags?.trader_drawdown_resolved) {
+    return 'trader_drawdown_crisis';
+  }
+  return h1ToH2Router(s);
+};
+
 export const tradingEvents: Record<string, GameEvent> = {
   'stock_market_annual_gamble': {
     id: 'stock_market_annual_gamble',
@@ -189,27 +238,31 @@ export const tradingEvents: Record<string, GameEvent> = {
   'trader_annual_strategy': {
     id: 'trader_annual_strategy',
     title: '【全职 Day Trader】年度操盘策略选择',
-    description: '作为全职 Trader，你不再依靠大厂发放的固定工资。今年的美股/加密货币市场波谲云诡，你打算采用哪种操盘策略？',
+    description: '作为全职 Trader，你不再依靠大厂发放的固定工资。仪表盘上的牛熊研判只是你的「判断」——它大约七成时候是对的，剩下三成市场会当众打你的脸。押对方向赚得最狠，而对冲与量化在你看走眼时最抗揍。今年你打算怎么下注？',
     choices: [
       {
         text: '【稳健对冲股息策略】主要布局标普500/高股息 ETF 与跨期领子对冲期权',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
-          const isBear = s.macro_economy === 'bear';
-          const isBull = s.macro_economy === 'bull';
+          // The defensive book: shallow downside even when the read is wrong — that robustness
+          // is the whole point of it now that the regime can surprise you.
+          const { regime, surprised } = resolveTradeRegime(s);
+          const isBear = regime === 'bear';
+          const isBull = regime === 'bull';
           const baseRate = isBull ? 0.10 : (isBear ? -0.04 : 0.06);
           const luckRate = ((s.luck || 20) / 1000);
           const gainRate = baseRate + luckRate;
           const profit = s.cash * gainRate;
           const cappedProfit = Math.max(0, Math.min(30, parseFloat(profit.toFixed(1))));
-          
+          const twist = regimeSurpriseMsg(s.macro_economy as MarketRegime, regime, surprised);
+
           if (profit >= 0) {
             return {
               mid_year: true, season_stage: 'h1',
               tc: 0,
               cash: parseFloat((s.cash + cappedProfit).toFixed(1)),
               health: Math.max(0, s.health - 4),
-              message: ` 稳健盈利！凭借严谨的风控与股息配置，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (现金增厚 +$${cappedProfit}w)！`
+              message: `${twist} 稳健盈利！凭借严谨的风控与股息配置，本年度操盘收益率 +${(gainRate * 100).toFixed(1)}% (现金增厚 +$${cappedProfit}w)！`
             };
           } else {
             const loss = Math.min(Math.abs(profit), 20);
@@ -218,21 +271,24 @@ export const tradingEvents: Record<string, GameEvent> = {
               tc: 0,
               cash: parseFloat((s.cash - loss).toFixed(1)),
               health: Math.max(0, s.health - 6),
-              message: ` 熊市震荡！宏观大盘整体回调，对冲仓位受损 -$${loss.toFixed(1)}w 美元。好在你严格止损，保住了绝大部分主力资金。`
+              ...(loss >= DRAWDOWN_TRIGGER ? { story_flags: { ...(s.story_flags || {}), trader_drawdown_year: s.year, trader_drawdown_loss: parseFloat(loss.toFixed(1)) } } : {}),
+              message: `${twist} 大盘整体回调，对冲仓位受损 -$${loss.toFixed(1)}w 美元。好在你严格止损，保住了绝大部分主力资金。`
             };
           }
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: traderPostTradeRouter,
       },
       {
         text: '【重仓科技龙头股票】重仓配置英伟达 (NVDA)、特斯拉与前沿半导体龙头股票',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const totalCap = s.cash + (s.stocks || 0);
-          const isBull = s.macro_economy === 'bull';
-          const isBear = s.macro_economy === 'bear';
+          const { regime, surprised } = resolveTradeRegime(s);
+          const isBull = regime === 'bull';
+          const isBear = regime === 'bear';
           const winRate = isBull ? 0.55 : (isBear ? 0.32 : 0.45);
           const isWin = gameRandom() < winRate;
+          const twist = regimeSurpriseMsg(s.macro_economy as MarketRegime, regime, surprised);
           if (isWin) {
             const gain = Math.min(80, totalCap * 0.30);
             return {
@@ -240,7 +296,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               tc: 0,
               cash: parseFloat((s.cash + gain).toFixed(1)),
               health: Math.max(0, s.health - 6),
-              message: ` 飞天暴赚！你重仓的 AI 科技巨头股价随着算力风口暴涨！现金暴增 +$${gain.toFixed(1)}w 美元！`
+              message: `${twist} 飞天暴赚！你重仓的 AI 科技巨头股价随着算力风口暴涨！现金暴增 +$${gain.toFixed(1)}w 美元！`
             };
           } else {
             const loss = Math.min(totalCap * 0.28, 50);
@@ -249,21 +305,24 @@ export const tradingEvents: Record<string, GameEvent> = {
               tc: 0,
               cash: parseFloat((s.cash - loss).toFixed(1)),
               health: Math.max(0, s.health - 10),
-              message: ` 宏观回调！科技板块遭遇资金阶段性获利砸盘，仓位回调 -$${loss.toFixed(1)}w 美元！`
+              ...(loss >= DRAWDOWN_TRIGGER ? { story_flags: { ...(s.story_flags || {}), trader_drawdown_year: s.year, trader_drawdown_loss: parseFloat(loss.toFixed(1)) } } : {}),
+              message: `${twist} 科技板块遭遇资金砸盘，仓位回调 -$${loss.toFixed(1)}w 美元！`
             };
           }
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: traderPostTradeRouter,
       },
       {
         text: '【高杠杆末日期权】重仓 0DTE 末日期权与高 Beta 科技股衍生品博弈',
         condition: (s) => s.job_type === 'trader',
         effect: (s) => {
           const totalCap = s.cash + (s.stocks || 0);
-          const isBull = s.macro_economy === 'bull';
-          const isBear = s.macro_economy === 'bear';
+          const { regime, surprised } = resolveTradeRegime(s);
+          const isBull = regime === 'bull';
+          const isBear = regime === 'bear';
           const winRate = isBull ? 0.40 : (isBear ? 0.18 : 0.28);
           const roll = gameRandom();
+          const twist = regimeSurpriseMsg(s.macro_economy as MarketRegime, regime, surprised);
           if (roll < winRate) {
             const doubleGain = Math.min(120, totalCap * 0.50);
             return {
@@ -271,7 +330,7 @@ export const tradingEvents: Record<string, GameEvent> = {
               tc: 0,
               cash: parseFloat((s.cash + doubleGain).toFixed(1)),
               health: Math.max(0, s.health - 10),
-              message: ` 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +$${doubleGain.toFixed(1)}w 美元！`
+              message: `${twist} 奇迹大胜！末日期权精准抓中财报暴涨行情，本金暴赚 +$${doubleGain.toFixed(1)}w 美元！`
             };
           } else if (roll < winRate + 0.40) {
             const drop = Math.min(totalCap * 0.30, 60);
@@ -280,7 +339,8 @@ export const tradingEvents: Record<string, GameEvent> = {
               tc: 0,
               cash: parseFloat((s.cash - drop).toFixed(1)),
               health: Math.max(0, s.health - 12),
-              message: ` 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -$${drop.toFixed(1)}w 美元！`
+              ...(drop >= DRAWDOWN_TRIGGER ? { story_flags: { ...(s.story_flags || {}), trader_drawdown_year: s.year, trader_drawdown_loss: parseFloat(drop.toFixed(1)) } } : {}),
+              message: `${twist} 惨遭反杀！黑天鹅剧烈波动导致期权权利金归零，本金大撤退 -$${drop.toFixed(1)}w 美元！`
             };
           } else {
             const bust = Math.min(totalCap * 0.55, 90);
@@ -289,11 +349,12 @@ export const tradingEvents: Record<string, GameEvent> = {
               tc: 0,
               cash: parseFloat((s.cash - bust).toFixed(1)),
               health: Math.max(0, s.health - 15),
-              message: ` 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
+              ...(bust >= DRAWDOWN_TRIGGER ? { story_flags: { ...(s.story_flags || {}), trader_drawdown_year: s.year, trader_drawdown_loss: parseFloat(bust.toFixed(1)) } } : {}),
+              message: `${twist} 极端爆仓！杠杆触发强制平仓连环踩踏，数十万本金瞬间灰飞烟灭！你欲哭无泪，备受精神打击...`
             };
           }
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: traderPostTradeRouter,
       },
       {
         // 读牌博弈的另一极:唯一能在熊市主动赚钱的策略(反向 ETF + 长久期国债)。方向按宏观
@@ -304,22 +365,25 @@ export const tradingEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const totalCap = s.cash + (s.stocks || 0);
           const luck = ((s.luck || 20) / 1000);
-          if (s.macro_economy === 'bear') {
+          const { regime, surprised } = resolveTradeRegime(s);
+          const twist = regimeSurpriseMsg(s.macro_economy as MarketRegime, regime, surprised);
+          if (regime === 'bear') {
             const gain = Math.min(70, totalCap * (0.26 + luck));
             return {
               mid_year: true, season_stage: 'h1', tc: 0,
               cash: parseFloat((s.cash + gain).toFixed(1)),
               health: Math.max(0, s.health - 5),
               story_flags: { ...(s.story_flags || {}), sqqq_win: true },
-              message: ` 逆势封神！熊市中反向 ETF 与避险长债齐飞,你在别人割肉时反手做空大赚 +$${gain.toFixed(1)}w 美元!`
+              message: `${twist} 逆势封神！熊市中反向 ETF 与避险长债齐飞,你在别人割肉时反手做空大赚 +$${gain.toFixed(1)}w 美元!`
             };
-          } else if (s.macro_economy === 'bull') {
+          } else if (regime === 'bull') {
             const loss = Math.min(50, totalCap * 0.22);
             return {
               mid_year: true, season_stage: 'h1', tc: 0,
               cash: parseFloat((s.cash - loss).toFixed(1)),
               health: Math.max(0, s.health - 8),
-              message: ` 逆势踏空!牛市一路轧空,你的空头仓位与长债被反复碾压,倒亏 -$${loss.toFixed(1)}w 美元。`
+              ...(loss >= DRAWDOWN_TRIGGER ? { story_flags: { ...(s.story_flags || {}), trader_drawdown_year: s.year, trader_drawdown_loss: parseFloat(loss.toFixed(1)) } } : {}),
+              message: `${twist} 逆势踏空!行情一路轧空,你的空头仓位与长债被反复碾压,倒亏 -$${loss.toFixed(1)}w 美元。`
             };
           } else {
             const drag = Math.min(15, totalCap * 0.05);
@@ -327,11 +391,12 @@ export const tradingEvents: Record<string, GameEvent> = {
               mid_year: true, season_stage: 'h1', tc: 0,
               cash: parseFloat((s.cash - drag).toFixed(1)),
               health: Math.max(0, s.health - 5),
-              message: ` 横盘磨人:震荡期没有明确方向,做空与长债的持有成本(Decay/负 Carry)小幅拖累了本金 -$${drag.toFixed(1)}w。`
+              ...(drag >= DRAWDOWN_TRIGGER ? { story_flags: { ...(s.story_flags || {}), trader_drawdown_year: s.year, trader_drawdown_loss: parseFloat(drag.toFixed(1)) } } : {}),
+              message: `${twist} 横盘磨人:震荡期没有明确方向,做空与长债的持有成本(Decay/负 Carry)小幅拖累了本金 -$${drag.toFixed(1)}w。`
             };
           }
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: traderPostTradeRouter,
       },
       {
         text: '【开发量化自动套利系统】手写 Python/C++ 跨期网格与均值回归算法，部署低延迟机房',
@@ -342,21 +407,26 @@ export const tradingEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const totalCap = s.cash + (s.stocks || 0);
           const leetBonus = Math.min(0.08, (s.leetcode / 1000));
-          const ecoBonus = s.macro_economy === 'bull' ? 0.06 : (s.macro_economy === 'bear' ? -0.06 : 0.02);
+          // Systematic, not directional: the quant book leans on your coding edge and is the
+          // least regime-sensitive play — which is exactly why it survives a wrong read.
+          const { regime, surprised } = resolveTradeRegime(s);
+          const ecoBonus = regime === 'bull' ? 0.06 : (regime === 'bear' ? -0.06 : 0.02);
           const yieldRate = 0.04 + leetBonus + ecoBonus; // can go negative
           const pnl = Math.max(-40, Math.min(45, parseFloat((totalCap * yieldRate).toFixed(1))));
+          const twist = regimeSurpriseMsg(s.macro_economy as MarketRegime, regime, surprised);
           return {
             mid_year: true, season_stage: 'h1',
             tc: 0,
             cash: parseFloat((s.cash + pnl).toFixed(1)),
             leetcode: s.leetcode + 4,
             health: Math.max(0, s.health - 4),
+            ...(pnl <= -DRAWDOWN_TRIGGER ? { story_flags: { ...(s.story_flags || {}), trader_drawdown_year: s.year, trader_drawdown_loss: parseFloat(Math.abs(pnl).toFixed(1)) } } : {}),
             message: pnl >= 0
-              ? `【量化算法】你的自动套利脚本在低延迟机房跑通，算法捕获 +$${pnl.toFixed(1)}w Alpha 超额收益！`
-              : `【量化模型回撤】市场结构突变，你的均值回归模型连环止损，本年策略回撤 -$${Math.abs(pnl).toFixed(1)}w。`
+              ? `${twist}【量化算法】你的自动套利脚本在低延迟机房跑通，算法捕获 +$${pnl.toFixed(1)}w Alpha 超额收益！`
+              : `${twist}【量化模型回撤】市场结构突变，你的均值回归模型连环止损，本年策略回撤 -$${Math.abs(pnl).toFixed(1)}w。`
           };
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: traderPostTradeRouter,
       },
       {
         text: '【参加量化对冲私董会】在沙丘路展示实盘 Sharpe 收益曲线，吸引高净值 LP 资金',
@@ -386,7 +456,7 @@ export const tradingEvents: Record<string, GameEvent> = {
                 message: '【路演反响平平】你展示了实盘曲线，但近期回撤让 LP 们持观望态度，没能拉到新资金，白搭了入场费与精力。'
               };
         },
-        nextEventId: h1ToH2Router,
+        nextEventId: traderPostTradeRouter,
       },
       {
         // Dramatic interactive terminal — mirrors the founder's 终局退场 → founder_exit_event.
@@ -411,6 +481,64 @@ export const tradingEvents: Record<string, GameEvent> = {
           message: '你决定结束个人操盘手生涯，落袋为安，带着充沛的本金重新开启大厂求职！'
         }),
         nextEventId: 'job_hunt',
+      }
+    ]
+  },
+
+  // The trader's counterpart to the founder's pain-point panel: a deep drawdown is no longer a
+  // number that scrolls past, it's a decision about discipline. Averaging down is the tilt play
+  // (big swing, needs dry powder), cutting is the disciplined one (locks the loss, keeps you
+  // sharp), stepping away trades money for health. All three clear the drawdown flag.
+  'trader_drawdown_crisis': {
+    id: 'trader_drawdown_crisis',
+    title: '【爆亏之后】深夜的对账单与那根没走完的下影线',
+    description: '收盘后你盯着账户曲线上那道刺眼的缺口，手心还在出汗。群里有人在喊“黄金坑，梭了”，也有人已经清仓销号。你端起凉透的咖啡——这一刻怎么做，决定了你是个赌徒还是个交易员。',
+    choices: [
+      {
+        text: '【加仓摊平成本】相信自己的判断，动用剩余弹药向下摊平，赌一把反弹回本',
+        reqBadge: '需现金 >= $8w',
+        condition: (s) => s.cash >= 8,
+        effect: (s) => {
+          const loss = (s.story_flags?.trader_drawdown_loss as number) || 12;
+          // Averaging down is genuinely double-or-nothing: it can erase the drawdown, or double it.
+          const rebound = gameRandom() < 0.42;
+          const flags = { ...(s.story_flags || {}), trader_drawdown_resolved: true };
+          return rebound
+            ? {
+                cash: parseFloat((s.cash + loss * 1.1).toFixed(1)),
+                health: Math.max(0, s.health - 8),
+                story_flags: { ...flags, trader_averaged_down_win: true },
+                message: `【抄在了底部】你顶着浮亏一路加仓，市场在你弹药耗尽的前一周掉头向上——不仅回本，还多赚了 $${(loss * 1.1).toFixed(1)}w。你长舒一口气，后背全是冷汗。`
+              }
+            : {
+                cash: parseFloat(Math.max(0, s.cash - loss * 0.8).toFixed(1)),
+                health: Math.max(0, s.health - 14),
+                story_flags: flags,
+                message: `【越摊越深】你把子弹全打了出去，行情却继续阴跌。第二笔亏损 -$${(loss * 0.8).toFixed(1)}w 落袋，你终于明白什么叫「不要接下落的刀」。`
+              };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【止损割肉认错】按纪律砍掉亏损头寸，把复盘写进交易日志，保住东山再起的本金',
+        effect: (s) => ({
+          // Discipline pays in edge, not cash: you keep your powder and sharpen the system.
+          health: Math.max(0, s.health - 3),
+          leetcode: Math.min(100, s.leetcode + 5),
+          story_flags: { ...(s.story_flags || {}), trader_drawdown_resolved: true, trader_cut_losses: true },
+          message: '【纪律先于判断】你平静地砍掉了所有亏损头寸，把这轮回撤逐笔写进交易日志——错在哪一步、下次怎么改。钱没赚回来，但你的系统更硬了。'
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【关掉行情停手休整】拔掉六块屏幕的电源，去 Tahoe 待两周，让脑子从盘面里出来',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 12),
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 1),
+          story_flags: { ...(s.story_flags || {}), trader_drawdown_resolved: true },
+          message: '【离场也是一种仓位】你关掉所有行情软件，在 Tahoe 的雪线上待了两周。回来时账户还是那个数字，但你不再半夜惊醒去看期货了。'
+        }),
+        nextEventId: h1ToH2Router,
       }
     ]
   },

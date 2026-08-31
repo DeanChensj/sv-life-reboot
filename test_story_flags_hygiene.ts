@@ -12,9 +12,12 @@
 // achievement) — with a reason.
 import fs from 'fs';
 
-const dirs = ['src/data/events', 'src/data', 'src/utils'];
+// src/components is scanned too: consuming a flag in the UI (a war-report persona tag, a
+// dashboard badge) is legitimate consumption, and leaving components out made those reads
+// invisible — the audit would demand a "breadcrumb" exemption for a flag that IS read.
+const dirs = ['src/data/events', 'src/data', 'src/utils', 'src/components'];
 const files: string[] = [];
-for (const d of dirs) for (const f of fs.readdirSync(d)) if (f.endsWith('.ts')) files.push(`${d}/${f}`);
+for (const d of dirs) for (const f of fs.readdirSync(d)) if (f.endsWith('.ts') || f.endsWith('.tsx')) files.push(`${d}/${f}`);
 const baseName = (f: string) => f.split('/').pop() as string;
 const parts = files.map((f) => fs.readFileSync(f, 'utf8'));
 const src = parts.join('\n');

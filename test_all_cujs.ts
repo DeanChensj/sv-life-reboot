@@ -9,6 +9,7 @@ import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration
 import { setGameSeed, gameRandom } from './src/utils/random';
 import { determineEnding } from './src/utils/endings';
 import { normalizeLevel, getLevelRank } from './src/data/levelProfiles';
+import { resolveTradeRegime } from './src/data/events/trading';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
@@ -3584,6 +3585,69 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   }
 
   console.log('✅ CUJ 64 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 66: Trader — forecast uncertainty + drawdown crisis chain
+// 1. The market read is a FORECAST: a trade must sometimes resolve against a regime other
+//    than the dashboard's, or the trader loop degenerates into an on-screen lookup table.
+// 2. A deep drawdown routes into trader_drawdown_crisis (not silently past it), every branch
+//    resolves the crisis, and the flags are cleared annually so a later blow-up re-triggers.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 66] Trader Forecast Uncertainty & Drawdown Chain ---');
+
+  // 1. Regime surprises actually happen (and aren't so common the read is worthless).
+  setGameSeed(4242);
+  const bullRead = { ...generateInitialState(nextCujSeed()), job_type: 'trader', macro_economy: 'bull', cash: 200, stocks: 0, status: 'playing' } as GameState;
+  let surprises = 0;
+  const N = 2000;
+  for (let i = 0; i < N; i++) {
+    if (resolveTradeRegime(bullRead).regime !== 'bull') surprises++;
+  }
+  const rate = surprises / N;
+  assert(rate > 0.15 && rate < 0.45, `market read is a forecast, not an oracle (surprise rate ${(rate * 100).toFixed(1)}% should sit near 28%)`);
+
+  // 2. Deep losses flag a drawdown and route into the crisis.
+  const hub = events['trader_annual_strategy'];
+  const yolo = hub.choices.find(c => c.text.includes('末日期权'));
+  assert(!!yolo, '0DTE strategy exists');
+  const whale = { ...generateInitialState(nextCujSeed()), job_type: 'trader', macro_economy: 'bear', cash: 300, stocks: 0, year: 2030, status: 'playing', health: 80 } as GameState;
+  let sawDrawdownRoute = false;
+  for (let i = 0; i < 400 && !sawDrawdownRoute; i++) {
+    const eff = yolo!.effect(whale) as Partial<GameState>;
+    if (eff.story_flags?.trader_drawdown_year === whale.year) {
+      const next = typeof yolo!.nextEventId === 'function'
+        ? yolo!.nextEventId({ ...whale, ...eff } as GameState)
+        : yolo!.nextEventId;
+      assert(next === 'trader_drawdown_crisis', `a deep drawdown must route into the crisis (got ${next})`);
+      sawDrawdownRoute = true;
+    }
+  }
+  assert(sawDrawdownRoute, 'a deep 0DTE loss is reachable and flags a drawdown');
+
+  // 3. Every crisis branch resolves the crisis (no infinite re-entry).
+  const crisis = events['trader_drawdown_crisis'];
+  assert(!!crisis && crisis.choices.length === 3, 'drawdown crisis offers three responses');
+  const drawnDown = { ...whale, cash: 60, story_flags: { trader_drawdown_year: 2030, trader_drawdown_loss: 20 } } as GameState;
+  for (const c of crisis.choices) {
+    if (c.condition && !c.condition(drawnDown)) continue;
+    const eff = c.effect(drawnDown) as Partial<GameState>;
+    assert(eff.story_flags?.trader_drawdown_resolved === true, `"${c.text.slice(0, 12)}" must resolve the drawdown so the router moves on`);
+    const next = typeof c.nextEventId === 'function' ? c.nextEventId({ ...drawnDown, ...eff } as GameState) : c.nextEventId;
+    assert(next !== 'trader_drawdown_crisis', 'crisis never routes back into itself');
+  }
+
+  // 4. Settlement clears the chain so a later blow-up gets its own crisis.
+  const settled = events['sv_year_end_settlement'].choices[0].effect({
+    ...generateInitialState(nextCujSeed()),
+    job_type: 'trader', cash: 100, stocks: 0, year: 2030, age: 33, status: 'playing', visa: '绿卡',
+    story_flags: { trader_drawdown_year: 2030, trader_drawdown_resolved: true, trader_drawdown_loss: 20 },
+  } as GameState) as Partial<GameState>;
+  assert(settled.story_flags?.trader_drawdown_resolved === false, 'drawdown resolution marker resets each year');
+  assert(settled.story_flags?.trader_drawdown_year === undefined, 'drawdown trigger resets each year');
+
+  console.log('✅ CUJ 66 Passed\n');
 }
 
 console.log(`\n======================================================`);

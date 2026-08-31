@@ -435,6 +435,11 @@ export const settlementEvents: Record<string, GameEvent> = {
               // Per-year crisis latch: without this reset a single denied RFE routed EVERY
               // later year (success included) into the paid emergency panel, forever.
               h1b_rfe_denied: false,
+              // Trader drawdown chain is per-year: clear both the trigger and its resolution
+              // marker so a later blow-up gets its own crisis instead of being swallowed.
+              trader_drawdown_resolved: false,
+              trader_drawdown_year: undefined,
+              trader_drawdown_loss: undefined,
               exit_deliberated: false,
               scam_marriage_failed: false,
               side_hustle_canceled: false,

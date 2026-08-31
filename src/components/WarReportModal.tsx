@@ -42,6 +42,26 @@ function getEpitaph(s: GameState, endingId: string, tone: string): string {
 }
 
 // 人设标签:一串"晒人设"的浓缩标签,和墓志铭一起构成可炫耀的诊断书。
+/** ctx.roundRect with a manual fallback for browsers below the project's baseline. */
+function roundedRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  const rr = Math.min(r, w / 2, h / 2);
+  const c = ctx as CanvasRenderingContext2D & { roundRect?: (x: number, y: number, w: number, h: number, r: number) => void };
+  if (typeof c.roundRect === 'function') {
+    c.roundRect(x, y, w, h, rr);
+    return;
+  }
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.arcTo(x + w, y, x + w, y + rr, rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+  ctx.lineTo(x + rr, y + h);
+  ctx.arcTo(x, y + h, x, y + h - rr, rr);
+  ctx.lineTo(x, y + rr);
+  ctx.arcTo(x, y, x + rr, y, rr);
+  ctx.closePath();
+}
+
 function getPersonaTags(s: GameState): string[] {
   const tags: string[] = [];
   if (s.trait_title) tags.push(s.trait_title);
@@ -173,7 +193,11 @@ export const WarReportModal: React.FC<WarReportModalProps> = ({ gameState, onClo
       if (tagX + w > 730) break; // one clean row; drop overflow
       // pill background + border in the ending's palette
       ctx.beginPath();
-      ctx.roundRect(tagX, tagY, w, tagH, 20);
+      // ctx.roundRect is newer than this project's browser baseline (Safari 16.4 / FF 112 vs
+      // the Vite target's Safari 16.0 / FF 104), and the only smoke test runs Chromium — so on
+      // an older browser the share poster, the whole point of the viral loop, threw instead of
+      // rendering. Fall back to an arc-built pill.
+      roundedRectPath(ctx, tagX, tagY, w, tagH, 20);
       ctx.fillStyle = primaryColorAlpha;
       ctx.fill();
       ctx.strokeStyle = primaryColor;

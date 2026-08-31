@@ -153,7 +153,15 @@ async function main(): Promise<void> {
       const n = await choices.count();
       const title = (await page.locator('h2').first().textContent().catch(() => null))?.trim();
       if (title) seenEvents.add(title);
-      await choices.nth(steps % n).click({ timeout: 10_000 });
+      try {
+        await choices.nth(steps % n).click({ timeout: 10_000 });
+      } catch {
+        // A React.lazy modal (settlement) can mount in the gap between "no blocker is up" and
+        // the click landing, and then swallows it. That's a harness race, not an app bug:
+        // re-classify the turn instead of failing the run.
+        if ((await blocker.count()) > 0) { steps--; continue; }
+        throw new Error(`choice click failed with no blocking modal present at turn ${steps}`);
+      }
       await page.waitForTimeout(80);
     }
 

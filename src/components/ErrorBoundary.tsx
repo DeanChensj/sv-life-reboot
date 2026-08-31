@@ -29,6 +29,14 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ errorInfo });
   }
 
+  // Recover WITHOUT nuking anything. The modal-layer boundary trips on transient render
+  // errors and on stale lazy-chunk 404s after a redeploy; previously it latched forever and
+  // offered "wipe your save" as the primary action, so one bad chunk bricked every modal for
+  // the rest of the session.
+  private handleDismiss = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  };
+
   private handleResetGame = () => {
     try {
       safeStorage.removeItem(STORAGE_KEYS.GAME_SAVE);
@@ -94,28 +102,38 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              {/* Reload first: a stale lazy-chunk 404 after a redeploy is the most likely cause
+                  and a reload genuinely fixes it. Your save is untouched by both of these. */}
               <button
                 type="button"
-                onClick={this.handleResetGame}
-                className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg shadow-red-500/20 active:scale-[0.98]"
+                onClick={() => window.location.reload()}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
               >
-                清除坏档并重新开始
+                刷新重试 (存档保留)
+              </button>
+              <button
+                type="button"
+                onClick={this.handleDismiss}
+                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium py-3 px-4 rounded-xl text-sm transition-all border border-zinc-700 active:scale-[0.98]"
+              >
+                返回游戏
               </button>
               <button
                 type="button"
                 onClick={this.handleExportDebugData}
                 className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium py-3 px-4 rounded-xl text-sm transition-all border border-zinc-700 active:scale-[0.98]"
               >
-                导出诊断数据 (JSON)
-              </button>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium py-3 px-4 rounded-xl text-sm transition-all border border-zinc-700 active:scale-[0.98]"
-              >
-                刷新重试
+                导出诊断数据
               </button>
             </div>
+            {/* Last resort, visually demoted: this DELETES the run. */}
+            <button
+              type="button"
+              onClick={this.handleResetGame}
+              className="text-xs text-red-400/70 hover:text-red-300 underline underline-offset-4 self-center transition-colors"
+            >
+              以上都无效？清除坏档并重新开始 (将丢失当前存档)
+            </button>
           </div>
         </div>
       );

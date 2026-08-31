@@ -2,6 +2,7 @@ import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, pickCollegeEvent, collegeNextStage, addImpact, deductAssets, calculatePhdAdmitProb } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
 import { SCHOOL_PROFILES } from '../schoolProfiles';
+import { HOUSING_NAMES } from '../../constants/gameConstants';
 
 export const initializationEvents: Record<string, GameEvent> = {
   'choose_trait': {
@@ -241,10 +242,19 @@ export const initializationEvents: Record<string, GameEvent> = {
           company: 'cn_big_tech',
           level: 'L3',
           tc: 20,
+          // You are working in China: drop any US status and move into domestic housing, the
+          // same way every other cn_tech entry in this file does. Without it the player kept a
+          // US visa (and got routed through the US housing picker into the Bay Area main loop)
+          // while employed in Beijing — and settlement then excluded them from the H1B lottery
+          // forever because job_type is cn_tech.
+          visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '无',
+          housing_name: HOUSING_NAMES.CN_FACTORY_ROOM,
+          has_housing: false,
+          rent: 0.8,
           story_flags: { ...(s.story_flags || {}), zhuanma_method: 'cn_defer' },
           message: '预算不够读美硕，你只能先回国内大厂卷着攒钱，把转码来美的梦想暂时压在心底。',
         }),
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : 'sv_daily_life'),
+        nextEventId: 'sv_daily_life',
       },
     ],
   },

@@ -180,7 +180,9 @@ export const settlementEvents: Record<string, GameEvent> = {
              // AI labs (OpenAI/Anthropic MTS) are prestigious but intense — not a 养老大厂.
              else if (s.job_type === 'ai_research') { healthDrain = 6; companyMsg = ' 【职场健康】前沿 AI 实验室的 AGI 军备竞赛与算力集群连轴转消耗了体力 (健康 -6)。'; }
 
-             else if (s.job_type === 'big_tech') { healthDrain = -10; companyMsg = ' 【职场健康】养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
+             // Guard on company, not just job_type — the documented TikTok trap: a domestic
+             // employer paired with job_type 'big_tech' would otherwise collect the 养老大厂 +10.
+             else if (s.job_type === 'big_tech' && s.company !== 'cn_big_tech') { healthDrain = -10; companyMsg = ' 【职场健康】养老大厂的神仙 WLB 让你充分养精蓄锐 (健康 +10)。'; }
              else if (s.job_type === 'cn_tech' || s.company === 'cn_big_tech') { healthDrain = 6; companyMsg = ' 【职场健康】国内大厂的高强度业务开发消耗了精力 (健康 -6)。'; }
              else { healthDrain = -6; companyMsg = ' 【职场健康】充沛的带薪年假与规律作息让你的体力得到恢复 (健康 +6)。'; }
            } else {
@@ -306,6 +308,10 @@ export const settlementEvents: Record<string, GameEvent> = {
             let h1bMsg = '';
             let newVisa = s.visa;
             let newAttempts = s.h1b_attempts || 0;
+            // Vestigial by construction: settlement is the only writer of last_h1b_lottery_year
+            // and bumps `year` in the same effect, so this is never true today (0 hits in 46k
+            // simulated settlements). Kept as a cheap double-draw guard in case settlement is
+            // ever re-entered within a year — do NOT assume the branches below are live.
             const alreadyDrewThisYear = s.story_flags?.last_h1b_lottery_year === s.year;
 
             if (!alreadyDrewThisYear && (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.company !== 'cn_big_tech') {
@@ -562,9 +568,13 @@ export const settlementEvents: Record<string, GameEvent> = {
               year_seg: undefined, // 清零季度事件机相位,确保下一年从 H1 重新开始 (防跨年残留导致跳过 H1/H2)
               age: s.age + 1, 
               year: s.year + 1,
-              // Per-transition marker — must not persist across years, or "did I hop THIS
+              // Per-transition markers — must not persist across years, or "did I hop THIS
               // year?" checks (e.g. the double-hop guard in h1ToH2Router) stay true forever.
               is_new_job: false,
+              // The offer slate belongs to ONE hop round. Leaving it set meant every later
+              // job_hop_market was still gated by last round's companies.
+              hop_offers: undefined,
+              hop_applied_count: undefined,
               // Sham marriage auto-dissolves at the 2-year mark (no asset split).
               ...(shamExpired ? {
                 is_married: false,
@@ -783,9 +793,18 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【无畏追梦 · 辞职创立 AI 独角兽】手握充沛本金，去沙丘路拉融资改变世界！',
+        reqBadge: '需美籍/绿卡/O-1 或自费办 O-1',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 200 && s.job_type !== 'startup_founder',
         effect: (s) => ({
           has_reached_initial_fire: true,
+          // Quitting to found a company needs work authorization, exactly like the two
+          // equivalent options in career.ts (which buy an O-1 for $5w). Without this gate an
+          // H1B holder became a self-employed founder and kept the工签 forever — no sponsor,
+          // no PERM, never routed to layoff_hit, while settlement still narrated "公司律师
+          // 正式为你启动了 PERM" for a company that doesn't exist.
+          ...(s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)'
+            ? { visa: 'O1 (杰出人才)' as const, cash: parseFloat((s.cash - 5).toFixed(1)) }
+            : {}),
           last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, s.win_threshold),
           win_threshold: nextFireTarget(s.win_threshold),
           fire_tier: 'luxury',

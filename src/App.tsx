@@ -296,7 +296,8 @@ export default function App() {
         return;
       }
 
-      if (['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+      // 1-9 are wired; the badge below is hidden past 9 since 10+ needs multi-key input.
+      if (['1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
         if (gameState.status === 'playing' && currentEvent && !isCoolingDown) {
           const choiceIndex = parseInt(e.key, 10) - 1;
           const availableChoices = currentEvent.choices.filter((choice) => {
@@ -1039,9 +1040,13 @@ export default function App() {
                             : isLimitedOpp && isAvailable ? 'text-amber-200 group-hover:text-amber-100 font-bold'
                             : isAvailable ? 'text-zinc-300 group-hover:text-emerald-400' : 'text-zinc-600'
                         }`}>
-                          <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 shrink-0 group-hover:border-emerald-500/40 group-hover:text-zinc-200">
-                            [{idx + 1}]
-                          </span>
+                          {/* Only advertise a shortcut that actually exists: keys 1-9 are wired,
+                              and sv_daily_life can render up to 13 options. */}
+                          {idx < 9 && (
+                            <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-zinc-800/90 text-zinc-400 border border-zinc-700/80 shrink-0 group-hover:border-emerald-500/40 group-hover:text-zinc-200">
+                              [{idx + 1}]
+                            </span>
+                          )}
                           <span>{mainText}</span>
                         </span>
                         

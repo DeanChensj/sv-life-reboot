@@ -63,6 +63,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
               return {
                 cash: s.cash - 8,
                 status: 'game_over',
+                story_flags: { ...(s.story_flags || {}), deported: true },
                 message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
               };
             }
@@ -236,6 +237,7 @@ export const immigrationEvents: Record<string, GameEvent> = {
             return {
               cash: s.cash - 8,
               status: 'game_over',
+              story_flags: { ...(s.story_flags || {}), deported: true },
               message: '【移民欺诈立案】移民局 FDNS 严厉调查判定为虚假商婚，你被当场遣返回国并终身禁入美国，游戏结束！'
             };
           }

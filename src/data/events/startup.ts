@@ -179,6 +179,7 @@ export const startupEvents: Record<string, GameEvent> = {
                 status: 'game_over',
                 cash: Math.max(0, parseFloat((s.cash - 1).toFixed(1))),
                 health: Math.max(0, s.health - 12),
+                story_flags: { ...(s.story_flags || {}), startup_ruined: true },
                 message: '【弹尽粮绝】融资失败且账上现金见底，无力支付团队工资与云账单，公司被迫关停清算。你的创业梦碎，背负债务黯然离场。'
               };
             }

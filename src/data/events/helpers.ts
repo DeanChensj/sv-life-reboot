@@ -162,6 +162,10 @@ export const resolveHopVisaTransition = (s: GameState): { visa: string; cashDelt
 };
 
 // impact 只对标准大厂/研究阶梯有意义(founder/trader/unemployed 无此概念)。
+// NOTE: 'ai_research' is listed for correctness of the predicate itself, but at the ONE call
+// site (the H1 impact-setback block) ai_research has already returned earlier in the router,
+// so that disjunct is unreachable from there. Keep it — the predicate is about the concept,
+// not about that one caller — but don't read its presence as proof ai_research reaches that block.
 export const isImpactCareer = (s: GameState): boolean =>
   s.job_type === 'big_tech' || s.job_type === 'ai_research' ||
   s.job_type === 'cn_tech';

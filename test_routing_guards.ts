@@ -11,14 +11,23 @@
 
 import fs from 'fs';
 
-const EVENTS_DIR = './src/data/events';
+// src/utils is scanned too: endings.ts classifies the whole run and used to route on message
+// substrings from OUTSIDE this guard's reach — including '禁令', which also appears in an
+// unrelated NVDA trade message ("监管禁令导致大厂股票大幅回撤") and could hand a player a
+// DEPORTED card. Exactly the false-positive class this guard exists to prevent.
+const SCAN_DIRS = ['./src/data/events', './src/utils'];
 const BASELINE = 0; // 0 message-substring routings remaining; permanently lock in 0.
 
 let count = 0;
 const hits: string[] = [];
 
-for (const file of fs.readdirSync(EVENTS_DIR).filter((f) => f.endsWith('.ts'))) {
-  const src = fs.readFileSync(`${EVENTS_DIR}/${file}`, 'utf8');
+const scanFiles: string[] = [];
+for (const dir of SCAN_DIRS) {
+  for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.ts'))) scanFiles.push(`${dir}/${f}`);
+}
+
+for (const file of scanFiles) {
+  const src = fs.readFileSync(file, 'utf8');
   src.split('\n').forEach((line, i) => {
     const trimmed = line.trim();
     if (trimmed.startsWith('//') || trimmed.startsWith('*')) return; // skip comments
@@ -31,7 +40,7 @@ for (const file of fs.readdirSync(EVENTS_DIR).filter((f) => f.endsWith('.ts'))) 
 }
 
 console.log(`=== [Routing Guard] message-substring control flow ===`);
-console.log(`Found ${count} message.includes routing site(s) in ${EVENTS_DIR} (baseline ${BASELINE}).`);
+console.log(`Found ${count} message.includes routing site(s) across ${SCAN_DIRS.join(', ')} (baseline ${BASELINE}).`);
 
 if (count > BASELINE) {
   console.error(

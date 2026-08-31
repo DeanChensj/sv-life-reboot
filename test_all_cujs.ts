@@ -700,7 +700,10 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   // Tragedies
   assert(end({ status: 'game_over', health: 0 }) === 'burnout', 'game_over + health 0 -> burnout');
   assert(end({ status: 'game_over', health: 40, cash: 0, stocks: 0 }) === 'bankruptcy', 'game_over + no cash -> bankruptcy');
-  assert(end({ status: 'game_over', health: 40, cash: 5, message: '被迫登机回国，签证失效' }) === 'deported', 'game_over + deport message -> deported');
+  // Deportation is state-keyed now (story_flags.deported), not message-keyed — a message alone
+  // must NOT be enough, or an unrelated line containing 禁令/入境 could award this card.
+  assert(end({ status: 'game_over', health: 40, cash: 5, story_flags: { deported: true } }) === 'deported', 'game_over + deported flag -> deported');
+  assert(end({ status: 'game_over', health: 40, cash: 5, message: '被迫登机回国，签证失效' }) !== 'deported', 'a deport-flavored message alone no longer classifies as deported');
   assert(end({ status: 'game_over', health: 40, cash: 5, job_type: 'startup_founder' }) === 'startup_ruin', 'game_over + founder -> startup_ruin');
 
   // Triumphs (win, or retired while wealthy)
@@ -3283,9 +3286,9 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(contEff.status !== 'win', 'Continue does NOT win');
 
   // determineEnding maps the finale flags to their dedicated endings
-  const fundEnding = determineEnding({ ...at1500, status: 'win', story_flags: { trader_exit_fund: true } } as GameState);
+  const fundEnding = determineEnding({ ...at1500, visa: '绿卡', status: 'win', story_flags: { trader_exit_fund: true } } as GameState);
   assert(fundEnding.id === 'quant_fund_godfather', 'Fund I flag yields quant_fund_godfather ending');
-  const famEnding = determineEnding({ ...at800, status: 'win', story_flags: { trader_exit_family_office: true } } as GameState);
+  const famEnding = determineEnding({ ...at800, visa: '绿卡', status: 'win', story_flags: { trader_exit_family_office: true } } as GameState);
   assert(famEnding.id === 'family_office_oldmoney', 'Family Office flag yields family_office_oldmoney ending');
 
   console.log('✅ CUJ 61 Passed\n');
@@ -3513,9 +3516,9 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(shamCash < realCash, 'sham marriage yields no spouse income (was $6w/yr forever via the default branch)');
 
   // 2. Trader finale endings outrank silicon_dynasty at dynasty-tier wealth.
-  const richFund = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 3200, stocks: 0, status: 'win', story_flags: { trader_exit_fund: true } } as GameState;
+  const richFund = { ...generateInitialState(nextCujSeed()), job_type: 'trader', visa: '绿卡', cash: 3200, stocks: 0, status: 'win', story_flags: { trader_exit_fund: true } } as GameState;
   assert(determineEnding(richFund).id === 'quant_fund_godfather', 'Fund I finale is not shadowed by silicon_dynasty at $3000w+');
-  const richFO = { ...generateInitialState(nextCujSeed()), job_type: 'trader', cash: 3200, stocks: 0, status: 'win', story_flags: { trader_exit_family_office: true } } as GameState;
+  const richFO = { ...generateInitialState(nextCujSeed()), job_type: 'trader', visa: '绿卡', cash: 3200, stocks: 0, status: 'win', story_flags: { trader_exit_family_office: true } } as GameState;
   assert(determineEnding(richFO).id === 'family_office_oldmoney', 'Family Office finale is not shadowed by silicon_dynasty at $3000w+');
 
   // 3. transferred_to_ai must take effect at EVERY big-tech company, not just the ones with no
@@ -3648,6 +3651,66 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(settled.story_flags?.trader_drawdown_year === undefined, 'drawdown trigger resets each year');
 
   console.log('✅ CUJ 66 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 67: P2 regression locks
+// 1. Endings classify on STATE, never on message text (a '禁令' in an NVDA trade message
+//    must not award a DEPORTED card).
+// 2. Domestic-path endings aren't shadowed by the wealth tiers.
+// 3. The FIRE "quit and found a startup" option carries the same work-authorization gate as
+//    its career.ts equivalents.
+// 4. The offer slate is per-hop-round, not permanent.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 67] P2 Regression Locks ---');
+
+  // 1. Deportation is state-keyed. A player whose FINAL message merely contains 禁令
+  //    (the NVDA regulation line) must NOT be classified as deported.
+  const nvdaVictim = {
+    ...generateInitialState(nextCujSeed()),
+    status: 'game_over', visa: '绿卡', health: 0, cash: 5, stocks: 0, age: 44,
+    message: '买在了高位... 监管禁令导致大厂股票大幅回撤。',
+    story_flags: {},
+  } as GameState;
+  assert(determineEnding(nvdaVictim).id !== 'deported', 'a 禁令 substring in an unrelated message must not award the DEPORTED ending');
+  const trulyDeported = { ...nvdaVictim, health: 50, story_flags: { deported: true } } as GameState;
+  assert(determineEnding(trulyDeported).id === 'deported', 'the deported flag does award the DEPORTED ending');
+
+  // 2. A wealthy domestic player keeps their own story instead of a 硅谷 wealth card.
+  const richReturnee = {
+    ...generateInitialState(nextCujSeed()),
+    status: 'retired', visa: '无', job_type: 'cn_tech', cash: 900, stocks: 0, health: 60, age: 50,
+    win_threshold: 500, story_flags: {},
+  } as GameState;
+  assert(determineEnding(richReturnee).id === 'homecoming', 'a wealthy never-emigrated player gets 海归, not a Silicon Valley wealth card');
+  const richHermit = { ...richReturnee, story_flags: { cn_hermit: true } } as GameState;
+  assert(determineEnding(richHermit).id === 'cn_hermit', 'the explicit 急流勇退 choice outranks the generic wealth tiers');
+
+  // 3. FIRE-then-found-a-startup requires work authorization (buys an O-1 like career.ts does).
+  const fireHub = events['fire_milestone_choice'];
+  const foundIt = fireHub.choices.find(c => c.text.includes('无畏追梦'));
+  assert(!!foundIt, 'the FIRE founder option exists');
+  const h1bRich = { ...generateInitialState(nextCujSeed()), job_type: 'big_tech', company: 'google', visa: 'H1B (工签)', cash: 400, stocks: 0, win_threshold: 500, status: 'playing' } as GameState;
+  const fEff = foundIt!.effect(h1bRich) as Partial<GameState>;
+  assert(fEff.visa === 'O1 (杰出人才)', 'an H1B holder must buy an O-1 to go found a company (was: kept the工签 forever with no sponsor)');
+  assert((fEff.cash ?? 0) < h1bRich.cash, 'the O-1 is paid for');
+  const gcRich = { ...h1bRich, visa: '绿卡' } as GameState;
+  const gEff = foundIt!.effect(gcRich) as Partial<GameState>;
+  assert(gEff.visa === undefined || gEff.visa === '绿卡', 'a green-card holder is not charged for an O-1');
+
+  // 4. The offer slate resets each year (it gated every later hop to last round's companies).
+  const settleChoice2 = events['sv_year_end_settlement'].choices[0];
+  const afterHop = settleChoice2.effect({
+    ...generateInitialState(nextCujSeed()),
+    job_type: 'big_tech', company: 'google', level: 'L4', tc: 30, cash: 40, visa: '绿卡',
+    age: 30, year: 2030, status: 'playing', is_new_job: true,
+    hop_offers: ['meta', 'amazon'], hop_applied_count: 4,
+  } as GameState) as Partial<GameState>;
+  assert(afterHop.hop_offers === undefined, 'hop_offers is cleared at year end');
+  assert(afterHop.is_new_job === false, 'is_new_job is cleared at year end');
+
+  console.log('✅ CUJ 67 Passed\n');
 }
 
 console.log(`\n======================================================`);

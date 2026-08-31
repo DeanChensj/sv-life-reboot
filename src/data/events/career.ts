@@ -187,7 +187,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const win = gameRandom() > 0.15; // 85% success
           return win
             ? { cash: s.cash - 1, health: s.health - 15, leetcode: s.leetcode + 5, message: '心惊胆战地越过美墨边境，你奇迹般地拿到了新的签证 Stamp！争取到了宝贵的留美时间！' }
-            : { status: 'game_over', message: '在边境小黑屋被海关查出挂靠历史，直接吊销签证并被 5 年禁令限制入境！' };
+            : { status: 'game_over', story_flags: { ...(s.story_flags || {}), deported: true }, message: '在边境小黑屋被海关查出挂靠历史，直接吊销签证并被 5 年禁令限制入境！' };
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : 'sv_year_end_settlement',
       },
@@ -213,15 +213,21 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【放弃求职告别硅谷】放弃求职，打包行李离开硅谷',
         effect: (s) => {
-          // Temp-visa branches are forced departures (visa loss) → must classify as
-          // 'deported' in endings.ts, which matches on keywords like 离境/登机. Keep such a
-          // keyword in the copy or these fall into the generic/bankruptcy ending.
-          const reason = (s.visa === '公民' || s.visa === '绿卡') 
+          // A temp-visa exit here is a FORCED departure (visa loss) and must classify as
+          // 'deported'; a citizen/green-card holder is just leaving by choice. This is carried
+          // by the `deported` story flag — it used to depend on keeping keywords like 离境/登机
+          // in the copy, so an innocuous copy edit could silently change the ending.
+          const forcedOut = s.visa !== '公民' && s.visa !== '绿卡';
+          const reason = !forcedOut
             ? '对硅谷内卷与就业市场彻底失望，你选择带上积蓄离开了加州湾区。' 
             : ((s.visa === 'F1 (学生)' || s.visa === '无') 
                 ? 'OPT 到期未能上岸，身份到期你只能被迫离境，遗憾登机踏上回国的航班。' 
                 : 'H1B 60 天失业宽限期满仍未找到新工作，身份失效被迫离境，遗憾登机回国。');
-          return { status: 'game_over', message: reason };
+          return {
+            status: 'game_over',
+            ...(forcedOut ? { story_flags: { ...(s.story_flags || {}), deported: true } } : {}),
+            message: reason,
+          };
         },
         nextEventId: 'end',
       },
@@ -1586,7 +1592,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const newTC = getLevelScaledTC(22, targetLvl);
           return pass
             ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: `【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)，成功延续 OPT 身份！` }
-            : { status: 'game_over', message: '90 天 OPT 失业期耗尽，且未能及时挂靠转学，SEVIS 状态失效被迫登机回国。' };
+            : { status: 'game_over', story_flags: { ...(s.story_flags || {}), deported: true }, message: '90 天 OPT 失业期耗尽，且未能及时挂靠转学，SEVIS 状态失效被迫登机回国。' };
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
@@ -1614,7 +1620,7 @@ export const careerEvents: Record<string, GameEvent> = {
           const newTC = getLevelScaledTC(24, targetLvl);
           return pass
             ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 15), visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'], message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${targetLvl} · 年薪 ${newTC}w) 并成功办理工签 Transfer 保住合法身份！` }
-            : { status: 'game_over', message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，工签身份到期被迫登机离境。' };
+            : { status: 'game_over', story_flags: { ...(s.story_flags || {}), deported: true }, message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，工签身份到期被迫登机离境。' };
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
       },
@@ -1676,7 +1682,26 @@ export const careerEvents: Record<string, GameEvent> = {
           message: '凭雄厚资金实力，全额出资 $80w 办妥新法 EB-5 投资移民绿卡！彻底甩开所有身份枷锁，自由留美找工！'
         }),
         nextEventId: 'post_green_card',
-      }
+      },
+      {
+        // Universal escape. Every other branch here is gated on a specific status
+        // (绿卡/公民 · OPT/F1 · H1B/L1/O1 · Day 1 CPT · network>=35), which left a player with
+        // visa '无' — e.g. someone working a domestic job inside the US loop — with ZERO
+        // clickable options: a hard soft-lock (fuzz SEED=13/85/112...). This branch has no
+        // condition, so the panel can never be empty again.
+        text: '【打包走人从头再来】没有身份缓冲也没有内推，你收拾好工位纸箱，重新投简历找下一份工作',
+        effect: (s) => ({
+          laid_off: true,
+          tc: 0,
+          job_type: 'unemployed',
+          company: undefined,
+          level: undefined,
+          leetcode: Math.min(100, s.leetcode + 8),
+          health: Math.max(0, s.health - 5),
+          message: '没有绿卡缓冲、没有学籍兜底、也没人给你内推。你抱着纸箱走出园区，回家打开招聘网站，从头再来。'
+        }),
+        nextEventId: 'job_hunt',
+      },
     ]
   },
 

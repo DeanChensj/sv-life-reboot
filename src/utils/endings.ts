@@ -16,11 +16,6 @@ export interface EndingResult {
 
 const totalAssets = (s: GameState): number => (s.cash || 0) + (s.stocks || 0);
 
-const messageIncludes = (s: GameState, needles: string[]): boolean => {
-  const msg = s.message || '';
-  return needles.some((n) => msg.includes(n));
-};
-
 /**
  * Classifies a finished game into a distinct ending archetype based on the final
  * state. Pure + priority-ordered (first match wins, rarest/most-specific first),
@@ -44,10 +39,13 @@ export function determineEnding(s: GameState): EndingResult {
         flavor: '非科班转码这条路，终究比想象中更陡。你耗尽了积蓄与心气，在一次次挂经后黯然退场——但逆袭的故事，永远可以从头再写。',
       };
     }
-    // Deportation / visa loss — message-driven (the visa/OPT/H1B failure events set a
-    // clear message). NOT keyed on visa==='无', since that is also the initial
-    // "未赴美" state and the domestic path (which resolves to 海归, not deportation).
-    if (messageIncludes(s, ['遣返', '登机', 'SEVIS', '吊销签证', '禁令', '离境', '送中', '入境'])) {
+    // Deportation / visa loss — keyed on the `deported` story flag that every deportation
+    // game-over sets (5 sites across career.ts / immigration.ts). It CANNOT key on
+    // visa==='无', which is also the initial "未赴美" state and the domestic path (that
+    // resolves to 海归). It used to match on message substrings, which the repo forbids and
+    // which really did misfire: '禁令' also appears in "监管禁令导致大厂股票大幅回撤" (an NVDA
+    // trade), so an unrelated final message could award a DEPORTED card.
+    if (s.story_flags?.deported) {
       return {
         id: 'deported', emoji: '🛂', title: '梦碎硅谷 · 黯然离境',
         subtitle: 'STATUS: DEPORTED', tone: 'tragedy', rarity: 'N',
@@ -65,7 +63,8 @@ export function determineEnding(s: GameState): EndingResult {
       };
     }
     // Founder runway bankruptcy.
-    if (s.job_type === 'startup_founder' || messageIncludes(s, ['清算', '关停', '弹尽粮绝', '资金链', '倒闭'])) {
+    // State-keyed (the runway-bankruptcy exit sets `startup_ruined`), not message-keyed.
+    if (s.job_type === 'startup_founder' || s.story_flags?.startup_ruined) {
       return {
         id: 'startup_ruin', emoji: '⚰️', title: '创业梦碎 · 弹尽粮绝',
         subtitle: 'STATUS: STARTUP RUIN', tone: 'tragedy', rarity: 'N',
@@ -91,6 +90,28 @@ export function determineEnding(s: GameState): EndingResult {
   // ---------- Triumph (FIRE-level wealth: status 'win', or 'retired' while wealthy) ----------
   const wealthy = s.status === 'win' || assets >= (s.win_threshold || 500);
   if (wealthy) {
+    // Domestic path first: these players never built a Silicon Valley life, so the
+    // silicon-flavored wealth cards below ("硅谷百亿巨擘…成为硅谷科技界的殿堂级传奇") are simply
+    // the wrong story for them. 急流勇退 (cn_hermit) is an explicit player choice and, like the
+    // founder/trader finales, outranks a generic wealth tier. Previously both sat AFTER this
+    // block and were unreachable for any domestic player who cleared win_threshold.
+    if (s.story_flags?.cn_hermit) {
+      return {
+        id: 'cn_hermit', emoji: '🏯', title: '国内隐居 · 佛系定居',
+        subtitle: 'STATUS: SLOW LIFE', tone: 'content', rarity: 'R',
+        flavor: '你告别了硅谷与 996 的双重内卷，回到二线城市全款置业养生，把日子过成了自己喜欢的慢节奏。',
+      };
+    }
+    // Requires POSITIVE evidence of the domestic track (a domestic employer), not merely the
+    // absence of a visa — `visa === '无'` is also the pre-emigration default, so keying on it
+    // alone would swallow any wealthy player whose visa was never set.
+    if (s.visa === '无' && (s.job_type === 'cn_tech' || s.story_flags?.zhuanma_method === 'cn_defer')) {
+      return {
+        id: 'homecoming', emoji: '✈️', title: '落叶归根 · 海归人生',
+        subtitle: 'STATUS: HOMECOMING', tone: 'content', rarity: 'R',
+        flavor: '你终究没有把根扎在硅谷。回到熟悉的土地，用这些年的历练，在故乡书写了另一段人生。',
+      };
+    }
     if (s.founder_stage === 'exit' || (s.company_valuation || 0) >= 6000) {
       return {
         id: 'unicorn_founder', emoji: '🦄', title: '独角兽敲钟 · 硅谷传奇',

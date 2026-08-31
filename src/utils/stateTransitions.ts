@@ -152,6 +152,18 @@ export function applyStateTransition(
     newState.job_start_age = newState.age;
   }
 
+  // Unfunded companies cannot scale. A founder who has never raised (still holding 100% of the
+  // equity) is hard-capped at $200w: with no outside capital there is no growth engine, so
+  // raising is mandatory to build anything real. Any round dilutes below 100% and lifts the cap
+  // for good. This MUST run before the stage sync below, which derives founder_stage from
+  // valuation — otherwise an uncapped bootstrapper would also auto-advance through the stages.
+  // Without it, bootstrapping was strictly dominant: grinding PMF to a $3435w valuation while
+  // keeping 100% paid $3435w at exit, vs $1050w for a fully-diluted blitz to Series B+.
+  const UNFUNDED_VALUATION_CAP = 200;
+  if (newState.job_type === 'startup_founder' && (newState.founder_equity_pct ?? 90) >= 100) {
+    newState.company_valuation = Math.min(newState.company_valuation ?? 0, UNFUNDED_VALUATION_CAP);
+  }
+
   // Founder stage/stipend sync (monotonic, up-only): keep founder_stage and the founder
   // stipend (tc) consistent with company_valuation, so growth via PMF / PR / hiring — not
   // only funding rounds — advances the company and pays the founder. Without this a founder

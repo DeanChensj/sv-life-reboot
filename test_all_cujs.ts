@@ -3650,6 +3650,95 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 66 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 67: Startup Launch & Angel Pitch Gauntlet (Sand Hill Road / YC / Bootstrapping)
+// Verify that:
+// 1. Starting a startup is no longer an instant 100% freebie — it routes to founder_angel_pitch.
+// 2. Sand Hill Road angel pitch can succeed (becomes founder) or fail (remains employee, health hit).
+// 3. YC application can succeed ($240w val, 93% equity) or fail (leetcode +3, health -4).
+// 4. Bootstrapping costs $8w cash, grants 100% un-diluted equity, and guarantees company launch.
+// 5. Deferring startup preserves current job with health recovery.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 67] Startup Launch & Angel Pitch Gauntlet ---');
+  const angelPitchEv = events['founder_angel_pitch'];
+  assert(!!angelPitchEv, 'founder_angel_pitch event is registered');
+  assert(angelPitchEv.choices.length === 4, 'founder_angel_pitch offers 4 distinct strategic choices');
+
+  const pitchChoice = angelPitchEv.choices[0]; // 沙丘路天使路演
+  const ycChoice = angelPitchEv.choices[1]; // YC 申请
+  const bootstrapChoice = angelPitchEv.choices[2]; // 自掏腰包 Bootstrapping
+  const deferChoice = angelPitchEv.choices[3]; // 暂缓创业
+
+  const engineer = {
+    ...generateInitialState(nextCujSeed()),
+    job_type: 'big_tech',
+    company: 'google',
+    tc: 35,
+    cash: 20,
+    health: 80,
+    network: 30,
+    leetcode: 75,
+    impact: 15,
+    visa: '绿卡',
+    status: 'playing',
+  } as GameState;
+
+  // 1. Defer choice keeps employee state and heals health
+  const deferEff = deferChoice.effect(engineer) as Partial<GameState>;
+  assert(deferEff.health === 82, 'deferring startup heals +2 health');
+  const deferNext = typeof deferChoice.nextEventId === 'function' ? deferChoice.nextEventId(engineer) : deferChoice.nextEventId;
+  assert(deferNext !== 'founder_annual_strategy', 'deferring does not enter founder annual strategy');
+
+  // 2. Bootstrapping costs $8w, yields 100% equity and starts company
+  const bootEff = bootstrapChoice.effect(engineer) as Partial<GameState>;
+  assert(bootEff.job_type === 'startup_founder', 'bootstrapping makes player a founder');
+  assert(bootEff.cash === 12, 'bootstrapping costs $8w cash ($20w -> $12w)');
+  assert(bootEff.founder_equity_pct === 100, 'bootstrapping retains 100% un-diluted equity');
+  assert(bootstrapChoice.nextEventId === 'founder_annual_strategy', 'bootstrapping routes to founder strategy');
+
+  // 3. Sand Hill Road Angel Pitch: reachability of both Success and Failure outcomes
+  let sawAngelSuccess = false;
+  let sawAngelFail = false;
+  for (let i = 0; i < 500; i++) {
+    const eff = pitchChoice.effect(engineer) as Partial<GameState>;
+    if (eff.job_type === 'startup_founder') {
+      sawAngelSuccess = true;
+      assert(eff.founder_stage === 'pre_seed', 'angel success gives pre_seed stage');
+      assert(eff.company_valuation === 180, 'angel success gives $180w valuation');
+      assert(eff.founder_equity_pct === 90, 'angel success starts at 90% equity');
+    } else {
+      sawAngelFail = true;
+      assert(eff.job_type === undefined, 'angel failure does NOT force founder status');
+      assert(eff.health === 74, 'angel failure hits -6 health from pitch exhaustion');
+    }
+    if (sawAngelSuccess && sawAngelFail) break;
+  }
+  assert(sawAngelSuccess, 'angel pitch success is reachable');
+  assert(sawAngelFail, 'angel pitch failure/rejection is reachable (not a free guarantee)');
+
+  // 4. YC application: reachability of YC admission and YC rejection
+  let sawYcPass = false;
+  let sawYcReject = false;
+  for (let i = 0; i < 500; i++) {
+    const eff = ycChoice.effect(engineer) as Partial<GameState>;
+    if (eff.job_type === 'startup_founder') {
+      sawYcPass = true;
+      assert(eff.company_valuation === 240, 'YC admission starts at $240w valuation');
+      assert(eff.founder_equity_pct === 93, 'YC admission starts at 93% equity (7% YC deal)');
+      assert(eff.network === 45, 'YC admission grants +15 network');
+    } else {
+      sawYcReject = true;
+      assert(eff.leetcode === 78, 'YC rejection grants +3 leetcode/system-design experience');
+    }
+    if (sawYcPass && sawYcReject) break;
+  }
+  assert(sawYcPass, 'YC acceptance is reachable');
+  assert(sawYcReject, 'YC rejection is reachable');
+
+  console.log('✅ CUJ 67 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

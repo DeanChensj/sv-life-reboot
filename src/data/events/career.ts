@@ -142,24 +142,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup',
         reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
         condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'startup_founder',
-        effect: (s) => {
-          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
-          return {
-            job_type: 'startup_founder',
-            company: 'AI/科技 Startup',
-            level: 'CEO & Founder',
-            tc: 6,
-            founder_stage: 'pre_seed',
-            company_valuation: 180,
-            laid_off: false,
-            cash: needsO1 ? s.cash - 5 : s.cash,
-            visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
-            message: needsO1
-              ? '你决定自己当老板！花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
-              : '你决定自己当老板！凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
-          };
-        },
-        nextEventId: h1ToH2Router,
+        effect: () => ({ message: '你带着商业计划书与技术原型，正式踏上硅谷天使轮路演与极客创业征程！' }),
+        nextEventId: 'founder_angel_pitch',
       }
     ]
   },
@@ -1139,27 +1123,8 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资',
         reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
         condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
-        effect: (s) => {
-          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
-          return {
-            // Consumes the year's action — must set mid_year or this transition year skips H1+H2.
-            mid_year: true, season_stage: 'h1' as const,
-            job_type: 'startup_founder',
-            company: 'AI/科技 Startup',
-            level: 'CEO & Founder',
-            tc: 6,
-            founder_stage: 'pre_seed',
-            company_valuation: 180,
-            laid_off: false,
-            impact: addImpact(s, 10),
-            cash: needsO1 ? s.cash - 5 : s.cash,
-            visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
-            message: needsO1
-              ? '你拒绝了稳健的大厂打工路，花 $5w 律师费办妥了 O1-A 创业杰出人才工签，在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
-              : '你拒绝了稳健的大厂打工路，凭自由身份在 San Mateo 租下一间 Garage，以 $180w Pre-Seed 估值开启了全职 Founder 极客创业！'
-          };
-        },
-        nextEventId: h1ToH2Router,
+        effect: () => ({ message: '你拒绝了稳健的大厂打工路，带着商业计划书与技术原型，踏上硅谷天使轮路演舞台！' }),
+        nextEventId: 'founder_angel_pitch',
       },
 
       // --- 待业 / Gap Year 探索 (仅失业或待业时可见) ---

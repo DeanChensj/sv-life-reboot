@@ -63,6 +63,146 @@ const diluteEquity = (s: GameState, keep: number): number =>
   Math.max(2, Math.round(founderEquity(s) * keep));
 
 export const startupEvents: Record<string, GameEvent> = {
+  'founder_angel_pitch': {
+    id: 'founder_angel_pitch',
+    title: '【创业启航】硅谷天使轮路演与启动资金博弈',
+    description: '你决心走出大厂温室，在硅谷开启极客创业！但要将一个想法落地为合规运营的初创企业，你必须解决核心启动资金 (Angel / Pre-Seed) 与经营跑道。请选择你的启动策略：',
+    choices: [
+      {
+        text: '【沙丘路天使路演】向 Sand Hill Road 早期天使 VC 演示 Demo 寻求 $180w 估值天使轮',
+        reqBadge: '需人脉、技术实力或牛市助力',
+        effect: (s) => {
+          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
+          if (needsO1 && s.cash < 5) {
+            return {
+              health: Math.max(0, s.health - 5),
+              message: '【身份门槛受阻】天使投资人对你的产品构想颇感兴趣，但得知你尚无绿卡且手头现金不足 $5w 办理 O-1 杰出人才签证，投资人遗憾撤回了意向书。你不得不先留在当前岗位积攒资金与身份！'
+            };
+          }
+          const ecoBonus = s.macro_economy === 'bull' ? 0.20 : s.macro_economy === 'bear' ? -0.25 : 0;
+          const networkBonus = Math.min(0.20, Math.max(0, ((s.network || 0) - 10) / 75));
+          const techBonus = Math.min(0.20, Math.max(0, ((s.leetcode || 0) - 50) / 100) + Math.min(0.15, (s.impact || 0) / 50));
+          const traitBonus = s.trait_title === '卷王之王' || s.trait_title === '天选之子' ? 0.15 : 0;
+          const baseRate = 0.42;
+          const winRate = Math.max(0.15, Math.min(0.85, baseRate + ecoBonus + networkBonus + techBonus + traitBonus));
+          const pass = gameRandom() < winRate;
+
+          if (pass) {
+            return {
+              job_type: 'startup_founder',
+              company: 'AI/科技 Startup',
+              level: 'CEO & Founder',
+              tc: 6,
+              founder_stage: 'pre_seed',
+              company_valuation: 180,
+              founder_equity_pct: 90,
+              laid_off: false,
+              cash: needsO1 ? parseFloat((s.cash - 5).toFixed(1)) : s.cash,
+              visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
+              message: needsO1
+                ? '【天使轮融资成功】你凭借出色的 Technical Demo 征服了沙丘路天使投资人！成功签下 $180w Pre-Seed 轮 SAFE 投资意向，并花 $5w 律师费办妥 O-1 签证，初创公司正式扬帆起航！'
+                : '【天使轮融资成功】你凭借出色的 Technical Demo 征服了沙丘路天使投资人！成功签下 $180w Pre-Seed 轮 SAFE 投资意向，初创公司正式扬帆起航！'
+            };
+          } else {
+            return {
+              mid_year: true,
+              season_stage: 'h1',
+              health: Math.max(0, s.health - 6),
+              network: Math.min(100, (s.network || 0) + 2),
+              message: '【天使轮路演折戟】你连续跑了十几家沙丘路早期天使基金，投资人虽然夸奖了你的构想，但最终以“商业闭环与护城河尚不清晰”为由 pass。首次拉融资折戟，你决定先继续留在当前岗位积蓄实力，待技术更成熟再出山！'
+            };
+          }
+        },
+        nextEventId: (s: GameState) => s.job_type === 'startup_founder' ? 'founder_annual_strategy' : 'sv_year_end_settlement',
+      },
+      {
+        text: '【申请 Y Combinator 孵化器】向 YC 提交申请并参加严苛的 10 分钟合伙人面试',
+        reqBadge: '需算法 >= 60 或 产出 >= 12',
+        condition: (s) => s.leetcode >= 60 || (s.impact || 0) >= 12 || s.is_phd,
+        effect: (s) => {
+          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
+          if (needsO1 && s.cash < 5) {
+            return {
+              mid_year: true,
+              season_stage: 'h1',
+              health: Math.max(0, s.health - 5),
+              message: '【资金与身份不足】YC 对项目表现出浓厚兴趣，但合规审核发现你无法自行解决签证与基础启动资金，申请暂被搁置。'
+            };
+          }
+          const techBonus = ((s.leetcode || 0) - 60) / 100 * 0.3;
+          const impactBonus = Math.min(0.20, ((s.impact || 0) - 10) / 60);
+          const phdBonus = s.is_phd ? 0.20 : 0;
+          const traitBonus = s.trait_title === '卷王之王' ? 0.15 : 0;
+          const winRate = Math.max(0.18, Math.min(0.80, 0.35 + techBonus + impactBonus + phdBonus + traitBonus));
+          const pass = gameRandom() < winRate;
+
+          if (pass) {
+            return {
+              job_type: 'startup_founder',
+              company: 'YC AI Startup',
+              level: 'CEO & Founder',
+              tc: 8,
+              founder_stage: 'pre_seed',
+              company_valuation: 240,
+              founder_equity_pct: 93, // 7% standard YC deal
+              network: Math.min(100, (s.network || 0) + 15),
+              laid_off: false,
+              cash: needsO1 ? parseFloat((s.cash - 5 + 2).toFixed(1)) : parseFloat((s.cash + 2).toFixed(1)),
+              visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
+              message: '【入选 Y Combinator！】经过 10 分钟极其严苛的合伙人质询，你收到了 YC 的录取电话！斩获 $50w 标准孵化支票与强大校友网络，公司以 $240w 估值强势启航！'
+            };
+          } else {
+            return {
+              mid_year: true,
+              season_stage: 'h1',
+              leetcode: Math.min(100, s.leetcode + 3),
+              health: Math.max(0, s.health - 4),
+              message: '【收到 YC 拒信】在最终合伙人面试中，对方肯定了你的技术深度，但认为产品获客路径不够清晰。虽然未获录取，但面试复盘让你对系统设计有了更深刻的认知。'
+            };
+          }
+        },
+        nextEventId: (s: GameState) => s.job_type === 'startup_founder' ? 'founder_annual_strategy' : 'sv_year_end_settlement',
+      },
+      {
+        text: '【破釜沉舟·自掏腰包 Bootstrapping】自筹资金租车库与付云账单，以 100% 独资全自研起步',
+        costBadge: '自筹出资 $8w',
+        reqBadge: '需现金 >= $8w',
+        condition: (s) => s.cash >= 8,
+        effect: (s) => {
+          const needsO1 = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)';
+          const totalCost = needsO1 ? 12 : 8; // $8w bootstrap + $4w extra O1 if needed
+          return {
+            job_type: 'startup_founder',
+            company: '自研极客 Startup',
+            level: 'CEO & Founder',
+            tc: 4,
+            founder_stage: 'pre_seed',
+            company_valuation: 180,
+            founder_equity_pct: 100, // 100% un-diluted ownership!
+            laid_off: false,
+            cash: parseFloat((s.cash - totalCost).toFixed(1)),
+            visa: needsO1 ? 'O1 (杰出人才)' : s.visa,
+            message: needsO1
+              ? '【独资自研起步】你自掏积蓄自办 O-1 签证并在 Palo Alto 租下车库，自付云服务器与算力账单。虽然前期勒紧裤腰带，但你拥有公司 100% 绝对控制权与全部股权！'
+              : '【独资自研起步】你自掏 $8w 积蓄在 Palo Alto 租下车库，自付云服务器与算力账单。虽然前期勒紧裤腰带，但你拥有公司 100% 绝对控制权与全部股权！'
+          };
+        },
+        nextEventId: 'founder_annual_strategy',
+      },
+      {
+        text: '【暂缓创业·稳健求稳】评估风险后认为时机尚未成熟，继续留在原岗位深耕',
+        condition: () => true,
+        effect: (_s) => ({
+          mid_year: true,
+          season_stage: 'h1',
+          health: Math.min(100, _s.health + 2),
+          message: '【稳字当头】经过深思熟虑，你决定不打无准备之仗。继续在当前岗位深耕技术并领着稳定高薪，等待更好的创业契机。'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      }
+    ]
+  },
+
   'startup_crisis': {
     id: 'startup_crisis',
     title: '【初创危机】期权缩水与核心团队动荡',

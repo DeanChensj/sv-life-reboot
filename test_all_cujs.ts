@@ -4,7 +4,7 @@ import { COMPANY_PROFILES } from './src/data/companyProfiles';
 import { GameState, Choice } from './src/types';
 import { HOUSING_NAMES } from './src/constants/gameConstants';
 import { applyStateTransition } from './src/utils/stateTransitions';
-import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown } from './src/utils/gameStateSelectors';
+import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown, getAnnualCompensation } from './src/utils/gameStateSelectors';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
 import { setGameSeed, gameRandom } from './src/utils/random';
 import { determineEnding } from './src/utils/endings';
@@ -3337,6 +3337,74 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(blitzCash <= 1100, 'blitz-to-exit IPO stays near the old ~1050w baseline (FIRE-neutral)');
 
   console.log('✅ CUJ 62 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 63: Mid-Year Promotion & Job-Hop Prorated Compensation (50% H1 + 50% H2)
+// Verify that:
+// 1. When no promotion/hop occurs, getAnnualCompensation equals getTCBreakdown.
+// 2. When mid-year promotion occurs (e.g. 30w -> 40w), annual TC is 0.5*30 + 0.5*40 = 35w.
+// 3. When mid-year hop occurs (e.g. Google 30w 55/45 -> Meta 50w 40/60), base and RSU are 50/50 blended.
+// 4. Year-end settlement uses the prorated compensation and resets start-of-year baseline for next year.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 63] Mid-Year Promotion & Job-Hop Prorated Compensation ---');
+  const baseEngineer = {
+    ...generateInitialState(nextCujSeed()),
+    job_type: 'big_tech',
+    company: 'google',
+    tc: 30,
+    tc_start_of_year: 30,
+    cash: 10,
+    stocks: 20,
+    status: 'playing',
+  } as GameState;
+
+  // 1. Unchanged year: no proration, exact match
+  const compUnchanged = getAnnualCompensation(baseEngineer);
+  assert(!compUnchanged.isMidYearChange, 'unchanged year is not marked as mid-year change');
+  assert(compUnchanged.preTaxTC === 30, 'unchanged year earns full $30w TC');
+  assert(compUnchanged.preTaxBase === parseFloat((30 * 0.55).toFixed(2)), 'base is 55% of 30w');
+
+  // 2. Mid-year promotion: 30w -> 40w
+  const promotedEngineer: GameState = {
+    ...baseEngineer,
+    tc: 40,
+    tc_start_of_year: 30,
+  };
+  const compPromoted = getAnnualCompensation(promotedEngineer);
+  assert(compPromoted.isMidYearChange, 'promoted year is marked as mid-year change');
+  assert(compPromoted.startTc === 30 && compPromoted.endTc === 40, 'records startTc 30 and endTc 40');
+  assert(compPromoted.preTaxTC === 35, 'annual earned TC is prorated to 0.5*30 + 0.5*40 = $35w');
+  const expBase = parseFloat((0.5 * (30 * 0.55) + 0.5 * (40 * 0.55)).toFixed(2));
+  assert(compPromoted.preTaxBase === expBase, `base is 50/50 prorated to $${expBase}w`);
+  const expRSU = parseFloat((0.5 * (30 * 0.45) + 0.5 * (40 * 0.45)).toFixed(2));
+  assert(compPromoted.preTaxRSU === expRSU, `RSU is 50/50 prorated to $${expRSU}w`);
+
+  // 3. Mid-year job hop across companies with different comp splits (Google 55/45 -> Meta 40/60)
+  const hoppedEngineer: GameState = {
+    ...baseEngineer,
+    company: 'meta',
+    company_at_year_start: 'google',
+    tc: 50,
+    tc_start_of_year: 30,
+    is_new_job: true,
+  };
+  const compHopped = getAnnualCompensation(hoppedEngineer);
+  assert(compHopped.isMidYearChange, 'hop year is marked as mid-year change');
+  // Google H1: base = 30 * 0.55 = 16.5, RSU = 30 * 0.45 = 13.5
+  // Meta H2: base = 50 * 0.40 = 20.0, RSU = 50 * 0.60 = 30.0
+  const expHopBase = parseFloat((0.5 * 16.5 + 0.5 * 20.0).toFixed(2)); // 8.25 + 10.0 = 18.25
+  const expHopRSU = parseFloat((0.5 * 13.5 + 0.5 * 30.0).toFixed(2)); // 6.75 + 15.0 = 21.75
+  assert(compHopped.preTaxBase === expHopBase, `hopped preTaxBase is $${expHopBase}w`);
+  assert(compHopped.preTaxRSU === expHopRSU, `hopped preTaxRSU is $${expHopRSU}w`);
+
+  // 4. Settlement execution properly stores tc_start_of_year for next year
+  const settleChoice = events['sv_year_end_settlement'].choices[0];
+  const settleNext = applyStateTransition(promotedEngineer, settleChoice.effect(promotedEngineer), { eventId: 'sv_year_end_settlement' }).nextState;
+  assert(settleNext.tc_start_of_year !== undefined && settleNext.tc_start_of_year >= 40, 'next year start-of-year TC is updated to post-settlement TC (>=40w)');
+
+  console.log('✅ CUJ 63 Passed\n');
 }
 
 console.log(`\n======================================================`);

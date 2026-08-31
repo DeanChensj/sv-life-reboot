@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { GameState } from '../types';
-import { getTCBreakdown } from '../utils/gameStateSelectors';
+import { getAnnualCompensation } from '../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
 
@@ -14,7 +14,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   useFocusTrap(dialogRef);
   const isHomeowner = isOwnedHousing(gameState.housing_name);
   
-  const tcInfo = getTCBreakdown(gameState);
+  const tcInfo = getAnnualCompensation(gameState);
   const preTaxBase = tcInfo.preTaxBase;
   const preTaxRSU = tcInfo.preTaxRSU;
   const taxAmountNum = tcInfo.taxAmount;
@@ -165,6 +165,15 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
 
         {/* Detailed Financial Breakdown Table */}
         <div className="space-y-2.5 font-mono text-xs mb-6">
+          {tcInfo.isMidYearChange && (
+            <div className="px-3.5 py-2.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-[11px] font-mono flex items-center justify-between">
+              <span className="flex items-center gap-1.5 font-medium">
+                <svg className="w-3.5 h-3.5 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                年中职场变动折算 (各计半年)
+              </span>
+              <span className="font-bold tabular-nums">上半年 TC ${tcInfo.startTc.toFixed(1)}w + 下半年 TC ${tcInfo.endTc.toFixed(1)}w</span>
+            </div>
+          )}
           {preTaxBase > 0 && (
             <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
               <span className="text-zinc-400 flex items-center gap-2.5">

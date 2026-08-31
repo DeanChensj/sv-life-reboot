@@ -46,6 +46,13 @@ export function applyStateTransition(
     if ((prevState.visa === VISA_STATUS.F1 || !prevState.visa || prevState.visa === VISA_STATUS.NONE) && !normalizedEffect.visa) {
       normalizedEffect.visa = VISA_STATUS.OPT;
     }
+    // If entering the workforce for the first time (graduating student), initialize year-start baseline
+    if (prevState.job_type === undefined && prevState.tc_start_of_year === undefined && normalizedEffect.tc !== undefined) {
+      normalizedEffect.tc_start_of_year = normalizedEffect.tc;
+      normalizedEffect.company_at_year_start = normalizedEffect.company;
+      normalizedEffect.job_type_at_year_start = normalizedEffect.job_type;
+      normalizedEffect.laid_off_at_year_start = false;
+    }
   }
 
   // Green Card Reset Middleware (Job Hopping)

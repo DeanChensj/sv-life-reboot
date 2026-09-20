@@ -275,7 +275,8 @@ export const generateInitialState = (customSeed?: number): GameState => {
       cash = gameRandomInt(25, 50); // 25 - 50 万美元 (富裕家庭)
     }
     charm = gameRandomInt(1, 10); // 颜值 1-10
-    max_charm = Math.min(30, Math.max(15, charm + gameRandomInt(8, 14)));
+    // Floor at 22 so no player is genetically locked out of L7 (charm>=16) or L8 (charm>=20)
+    max_charm = Math.min(30, Math.max(22, charm + gameRandomInt(12, 16)));
     luck = gameRandomInt(0, 99);
 
     safeStorage.setItem(STORAGE_KEYS.INITIAL_SEED, JSON.stringify({ cash, charm, max_charm, luck, is_ssr_unlocked, seed }));

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { GameState } from '../types';
-import { getAnnualCompensation } from '../utils/gameStateSelectors';
+import { getAnnualCompensation, previewAnnualPerfReview } from '../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
 
@@ -13,6 +13,7 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   const dialogRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef);
   const isHomeowner = isOwnedHousing(gameState.housing_name);
+  const perfPreview = previewAnnualPerfReview(gameState);
   
   const tcInfo = getAnnualCompensation(gameState);
   const preTaxBase = tcInfo.preTaxBase;
@@ -26,8 +27,8 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   const postTaxIncome = postTaxIncomeNum.toFixed(1);
   const taxPct = Math.round(tcInfo.taxRate * 100); // real (progressive) rate, not a hardcoded 25%
   const rentalIncomeNum = gameState.rental_income || 0;
-  // Spouse income — MUST mirror settlement.ts so the预测 matches the actual year-end result.
-  const spouseIncomeNum = gameState.is_married
+  // Spouse income — MUST mirror settlement.ts so the预测 matches the actual year-end result (sham marriage pays $0).
+  const spouseIncomeNum = (gameState.is_married && gameState.partner_type !== 'sham')
     ? (gameState.partner_type === 'vc' ? 15 : gameState.partner_type === 'founder' ? 12 : gameState.partner_type === 'engineer' ? 10 : gameState.partner_type === 'artist' ? 3 : 6)
     : 0;
 
@@ -49,7 +50,8 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
   const carExpense = carExpenseNum.toFixed(1);
   const livingExpenseNum = 3.0;
   const livingExpense = livingExpenseNum.toFixed(1);
-  const petExpenseNum = gameState.has_pet ? 0.3 : 0;
+  const petCount = (gameState.has_dog ? 1 : 0) + (gameState.has_cat ? 1 : 0) || (gameState.has_pet ? 1 : 0);
+  const petExpenseNum = parseFloat((petCount * 0.3).toFixed(1));
   const petExpense = petExpenseNum.toFixed(1);
   // Bay Area cost-of-living inflation (2%/yr compounding off 2018, capped +80%) and Day 1 CPT tuition.
   const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (gameState.year || 2018) - 2018)));
@@ -82,39 +84,39 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
         </div>
 
         {/* Annual Performance Review Status Banner (when employed) */}
-        {gameState.story_flags?.last_perf_rating && (
+        {perfPreview.rating && (
           <div className={`p-3.5 rounded-2xl border mb-5 flex items-center justify-between text-xs font-mono backdrop-blur-xl ${
-            gameState.story_flags.last_perf_rating === 'EE'
+            perfPreview.rating === 'EE'
               ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
-              : gameState.story_flags.last_perf_rating === 'NI'
+              : perfPreview.rating === 'NI'
               ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 animate-pulse'
               : 'bg-sky-500/10 border-sky-500/30 text-sky-300'
           }`}>
             <div>
               <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">
-                ANNUAL PERFORMANCE REVIEW (年度绩效考评)
+                ANNUAL PERFORMANCE REVIEW (本年度绩效考评)
               </div>
               <div className="font-bold text-sm text-zinc-100">
-                {gameState.story_flags.last_perf_rating === 'EE'
+                {perfPreview.rating === 'EE'
                   ? 'Exceeds Expectations (卓越 · 顶格激励)'
-                  : gameState.story_flags.last_perf_rating === 'NI'
+                  : perfPreview.rating === 'NI'
                   ? 'Needs Improvement (待改进 · 亮起 PIP 预警)'
                   : 'Meets Expectations (符合预期 · 60分及格)'}
-                {typeof gameState.story_flags.last_perf_raise === 'number' && (
+                {typeof perfPreview.raise === 'number' && (
                   <span className="ml-1.5 font-normal opacity-90">
-                    {gameState.story_flags.last_perf_raise > 0 ? `· 调薪 +${gameState.story_flags.last_perf_raise.toFixed(1)}w TC` : '· 无调薪'}
+                    {perfPreview.raise > 0 ? `· 调薪 +${perfPreview.raise.toFixed(1)}w TC` : '· 无调薪'}
                   </span>
                 )}
               </div>
             </div>
             <span className={`px-2.5 py-1 rounded-full text-xs font-bold font-mono ${
-              gameState.story_flags.last_perf_rating === 'EE'
+              perfPreview.rating === 'EE'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                : gameState.story_flags.last_perf_rating === 'NI'
+                : perfPreview.rating === 'NI'
                 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
                 : 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
             }`}>
-              {gameState.story_flags.last_perf_rating}
+              {perfPreview.rating}
             </span>
           </div>
         )}

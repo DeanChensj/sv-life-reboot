@@ -115,6 +115,7 @@ export interface GameState {
   is_phd: boolean;
   is_master?: boolean;
   last_beauty_year?: number;
+  last_yacht_year?: number;
   season_stage?: 'h1' | 'h2';
   // 年度季度事件机的相位计数器 (resolveNextEventId 专用,与 season_stage 解耦):0/undefined=年初,
   // 1=H1 职场事件已放, 2=H2 生活事件已放 → 进结算。必须与 season_stage 分开,因为大量职场/再就业

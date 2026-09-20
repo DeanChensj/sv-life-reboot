@@ -87,8 +87,8 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
   const sanitizedStocks = typeof rawState.stocks === 'number' && !isNaN(rawState.stocks) ? Math.max(0, rawState.stocks) : 0;
   const sanitizedHealth = typeof rawState.health === 'number' && !isNaN(rawState.health) ? Math.max(0, Math.min(100, rawState.health)) : fallbackState.health;
   const sanitizedLeetcode = typeof rawState.leetcode === 'number' && !isNaN(rawState.leetcode) ? Math.max(0, Math.min(100, rawState.leetcode)) : 0;
-  // max_charm must be sanitized FIRST so it can safely serve as the charm ceiling.
-  const sanitizedMaxCharm = typeof rawState.max_charm === 'number' && !isNaN(rawState.max_charm) ? Math.max(15, Math.min(30, rawState.max_charm)) : (fallbackState.max_charm || 25);
+  // max_charm must be sanitized FIRST so it can safely serve as the charm ceiling (min 20 so L8 charm>=20 is never locked).
+  const sanitizedMaxCharm = typeof rawState.max_charm === 'number' && !isNaN(rawState.max_charm) ? Math.max(20, Math.min(30, rawState.max_charm)) : (fallbackState.max_charm || 25);
   const sanitizedCharm = typeof rawState.charm === 'number' && !isNaN(rawState.charm) ? Math.max(1, Math.min(sanitizedMaxCharm, rawState.charm)) : 10;
   const sanitizedNetwork = typeof rawState.network === 'number' && !isNaN(rawState.network) ? Math.max(0, Math.min(100, rawState.network)) : 10;
   const sanitizedTC = typeof rawState.tc === 'number' && !isNaN(rawState.tc) ? rawState.tc : 0;

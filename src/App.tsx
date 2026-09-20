@@ -227,10 +227,12 @@ export default function App() {
   useEffect(() => {
     const newlyUnlocked = checkAndUnlockAchievements(gameState);
     if (newlyUnlocked.length > 0) {
-      const ach = ACHIEVEMENTS.find(a => a.id === newlyUnlocked[0]);
-      if (ach) {
+      const titles = newlyUnlocked
+        .map(id => ACHIEVEMENTS.find(a => a.id === id)?.title)
+        .filter(Boolean);
+      if (titles.length > 0) {
         sound.play('achievement');
-        setAchievementToast(`[成就解锁] 恭喜获得隐藏成就：${ach.title}`);
+        setAchievementToast(`[成就解锁] 恭喜获得隐藏成就：${titles.join('、')}`);
         setTimeout(() => setAchievementToast(null), 4500);
       }
     }

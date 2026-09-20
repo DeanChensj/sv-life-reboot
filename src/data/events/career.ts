@@ -28,14 +28,33 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'interview_onsite_gauntlet_r1',
       },
       {
-        text: '【内推绿色通道 (Referral & 校友网络)】凭借资深人脉或名校/PhD 背书免初筛直通录用',
-        reqBadge: '需熟人人脉 或 名校/PhD 背景',
-        condition: (s) => ((s.network || 0) >= 30 && s.leetcode >= 35) || (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd,
+        text: '【内推绿色通道 (Referral & 校友/贵人网络)】凭借核心人脉、VC/高管盟友或名校/PhD 背书免初筛直通录用',
+        reqBadge: '需熟人人脉 / 结盟贵人 或 名校/PhD 背景',
+        condition: (s) =>
+          Boolean(s.story_flags?.linda_fast_track || s.story_flags?.linda_advisor || s.story_flags?.raj_ally || s.story_flags?.omniagent_advisor) ||
+          ((s.network || 0) >= 30 && s.leetcode >= 35) ||
+          (isTopTierCSSchool(s.school) && s.leetcode >= 45) ||
+          s.is_phd,
         effect: (s) => {
           const lvl = hopTargetLevel(s); // retain historical rank (max_level) — never demote a re-hired senior to L3/L4
+          const hasVipAlly = Boolean(s.story_flags?.linda_fast_track || s.story_flags?.linda_advisor || s.story_flags?.raj_ally || s.story_flags?.omniagent_advisor);
           const isElite = (isTopTierCSSchool(s.school) && s.leetcode >= 45) || s.is_phd;
 
-          if (isElite) {
+          if (hasVipAlly) {
+            const newTC = Math.max(s.tc + 4, getLevelScaledTC(30, lvl));
+            return {
+              tc: newTC,
+              laid_off: false,
+              cash: s.cash + 8,
+              stocks: (s.stocks || 0) + 6,
+              company: 'nvidia',
+              job_type: 'big_tech',
+              level: lvl,
+              health: Math.min(100, s.health + 6),
+              network: Math.min(100, (s.network || 10) + 6),
+              message: `【沙丘路 / 高管贵人直通】你拨通了当年结下的硅谷核心贵人电话！在 VC 合伙人 Linda 与高管盟友的亲自背书下，你免除了一切初筛，直接以 ${lvl} 核心骨干身份空降 Nvidia 核心组，斩获 $${newTC}w 总包、$8w 签字费与 $6w 首发股票！`,
+            };
+          } else if (isElite) {
             // 名校 / 博士校友黑手党路线：直通顶级大厂核心架构团队，享受顶格 Base TC + $8w 签字费
             const mafiaTargets = [
               { company: 'google', name: 'Google (Infra 核心架构组)', tcBoost: 28, healthDrain: 8, desc: '名校校友网络与硬核算法表现直接将你推进山景城 Googleplex 基础设施核心组！享受顶尖 WLB 与美味食堂，附赠 $8w 丰厚签字费！' },
@@ -141,8 +160,8 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【转型全职 Founder 科技创业】前往 Sand Hill Road 寻找 VC 融资开搞 Startup',
         reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
-        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'startup_founder',
-        effect: () => ({ mid_year: true, season_stage: 'h1' as const, message: '你带着商业计划书与技术原型，正式踏上硅谷天使轮路演与极客创业征程！' }),
+        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'startup_founder' && s.story_flags?.last_founder_pitch_year !== s.year,
+        effect: (s) => ({ mid_year: true, season_stage: 'h1' as const, story_flags: { ...(s.story_flags || {}), last_founder_pitch_year: s.year }, message: '你带着商业计划书与技术原型，正式踏上硅谷天使轮路演与极客创业征程！' }),
         nextEventId: 'founder_angel_pitch',
       }
     ]
@@ -1128,8 +1147,8 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【离职全职 AI/科技创业】拒绝大厂打工，前往 Sand Hill Road (沙丘路) 寻找 VC 融资',
         reqBadge: '需美籍/绿卡/O-1 或现金 >= $45w',
-        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
-        effect: () => ({ mid_year: true, season_stage: 'h1' as const, message: '你拒绝了稳健的大厂打工路，带着商业计划书与技术原型，踏上硅谷天使轮路演舞台！' }),
+        condition: (s) => ((s.visa === '绿卡' || s.visa === '公民' || s.visa === 'O1 (杰出人才)') || s.cash >= 45) && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && s.story_flags?.last_founder_pitch_year !== s.year,
+        effect: (s) => ({ mid_year: true, season_stage: 'h1' as const, story_flags: { ...(s.story_flags || {}), last_founder_pitch_year: s.year }, message: '你拒绝了稳健的大厂打工路，带着商业计划书与技术原型，踏上硅谷天使轮路演舞台！' }),
         nextEventId: 'founder_angel_pitch',
       },
 
@@ -2440,9 +2459,10 @@ export const careerEvents: Record<string, GameEvent> = {
           story_flags: {
             ...(s.story_flags || {}),
             alex_startup_invited: true,
-            omniagent_advisor: true
+            omniagent_advisor: true,
+            omniagent_start_year: s.year
           },
-          message: '你保持了大厂的稳定生活，并作为顾问为 Alex 介绍了多位大牛校友。Alex 依然视你为最信赖的技术智囊！'
+          message: '你保持了大厂的稳定生活，并作为顾问为 Alex 介绍了多位大牛校友。Alex 依然视你为最信赖的技术智囊，并为你授予了 0.5% 早期技术顾问干股 (Advisor Shares)！'
         }),
         nextEventId: 'sv_year_end_settlement'
       }
@@ -2534,6 +2554,29 @@ export const careerEvents: Record<string, GameEvent> = {
               message: '【投资失利】OmniAgent 算力耗尽清算倒闭，你的 $10w 天使投资打了水漂，交了一笔昂贵的硅谷天使学费。'
             };
           }
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【技术顾问干股兑现】兑现 Alex 承诺的 0.5% 早期外部顾问期权 (Advisor Shares)',
+        condition: (s) => !!s.story_flags?.omniagent_advisor,
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const hit = gameRandom() < 0.65;
+          return hit
+            ? {
+                cash: s.cash + 12,
+                stocks: (s.stocks || 0) + 8,
+                impact: addImpact(s, 6),
+                story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+                message: '【顾问干股变现！】OmniAgent 被科技巨头高价并购退出！Alex 博士重情重义，第一时间将你当年 0.5% 的早期技术顾问干股全额兑现为 $12w 现金支票与 $8w 大厂股票！',
+              }
+            : {
+                network: Math.min(100, (s.network || 10) + 8),
+                impact: addImpact(s, 4),
+                story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+                message: '【人情长存】虽然 OmniAgent 因算力烧穿最终仅作低价资产出售、顾问干股未能变现，但 Alex 专门在硅谷顶级 VC 群里盛赞你的架构指导，为你攒下了极高的业界口碑！',
+              };
         },
         nextEventId: 'sv_year_end_settlement'
       },
@@ -3513,6 +3556,107 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: h1ToH2Router,
       },
     ],
-  }
+  },
+
+  'npc_silicon_valley_inner_circle': {
+    id: 'npc_silicon_valley_inner_circle',
+    oncePerLife: true,
+    title: '【人脉变现】硅谷核心圈闭门私董会 (Inner Circle)',
+    description: '你在硅谷多年经营的人脉网络终于结出硕果！周五夜晚，你受邀出席位于 Atherton 庄园的私密高管与创投晚宴。昔日结识的 Director Raj、沙丘路合伙人 Linda 以及独角兽领袖们齐聚一堂，向你抛出了外界求之不得的内部资源：',
+    choices: [
+      {
+        text: '【联手 Director Raj 运作高管互相背书】打通跨大厂 VP 政治同盟，锁定特别晋升与调薪',
+        reqBadge: '需与 Raj 结盟 或 深厚人脉',
+        condition: (s) => Boolean(s.story_flags?.raj_ally || s.npcs?.raj?.status === 'ally' || (s.network || 0) >= 40),
+        effect: (s) => ({
+          tc: s.tc + 5,
+          impact: addImpact(s, 10),
+          network: Math.min(100, (s.network || 10) + 8),
+          health: Math.max(0, s.health - 4),
+          message: '【高管圈层互抬轿子】Raj 将你引荐给三位平级工程 VP，大家在雪茄房里达成了跨部门架构互助同盟！你的名字被列入高管重点提拔名单，总包与架构话语权双双跃升 (+$5w TC, Impact +10)！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【行使 VC Linda 顾问特权认购折价 Secondary】出资 $8w 拿内部 5 折准上市独角兽份额',
+        costBadge: '出资 $8w',
+        reqBadge: '需 Linda 顾问/通道 或 总资产 >= $12w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 8 && Boolean(s.story_flags?.linda_advisor || s.story_flags?.linda_fast_track || (s.cash + (s.stocks || 0)) >= 12),
+        effect: (s) => {
+          const liq = liquidateStocksToCover(s.cash - 8, (s.stocks || 0) + 20);
+          return {
+            cash: liq.cash,
+            stocks: liq.stocks,
+            network: Math.min(100, (s.network || 10) + 5),
+            message: '【沙丘路内部福利】Linda 微笑着替你签下内部员工老股转让协议：“这批份额外面溢价两倍都抢不到。” 你用 $8w 直接换回了估值 $20w 的准上市蓝筹股权 (净增值 +$12w)！',
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【与极客老友共推开源 AI 标准联盟】和 Alex / Sam 联名发布硅谷开源技术白皮书',
+        effect: (s) => ({
+          impact: addImpact(s, 8),
+          leetcode: Math.min(100, s.leetcode + 5),
+          network: Math.min(100, (s.network || 10) + 6),
+          health: Math.min(100, s.health + 4),
+          message: '【技术名望大涨】你们在晚宴露台上一拍即合，联手发布的 AI Infra 开源基准白皮书在 HackerNews 霸榜三天，你在硅谷华人极客圈声名远播 (Impact +8，人脉网络大幅拓展)！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
+  },
+
+  'npc_raj_rival_ambush': {
+    id: 'npc_raj_rival_ambush',
+    oncePerLife: true,
+    title: '【宿敌暗算】跨部门架构评审会上的老熟人狙击',
+    description: '当年你在部门大会上锋芒毕露抢走聚光灯、从而结下梁子的 Raj，如今已混成了跨组 Architecture Review 委员会的核心评委！面对你苦心筹备半年的晋升核心设计文档，Raj 笑眯眯地连抛三个刁钻的边界死锁问题，企图当着全司大佬的面将你的项目打回重做！',
+    choices: [
+      {
+        text: '【亮出压测底牌当场反杀】早料到他会发难，切出隐藏附录里的百万并发压测数据打脸',
+        reqBadge: '需 LeetCode >= 55 或 Impact >= 25',
+        condition: (s) => s.leetcode >= 55 || (s.impact || 0) >= 25,
+        effect: (s) => ({
+          impact: addImpact(s, 12),
+          tc: s.tc + 4,
+          charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
+          health: Math.max(0, s.health - 6),
+          npcs: {
+            ...(s.npcs || {}),
+            raj: { name: 'Raj', role: 'mentor', status: 'active', note: '试图在架构会狙击你，反被你的硬核压测数据折服' },
+          },
+          message: '【全场寂静·绝地反杀！】你从容翻到第 42 页备份 Slide，线上混沌工程的实测曲线把 Raj 的质疑堵得哑口无言！首席架构师当场鼓掌通过，Raj 尴尬赔笑，你的职场声望暴涨 (Impact +12, TC +$4w)！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【高情商捧杀 · 化敌为盟】当众夸赞 Raj 切中要害，会后约他喝威士忌利益交换结盟',
+        reqBadge: '需高情商魅力或深厚人脉',
+        condition: (s) => (s.charm || 0) >= 13 || (s.network || 0) >= 28,
+        effect: (s) => ({
+          impact: addImpact(s, 7),
+          network: Math.min(100, (s.network || 10) + 8),
+          story_flags: { ...(s.story_flags || {}), raj_rival: false, raj_ally: true },
+          npcs: {
+            ...(s.npcs || {}),
+            raj: { name: 'Raj', role: 'mentor', status: 'ally', note: '不打不相识，已与你化敌为友结成利益同盟' },
+          },
+          message: '【化敌为友】你在会上给足了 Raj 台阶，会后私下承诺将他的底层组件纳入二期规划。Raj 喜出望外，不仅一路绿灯放行，还彻底倒向你成为坚实的政治盟友！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【忍气吞声 · 按意见重写设计】好汉不吃眼前亏，认下刁难回去加班补齐文档',
+        effect: (s) => ({
+          impact: Math.max(0, (s.impact || 0) - 3),
+          leetcode: Math.min(100, s.leetcode + 4),
+          health: Math.max(0, s.health - 8),
+          message: '你咽下了这口闷气，连续两周熬夜重写了容灾模块才勉强过会。你深刻体会到：在硅谷大厂，得罪小人比写错代码麻烦得多。',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
+  },
 };
 

@@ -3911,6 +3911,66 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 70 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 71: L6+ Manager/IC Signature Events, Real Estate Crises & Dynamic NPC Network
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 71] L6+ Manager/IC Events, Real Estate Crises & Dynamic NPC Network ---');
+  const sBase = generateInitialState(nextCujSeed());
+
+  // 1. Verify all 3 L6+ Manager / Senior IC signature events exist and are oncePerLife
+  const l6Events = ['level_l6_em_headcount_war', 'level_l6_staff_architecture_veto', 'level_l6_poach_bidding_war'];
+  for (const id of l6Events) {
+    assert(events[id]?.oncePerLife === true, `L6+ event ${id} is registered with oncePerLife=true`);
+    const sL6: GameState = { ...sBase, job_type: 'big_tech', company: 'google', level: 'L6 (Staff)', tc: 65, impact: 40, leetcode: 70, network: 35, cash: 50, health: 80 };
+    const eff = events[id].choices[0].effect(sL6);
+    const trans = applyStateTransition(sL6, eff, { eventId: id });
+    assert(hasSeen(trans.nextState, id) === true, `${id} automatically stamps ${id}_seen`);
+    assert(trans.nextState.health > 0 && trans.nextState.cash >= 0, `${id} choice 0 preserves health/cash invariants`);
+  }
+
+  // 2. Verify all 3 Real Estate negative/crisis events exist and honor ally discount / asset liquidity
+  const propCrises = ['property_squatter_nightmare', 'property_bay_area_termites_storm', 'property_remote_landlord_trap'];
+  for (const id of propCrises) {
+    assert(events[id]?.oncePerLife === true, `Property crisis event ${id} is registered with oncePerLife=true`);
+  }
+  const landlordState: GameState = {
+    ...sBase,
+    has_housing: true,
+    housing_name: 'Sunnyvale 老破小',
+    has_adu_rented: true,
+    rental_income: 2.5,
+    investment_properties: ['Austin 远程独栋屋'],
+    cash: 1.0,
+    stocks: 20.0,
+    story_flags: { raj_ally: true },
+  };
+  const squatterEff = events['property_squatter_nightmare'].choices[0].effect(landlordState);
+  assert(squatterEff.cash === 0 && squatterEff.stocks === 19.5, 'Squatter legal defense charges $1.5w with Raj/Linda ally discount and auto-liquidates stocks when cash < cost');
+
+  // 3. Verify NPC Raj ally rescue choices in midlife_ageism_squeeze & org_ai_wipeout, plus omniagent_advisor IPO payout
+  const rajAllyState: GameState = {
+    ...sBase,
+    job_type: 'big_tech',
+    company: 'meta',
+    level: 'L6 (Staff)',
+    tc: 60,
+    story_flags: { raj_ally: true, omniagent_advisor: true },
+  };
+  const ageismRescue = events['midlife_ageism_squeeze'].choices.find(c => c.text.includes('Director Raj'));
+  assert(Boolean(ageismRescue && ageismRescue.condition?.(rajAllyState)), 'midlife_ageism_squeeze unlocks Director Raj rescue choice when raj_ally is true');
+  const rescueEff = ageismRescue!.effect(rajAllyState);
+  assert(!rescueEff.laid_off && (rescueEff.tc || 0) === 63, 'Director Raj rescue prevents layoff and grants +$3w TC');
+
+  const advisorExit = events['alex_omniagent_ipo_exit'].choices.find(c => c.text.includes('技术顾问干股兑现'));
+  assert(Boolean(advisorExit && advisorExit.condition?.(rajAllyState)), 'alex_omniagent_ipo_exit unlocks advisor shares exit when omniagent_advisor is true');
+
+  assert(events['npc_silicon_valley_inner_circle']?.oncePerLife === true, 'npc_silicon_valley_inner_circle registered with oncePerLife=true');
+  assert(events['npc_raj_rival_ambush']?.oncePerLife === true, 'npc_raj_rival_ambush registered with oncePerLife=true');
+
+  console.log('✅ CUJ 71 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

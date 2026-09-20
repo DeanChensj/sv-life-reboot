@@ -49,9 +49,6 @@ const KNOWN_UNREAD: Record<string, string> = {
   icu_legal_win: 'ICU 分支记录(法律维权),留作成就',
   icu_uninsured_hit: 'ICU 分支记录(裸奔),留作成就',
   icu_complication: 'ICU 裸奔后遗症记录,留作成就/未来慢性病',
-  linda_advisor: '顶层字段:Linda 投资顾问加成,留作未来消费',
-  linda_fast_track: '顶层字段:Linda pre-IPO 快车道,留作未来消费',
-  omniagent_advisor: '顶层字段:OmniAgent 顾问加成,留作未来消费',
 };
 
 const written = [...writes.keys()].sort();

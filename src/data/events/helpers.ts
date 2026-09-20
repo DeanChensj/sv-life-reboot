@@ -349,7 +349,7 @@ export const midYearEventRouter = (s: GameState): string => {
     }
 
     // 2) Alex 博士剧情链：OmniAgent 纳斯达克 IPO / 退出回报结算
-    if ((s.story_flags?.joined_omniagent || s.story_flags?.angel_invest_omniagent) && !s.story_flags?.alex_ipo_done && s.year >= (Number(s.story_flags.omniagent_start_year || 0) + 3)) {
+    if ((s.story_flags?.joined_omniagent || s.story_flags?.angel_invest_omniagent || s.story_flags?.omniagent_advisor) && !s.story_flags?.alex_ipo_done && s.year >= (Number(s.story_flags.omniagent_start_year || 0) + 3)) {
       return 'alex_omniagent_ipo_exit';
     }
 
@@ -513,6 +513,13 @@ export const midYearEventRouter = (s: GameState): string => {
          if (isEntryLvl && !sig.level_entry_grunt_work_seen && gameRandom() < 0.3) return 'level_entry_grunt_work';
          if (isSeniorLvl && !sig.level_senior_plateau_seen && gameRandom() < 0.3) return 'level_senior_plateau';
          if (isStaffPlusLvl && !sig.level_staff_glue_work_seen && gameRandom() < 0.3) return 'level_staff_glue_work';
+         if (isStaffPlusLvl && !sig.level_l6_em_headcount_war_seen && gameRandom() < 0.35) return 'level_l6_em_headcount_war';
+         if (isStaffPlusLvl && !sig.level_l6_staff_architecture_veto_seen && gameRandom() < 0.35) return 'level_l6_staff_architecture_veto';
+         if (isStaffPlusLvl && !sig.level_l6_poach_bidding_war_seen && gameRandom() < 0.35) return 'level_l6_poach_bidding_war';
+
+         // NPC 动态后续：Raj 宿敌架构评审狙击 & 硅谷核心圈闭门私董会（人脉变现）
+         if (sig.raj_rival && (isSeniorLvl || isStaffPlusLvl) && !sig.npc_raj_rival_ambush_seen && gameRandom() < 0.45) return 'npc_raj_rival_ambush';
+         if ((sig.raj_ally || sig.linda_advisor || sig.linda_fast_track || sig.omniagent_advisor || (s.network || 0) >= 45) && !sig.npc_silicon_valley_inner_circle_seen && gameRandom() < 0.35) return 'npc_silicon_valley_inner_circle';
 
          // 中后期身份抉择 (lateGameEvents.ts, T2 非破坏性)：中年 IC vs 管理，一局一次。
          if (s.age >= 34 && !sig.late_ic_vs_management_seen && gameRandom() < 0.3) return 'late_ic_vs_management';
@@ -806,6 +813,24 @@ export const midYearEventRouter = (s: GameState): string => {
   // (需 cash<1) 分支永不可选(死码);去掉现金门控后,现金拮据的房主才会真正面临这个两难。
   if (isHomeowner) {
     lifeEvents.push('property_supplemental_tax_hike');
+    if (!hasSeen(s, 'property_bay_area_termites_storm')) {
+      lifeEvents.push('property_bay_area_termites_storm', 'property_bay_area_termites_storm');
+    }
+  }
+
+  // 出租房 / ADU / 远程投资房反向爆雷事件（职业租霸拒付房租 & 物业跑路/地税暴涨）
+  const hasRentalProperty = Boolean(
+    s.has_adu_rented ||
+    (s.rental_income || 0) > 0 ||
+    (s.investment_properties && s.investment_properties.length > 0)
+  );
+  if (hasRentalProperty) {
+    if (!hasSeen(s, 'property_squatter_nightmare')) {
+      lifeEvents.push('property_squatter_nightmare', 'property_squatter_nightmare', 'property_squatter_nightmare');
+    }
+    if (!hasSeen(s, 'property_remote_landlord_trap')) {
+      lifeEvents.push('property_remote_landlord_trap', 'property_remote_landlord_trap', 'property_remote_landlord_trap');
+    }
   }
 
   if (s.cash >= 80 || s.tc >= 45) {

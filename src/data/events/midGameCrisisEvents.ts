@@ -40,6 +40,19 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
       },
       {
+        text: '【摇人破局：请盟友 Director Raj 跨部门收编庇护】(人脉底牌)',
+        reqBadge: '需与 Raj 结盟',
+        condition: (s) => employed(s) && Boolean(s.story_flags?.raj_ally || s.npcs?.raj?.status === 'ally'),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          tc: s.tc + 3,
+          impact: addImpact(s, 6),
+          health: Math.min(100, s.health + 4),
+          message: '【关键盟友救场！】你一个电话打给已是部门 Director 的老盟友 Raj。Raj 当天就向 HRBP 发函将你连人带 HC 调入他的核心架构部，不仅完美避开了年轻 VP 的清洗名单，还顺手给你提了一档薪资 (+$3w TC)！',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+      {
         text: '【体面拿钱离场】体面离场：拿赔偿走人，凭积蓄考虑转型或提前 FIRE',
         condition: employed,
         effect: (s) => ({
@@ -72,6 +85,21 @@ export const midGameCrisisEvents: Record<string, GameEvent> = {
             : { laid_off: true, tc: 0, job_type: 'unemployed', health: Math.max(0, s.health - 12), leetcode: Math.min(100, s.leetcode + 4), message: '内部转岗竞争惨烈，核心组只要顶尖选手。你没能挤进那扇窄门，最终还是随全组一起被裁——技术浪潮不等人。' };
         },
         nextEventId: (s) => s.laid_off ? 'job_hunt' : h1ToH2Router(s),
+      },
+      {
+        text: '【高管特批：找盟友 Raj 免试直通 AI 基建组】(人脉底牌)',
+        reqBadge: '需与 Raj 结盟',
+        condition: (s) => employed(s) && Boolean(s.story_flags?.raj_ally || s.npcs?.raj?.status === 'ally'),
+        hideIfUnavailable: true,
+        effect: (s) => ({
+          transferred_to_ai: true,
+          job_type: 'big_tech',
+          tc: s.tc + 2,
+          impact: addImpact(s, 6),
+          health: Math.max(0, s.health - 4),
+          message: '【早年香火情兑现！】当年和 Raj 喝过的 Chai 咖啡成了救命符！手握大批 AI 算力预算的 Director Raj 直接跳过内部转岗笔试，一纸特批把你收编进 AI Infra 核心组，原包保留还外加 +$2w 算力专项津贴！',
+        }),
+        nextEventId: h1ToH2Router,
       },
       {
         text: '【拿 N+2 赔偿体面离场】拿 N+2 赔偿，体面离场再战',

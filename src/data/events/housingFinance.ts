@@ -469,4 +469,140 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       },
     ],
   },
+
+  'property_squatter_nightmare': {
+    id: 'property_squatter_nightmare',
+    oncePerLife: true,
+    title: '【房东噩梦】加州职业租霸拒付房租与驱逐拉锯战',
+    description: '你出租的房屋遇上了精通加州租客保护法的“职业租霸 (Professional Squatter)”！对方交了首月押金后立刻断缴房租，不仅把你的房子挂上短租平台二房东牟利，甚至在小红书发帖炫耀“如何在湾区合法白住 12 个月还能倒拿房东搬家费”，而你的房贷地税分文不能少交！',
+    choices: [
+      {
+        text: '【聘请驱逐大律师硬刚】走加州 Unlawful Detainer 法庭强制驱逐并冻结其全美信用',
+        costBadge: '律师费 $3.0w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 3.0,
+        effect: (s) => {
+          const hasAllyHelp = Boolean(s.story_flags?.raj_ally || s.story_flags?.linda_advisor);
+          const cost = hasAllyHelp ? 1.5 : 3.0;
+          return {
+            ...deductAssets(s, cost),
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
+            health: Math.max(0, s.health - 6),
+            message: hasAllyHelp
+              ? '【人脉律所雷霆出击】多亏你的硅谷高管/投资人盟友引荐了顶级地产诉讼大状，不仅半价 ($1.5w) 极速拿下法警驱逐令，还把租霸送上了全美房东黑名单，顺利保住全部租金现金流！'
+              : '你斥资 $3.0w 聘请专业驱逐律师与县警长 (Sheriff) 强制清场！虽然耗费了律师费与精力，但彻底粉碎了租霸气焰，房子重新租给了背景干净的大厂双职工！',
+          };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【破财消灾 Cash for Keys】忍痛开出 $2.0w 支票“送瘟神”，买断租约立刻换锁',
+        costBadge: '花费 $2.0w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 2.0,
+        effect: (s) => ({
+          ...deductAssets(s, 2.0),
+          health: Math.max(0, s.health - 4),
+          message: '你强忍恶心当面递上 $2.0w 现金支票换取对方签字搬离。虽然咽下了一口恶气，但好歹在两周内收回了房屋控制权，避免了长达一年的空置失血。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【冲动上门断水断电换锁】自己拎着工具箱去换锁，与租霸正面肉搏对峙',
+        effect: (s) => ({
+          rental_income: Math.max(0, parseFloat(((s.rental_income || 0) - 0.8).toFixed(1))),
+          health: Math.max(0, s.health - 12),
+          message: '你周末气冲冲上门断电换锁，结果租霸熟练地拨打 911 报警控告你“非法自力驱逐 (Illegal Lockout)”！你不仅被警察警告训话，还被迫免除对方欠租才勉强结案，年租金收益缩水！',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+    ],
+  },
+
+  'property_bay_area_termites_storm': {
+    id: 'property_bay_area_termites_storm',
+    oncePerLife: true,
+    title: '【天灾人祸】大气河特大暴雨砸穿屋顶与老房白蚁危机',
+    description: '湾区连下三周“大气河 (Atmospheric River)”特大暴雨，后院 60 年树龄的红杉树轰然折断砸穿了屋顶！更糟的是，掀开木瓦后发现老木屋承重梁早已被加州白蚁蛀空，而房屋保险公司以“加州山火风灾赔付率过高、屋龄老化”为由拒绝全额理赔！',
+    choices: [
+      {
+        text: '【请持牌 GC 彻底换顶加固】斥资 $5.5w 更换全屋金属屋顶 + 帐篷熏蒸灭白蚁 (房屋增值)',
+        costBadge: '花费 $5.5w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 5.5,
+        effect: (s) => ({
+          ...deductAssets(s, 5.5),
+          stocks: (s.stocks || 0) + 3.5,
+          health: Math.min(100, s.health + 5),
+          message: '你咬牙请来硅谷持牌 General Contractor 给整栋房子罩上彩色大帐篷熏蒸白蚁，并换上了全新抗风金属屋顶。虽然花了 $5.5w，但全新屋顶让 Redfin 房屋估值立刻反涨 $3.5w，住得无比踏实！',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【看 YouTube 周末自己爬房顶 DIY】去 Home Depot 买油毡木板，连续三个周末自己叮当修房',
+        costBadge: '材料费 $1.2w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 1.2,
+        effect: (s) => ({
+          ...deductAssets(s, 1.2),
+          health: Math.max(0, s.health - 13),
+          message: '硅谷高薪工程师被迫进化成全能土木老哥！你顶着冷风在房顶打钉子、喷白蚁药，仅花 $1.2w 材料费就堵住了漏水，但腰酸背痛整整半个月直不起腰。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【拉蓝布防雨 + 申请灾后分期贷款】先盖塑料布救急，将修房账单摊入每年持有月供',
+        effect: (s) => ({
+          rent: parseFloat((s.rent + 0.5).toFixed(1)),
+          health: Math.max(0, s.health - 7),
+          message: '你在屋顶临时蒙上一层刺眼的蓝色防雨布，并申请了州政府低息修缮分期贷款。虽然没掏大笔现金，但每年的房屋固定月供负担上涨了 $0.5w。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+    ],
+  },
+
+  'property_remote_landlord_trap': {
+    id: 'property_remote_landlord_trap',
+    oncePerLife: true,
+    title: '【出租爆雷】代管物业跑路与地税保险暴涨连环劫',
+    description: '你的出租投资房遭遇连环黑天鹅：先是县政府重估导致房产税与房东保险暴涨 40%，紧接着委托的代管物业经理 (Property Manager) 虚报了一笔 $1.8w 的“中央空调更换账单”后直接卷款失联，租客因酷暑空调罢工威胁立刻退租！',
+    choices: [
+      {
+        text: '【飞往当地换空调 + 数字化自管】花 $2.5w 换新机组并收回自管，省下中介抽成提升净租',
+        costBadge: '花费 $2.5w',
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 2.5,
+        effect: (s) => ({
+          ...deductAssets(s, 2.5),
+          rental_income: parseFloat(((s.rental_income || 0) + 0.3).toFixed(1)),
+          health: Math.max(0, s.health - 7),
+          message: '你连夜飞过去重换高效能热泵空调，并接入 AI 电子租约平台亲自远程直管。踢掉吸血黑中介后，每年净租金流反而额外增加了 +$0.3w！',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【割肉甩卖出租物业 · 回防美股大盘】受够了当跨州水电工，将问题物业折价套现买入指数',
+        condition: (s) => Boolean((s.investment_properties && s.investment_properties.length > 0) || s.has_adu_rented),
+        effect: (s) => {
+          const props = s.investment_properties || [];
+          const hasRemote = props.length > 0;
+          const nextProps = hasRemote ? props.slice(0, -1) : props;
+          return {
+            cash: s.cash + (hasRemote ? 18 : 8),
+            investment_properties: nextProps,
+            has_adu_rented: hasRemote ? s.has_adu_rented : false,
+            rental_income: Math.max(0, parseFloat(((s.rental_income || 0) - 1.2).toFixed(1))),
+            health: Math.min(100, s.health + 10),
+            message: '【无房一身轻】你果断将折腾人的出租物业挂牌套现，收回流动本金直接定投 QQQ/VOO。再也不用半夜接通马桶电话了，睡眠质量瞬间拉满！',
+          };
+        },
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
+        text: '【免租两个月安抚租客凑合修】让租客自己找廉价维修工对付，以租金缩水换省心',
+        effect: (s) => ({
+          rental_income: Math.max(0, parseFloat(((s.rental_income || 0) - 0.5).toFixed(1))),
+          health: Math.max(0, s.health - 5),
+          message: '你答应免去租客两个月房租让其自行找 Handyman 修补。虽然保住了租约，但地税上涨加上租金打折让你的被动现金流缩水了 $0.5w/年。',
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+    ],
+  },
 };

@@ -84,12 +84,12 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={totalAssets >= 10 || gameState.rent <= 0 || isHomeowner}
+                disabled={totalAssets >= 10 || gameState.rent <= 0 || isHomeowner || !gameState.car || gameState.car === 'none'}
                 onClick={() => onBuy({ rent: 0, housing_name: '特斯拉 睡车顶', health: Math.max(10, gameState.health - 10) }, '你把睡袋塞进了车后备箱。虽然每天去健身房洗澡极其硬核，但成功将房租消耗砍到了 $0！')}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-zinc-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed group col-span-1 sm:col-span-2"
               >
                 <div className="font-bold text-zinc-400">【挂壁退租】退租搬进特斯拉睡车顶 (房租归零)</div>
-                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法退租' : '要求：总资产 < $10w 且当前有房租。健康大幅下降。'}</div>
+                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法退租' : (!gameState.car || gameState.car === 'none') ? '需先拥有一辆座驾才能睡车里' : '要求：总资产 < $10w 且拥有座驾。健康大幅下降。'}</div>
               </button>
             </div>
           </section>
@@ -326,34 +326,58 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={totalAssets < 5 || gameState.charm < 8}
+                disabled={totalAssets < 5 || gameState.charm < 8 || gameState.last_yacht_year === gameState.year}
                 onClick={() => {
                   const success = gameRandom() > 0.5; // seeded PRNG for reproducibility (was Math.random)
                   if (success) {
                     if (gameState.laid_off || gameState.job_type === 'unemployed') {
                       onBuy({ 
                         cash: gameState.cash - 5, 
+                        last_yacht_year: gameState.year,
                         job_type: 'startup', 
                         company: 'star_startup', 
                         laid_off: false, 
                         tc: 20, 
+                        network: Math.min(100, (gameState.network || 10) + 5),
                         charm: Math.min(maxCharm, gameState.charm + 2) 
                       }, '你在游艇派对上认识了顶级风投大佬，对方直接推荐你入职他们领投的明星独角兽 (TC $20w)！成功重返职场！');
+                    } else if (gameState.job_type === 'trader') {
+                      onBuy({
+                        cash: gameState.cash - 5,
+                        last_yacht_year: gameState.year,
+                        stocks: (gameState.stocks || 0) + 12,
+                        network: Math.min(100, (gameState.network || 10) + 5),
+                        charm: Math.min(maxCharm, gameState.charm + 2)
+                      }, '你在游艇派对上结识了华尔街与沙丘路资本大佬，拿到第一手机构建仓阿尔法情报，投资组合大赚 +$12w！');
+                    } else if (gameState.job_type === 'startup_founder') {
+                      onBuy({
+                        cash: gameState.cash - 5,
+                        last_yacht_year: gameState.year,
+                        company_valuation: (gameState.company_valuation || 180) + 80,
+                        network: Math.min(100, (gameState.network || 10) + 6),
+                        charm: Math.min(maxCharm, gameState.charm + 2)
+                      }, '你在游艇派对上结识了沙丘路顶级风投合伙人，当场敲定追加战略跟投，公司估值飙升 +$80w！');
                     } else {
                       onBuy({ 
                         cash: gameState.cash - 5, 
+                        last_yacht_year: gameState.year,
                         tc: gameState.tc + 5, 
+                        network: Math.min(100, (gameState.network || 10) + 5),
                         charm: Math.min(maxCharm, gameState.charm + 2) 
-                      }, '你在游艇派对上认识了顶级风投大佬，对方一高兴直接把你塞进了他们刚投的明星公司，总包大涨！');
+                      }, '你在游艇派对上认识了顶级风投大佬与高管 Sponsor，对方强力举荐你拿到了保留津贴，总包与人脉大涨！');
                     }
                   } else {
-                    onBuy({ cash: gameState.cash - 5, health: Math.max(0, gameState.health - 10) }, '去游艇派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。');
+                    onBuy({ cash: gameState.cash - 5, last_yacht_year: gameState.year, health: Math.max(0, gameState.health - 10) }, '去游艇派对当了气氛组，钱花了，酒喝多了，什么实质性人脉都没捞到。');
                   }
                 }}
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-purple-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-purple-400 transition-colors">【游艇社交】高端游艇派对人脉局</div>
-                <div className="text-xs text-zinc-500 mt-1">入场费: $5w | 高风险高回报：可能结识大佬涨 TC，也可能白扔钱扣健康。</div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {gameState.last_yacht_year === gameState.year
+                    ? '本年度已参加游艇派对 (每年限 1 次)'
+                    : '入场费: $5w (每年限 1 次) | 可能结识大佬涨 TC/估值/人脉，也可能白扔钱扣健康。'}
+                </div>
               </button>
 
               <button

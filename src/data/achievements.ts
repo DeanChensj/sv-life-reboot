@@ -297,7 +297,7 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('stanford_professor')) newlyUnlocked.push('stanford_professor');
   }
 
-  if (state.status === 'win' && (state.trait_title === '家里有矿' || state.parents_helped_house)) {
+  if (state.status === 'win' && state.age <= 35 && (state.trait_title === '家里有矿' || state.parents_helped_house)) {
     if (unlockAchievement('rich_family_fire')) newlyUnlocked.push('rich_family_fire');
   }
 
@@ -351,7 +351,7 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('cats_and_dogs')) newlyUnlocked.push('cats_and_dogs');
   }
 
-  if (state.company !== 'icc' && state.story_flags?.icc_hired) {
+  if (state.company && state.company !== 'icc' && !state.laid_off && state.job_type !== 'unemployed' && state.story_flags?.icc_hired) {
     if (unlockAchievement('icc_survivor')) newlyUnlocked.push('icc_survivor');
   }
 

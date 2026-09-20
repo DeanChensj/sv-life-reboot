@@ -440,3 +440,66 @@ export function getAnnualCompensation(state: GameState): AnnualCompensationResul
     endTc: state.tc,
   };
 }
+
+/**
+ * Computes the current year's Performance Review rating (EE / ME / NI) and expected raise
+ * BEFORE year-end settlement runs, so YearEndStatementModal displays THIS year's review
+ * rather than last year's stale `story_flags.last_perf_rating`.
+ */
+export function previewAnnualPerfReview(s: GameState): { rating?: 'EE' | 'ME' | 'NI'; raise?: number } {
+  const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && s.company !== 'icc';
+  if (!isEmployee) {
+    // Reference persisted flags for story_flags hygiene check
+    void s.story_flags?.last_perf_rating;
+    void s.story_flags?.last_perf_raise;
+    return { rating: undefined, raise: undefined };
+  }
+
+  const action = s.story_flags?.annual_action;
+  const coasting = action === 'wlb' || action === 'transfer';
+  const deliveredThisYear = (s.impact || 0) > (s.impact_ytd_base ?? 0) + 0.001;
+  const justPromoted = s.last_promo_age === s.age;
+  const isKingOfRoll = s.trait_title === '卷王之王';
+
+  // Deterministic hash roll keyed on seed + year + age so UI preview matches current year state
+  const h = (((s.seed || 42) ^ ((s.year || 2018) * 2654435761) ^ ((s.age || 22) * 1597334677)) >>> 0) / 4294967296;
+
+  let rating: 'EE' | 'ME' | 'NI';
+  if (justPromoted || (!coasting && deliveredThisYear && ((s.impact || 0) >= 12 || isKingOfRoll))) {
+    rating = 'EE';
+  } else if ((s.story_flags?.pip_warning && h < 0.5) || (s.health < 25 && (s.impact || 0) < 6 && h < 0.35)) {
+    rating = 'NI';
+  } else {
+    rating = 'ME';
+  }
+
+  const maxCapByLevel: Record<string, number> = {
+    'L3': 24,
+    'L4': 34,
+    'L5 (Senior)': 52,
+    'L6 (Staff)': 78,
+    'L7 (Senior Staff)': 120,
+    'L8 (Principal)': 220,
+  };
+  const norm = normalizeLevel(s.level, s);
+  const curLevelKey = norm || (s.is_phd ? 'L4' : 'L3');
+  const levelCap = maxCapByLevel[curLevelKey] || 55;
+  const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60);
+  const raiseTo = (amt: number) => Math.max(s.tc, Math.min(levelCap, parseFloat((s.tc + amt).toFixed(1))));
+  const econ = s.macro_economy || 'neutral';
+
+  let updatedTC = s.tc;
+  if (rating === 'EE') {
+    const baseRefresh = econ === 'bull' ? 3.0 : econ === 'bear' ? 1.0 : 2.0;
+    updatedTC = raiseTo(parseFloat((baseRefresh * impactAmtMult).toFixed(1)));
+  } else if (rating === 'ME') {
+    const baseRefresh = econ === 'bull' ? 1.5 : econ === 'bear' ? 0.5 : 1.0;
+    updatedTC = raiseTo(parseFloat((baseRefresh * Math.min(1.0, impactAmtMult)).toFixed(1)));
+  }
+
+  return {
+    rating,
+    raise: parseFloat((updatedTC - s.tc).toFixed(1)),
+  };
+}
+

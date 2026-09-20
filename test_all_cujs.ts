@@ -4,8 +4,9 @@ import { COMPANY_PROFILES } from './src/data/companyProfiles';
 import { GameState, Choice } from './src/types';
 import { HOUSING_NAMES } from './src/constants/gameConstants';
 import { applyStateTransition } from './src/utils/stateTransitions';
-import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown, getAnnualCompensation } from './src/utils/gameStateSelectors';
+import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown, getAnnualCompensation, previewAnnualPerfReview } from './src/utils/gameStateSelectors';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
+import { safeStorage } from './src/utils/safeStorage';
 import { setGameSeed, gameRandom } from './src/utils/random';
 import { determineEnding } from './src/utils/endings';
 import { normalizeLevel, getLevelRank } from './src/data/levelProfiles';
@@ -3852,6 +3853,62 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert((boot2.company_valuation || 0) > 200, `raising lifts the unfunded cap (got $${boot2.company_valuation}w)`);
 
   console.log('✅ CUJ 69 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 70: Perf Review live preview, max_charm L8 eligibility, dual-pet stacking & achievement guards
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 70] Perf Review live preview, max_charm L8 floor, dual-pet stacking & achievement guards ---');
+  const sBase = generateInitialState(nextCujSeed());
+
+  // 1. max_charm floor guarantees every player can reach L8 (charm >= 20)
+  for (let k = 0; k < 50; k++) {
+    const sample = generateInitialState(1000 + k);
+    assert((sample.max_charm || 0) >= 22, `generateInitialState max_charm >= 22 so L8 charm>=20 is never genetically locked (got ${sample.max_charm})`);
+  }
+  const migratedLow = migrateSaveData({ version: 2, gameState: { ...sBase, max_charm: 15, charm: 15 } });
+  assert((migratedLow.gameState.max_charm || 0) >= 20, `migrateSaveData upgrades legacy max_charm<20 to >=20 (got ${migratedLow.gameState.max_charm})`);
+
+  // 2. previewAnnualPerfReview computes THIS year's live rating rather than lagging on last year's story_flags.last_perf_rating
+  const wlbState: GameState = {
+    ...sBase,
+    job_type: 'big_tech',
+    company: 'google',
+    level: 'L5 (Senior)',
+    tc: 42,
+    age: 28,
+    last_promo_age: 25,
+    impact: 20,
+    impact_ytd_base: 20,
+    story_flags: { last_perf_rating: 'EE', annual_action: 'wlb' },
+  };
+  const liveWlb = previewAnnualPerfReview(wlbState);
+  assert(liveWlb.rating === 'ME', `WLB year previews ME immediately even when prior year was EE (got ${liveWlb.rating})`);
+  const promoYearState: GameState = { ...wlbState, last_promo_age: 28, story_flags: { last_perf_rating: undefined } };
+  assert(previewAnnualPerfReview(promoYearState).rating === 'EE', 'First-year promoted employee previews EE before settlement runs');
+  const unemployedState: GameState = { ...wlbState, laid_off: true, job_type: 'unemployed' };
+  assert(previewAnnualPerfReview(unemployedState).rating === undefined, 'Unemployed player does not display stale corporate Perf Review banner');
+
+  // 3. Dual pets (dog + cat) stack annual health (+4) and expense ($0.6w)
+  const settleChoice = events['sv_year_end_settlement'].choices[0];
+  const onePet: GameState = { ...sBase, job_type: 'big_tech', company: 'meta', level: 'L4', tc: 30, cash: 50, health: 60, has_pet: true, has_dog: true, year: 2018 };
+  const twoPets: GameState = { ...onePet, has_cat: true };
+  const res1 = settleChoice.effect(onePet);
+  const res2 = settleChoice.effect(twoPets);
+  assert((res2.health || 0) === (res1.health || 0) + 2, `Adopting second pet adds +2 annual health (1 pet: ${res1.health}, 2 pets: ${res2.health})`);
+  assert(parseFloat(((res1.cash || 0) - (res2.cash || 0)).toFixed(1)) === 0.3, `Adopting second pet adds $0.3w annual expense`);
+
+  // 4. ICC crackdown / unemployment does NOT falsely unlock icc_survivor; rich_family_fire enforces age <= 35
+  safeStorage.removeItem('sv_life_achievements');
+  const iccLaidOff = checkAndUnlockAchievements({ ...sBase, company: undefined, laid_off: true, job_type: 'unemployed', story_flags: { icc_hired: true } });
+  assert(!iccLaidOff.includes('icc_survivor'), 'Being laid off / raided from ICC (company=undefined) must not unlock icc_survivor');
+  const lateRichFire = checkAndUnlockAchievements({ ...sBase, status: 'win', age: 42, trait_title: '家里有矿' });
+  assert(!lateRichFire.includes('rich_family_fire'), 'rich_family_fire requires age <= 35');
+  const earlyRichFire = checkAndUnlockAchievements({ ...sBase, status: 'win', age: 33, trait_title: '家里有矿' });
+  assert(earlyRichFire.includes('rich_family_fire'), 'rich_family_fire unlocks when age <= 35');
+
+  console.log('✅ CUJ 70 Passed\n');
 }
 
 console.log(`\n======================================================`);

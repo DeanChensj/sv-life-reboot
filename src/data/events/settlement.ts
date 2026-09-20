@@ -71,7 +71,8 @@ export const settlementEvents: Record<string, GameEvent> = {
 
            const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
            const livingExpense = 3.0;
-           const petExpense = s.has_pet ? 0.3 : 0;
+           const petCount = (s.has_dog ? 1 : 0) + (s.has_cat ? 1 : 0) || (s.has_pet ? 1 : 0);
+           const petExpense = parseFloat((petCount * 0.3).toFixed(1));
            // 湾区生活成本通胀：以 2018 为基准 ~2%/年复利、封顶 +80%。engaged 玩家靠 merit/晋升涨薪跑赢，
            // 躺平(TC 停滞)玩家被持续上涨的物价蚕食 —— 与 impact 机制协同，制造「趁早 FIRE、别拖」的压力。
            // 不影响 FIRE 目标与 TC 档,只作用于每年生活开销。
@@ -190,7 +191,8 @@ export const settlementEvents: Record<string, GameEvent> = {
              companyMsg = ' 【休假恢复】充沛的休息与离职休假让你的身心彻底康复大复活 (健康 +15)。';
            }
            
-           const petHealthBoost = s.has_pet ? 2 : 0;
+           const petHealthBoost = petCount * 2;
+           const carSleepHealthHit = s.housing_name === '特斯拉 睡车顶' ? 4 : 0;
 
            // Day 1 CPT 学业负担:白天全职写代码、晚上/周末应付水硕课程与作业,精力被持续透支 (健康 -4)。
            let day1CptHealthHit = 0;
@@ -200,7 +202,7 @@ export const settlementEvents: Record<string, GameEvent> = {
              day1CptMsg = ` 【Day 1 CPT 学业维持】为保住合法学生身份，你缴纳了 $1.2w 学费，并挤出精力应付课程与作业 (健康 -4)。`;
            }
 
-           let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost - day1CptHealthHit));
+           let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost - day1CptHealthHit - carSleepHealthHit));
            let gcMsg = '';
 
            if (s.visa === '绿卡' || s.visa === '公民' || s.gc_progress >= 5) {

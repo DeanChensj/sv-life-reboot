@@ -110,6 +110,15 @@ export interface GameState {
   is_new_job?: boolean; // Flag to indicate a job hop happened
   is_ssr_unlocked?: boolean; // 8% random roll for SSR Native US Citizen trait
   gc_stage?: 'not_started' | 'perm_processing' | 'perm_audit' | 'i140_processing' | 'i140_rfe' | 'i140_approved' | 'waiting_pd' | 'i485_pending' | 'approved';
+  // ---- 动态排期 (Dynamic Visa Bulletin) ----
+  // priority_date: PD，以游戏 `year` 为单位（可带小数），在 PERM 启动 / 直递 I-140 时锁定；跳槽重置 PERM 时清空。
+  priority_date?: number;
+  // eb_category: 当前走的职业移民类别。O-1/PhD 直递 → 'eb1'(快车道，不排表 A)；普通 PERM → 'eb2'；
+  // 可在 pd_waiting_strategy 面板降级为 'eb3' 或自请 NIW/EB-1A 升为 'eb1'。
+  eb_category?: 'eb1' | 'eb2' | 'eb3';
+  // visa_bulletin: 当前 Visa Bulletin 表 A 的 cutoff（中国大陆出生 EB-2 / EB-3），同样以游戏 year 为单位。
+  // 由年终结算按宏观周期 + 随机前进/倒退推进；缺省时按 (year - 初始积压) 懒初始化（兼容旧存档）。
+  visa_bulletin?: { eb2: number; eb3: number };
   has_us_degree: boolean;
   school: string;
   is_phd: boolean;

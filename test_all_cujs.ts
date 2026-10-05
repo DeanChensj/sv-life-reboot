@@ -11,6 +11,7 @@ import { setGameSeed, gameRandom } from './src/utils/random';
 import { determineEnding } from './src/utils/endings';
 import { normalizeLevel, getLevelRank } from './src/data/levelProfiles';
 import { resolveTradeRegime } from './src/data/events/trading';
+import { initVisaBulletin, advanceVisaBulletin, hasPdStrategyLever } from './src/utils/visaBulletin';
 
 console.log('🚀 === STARTING SV LIFE REBOOT FULL CUJ INTEGRATION SUITE ===\n');
 
@@ -4085,6 +4086,168 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   assert(r6.h1b_tenure === 6 && r6.message.includes('6年大限豁免'), 'AC21 exemption banner fires once when crossing tenure 6');
 
   console.log('✅ CUJ 72 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 73: Dynamic Visa Bulletin (动态排期).
+// ① bulletin advances every settlement, bounded (≤ year, ≥ year-9), mean ≈ 0.9 yr/yr;
+// ② PERM start locks priority_date/eb_category; ③ I-140 approval → waiting_pd when the
+// cutoff is behind the PD, → i485_pending once the cutoff passes it; ④ PhD/O-1 ride the
+// EB-1 fast lane; ⑤ job hop PERM reset restarts the PD; ⑥ pd_waiting_strategy levers:
+// EB-2→EB-3 downgrade only inside a window, NIW self-petition can move to EB-1, PD never
+// changes; ⑦ router injects the panel only for waiting_pd + lever + cooldown; ⑧ HUD
+// selector exposes a bulletin summary; ⑨ legacy saves without the new fields still settle.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 73] Dynamic Visa Bulletin: PD lock, waiting_pd, levers, HUD, legacy ---');
+  const settlementEv = events['sv_year_end_settlement'];
+  const yearEndChoice = settlementEv.choices[0];
+  const runSettlement = (s: GameState) => applyStateTransition(s, yearEndChoice.effect(s), { eventId: 'sv_year_end_settlement' }).nextState;
+
+  // ① bulletin dynamics
+  {
+    let total = 0; let n = 0;
+    for (let k = 0; k < 20; k++) {
+      setGameSeed(nextCujSeed());
+      let vb = initVisaBulletin(2020);
+      let yr = 2020;
+      for (let i = 0; i < 15; i++) {
+        const step = advanceVisaBulletin({ year: yr, visa_bulletin: vb }, i % 3 === 0 ? 'bull' : i % 3 === 1 ? 'bear' : 'neutral');
+        assert(step.next.eb2 <= yr && step.next.eb3 <= yr, 'bulletin cutoff never exceeds the current year');
+        assert(step.next.eb2 >= yr - 9 && step.next.eb3 >= yr - 9, 'bulletin cutoff never retrogresses beyond 9 years');
+        total += step.delta.eb2; n++;
+        vb = step.next; yr++;
+      }
+    }
+    const mean = total / n;
+    assert(mean > 0.6 && mean < 1.2, `EB-2 mean advance ≈ 0.9 yr/yr (got ${mean.toFixed(2)})`);
+  }
+
+  const baseH1b: GameState = {
+    ...generateInitialState(nextCujSeed()),
+    age: 28, year: 2021, visa: 'H1B (工签)', h1b_tenure: 1, h1b_attempts: 1,
+    gc_stage: 'not_started', gc_progress: 0,
+    job_type: 'big_tech', company: 'google', tc: 35, cash: 20, stocks: 10, win_threshold: 500, laid_off: false,
+  } as GameState;
+
+  // ② PERM start locks the PD
+  let permStarted: GameState | null = null;
+  for (let i = 0; i < 30 && !permStarted; i++) {
+    setGameSeed(nextCujSeed());
+    const r = runSettlement(baseH1b);
+    if (r.gc_stage === 'perm_processing') permStarted = r;
+  }
+  assert(!!permStarted, 'PERM eventually starts for a big-tech H-1B');
+  assert(permStarted!.priority_date === 2021 && permStarted!.eb_category === 'eb2', 'PERM start locks priority_date = year and eb_category = eb2');
+  assert(!!permStarted!.visa_bulletin && typeof permStarted!.visa_bulletin.eb2 === 'number', 'settlement persists visa_bulletin');
+  assert(permStarted!.message.includes('Priority Date 锁定为'), 'PERM start message announces the locked PD');
+
+  // ③ I-140 approved, cutoff behind PD → waiting_pd; cutoff ahead → I-485
+  const approvedBehind: GameState = {
+    ...baseH1b, year: 2024, gc_stage: 'i140_approved', gc_progress: 3, priority_date: 2021, eb_category: 'eb2',
+    visa_bulletin: { eb2: 2016, eb3: 2015.5 },
+  } as GameState;
+  setGameSeed(nextCujSeed());
+  const rBehind = runSettlement(approvedBehind);
+  assert(rBehind.gc_stage === 'waiting_pd', 'I-140 approved with cutoff behind PD → waiting_pd');
+  assert((rBehind.gc_progress || 0) >= 3 && (rBehind.gc_progress || 0) < 4.5, 'waiting_pd gauge stays within [3, 4.5)');
+  assert(rBehind.message.includes('表 A') && rBehind.message.includes('PD'), 'waiting_pd settlement log reports table A vs PD');
+  assert(rBehind.priority_date === 2021 && rBehind.eb_category === 'eb2', 'waiting does not mutate PD / category');
+
+  const waitingAhead: GameState = { ...approvedBehind, gc_stage: 'waiting_pd', visa_bulletin: { eb2: 2023.5, eb3: 2020 } } as GameState;
+  setGameSeed(nextCujSeed());
+  const rAhead = runSettlement(waitingAhead);
+  assert(rAhead.gc_stage === 'i485_pending' && rAhead.gc_progress === 4.5, 'waiting_pd files I-485 once the cutoff passes the PD');
+
+  // EB-3 downgraded player is judged on the EB-3 table
+  const eb3Waiting: GameState = { ...waitingAhead, eb_category: 'eb3', visa_bulletin: { eb2: 2016, eb3: 2022 } } as GameState;
+  setGameSeed(nextCujSeed());
+  assert(runSettlement(eb3Waiting).gc_stage === 'i485_pending', 'EB-3 category is judged against the EB-3 cutoff');
+
+  // ④ EB-1 fast lane
+  const phdApproved: GameState = { ...approvedBehind, is_phd: true, eb_category: 'eb1' } as GameState;
+  let phdFiled = 0;
+  for (let i = 0; i < 40; i++) { setGameSeed(nextCujSeed()); if (runSettlement(phdApproved).gc_stage === 'i485_pending') phdFiled++; }
+  assert(phdFiled >= 15, `EB-1 fast lane files I-485 without a bulletin wait (${phdFiled}/40)`);
+
+  // ⑤ hop PERM reset restarts the PD
+  const midPerm: GameState = { ...baseH1b, year: 2023, gc_stage: 'i140_processing', gc_progress: 2, priority_date: 2021, eb_category: 'eb2' } as GameState;
+  const hopped = applyStateTransition(midPerm, { is_new_job: true, company: 'meta', job_type: 'big_tech', tc: 45 }, { eventId: 'job_hop_market' }).nextState;
+  assert(hopped.gc_stage === 'perm_processing' && hopped.priority_date === 2023, 'hop before I-140 approval resets PD to the hop year');
+  const lockedHop = applyStateTransition({ ...midPerm, gc_stage: 'waiting_pd', gc_progress: 3.5 } as GameState, { is_new_job: true, company: 'meta', job_type: 'big_tech', tc: 45 }, { eventId: 'job_hop_market' }).nextState;
+  assert(lockedHop.gc_stage === 'waiting_pd' && lockedHop.priority_date === 2021, 'hop after I-140 approval keeps the PD');
+
+  // ⑥ levers
+  const stratEv = events['pd_waiting_strategy'];
+  assert(!!stratEv && stratEv.choices.length === 4, 'pd_waiting_strategy exists with 4 choices');
+  const downgrade = stratEv.choices.find(c => c.text.includes('EB-3 降级'))!;
+  const upgradeBack = stratEv.choices.find(c => c.text.includes('升回 EB-2'))!;
+  const niw = stratEv.choices.find(c => c.text.includes('NIW'))!;
+  const keepWaiting = stratEv.choices.find(c => c.text.includes('继续安心排队'))!;
+  assert(!!downgrade && !!upgradeBack && !!niw && !!keepWaiting, 'all four lever choices present');
+
+  const noWindow: GameState = { ...approvedBehind, gc_stage: 'waiting_pd', visa_bulletin: { eb2: 2017, eb3: 2016 }, impact: 0 } as GameState;
+  assert(!downgrade.condition!(noWindow), 'EB-3 downgrade hidden when EB-3 is not ahead');
+  assert(!niw.condition!(noWindow), 'NIW hidden without impact / PhD');
+  assert(!hasPdStrategyLever(noWindow), 'router lever guard false when nothing is actionable');
+  const windowOpen: GameState = { ...noWindow, visa_bulletin: { eb2: 2017, eb3: 2018 } } as GameState;
+  assert(downgrade.condition!(windowOpen), 'EB-3 downgrade available when EB-3 leads EB-2 by ≥ 0.5 yr');
+  assert(hasPdStrategyLever(windowOpen), 'router lever guard true inside the downgrade window');
+  const dEff = downgrade.effect(windowOpen) as Partial<GameState>;
+  assert(dEff.eb_category === 'eb3' && dEff.priority_date === undefined && dEff.cash === windowOpen.cash - 0.8, 'downgrade switches category, keeps PD, costs $0.8w');
+  const eb3Now: GameState = { ...windowOpen, eb_category: 'eb3', visa_bulletin: { eb2: 2019, eb3: 2018 } } as GameState;
+  assert(upgradeBack.condition!(eb3Now), 'switch-back available once EB-2 leads again');
+  assert((upgradeBack.effect(eb3Now) as Partial<GameState>).eb_category === 'eb2', 'switch-back returns to EB-2');
+
+  const impactful: GameState = { ...noWindow, impact: 40 } as GameState;
+  assert(niw.condition!(impactful), 'NIW available with impact ≥ 20');
+  let niwOk = 0; let niwFail = 0;
+  for (let i = 0; i < 40; i++) {
+    setGameSeed(nextCujSeed());
+    const e = niw.effect(impactful) as Partial<GameState>;
+    if (e.eb_category === 'eb1') niwOk++; else niwFail++;
+    assert(e.priority_date === undefined, 'NIW never touches the PD');
+    assert(e.cash === impactful.cash - 1.5, 'NIW costs $1.5w win or lose');
+  }
+  assert(niwOk >= 10 && niwFail >= 3, `NIW self-petition is a real gamble (${niwOk} ok / ${niwFail} fail)`);
+  assert(!niw.condition!({ ...impactful, eb_category: 'eb1' } as GameState), 'NIW hidden once already EB-1');
+  const kw = keepWaiting.effect(noWindow) as Partial<GameState>;
+  assert(kw.story_flags?.last_pd_strategy_year === noWindow.year, 'keep-waiting stamps the 2-year cooldown');
+
+  // ⑦ router injection
+  {
+    let hits = 0;
+    for (let i = 0; i < 40; i++) { setGameSeed(nextCujSeed()); if (midYearEventRouter({ ...windowOpen, season_stage: 'h1' } as GameState) === 'pd_waiting_strategy') hits++; }
+    assert(hits >= 8, `router injects pd_waiting_strategy for waiting_pd + lever (${hits}/40)`);
+    let cooled = 0;
+    const onCooldown = { ...windowOpen, season_stage: 'h1', story_flags: { last_pd_strategy_year: windowOpen.year - 1 } } as GameState;
+    for (let i = 0; i < 40; i++) { setGameSeed(nextCujSeed()); if (midYearEventRouter(onCooldown) === 'pd_waiting_strategy') cooled++; }
+    assert(cooled === 0, 'router respects the 2-year cooldown');
+    let noLever = 0;
+    for (let i = 0; i < 40; i++) { setGameSeed(nextCujSeed()); if (midYearEventRouter({ ...noWindow, season_stage: 'h1' } as GameState) === 'pd_waiting_strategy') noLever++; }
+    assert(noLever === 0, 'router never shows the panel with only the keep-waiting option');
+  }
+
+  // ⑧ HUD selector
+  const hud = getVisaDisplayInfo(rBehind);
+  assert(!!hud.bulletin && hud.bulletin.summary.includes('PD') && hud.bulletin.summary.includes('表A'), 'HUD exposes PD / table A summary while waiting');
+  assert(hud.visaLabel === 'H-1B (排期中)', 'H-1B label reflects waiting_pd');
+  assert(getVisaDisplayInfo({ ...rBehind, visa: '绿卡' } as GameState).bulletin === null, 'HUD hides bulletin once the card is in hand');
+  assert(getVisaDisplayInfo(baseH1b).bulletin === null, 'HUD hides bulletin before a PD exists');
+
+  // ⑨ legacy save (no new fields) in i140_approved still settles and backfills
+  const legacy = { ...approvedBehind } as GameState;
+  delete (legacy as Partial<GameState>).priority_date;
+  delete (legacy as Partial<GameState>).eb_category;
+  delete (legacy as Partial<GameState>).visa_bulletin;
+  setGameSeed(nextCujSeed());
+  const rLegacy = runSettlement(legacy);
+  assert(rLegacy.gc_stage === 'waiting_pd' || rLegacy.gc_stage === 'i485_pending', 'legacy i140_approved save settles into the new queue');
+  assert(!!rLegacy.visa_bulletin, 'legacy save gets a bulletin after one settlement');
+  const migrated = migrateSaveData({ version: 2, gameState: { ...legacy, seed: 1 }, currentEventId: 'sv_daily_life' });
+  assert(migrated.gameState.gc_stage === 'i140_approved' && migrated.gameState.visa_bulletin === undefined, 'migrateSaveData tolerates saves without bulletin fields (lazy init at next settlement)');
+
+  console.log('✅ CUJ 73 Passed\n');
 }
 
 console.log(`\n======================================================`);

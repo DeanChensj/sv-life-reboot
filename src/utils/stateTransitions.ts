@@ -71,7 +71,10 @@ export function applyStateTransition(
     if (prevState.gc_stage === 'perm_processing' || prevState.gc_stage === 'perm_audit' || prevState.gc_stage === 'i140_processing' || prevState.gc_stage === 'i140_rfe') {
       normalizedEffect.gc_stage = 'perm_processing';
       normalizedEffect.gc_progress = 1;
-      gcHopNote = ' 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队。';
+      // New employer files a fresh PERM → the Priority Date restarts from this year.
+      normalizedEffect.priority_date = prevState.year;
+      normalizedEffect.eb_category = 'eb2';
+      gcHopNote = ' 【H1B 跳槽 PERM 重置】因跳槽时旧公司 I-140 尚未批准，原 PERM 废弃，新公司须重新为您递交 PERM 重新排队（Priority Date 重置为今年）。';
     } else if (isI140Approved) {
       gcHopNote = ' 【I-140 已锁 PD】因之前 I-140 已批准，本次跳槽成功锁定原优先日期 (PD)！';
     }

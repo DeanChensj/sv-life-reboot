@@ -1,8 +1,106 @@
 import type { GameEvent, GameState } from '../../types';
 import { h1ToH2Router, gameRandom, o1PassProb, deductAssets } from './helpers';
 import { HOUSING_NAMES, VISA_STATUS } from '../../constants/gameConstants';
+import { getPdQueueInfo, getVisaBulletin, formatGameYearMonth, formatYearsDelta, EB_SWITCH_LEAD_YEARS } from '../../utils/visaBulletin';
+
+// 降级窗口：EB-3 表 A 至少领先 EB-2 半年才值得折腾（律师费 + 风险）。
+const EB3_DOWNGRADE_LEAD_YEARS = EB_SWITCH_LEAD_YEARS;
 
 export const immigrationEvents: Record<string, GameEvent> = {
+  // 排期等待期的策略面板。仅在 gc_stage === 'waiting_pd' 时由 midYearEventRouter (H1) 注入，
+  // 每 2 年最多一次 (story_flags.last_pd_strategy_year)。所有选项都不改变 PD，只改变走哪条队
+  // (eb_category)，真正的「排到了没」仍由年终结算对比表 A 决定 —— 不存在白送绿卡的捷径。
+  // 当前 PD / 表 A / 差距在 HUD 的绿卡面板与年终报表里随时可查。
+  'pd_waiting_strategy': {
+    id: 'pd_waiting_strategy',
+    title: '【排期攻防】Visa Bulletin 下的主动出击',
+    description: '你的 I-140 早已获批，PD 锁死在那里，每个月 Visa Bulletin 一出，整个微信群就炸一次。律师发来一封邮件，附上最新的 EB-2 / EB-3 表 A 截图（见左侧身份面板），并列出几条可以主动出击的路线：',
+    choices: [
+      {
+        text: '【EB-2 → EB-3 降级】趁 EB-3 表 A 领先，让公司律师递交 EB-3 I-140 并保留原 PD (花费 $0.8w)',
+        costBadge: '花费 $0.8w',
+        reqBadge: '需 EB-3 表 A 领先 EB-2 半年以上',
+        condition: (s) => {
+          const info = getPdQueueInfo(s);
+          const vb = getVisaBulletin(s);
+          return !!info && info.category === 'eb2' && vb.eb3 >= vb.eb2 + EB3_DOWNGRADE_LEAD_YEARS && s.cash >= 0.8 && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+        },
+        effect: (s) => {
+          const vb = getVisaBulletin(s);
+          const info = getPdQueueInfo(s)!;
+          const nowCurrent = vb.eb3 >= info.priorityDate;
+          return {
+            cash: s.cash - 0.8,
+            eb_category: 'eb3',
+            story_flags: { ...(s.story_flags || {}), last_pd_strategy_year: s.year },
+            message: nowCurrent
+              ? `【降级成功】公司律师以同一份 PERM 重新递交了 EB-3 I-140，原 PD ${formatGameYearMonth(info.priorityDate)} 完整保留！EB-3 表 A（${formatGameYearMonth(vb.eb3)}）已经越过你的 PD，年底就能递交 I-485！`
+              : `【降级成功】公司律师以同一份 PERM 重新递交了 EB-3 I-140，原 PD ${formatGameYearMonth(info.priorityDate)} 完整保留。你现在排在 EB-3 队列（表 A ${formatGameYearMonth(vb.eb3)}），比 EB-2 近了 ${formatYearsDelta(vb.eb3 - vb.eb2)}——但 EB-3 波动更大，祈祷它别再被反超。`,
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【EB-3 → 升回 EB-2】EB-2 表 A 重新领先，用原批件 Interfile 切回 EB-2 队列 (花费 $0.5w)',
+        costBadge: '花费 $0.5w',
+        reqBadge: '需 EB-2 表 A 领先 EB-3 半年以上',
+        condition: (s) => {
+          const info = getPdQueueInfo(s);
+          const vb = getVisaBulletin(s);
+          return !!info && info.category === 'eb3' && vb.eb2 >= vb.eb3 + EB3_DOWNGRADE_LEAD_YEARS && s.cash >= 0.5;
+        },
+        effect: (s) => {
+          const vb = getVisaBulletin(s);
+          return {
+            cash: s.cash - 0.5,
+            eb_category: 'eb2',
+            story_flags: { ...(s.story_flags || {}), last_pd_strategy_year: s.year },
+            message: `【切回 EB-2】律师用你早已获批的 EB-2 I-140 做了 Interfiling，重新排回 EB-2 队列（表 A ${formatGameYearMonth(vb.eb2)}）。两张批件在手，哪条队快走哪条。`,
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【自请 NIW / EB-1A】拿论文、专利、开源影响力自己递交 EB-1A/NIW I-140，跳出排期长队 (花费 $1.5w)',
+        costBadge: '花费 $1.5w',
+        reqBadge: '需 Impact >= 20 或 PhD',
+        condition: (s) => {
+          const info = getPdQueueInfo(s);
+          return !!info && info.category !== 'eb1' && s.cash >= 1.5 && ((s.impact || 0) >= 20 || !!s.is_phd);
+        },
+        effect: (s) => {
+          const impact = s.impact || 0;
+          // 45% base, +1% per impact point above 20 (capped), +10% for PhD; O-1 holders +10%.
+          const prob = Math.min(0.85, 0.45 + Math.min(0.25, Math.max(0, impact - 20) * 0.01) + (s.is_phd ? 0.10 : 0) + (s.visa === 'O1 (杰出人才)' ? 0.10 : 0));
+          const ok = gameRandom() < prob;
+          if (ok) {
+            return {
+              cash: s.cash - 1.5,
+              eb_category: 'eb1',
+              story_flags: { ...(s.story_flags || {}), last_pd_strategy_year: s.year },
+              message: '【EB-1A/NIW 获批】移民官认可了你的「杰出能力 / 国家利益」论证！你的 I-140 升级为 EB-1 类别，原 PD 继续保留——不用再盯着 EB-2 表 A 过日子，年底即可递交 I-485。',
+            };
+          }
+          return {
+            cash: s.cash - 1.5,
+            health: Math.max(0, s.health - 5),
+            story_flags: { ...(s.story_flags || {}), last_pd_strategy_year: s.year },
+            message: '【NIW 被拒】移民官认为你的推荐信和引用数「不足以证明杰出」，自请 I-140 被拒。$1.5w 律师费打了水漂，好在原有的雇主担保 I-140 与 PD 不受影响，继续排队。',
+          };
+        },
+        nextEventId: h1ToH2Router,
+      },
+      {
+        text: '【继续安心排队】关掉 Visa Bulletin 推送，把精力放回工作和生活',
+        effect: (s) => ({
+          health: Math.min(100, s.health + 3),
+          story_flags: { ...(s.story_flags || {}), last_pd_strategy_year: s.year },
+          message: '你决定不再每天刷排期论坛——该来的总会来。把律师邮件归档后，你明显睡得好了一些。',
+        }),
+        nextEventId: h1ToH2Router,
+      },
+    ],
+  },
   'h1b_fallback_options': {
     id: 'h1b_fallback_options',
     title: '【身份突围】H-1B 拒签应对与紧急自救',

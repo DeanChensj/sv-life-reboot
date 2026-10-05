@@ -3,6 +3,7 @@ import type { GameState } from '../types';
 import { useFocusTrap } from '../utils/useFocusTrap';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { isOwnedHousing } from '../constants/gameConstants';
+import { getVisaDisplayInfo } from '../utils/gameStateSelectors';
 
 interface CareerTimelineModalProps {
   gameState: GameState;
@@ -854,7 +855,21 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                 <div className="text-xs text-zinc-400">
                   {gameState.visa === '公民' || gameState.visa === '绿卡' 
                     ? '已彻底解决留美身份，拥有完全执业与生活自由' 
-                    : `绿卡排期阶段: ${gameState.gc_stage || '未启动'}`}
+                    : (() => {
+                        const stageLabel: Record<string, string> = {
+                          not_started: '未启动',
+                          perm_processing: 'PERM 审理中',
+                          perm_audit: 'PERM Audit 中',
+                          i140_processing: 'I-140 审理中',
+                          i140_rfe: 'I-140 补件 (RFE)',
+                          i140_approved: 'I-140 已批 · 锁定 PD',
+                          waiting_pd: '排期等待中',
+                          i485_pending: 'I-485 审理中',
+                          approved: '已获批',
+                        };
+                        const info = getVisaDisplayInfo(gameState).bulletin;
+                        return `绿卡阶段: ${stageLabel[gameState.gc_stage || 'not_started'] || gameState.gc_stage}${info ? ` · ${info.summary}` : ''}`;
+                      })()}
                 </div>
               </div>
 

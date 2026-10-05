@@ -1,5 +1,6 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
+import { advanceVisaBulletin, formatGameYearMonth, formatYearsDelta, getEbCategory, getPriorityDate, pdWaitGauge, EB_CATEGORY_LABEL } from '../../utils/visaBulletin';
 import { getTCBreakdown, getAnnualCompensation } from '../../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing, liquidateStocksToCover } from '../../constants/gameConstants';
 import { getCompanyProfile } from '../companyProfiles';
@@ -205,6 +206,32 @@ export const settlementEvents: Record<string, GameEvent> = {
            let newHealth = Math.min(100, Math.max(0, s.health - healthDrain + petHealthBoost - day1CptHealthHit - carSleepHealthHit));
            let gcMsg = '';
 
+           // 动态排期：Visa Bulletin 每年都在动（与玩家当前阶段无关，这样 HUD 里随时能查到最新表 A），
+           // 牛市递件多 → 慢，熊市 → 快，另有随机「大前进 / 倒退」。详见 utils/visaBulletin.ts。
+           const bulletinStep = advanceVisaBulletin(s, newEconomy);
+           const newBulletin = bulletinStep.next;
+           let nextPriorityDate = s.priority_date;
+           let nextEbCategory = s.eb_category;
+           const lockPd = (category: 'eb1' | 'eb2' | 'eb3') => {
+             if (nextPriorityDate === undefined) nextPriorityDate = s.year;
+             if (!nextEbCategory) nextEbCategory = category;
+           };
+           // Called at I-140 approval. Backfills PD/category for saves (or event shortcuts) that
+           // reached approval without ever locking one — assume PERM was filed ~2 years earlier —
+           // and renders the "where am I in the queue" line for the settlement log.
+           const describePdLock = (): string => {
+             const fast = s.is_phd || s.visa === 'O1 (杰出人才)';
+             if (nextPriorityDate === undefined) nextPriorityDate = s.year - 2;
+             if (!nextEbCategory) nextEbCategory = fast ? 'eb1' : 'eb2';
+             const pd = nextPriorityDate;
+             if (nextEbCategory === 'eb1') return `你走的是 ${EB_CATEGORY_LABEL.eb1} 快车道，无需排长队，预计很快即可递交 I-485！`;
+             const cutoff = nextEbCategory === 'eb3' ? newBulletin.eb3 : newBulletin.eb2;
+             const gap = pd - cutoff;
+             return gap <= 0
+               ? `你的 PD（${formatGameYearMonth(pd)}）已经 Current，律师准备同步递交 I-485！`
+               : `你的 Priority Date ${formatGameYearMonth(pd)} 已永久锁定；当前 ${EB_CATEGORY_LABEL[nextEbCategory]} 表 A 排到 ${formatGameYearMonth(cutoff)}，还差约 ${formatYearsDelta(gap)}，正式进入排期队列。`;
+           };
+
            if (s.visa === '绿卡' || s.visa === '公民' || s.gc_progress >= 5) {
              nextGc = 5;
              nextStage = 'approved';
@@ -220,25 +247,33 @@ export const settlementEvents: Record<string, GameEvent> = {
               // Post-I-140 queue (PD wait → I-485 → card). Shared by the employed AND the
               // unemployed branch below: once the I-140 is approved the PD survives a layoff
               // (AC21 / 180-day portability), and a pending I-485 is adjudicated by USCIS
-              // regardless of whether the applicant currently has a job. Previously this
-              // logic lived only inside the employed `else` branch, so a laid-off I-485
-              // applicant (incl. the $80w EB-5 concurrent filer) could never get approved
-              // and the "排期照常进行" message was a lie — nothing advanced.
+              // regardless of whether the applicant currently has a job.
+              //
+              // 排期判定：对比玩家锁定的 PD 与本年度推进后的表 A cutoff。EB-1 / NIW 快车道不排表 A
+              // (~70%/年 current)。`i140_approved` 是刚获批的过渡态，之后进入 `waiting_pd`。
               const advancePdQueue = () => {
-                 if (nextStage === 'i140_approved') {
-                    // EB-1/NIW fast lane for O-1 / PhD: no multi-year backlog, ~70%/yr to be
-                    // current. Replaces the old hard calendar gate (`year >= 2024`) which made
-                    // the wait depend on the chosen start era (0–5 yrs) — `year` is an abstract
-                    // era clock here, not a real Visa Bulletin date.
-                    const fastLaneCurrent = (isO1 || isPhd) && gameRandom() < 0.7;
-                    const canFile485 = fastLaneCurrent || (nextGc >= 4);
-                    if (canFile485) {
+                 if (nextStage === 'i140_approved' || nextStage === 'waiting_pd') {
+                    const category = getEbCategory({ eb_category: nextEbCategory, is_phd: isPhd, visa: s.visa });
+                    const pd = getPriorityDate({ year: s.year, priority_date: nextPriorityDate });
+                    const cutoff = category === 'eb1' ? null : (category === 'eb3' ? newBulletin.eb3 : newBulletin.eb2);
+                    const isCurrent = category === 'eb1' ? gameRandom() < 0.7 : (cutoff as number) >= pd;
+                    if (isCurrent) {
                        nextStage = 'i485_pending';
                        nextGc = 4.5;
-                       gcMsg = ' 【排期大前进】排期到了！律师已火速为你递交 I-485 身份调整申请，进入最后制卡冲刺阶段！';
+                       gcMsg = category === 'eb1'
+                         ? ' 【排期 Current】EB-1/NIW 类别无需排队，律师已火速为你递交 I-485 身份调整申请，进入最后制卡冲刺阶段！'
+                         : ` 【排期到了】${EB_CATEGORY_LABEL[category]} 表 A 已排到 ${formatGameYearMonth(cutoff as number)}，越过了你 ${formatGameYearMonth(pd)} 的 PD！律师火速为你递交 I-485，进入最后制卡冲刺阶段！`;
+                    } else if (category === 'eb1') {
+                       nextStage = 'waiting_pd';
+                       gcMsg = ' 【EB-1 短暂回退】本年度 EB-1 类别名额用罄暂时回退，律师建议再等几个月即可递交 I-485。';
                     } else {
-                       gcMsg = ' 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
-                       if (gameRandom() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
+                       const gap = pd - (cutoff as number);
+                       const delta = category === 'eb3' ? bulletinStep.delta.eb3 : bulletinStep.delta.eb2;
+                       const moveTxt = delta >= 0.05 ? `前进 ${formatYearsDelta(delta)}` : delta <= -0.05 ? `倒退 ${formatYearsDelta(delta)}` : '原地踏步';
+                       nextStage = 'waiting_pd';
+                       nextGc = Math.max(nextGc, pdWaitGauge(gap));
+                       gcMsg = ` 【绿卡排期】本年度 ${EB_CATEGORY_LABEL[category]} 表 A ${moveTxt}，目前排到 ${formatGameYearMonth(cutoff as number)}；你的 PD 为 ${formatGameYearMonth(pd)}，还差约 ${formatYearsDelta(gap)}。${bulletinStep.note.trim()}`.trim();
+                       gcMsg = ' ' + gcMsg;
                     }
                  } else if (nextStage === 'i485_pending') {
                     if (gameRandom() < 0.6) {
@@ -256,6 +291,8 @@ export const settlementEvents: Record<string, GameEvent> = {
                  if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {
                     nextStage = 'not_started';
                     nextGc = 0;
+                    nextPriorityDate = undefined;
+                    nextEbCategory = undefined;
                     gcMsg = ' 【绿卡中断】由于你目前处于失业状态，你的 PERM/I-140 申请被原公司撤回，绿卡进度惨遭清零！';
                  } else if (nextStage === 'not_started') {
                     gcMsg = ' 【绿卡停滞】你目前失业，无法启动任何雇主担保的绿卡申请。';
@@ -263,7 +300,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                     advancePdQueue();
                     gcMsg = ` 【PD 保留】你虽然失业，但你的 I-140 已经获批，Priority Date 依然为你保留。${gcMsg.trim()}`;
                  }
-              } else if (nextStage === 'i140_approved' || nextStage === 'i485_pending') {
+              } else if (nextStage === 'i140_approved' || nextStage === 'waiting_pd' || nextStage === 'i485_pending') {
                  // PD already locked (or I-485 already filed): the queue keeps moving no
                  // matter whether the current employer is an ICC body-shop or a startup
                  // that won't sponsor a NEW PERM. Those gates only block starting a case.
@@ -279,12 +316,14 @@ export const settlementEvents: Record<string, GameEvent> = {
                     if (isO1 || isPhd) {
                        nextStage = 'i140_processing';
                        nextGc = Math.max(2, nextGc); 
+                       lockPd('eb1');
                        gcMsg = ' 【绿卡进度】凭借你的杰出背景 (NIW/EB1)，律师直接为你跳过 PERM，提交了 I-140 申请！';
                     } else {
                        if (gameRandom() < (isBigTech ? 0.7 : 0.4)) {
                          nextStage = 'perm_processing';
                          nextGc = Math.max(1, nextGc);
-                         gcMsg = ' 【绿卡进度】公司律师正式为你启动了 PERM 打广告和 PWD 流程，漫长的绿卡长征开始了。';
+                         lockPd('eb2');
+                         gcMsg = ` 【绿卡进度】公司律师正式为你启动了 PERM 打广告和 PWD 流程，你的 Priority Date 锁定为 ${formatGameYearMonth(s.year)}（当前 EB-2 表 A 排到 ${formatGameYearMonth(newBulletin.eb2)}），漫长的绿卡长征开始了。`;
                        } else {
                          gcMsg = ' 【绿卡进度】HR 还在拖延你的绿卡流程，尚未正式启动 PERM...';
                        }
@@ -317,7 +356,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                     } else {
                        nextStage = 'i140_approved';
                        nextGc = 3;
-                       gcMsg = ' 【I-140获批】大喜讯！你的 I-140 移民申请正式获批！你的 Priority Date (PD) 已永久锁定，正式进入漫长排期队列！';
+                       gcMsg = ` 【I-140获批】大喜讯！你的 I-140 移民申请正式获批！${describePdLock()}`;
                     }
                  } else if (nextStage === 'i140_rfe') {
                     // RFE is no longer a guaranteed one-year delay: ~15% of RFE responses are
@@ -329,7 +368,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                     } else {
                        nextStage = 'i140_approved';
                        nextGc = 3;
-                       gcMsg = ' 【RFE通过】补充材料顺利打消了移民局疑虑，你的 I-140 成功获批并锁定 PD！';
+                       gcMsg = ` 【RFE通过】补充材料顺利打消了移民局疑虑，你的 I-140 成功获批！${describePdLock()}`;
                     }
                  }
                  // i140_approved / i485_pending are handled by the shared branch above.
@@ -382,7 +421,7 @@ export const settlementEvents: Record<string, GameEvent> = {
             if (newVisa === 'H1B (工签)') {
               newH1bTenure += 1;
               if (newH1bTenure >= 6) {
-                if (nextStage === 'i140_approved' || nextStage === 'i485_pending' || nextStage === 'approved' || nextGc >= 3) {
+                if (nextStage === 'i140_approved' || nextStage === 'waiting_pd' || nextStage === 'i485_pending' || nextStage === 'approved' || nextGc >= 3) {
                   // Announce the AC21 exemption once when crossing the cap, then only on each
                   // 3-year extension cycle (6 → 9 → 12) instead of every single settlement.
                   if (newH1bTenure === 6) {
@@ -647,6 +686,9 @@ export const settlementEvents: Record<string, GameEvent> = {
                 : Math.max(0, (s.impact || 0) - 4),
               health: newHealth,
               macro_economy: newEconomy,
+              visa_bulletin: newBulletin,
+              priority_date: nextPriorityDate,
+              eb_category: nextEbCategory,
               story_flags: newStoryFlags,
               timeline: newTimeline,
               history_net_worth: newHistory,
@@ -678,7 +720,7 @@ export const settlementEvents: Record<string, GameEvent> = {
           if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
             return 'h1b_final_crisis';
           }
-          if (s.visa === 'H1B (工签)' && (s.h1b_tenure || 0) >= 6 && s.gc_stage !== 'i140_approved' && s.gc_stage !== 'i485_pending' && s.gc_stage !== 'approved' && (s.gc_progress || 0) < 3) {
+          if (s.visa === 'H1B (工签)' && (s.h1b_tenure || 0) >= 6 && s.gc_stage !== 'i140_approved' && s.gc_stage !== 'waiting_pd' && s.gc_stage !== 'i485_pending' && s.gc_stage !== 'approved' && (s.gc_progress || 0) < 3) {
             return 'h1b_six_year_crisis';
           }
           if (s.gc_progress >= 5 && s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无') return 'post_green_card';

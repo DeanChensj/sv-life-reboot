@@ -4,6 +4,7 @@ import { STORAGE_KEYS, isOwnedHousing, VISA_STATUS, isPermanentVisa } from '../.
 import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '../../utils/random';
 import { getCompanyProfile } from '../companyProfiles';
 import { normalizeLevel } from '../levelProfiles';
+import { hasPdStrategyLever } from '../../utils/visaBulletin';
 
 export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 
@@ -411,6 +412,13 @@ export const midYearEventRouter = (s: GameState): string => {
     // 10) 离婚后前任独角兽暴富讽刺事件 (一生一次)
     if (s.story_flags?.had_divorce && !hasSeen(s, 'ex_spouse_unicorn_exit') && s.age >= 27 && gameRandom() < 0.35) {
       return 'ex_spouse_unicorn_exit';
+    }
+
+    // 11) 排期攻防 (immigration.ts pd_waiting_strategy)：I-140 已批、正在等表 A 的在职玩家，每 2 年至多
+    //     一次拿到律师的「主动出击」邮件 (EB-3 降级 / 升回 EB-2 / 自请 NIW·EB-1A)。只有 waiting_pd
+    //     才有意义 —— 其他阶段没有 PD 可以博弈。
+    if (s.gc_stage === 'waiting_pd' && isWorking && hasPdStrategyLever(s) && s.year >= (Number(s.story_flags?.last_pd_strategy_year || 0) + 2) && gameRandom() < 0.55) {
+      return 'pd_waiting_strategy';
     }
     // 注:房贷断供危机(触发条件含失业)注入在 H2 段 —— H1 只对【在职】regularEmployee 运行,
     // 失业者永远到不了这里(旧位置是死代码)。见下方 Stage H2。

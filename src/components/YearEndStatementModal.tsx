@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { GameState } from '../types';
-import { getAnnualCompensation, previewAnnualPerfReview } from '../utils/gameStateSelectors';
+import { getAnnualCompensation, previewAnnualPerfReview, getVisaDisplayInfo } from '../utils/gameStateSelectors';
 import { HOUSING_NAMES, isOwnedHousing } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
 
@@ -292,6 +292,14 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
               <span className="text-zinc-400 font-mono">身份/绿卡 状态进度:</span>
               <span className="font-bold text-emerald-400 font-mono tabular-nums">
                 {gameState.visa === '公民' ? '100% (美籍公民)' : (gameState.visa === '绿卡' ? '100% (已获绿卡)' : `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}% (${gameState.gc_progress || 0}/5 阶段)`)}
+              </span>
+            </div>
+          )}
+          {getVisaDisplayInfo(gameState).bulletin && (
+            <div className="flex justify-between gap-3">
+              <span className="text-zinc-400 font-mono shrink-0">绿卡排期 (Visa Bulletin):</span>
+              <span className="font-bold text-amber-200 font-mono tabular-nums text-right">
+                {getVisaDisplayInfo(gameState).bulletin!.summary}
               </span>
             </div>
           )}

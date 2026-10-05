@@ -25,7 +25,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   hasOpenedShop = false,
 }) => {
   const { companyHeaderLabel, companyLabel, companyClassName, levelHeaderLabel, levelLabel, levelClassName, tcHeaderLabel } = getJobDisplayInfo(gameState);
-  const { visaLabel, visaClassName, gcStation } = getVisaDisplayInfo(gameState);
+  const { visaLabel, visaClassName, gcStation, bulletin } = getVisaDisplayInfo(gameState);
   const { housingLabel, carLabel, hasCar } = getHousingDisplayInfo(gameState);
 
   return (
@@ -217,6 +217,18 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
                 );
               })}
             </div>
+
+            {/* 排期查询 (Visa Bulletin) — PD 已锁后随时可查 */}
+            {bulletin && (
+              <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[10px] sm:text-[11px] font-mono">
+                <div className={`font-bold tabular-nums ${bulletin.isCurrent ? 'text-emerald-300' : 'text-amber-200'}`}>
+                  📅 {bulletin.summary}
+                </div>
+                <div className="text-zinc-500 tabular-nums">
+                  表A · EB-2 {bulletin.eb2Label} · EB-3 {bulletin.eb3Label}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

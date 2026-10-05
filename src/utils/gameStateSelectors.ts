@@ -1,5 +1,6 @@
 import type { GameState } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
+import { getPdQueueInfo, getVisaBulletin, formatGameYearMonth, formatYearsDelta } from './visaBulletin';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { getSchoolProfile } from '../data/schoolProfiles';
 import { LEVEL_PROFILES, normalizeLevel } from '../data/levelProfiles';
@@ -24,6 +25,21 @@ export interface VisaDisplayInfo {
   visaClassName: string;
   gcStation: number;
   isPermanent: boolean;
+  /**
+   * 排期查询 (Visa Bulletin). `null` until a PD exists (PERM started) or once the card is in hand.
+   * `summary` is a ready-to-render one-liner, e.g. 「EB-2 · PD 2019年4月 · 表A 2017年1月 · 还差约 2 年 3 个月」。
+   */
+  bulletin: {
+    categoryLabel: string;
+    pdLabel: string;
+    cutoffLabel: string;
+    gapLabel: string;
+    isCurrent: boolean;
+    summary: string;
+    /** Both tables for the "should I downgrade" glance. */
+    eb2Label: string;
+    eb3Label: string;
+  } | null;
 }
 
 export interface HousingDisplayInfo {
@@ -228,8 +244,9 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
     visaLabel = 'Day 1 CPT';
     visaClassName = 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30 font-bold';
   } else if (state.visa === 'H1B (工签)') {
-    const isLocked = ['i140_approved', 'waiting_pd'].includes(state.gc_stage || '');
-    visaLabel = isLocked ? 'H-1B (已锁PD)' : 'H-1B (工作签证)';
+    const isWaiting = state.gc_stage === 'waiting_pd';
+    const isLocked = state.gc_stage === 'i140_approved';
+    visaLabel = isWaiting ? 'H-1B (排期中)' : isLocked ? 'H-1B (已锁PD)' : 'H-1B (工作签证)';
     visaClassName = 'text-amber-300 bg-amber-500/15 border-amber-500/30 font-bold';
   } else if (state.visa === 'OPT (实习)') {
     const attempts = state.h1b_attempts || 0;
@@ -251,11 +268,28 @@ export function getVisaDisplayInfo(state: GameState): VisaDisplayInfo {
     visaClassName = 'text-zinc-400 bg-zinc-800/60 border-zinc-700 font-medium';
   }
 
+  // 排期查询：只要 PD 已锁（PERM 启动起）且还没拿到卡，就能随时看到自己在表 A 的位置。
+  let bulletin: VisaDisplayInfo['bulletin'] = null;
+  const queue = isPermanent ? null : getPdQueueInfo(state);
+  if (queue) {
+    const vb = getVisaBulletin(state);
+    const pdLabel = formatGameYearMonth(queue.priorityDate);
+    const cutoffLabel = queue.cutoff === null ? 'Current' : formatGameYearMonth(queue.cutoff);
+    const gapLabel = queue.isCurrent ? '已 Current' : `还差约 ${formatYearsDelta(queue.gapYears)}`;
+    const eb2Label = formatGameYearMonth(vb.eb2);
+    const eb3Label = formatGameYearMonth(vb.eb3);
+    const inLine = state.gc_stage === 'i485_pending'
+      ? `${queue.categoryLabel} · PD ${pdLabel} · I-485 审理中`
+      : `${queue.categoryLabel} · PD ${pdLabel} · 表A ${cutoffLabel} · ${gapLabel}`;
+    bulletin = { categoryLabel: queue.categoryLabel, pdLabel, cutoffLabel, gapLabel, isCurrent: queue.isCurrent, summary: inLine, eb2Label, eb3Label };
+  }
+
   return {
     visaLabel,
     visaClassName,
     gcStation,
     isPermanent,
+    bulletin,
   };
 }
 

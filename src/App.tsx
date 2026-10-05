@@ -672,6 +672,13 @@ export default function App() {
                   setIsShopOpen(false);
                   return;
                 }
+                // Remember where we came from. The housing panels (buy_house / change_rental /
+                // manage_rental_properties / house_slave) hand control back to this event via
+                // resolveNextEventId, so opening the shop during a PIP / layoff / margin-call
+                // panel — or at the start of the year — can never skip that event.
+                if (currentEventId !== eventId) {
+                  setGameState(prev => ({ ...prev, shop_return_event: currentEventId }));
+                }
                 setCurrentEventId(eventId);
               }}
               onBuy={(effect, msg) => {

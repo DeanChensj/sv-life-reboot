@@ -1,7 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, gameRandom, deductAssets } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
-import { isOwnedHousing, HOUSING_NAMES } from '../../constants/gameConstants';
+import { isOwnedHousing, HOUSING_NAMES, getInvestmentPropertyProfile } from '../../constants/gameConstants';
 
 // 置业/换租是资产配置操作,不该吞掉当年的职场主行动 (#2)。完成后回到玩家对应的年度面板
 // (founder/trader 回各自策略枢纽, 其余回 sv_daily_life),让玩家当年仍可选择工作重心;
@@ -125,12 +125,12 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【父母紧急开支票】向国内父母紧急开支票（掏空六个钱包跨国电汇凑齐首付）',
         costBadge: '自付 $3w (父母资助)',
-        reqBadge: '需现金 < $40w 且未曾受助',
-        // Available when your own CASH can't cover a down payment (buy_house is only entered
-        // with total assets >= 40, so the old `cash+stocks < 40` was unsatisfiable → this
-        // choice and the whole house_slave storyline were dead/unreachable). Now it's the
-        // "ask parents instead of liquidating your stocks" alternative.
-        condition: (s) => s.cash < 40 && !s.parents_helped_house,
+        reqBadge: '需总资产 < $50w 且未曾受助',
+        // Available when your own liquid assets (cash + stocks) can't comfortably cover a down
+        // payment (buy_house is only entered with total assets >= 40, so the old `cash+stocks < 40`
+        // was unsatisfiable → this choice and the whole house_slave storyline were dead). It used to
+        // check only cash, so a player with $3w cash and $500w of stock could still tap the parents.
+        condition: (s) => (s.cash + (s.stocks || 0)) < 50 && !s.parents_helped_house,
         // Player chips in a small fixed contribution; parents cover the rest (was
         // cash:0, which discarded up to ~$40w of the player's existing savings).
         effect: (s) => ({ cash: Math.max(0, s.cash - 3), has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, health: s.health - 15, parents_helped_house: true, message: '父母卖掉了国内老家二线城市的房子跨国电汇给你凑齐了 Sunnyvale 首付，你背上了深沉的愧疚包袱与巨额房贷。' }),
@@ -181,7 +181,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         condition: (s) => (s.cash + (s.stocks || 0)) >= 100 && s.job_type !== 'startup_founder',
         // Selling ADDS home equity (was subtracting $50w while keeping the house).
         // Actually liquidate the home and start the FOUNDER path (not the employee event).
-        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, tc: 6, level: undefined, company: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
+        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, tc: 6, level: undefined, company: undefined, shop_return_event: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
         nextEventId: 'founder_annual_strategy',
       }
     ]
@@ -203,7 +203,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
           rental_income: (s.rental_income || 0) + 1.2,
           message: '【ADU 改造完成】你砸下 $12w 在后院建起一套带独立卫浴的预制 ADU（含设计、许可与施工），挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$1.2w 净租金流！'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: returnToAnnualPanel,
       },
       {
         text: '【外州远程投资】购入 Austin/Seattle 精装独栋别墅 (首付 $25w · 产生 +$1.2w/年 租金净流)',
@@ -215,7 +215,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
           investment_properties: [...(s.investment_properties || []), 'Austin 远程独栋屋'],
           message: '【外州资产配置】借助全美远程物业托管，你在德州 Austin 核心科技园区拿下了一套独栋屋，租给 Tesla/Apple 工程师，每年被动落袋 +$1.2w 纯现金流！'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: returnToAnnualPanel,
       },
       {
         text: '【湾区核心投资】购入东湾 Hayward/Fremont 独栋出租房 (首付 $45w · 产生 +$2.2w/年 租金净流)',
@@ -227,7 +227,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
           investment_properties: [...(s.investment_properties || []), 'Hayward 独立投资房'],
           message: '【湾区核心资产】拿下东湾优质通勤独立屋！坐收湾区刚需码农家庭租金，每年稳健产生 +$2.2w 租金现金流！'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: returnToAnnualPanel,
       },
       {
         text: '【大地主终极资产】全款/杠杆拿下 Sunnyvale 4-Plex 核心多户公寓楼 (首付 $120w · 产生 +$6.0w/年 巨额租金)',
@@ -240,12 +240,12 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
           charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 5),
           message: '【加州大地主登顶】你拿下了 Sunnyvale 黄金地段 4 套相连的公寓楼！光靠收租每年就能躺赚 +$6.0w 净现金流，彻底告别打工内卷！'
         }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: returnToAnnualPanel,
       },
       {
         text: '【返回日常行动面板】暂不进行房产管理，返回日常行动',
         effect: () => ({ message: '你审视了名下的资产组合与租金收益，决定稳健经营现金流。' }),
-        nextEventId: 'sv_year_end_settlement',
+        nextEventId: returnToAnnualPanel,
       }
     ]
   },
@@ -582,14 +582,21 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const props = s.investment_properties || [];
           const hasRemote = props.length > 0;
+          // Sell the most recently acquired property and remove *its* income (was a fixed
+          // cash+18 / rental_income-1.2 regardless of what got sold → selling the 4-plex left
+          // $4.8w/yr of ghost rent). Fire-sale recovers ~72% of the down payment.
+          const sold = hasRemote ? props[props.length - 1] : undefined;
+          const profile = sold ? getInvestmentPropertyProfile(sold) : undefined;
           const nextProps = hasRemote ? props.slice(0, -1) : props;
+          const proceeds = profile ? parseFloat((profile.downPayment * 0.72).toFixed(1)) : 8;
+          const lostIncome = profile ? profile.rentalIncome : 1.2;
           return {
-            cash: s.cash + (hasRemote ? 18 : 8),
+            cash: s.cash + proceeds,
             investment_properties: nextProps,
             has_adu_rented: hasRemote ? s.has_adu_rented : false,
-            rental_income: Math.max(0, parseFloat(((s.rental_income || 0) - 1.2).toFixed(1))),
+            rental_income: Math.max(0, parseFloat(((s.rental_income || 0) - lostIncome).toFixed(1))),
             health: Math.min(100, s.health + 10),
-            message: '【无房一身轻】你果断将折腾人的出租物业挂牌套现，收回流动本金直接定投 QQQ/VOO。再也不用半夜接通马桶电话了，睡眠质量瞬间拉满！',
+            message: `【无房一身轻】你果断将折腾人的出租物业${sold ? `「${sold}」` : ''}挂牌套现 (+$${proceeds.toFixed(1)}w · 年租金 -$${lostIncome.toFixed(1)}w)，收回流动本金直接定投 QQQ/VOO。再也不用半夜接通马桶电话了，睡眠质量瞬间拉满！`,
           };
         },
         nextEventId: 'sv_year_end_settlement',

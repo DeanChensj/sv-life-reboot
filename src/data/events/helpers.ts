@@ -10,8 +10,14 @@ export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
 
 // True when the player currently has a live partner whose feelings a "career over
 // family" choice can strain (married, or actively dating/married status).
+// A paid sham marriage (partner_type 'sham') is a green-card transaction, not a household:
+// no feelings to strain, no community property to split, no dual income (audit O18).
 export const hasPartner = (s: GameState): boolean =>
-  s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating';
+  s.partner_type !== 'sham' && (s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating');
+
+// Real (non-sham) marriage — gates the dual-income / divorce event pool.
+export const hasRealSpouse = (s: GameState): boolean =>
+  s.partner_type !== 'sham' && (s.is_married || s.relationship_status === 'married');
 
 // ── Impact (影响力) — L5+ 高级晋升的硬通货 ─────────────────────────────
 // leetcode 管「进厂/初级/面试」，impact 管「往上爬到 Staff/Principal」。主导项目 / 发 paper /
@@ -240,6 +246,17 @@ export const getLevelScaledTC = (baseL3TC: number, level?: string): number => {
   return Math.min(24, baseL3TC); // L3 or new grad
 };
 
+// 「被内推/救援/面试上岸进大厂」的统一落点:公司 + job_type + 定级 + TC 一次写齐。
+// 历史上多处只写 job_type:'big_tech' 不写 company,留下「company='startup' + big_tech」之类
+// 的错配 (审计 O11),选择器/结算按旧公司档案发健康与文案。
+export const BIG_TECH_HIRE_POOL = ['google', 'meta', 'apple', 'microsoft', 'nvidia', 'amazon'] as const;
+export const landBigTechJob = (s: GameState, baseL3TC: number): Pick<GameState, 'tc' | 'level' | 'company' | 'job_type' | 'laid_off'> & { level: string } => {
+  const level = hopTargetLevel(s);
+  const pool = BIG_TECH_HIRE_POOL.filter((c) => c !== s.company);
+  const company = pool[Math.floor(gameRandom() * pool.length)];
+  return { tc: getLevelScaledTC(baseL3TC, level), level, company, job_type: 'big_tech', laid_off: false };
+};
+
 export const generateInitialState = (customSeed?: number): GameState => {
   let savedSeed: { cash: number; charm: number; max_charm: number; luck: number; is_ssr_unlocked?: boolean; seed?: number } | null = null;
 
@@ -334,6 +351,33 @@ export const generateInitialState = (customSeed?: number): GameState => {
   };
 };
 
+// 不依赖在职状态的长线剧情链 (对 founder / trader / 失业者同样成立)。H1 路由的第一步调用它;
+// resolveNextEventId 对非常规雇员 (H1 段本来不跑) 也会单独调用一次,保证这些回报/因果必然兑现。
+// 每条写成字面量 return 便于 audit_all_flows.ts 源码扫描确定性识别可达性。
+export const universalStoryArcRouter = (s: GameState): string | undefined => {
+  // Alex 博士剧情链：OmniAgent 纳斯达克 IPO / 退出回报结算 (全职合伙人 / 天使 / 顾问 都要结算)
+  if ((s.story_flags?.joined_omniagent || s.story_flags?.angel_invest_omniagent || s.story_flags?.omniagent_advisor) && !s.story_flags?.alex_ipo_done && s.year >= (Number(s.story_flags.omniagent_start_year || 0) + 3)) {
+    return 'alex_omniagent_ipo_exit';
+  }
+  // Dave 职场宿敌剧情链：多年后的面试桌攻守易形逆转 (资深 IC 或 founder 坐到面试官席)
+  if (s.story_flags?.dave_defeated && !s.story_flags?.dave_veto_done && (s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)' || s.job_type === 'startup_founder') && s.year >= (Number(s.story_flags.dave_defeated_year || 0) + 2)) {
+    return 'dave_interview_veto';
+  }
+  // Sam 极客战友剧情链：Zero-Day 漏洞与黑客项目
+  if (s.story_flags?.met_sam && !s.story_flags?.sam_zero_day_done && s.age >= 24 && s.leetcode >= 25 && gameRandom() < 0.35) {
+    return 'sam_garage_zero_day';
+  }
+  // Linda 沙丘路剧情链：Pre-IPO 独角兽老股额度与领投资源
+  if (s.story_flags?.met_linda && !s.story_flags?.linda_deal_done && s.year >= (Number(s.story_flags.linda_meet_year || 0) + 2) && gameRandom() < 0.4) {
+    return 'linda_angel_co_investment';
+  }
+  // 离婚后前任独角兽暴富讽刺事件 (一生一次)
+  if (s.story_flags?.had_divorce && !hasSeen(s, 'ex_spouse_unicorn_exit') && s.age >= 27 && gameRandom() < 0.35) {
+    return 'ex_spouse_unicorn_exit';
+  }
+  return undefined;
+};
+
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Mid-year event router: called after choosing a yearly focus in sv_daily_life.
 // Weaves in 1-2 random events before year-end settlement.
@@ -344,29 +388,20 @@ export const midYearEventRouter = (s: GameState): string => {
   // Stage H1 (Spring/Summer: Career & Major Work Events)
   if (s.season_stage === 'h1' || !s.season_stage) {
     // --- 0. 优先消费长线因果剧情链 (Priority Narrative Arcs) ---
+    // 0a) 不依赖「在职」的剧情链 (OmniAgent 退出 / Dave 面试逆转 / Sam 零日 / Linda 老股 /
+    //     前任独角兽) 统一放在 universalStoryArcRouter —— 它也会被 resolveNextEventId 对
+    //     founder / trader / 失业者单独调用,否则这些人永远拿不到天使投资回报 (审计 O15)。
+    const arc = universalStoryArcRouter(s);
+    if (arc) return arc;
+
     // 1) Alex 博士剧情链：Series A 创业合伙人/天使邀请
     if (s.story_flags?.met_alex && !s.story_flags?.alex_startup_invited && isWorking && s.age >= 24 && s.year >= (Number(s.story_flags.alex_meet_year || 0) + 1)) {
       return 'alex_startup_series_a';
     }
 
-    // 2) Alex 博士剧情链：OmniAgent 纳斯达克 IPO / 退出回报结算
-    if ((s.story_flags?.joined_omniagent || s.story_flags?.angel_invest_omniagent || s.story_flags?.omniagent_advisor) && !s.story_flags?.alex_ipo_done && s.year >= (Number(s.story_flags.omniagent_start_year || 0) + 3)) {
-      return 'alex_omniagent_ipo_exit';
-    }
-
     // 3) Dave 职场宿敌剧情链：掌握证据后的年度考核摊牌大反击
     if (s.story_flags?.has_dave_evidence && !s.story_flags?.dave_defeated && isWorking && s.year >= (Number(s.story_flags.dave_conflict_year || 0) + 1)) {
       return 'dave_retaliation_showdown';
-    }
-
-    // 4) Dave 职场宿敌剧情链：多年后的面试桌攻守易形逆转
-    if (s.story_flags?.dave_defeated && !s.story_flags?.dave_veto_done && (s.level === 'L6 (Staff)' || s.level === 'L7 (Senior Staff)' || s.level === 'L8 (Principal)' || s.job_type === 'startup_founder') && s.year >= (Number(s.story_flags.dave_defeated_year || 0) + 2)) {
-      return 'dave_interview_veto';
-    }
-
-    // 5) Sam 极客战友剧情链：Zero-Day 漏洞与黑客项目
-    if (s.story_flags?.met_sam && !s.story_flags?.sam_zero_day_done && s.age >= 24 && s.leetcode >= 25 && gameRandom() < 0.35) {
-      return 'sam_garage_zero_day';
     }
 
     // 6) Raj 职场向上管理与架构评审剧情链：
@@ -386,11 +421,6 @@ export const midYearEventRouter = (s: GameState): string => {
     if (!s.story_flags?.met_linda && isWorking && s.age >= 25 && ((s.network || 0) >= 12 || (s.charm || 0) >= 12 || s.leetcode >= 60) && gameRandom() < 0.25) {
       return 'linda_sand_hill_encounter';
     }
-    // 7b) Pre-IPO 独角兽老股额度与领投资源
-    if (s.story_flags?.met_linda && !s.story_flags?.linda_deal_done && s.year >= (Number(s.story_flags.linda_meet_year || 0) + 2) && gameRandom() < 0.4) {
-      return 'linda_angel_co_investment';
-    }
-
     // 8) 首次担任暑期实习生 Mentor (L4 / L5 专属，有且仅有 1 次)
     if (isWorking && isBigTech && !s.story_flags?.intern_mentored && (s.level === 'L4' || s.level === 'L5 (Senior)' || s.level === 'L5') && gameRandom() < 0.35) {
       return 'career_summer_intern_mentor';
@@ -407,11 +437,6 @@ export const midYearEventRouter = (s: GameState): string => {
       if (!hasSeen(s, 'zhuanma_mentor_community') && (s.level === 'L5 (Senior)' || s.level === 'L5' || s.level === 'L6 (Staff)' || s.level === 'L6') && gameRandom() < 0.30) {
         return 'zhuanma_mentor_community';
       }
-    }
-
-    // 10) 离婚后前任独角兽暴富讽刺事件 (一生一次)
-    if (s.story_flags?.had_divorce && !hasSeen(s, 'ex_spouse_unicorn_exit') && s.age >= 27 && gameRandom() < 0.35) {
-      return 'ex_spouse_unicorn_exit';
     }
 
     // 11) 排期攻防 (immigration.ts pd_waiting_strategy)：I-140 已批、正在等表 A 的在职玩家，每 2 年至多
@@ -704,8 +729,8 @@ export const midYearEventRouter = (s: GameState): string => {
     if (s.health <= 50) lifeEvents.push('us_healthcare_icu_crisis');
   }
 
-  // 双职工家庭专属生活事件池
-  if (s.is_married || s.relationship_status === 'married') {
+  // 双职工家庭专属生活事件池 (商婚不算家庭:无共同财产可分、无双收入)
+  if (hasRealSpouse(s)) {
     if ((s.story_flags?.partner_strain || 0) >= 3) {
       return 'marriage_divorce_crisis';
     }
@@ -813,7 +838,7 @@ export const midYearEventRouter = (s: GameState): string => {
     lifeEvents.push('startup_angel_investing');
   }
 
-  if ((s.is_married || s.relationship_status === 'married') && !s.has_child && !s.story_flags?.bay_area_dink_vs_kids_seen) {
+  if (hasRealSpouse(s) && !s.has_child && !s.story_flags?.bay_area_dink_vs_kids_seen) {
     lifeEvents.push('bay_area_dink_vs_kids');
   }
 
@@ -857,9 +882,11 @@ export const midYearEventRouter = (s: GameState): string => {
       lifeEvents.push('visa_check');
   }
 
-  if (s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating') {
+  // Sham (paper) marriage: legally married (is_married=true) but no real partner — neither the
+  // divorce arc nor the dating arc applies, and dating_market has no unmarried-only choice to click.
+  if (hasPartner(s)) {
       lifeEvents.push('breakup_crisis');
-  } else {
+  } else if (s.partner_type !== 'sham' && !s.is_married && s.relationship_status !== 'married') {
       lifeEvents.push('boardgame_dating', 'dating_market');
   }
   
@@ -895,6 +922,11 @@ export const afterCareerAction = (s: GameState): string =>
 // measured on a game nobody ships. Given the post-effect state (newState = transition.nextState)
 // and the transition's targetEventId, resolve the next event id + any season-stage mutation.
 // Behavior is byte-for-byte what App.tsx did inline (UI side effects like sound stay in App.tsx).
+// 商店 (ShopModal) 可随时打开的房产面板及其子事件;它们的「返回」落点要被 shop_return_event 接管。
+export const SHOP_FLOW_EVENTS = new Set(['buy_house', 'change_rental', 'manage_rental_properties', 'house_slave']);
+// 这些落点代表「房产操作做完了,回到正常节奏」—— 若是从商店进来的,就改回被中断的事件。
+const SHOP_FLOW_RETURN_TARGETS = new Set(['sv_daily_life', 'founder_annual_strategy', 'trader_annual_strategy', 'sv_year_end_settlement']);
+
 export function resolveNextEventId(
   choice: Pick<Choice, 'nextEventId'>,
   newState: GameState,
@@ -909,6 +941,22 @@ export function resolveNextEventId(
   }
   let nextId: string | undefined =
     typeof choice.nextEventId === 'function' ? choice.nextEventId(newState) : choice.nextEventId;
+
+  // 1.5 商店入口的房产面板 (置业/换租/房产管理 + 其子事件 house_slave) 结束后,必须回到打开商店
+  //     时被中断的事件 (App 在 onTriggerEvent 写入 shop_return_event)。否则「商店→管理房产→返回」
+  //     会把年初的年度动作、或 PIP/裁员/爆仓/断供等危机面板整个跳过 (万能跳过键,审计 R1)。
+  //     只拦截「回年度面板/结算」这类收束型落点;真正的分支 (如 buy_house→house_slave) 原样透传。
+  if (newState.shop_return_event && !!sourceEventId && SHOP_FLOW_EVENTS.has(sourceEventId)) {
+    const returnTo = newState.shop_return_event;
+    const cleared: GameState = { ...newState, shop_return_event: undefined };
+    if (nextId && SHOP_FLOW_RETURN_TARGETS.has(nextId) && returnTo !== sourceEventId) {
+      return { finalState: cleared, nextEventId: returnTo };
+    }
+    if (!(nextId && SHOP_FLOW_EVENTS.has(nextId))) {
+      // 走向了别的分支 (如卖房创业) —— 放弃回跳,但别让旧的返回点泄漏到后续回合。
+      newState = cleared;
+    }
+  }
 
   // 2. 年度季度事件机 (single source of truth for the H1→H2→settlement rhythm).
   //    一个在职年度应为:年度动作(sv_daily_life 的重心选择,可能带子枢纽 job_hop_market /
@@ -945,6 +993,14 @@ export function resolveNextEventId(
       const h1 = midYearEventRouter({ ...newState, season_stage: 'h1' });
       if (h1 && h1 !== 'sv_daily_life' && h1 !== 'sv_year_end_settlement') {
         return { finalState: { ...newState, year_seg: 1 }, nextEventId: h1 };
+      }
+    } else if (seg < 1) {
+      // founder / trader / 失业者不跑 H1,但不依赖在职的长线剧情链 (OmniAgent 退出结算、Dave
+      // 面试逆转、Sam 零日、Linda 老股、前任独角兽) 仍必须兑现 —— 否则投了 $10w 天使的 founder
+      // 永远拿不到回报 (审计 O15)。
+      const arc = universalStoryArcRouter(newState);
+      if (arc) {
+        return { finalState: { ...newState, year_seg: 1 }, nextEventId: arc };
       }
     }
     // 阶段二:H2 生活事件 (人人有份)。

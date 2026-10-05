@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, gameRandom, deductAssets, addImpact, hopTargetLevel } from './helpers';
+import { getLevelScaledTC, gameRandom, deductAssets, addImpact, hopTargetLevel, landBigTechJob } from './helpers';
 import { HOUSING_NAMES, isOwnedHousing } from '../../constants/gameConstants';
 
 export const lifestyleEvents: Record<string, GameEvent> = {
@@ -479,10 +479,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
             health: s.health - 10,
             has_child: true,
             rent: isAtherton ? 0 : (alreadyOwns ? 4.5 : 5.5),
-            has_housing: alreadyOwns,
+            has_housing: true,
+            // Renters get a RENTAL name. HOUSING_NAMES.FREMONT is an OWNED name, so the old
+            // code turned a renter into a homeowner (double housing expense, homeowner-only
+            // crises, Atherton ending) for $15w — audit O16.
             housing_name: isAtherton
               ? HOUSING_NAMES.ATHERTON
-              : (alreadyOwns ? HOUSING_NAMES.FREMONT_10_DISTRICT : HOUSING_NAMES.FREMONT),
+              : (alreadyOwns ? HOUSING_NAMES.FREMONT_10_DISTRICT : HOUSING_NAMES.FREMONT_RENTAL),
             message: alreadyOwns
               ? '你把家搬进了 Fremont 10 分学区！社区邻居全是高强度卷 AMC10 的硅谷大佬，每天陪娃解题虽然辛苦但充实。'
               : '你咬牙在 Fremont 顶级学区租下一套房、交齐了夏令营学费。房子是租的，但学区是真的——社区邻居全是卷 AMC10 的硅谷大佬。'
@@ -536,18 +539,23 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！有投资人给你推了独角兽面试，但你太久不练算法，白板编程没有通过面试。'
             };
           }
-          const targetLvl = hopTargetLevel(s);
-          const newTC = isUnemployed ? getLevelScaledTC(22, targetLvl) : s.tc + 6;
+          // Employed players get a networking win, NOT a free level-up (writing level:
+          // hopTargetLevel(s) promoted them for playing pickleball, and overwrote founder/
+          // trader levels — audit O17). Only the unemployed branch actually lands a job.
+          if (!isUnemployed) {
+            return {
+              network: Math.min(100, (s.network || 0) + 6),
+              charm: Math.min(s.max_charm ?? 25, s.charm + 5),
+              health: Math.min(100, s.health + 15),
+              message: '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，交换了联系方式并答应以后帮你引荐——人脉圈子扩大了！'
+            };
+          }
+          const hire = landBigTechJob(s, 22);
           return {
-            tc: newTC,
-            level: targetLvl,
-            job_type: isUnemployed ? 'big_tech' : s.job_type,
-            laid_off: false,
+            ...hire,
             charm: Math.min(s.max_charm ?? 25, s.charm + 5),
             health: Math.min(100, s.health + 15),
-            message: isUnemployed
-              ? `多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人引荐你去 AI 独角兽，你扎实的算法基础顺利通过面试，空降高薪 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)！`
-              : '多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人主动拉你组队打双打，并现场推荐你去了顶级 AI 独角兽团队！'
+            message: `多边形皮卡/保时捷引擎轰鸣声吸引了全场眼光！一位科技基金合伙人引荐你去大厂 AI 团队，你扎实的算法基础顺利通过面试，空降高薪 Offer (定级 ${hire.level} · 年薪 ${hire.tc}w)！`
           };
         },
         nextEventId: 'sv_year_end_settlement'
@@ -562,11 +570,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           if (win && isUnemployed && !canLandJob) {
             return { cash: s.cash - 1, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档并获推面试，但算法生疏未能拿到 Offer。' };
           }
-          const targetLvl = hopTargetLevel(s);
-          const newTC = isUnemployed ? getLevelScaledTC(20, targetLvl) : s.tc + 5;
-          return win
-            ? { cash: s.cash - 1, tc: newTC, level: targetLvl, job_type: isUnemployed ? 'big_tech' : s.job_type, laid_off: false, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: `你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司 (定级 ${targetLvl} · 总包 ${newTC}w)！` }
-            : { cash: s.cash - 1, health: Math.max(0, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
+          if (!win) {
+            return { cash: s.cash - 1, health: Math.max(0, s.health - 15), message: '你用力过猛拉伤了跟腱，不仅没混到圈子，还在家躺了半个月。' };
+          }
+          if (!isUnemployed) {
+            return { cash: s.cash - 1, network: Math.min(100, (s.network || 0) + 5), charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: '你的球技极佳，在场上和一位 VC 成了双打搭档，对方把你拉进了他的创业者/投资人群——人脉圈子扩大了！' };
+          }
+          const hire = landBigTechJob(s, 20);
+          return { ...hire, cash: s.cash - 1, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 10), message: `你的球技极佳，在场上和一位 VC 成了双打搭档，对方随手把你推荐给了一家明星公司 (定级 ${hire.level} · 总包 ${hire.tc}w)！` };
         },
         nextEventId: 'sv_year_end_settlement'
       },
@@ -608,17 +619,21 @@ export const lifestyleEvents: Record<string, GameEvent> = {
               message: '老哥极为欣赏你的解题节奏并为你推荐了 AI 团队面试，可惜你长期没练算法没能通过白板面试。'
             };
           }
-          const targetLvl = hopTargetLevel(s);
-          const newTC = isUnemployed ? getLevelScaledTC(20, targetLvl) : s.tc + 5;
+          if (win && !isUnemployed) {
+            return {
+              network: Math.min(100, (s.network || 0) + 5),
+              charm: Math.min(s.max_charm ?? 25, s.charm + 4),
+              health: Math.min(100, s.health + 15),
+              message: '聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，加了微信说以后有合适的坑第一时间叫你——人脉圈子扩大了！'
+            };
+          }
+          const hire = landBigTechJob(s, 20);
           return win
             ? {
-                tc: newTC,
-                level: targetLvl,
-                job_type: isUnemployed ? 'big_tech' : s.job_type,
-                laid_off: false,
+                ...hire,
                 charm: Math.min(s.max_charm ?? 25, s.charm + 4),
                 health: Math.min(100, s.health + 15),
-                message: `聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，直通推荐你去了核心 AI 算力架构团队 (定级 ${targetLvl} · 总包 ${newTC}w)！`
+                message: `聊了几句才发现对方是隔壁 AI 巨头的 Principal Architect！老哥非常欣赏你的解题节奏，直通推荐你去了核心 AI 算力架构团队 (定级 ${hire.level} · 总包 ${hire.tc}w)！`
               }
             : {
                 health: Math.min(100, s.health + 20),

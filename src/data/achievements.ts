@@ -258,7 +258,9 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('crypto_whale')) newlyUnlocked.push('crypto_whale');
   }
 
-  if (state.visa === 'L1 (外派)' || state.l1_relocated) {
+  // Only the actual Vancouver/relocation arc sets l1_relocated; a direct cn_work → L1 transfer
+  // never visited Vancouver, so holding an L-1 alone must not unlock this (audit O19).
+  if (state.l1_relocated) {
     if (unlockAchievement('vancouver_l1_chill')) newlyUnlocked.push('vancouver_l1_chill');
   }
 

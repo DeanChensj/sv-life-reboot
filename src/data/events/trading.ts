@@ -629,11 +629,18 @@ export const tradingEvents: Record<string, GameEvent> = {
       },
       {
         text: '【落袋为安抛售套现】把归属的 RSU 及时 Sell，锁住现金买国债/S&P500',
-        effect: (s) => ({
-          cash: s.cash + 8,
-          macro_economy: 'bull',
-          message: '你稳健落袋为安！拿着现金稳稳躺赚高息，理财心态稳如老狗。'
-        }),
+        effect: (s) => {
+          // Selling is a transfer stocks→cash, not free money (was cash+8 with stocks untouched).
+          const sold = Math.min(s.stocks || 0, 8);
+          return {
+            cash: s.cash + sold,
+            stocks: (s.stocks || 0) - sold,
+            macro_economy: 'bull',
+            message: sold > 0
+              ? `你稳健落袋为安！卖出 $${sold.toFixed(1)}w 已归属股票换成现金，稳稳躺赚高息，理财心态稳如老狗。`
+              : '你本想落袋为安，翻开账户才发现根本没多少已归属股票可卖——只能继续稳健持有现金。',
+          };
+        },
         nextEventId: h1ToH2Router
       }
     ]

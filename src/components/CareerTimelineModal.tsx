@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import type { GameState } from '../types';
 import { useFocusTrap } from '../utils/useFocusTrap';
 import { getCompanyProfile } from '../data/companyProfiles';
-import { isOwnedHousing } from '../constants/gameConstants';
+import { isOwnedHousing, getFireNetWorth, getPropertyEquity } from '../constants/gameConstants';
 import { getVisaDisplayInfo } from '../utils/gameStateSelectors';
 
 interface CareerTimelineModalProps {
@@ -26,6 +26,9 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
   const timeline = gameState.timeline || [];
   const rawHistory = gameState.history_net_worth || [];
   const currentNetWorth = gameState.cash + (gameState.stocks || 0);
+  // FIRE 口径 (与结算门禁一致):流动资产 + 房产权益。
+  const fireNetWorth = getFireNetWorth(gameState);
+  const propertyEquity = getPropertyEquity(gameState);
 
   // Construct dynamic timeline data including all recorded points + current live status
   const chartHistory: { age: number; year: number; netWorth: number; cash: number; stocks: number; isLive?: boolean }[] = [];
@@ -359,7 +362,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                 <div className="bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col">
                   <span className="text-[10px] sm:text-xs text-zinc-500 font-mono">FIRE 阶段目标</span>
                   <span className="text-base sm:text-xl font-bold font-mono text-amber-400 mt-1">
-                    {Math.min(100, Math.floor((currentNetWorth / gameState.win_threshold) * 100))}%
+                    {Math.min(100, Math.floor((fireNetWorth / gameState.win_threshold) * 100))}%
                   </span>
                   <span className="text-[10px] text-zinc-500 font-mono mt-0.5">
                     目标阈值: ${gameState.win_threshold}w
@@ -899,10 +902,10 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                   <span>财富自由进程</span>
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-emerald-400 font-mono">
-                  ${currentNetWorth.toFixed(1)}w <span className="text-xs font-normal text-zinc-400 font-sans">/ 目标 ${gameState.win_threshold}w ({Math.min(100, Math.floor((currentNetWorth / gameState.win_threshold) * 100))}%)</span>
+                  ${fireNetWorth.toFixed(1)}w <span className="text-xs font-normal text-zinc-400 font-sans">/ 目标 ${gameState.win_threshold}w ({Math.min(100, Math.floor((fireNetWorth / gameState.win_threshold) * 100))}%)</span>
                 </div>
                 <div className="text-xs text-zinc-400">
-                  流动现金 ${gameState.cash.toFixed(1)}w · 证券股票 ${(gameState.stocks || 0).toFixed(1)}w · 历史峰值 ${peakNetWorth.toFixed(1)}w
+                  流动现金 ${gameState.cash.toFixed(1)}w · 证券股票 ${(gameState.stocks || 0).toFixed(1)}w{propertyEquity > 0 ? ` · 房产权益 $${propertyEquity.toFixed(1)}w` : ''} · 历史峰值 ${peakNetWorth.toFixed(1)}w
                 </div>
               </div>
             </div>

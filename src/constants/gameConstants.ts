@@ -15,6 +15,7 @@ export const HOUSING_NAMES = {
   NORTH_SAN_JOSE: 'North San Jose 联排',
   FREMONT: 'Fremont 学区房',
   FREMONT_10_DISTRICT: 'Fremont 10分学区房',
+  FREMONT_RENTAL: 'Fremont 学区租房',
   SUNNYVALE_4PLEX: 'Sunnyvale 4-Plex 公寓楼',
   SAN_JOSE_LUXURY: 'San Jose 高级公寓',
   CUPERTINO_SHARED: 'Cupertino 2b2b合租',
@@ -46,6 +47,39 @@ export const OWNED_HOUSING_NAMES: ReadonlySet<string> = new Set([
 export const isOwnedHousing = (name?: string): boolean => {
   return Boolean(name && OWNED_HOUSING_NAMES.has(name));
 };
+
+// 自住房的首付 (= 玩家实际投入的权益,单位 $w)。FIRE 净资产按「现金 + 股票 + 房产权益」计算,
+// 否则买房的玩家被首付惩罚 (资产凭空蒸发 $40-65w),理性策略变成永远租房。
+export const OWNED_HOME_EQUITY: Readonly<Record<string, number>> = {
+  [HOUSING_NAMES.SUNNYVALE]: 45,
+  [HOUSING_NAMES.NORTH_SAN_JOSE]: 40,
+  [HOUSING_NAMES.FREMONT]: 65,
+  [HOUSING_NAMES.FREMONT_10_DISTRICT]: 65,
+  [HOUSING_NAMES.ATHERTON]: 300,
+};
+
+// 投资房档案 (单一事实来源):首付 = 权益,年净租金;卖出/爆雷事件按此查表,
+// 不再用固定 "cash+18 / rental_income-1.2" —— 那会让卖掉 4-plex 后仍留下 $4.8w 幽灵租金。
+export interface InvestmentPropertyProfile { downPayment: number; rentalIncome: number }
+export const INVESTMENT_PROPERTY_PROFILES: Readonly<Record<string, InvestmentPropertyProfile>> = {
+  'Austin 远程独栋屋': { downPayment: 25, rentalIncome: 1.2 },
+  'Hayward 独立投资房': { downPayment: 45, rentalIncome: 2.2 },
+  [HOUSING_NAMES.SUNNYVALE_4PLEX]: { downPayment: 120, rentalIncome: 6.0 },
+  '东湾法拍翻新独立屋': { downPayment: 20, rentalIncome: 2.5 },
+};
+export const getInvestmentPropertyProfile = (name: string): InvestmentPropertyProfile =>
+  INVESTMENT_PROPERTY_PROFILES[name] || { downPayment: 25, rentalIncome: 1.2 };
+
+// 房产权益合计 (自住房首付 + 投资房首付)。父母出资的自住房不算玩家权益 (parents_helped_house)。
+export const getPropertyEquity = (s: { housing_name?: string; investment_properties?: string[]; parents_helped_house?: boolean }): number => {
+  const home = s.housing_name && !s.parents_helped_house ? (OWNED_HOME_EQUITY[s.housing_name] || 0) : 0;
+  const invest = (s.investment_properties || []).reduce((sum, p) => sum + getInvestmentPropertyProfile(p).downPayment, 0);
+  return home + invest;
+};
+
+// FIRE 口径的净资产:流动资产 + 房产权益。所有 FIRE 门禁 / 里程碑面板 / 结局判定统一用它。
+export const getFireNetWorth = (s: { cash: number; stocks?: number; housing_name?: string; investment_properties?: string[]; parents_helped_house?: boolean }): number =>
+  (s.cash || 0) + (s.stocks || 0) + getPropertyEquity(s);
 
 export const VISA_STATUS = {
   NONE: '无',

@@ -552,9 +552,16 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【抢占先机写 Paper】抢占先机，连夜写 Paper 冲击顶会！',
         effect: (s) => {
           const win = gameRandom() < Math.min(0.9, 0.55 + ((s.impact || 0) / 250) + s.leetcode / 400);
-          return win 
-            ? { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, impact: addImpact(s, 15), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4), health: s.health - 15, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界，行业影响力飙升 (Impact +15)！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' }
-            : { health: s.health - 15, cash: s.cash, impact: addImpact(s, 4), message: '熬了半个月，结果撞车了别人的工作被直接 Reject，但实验沉淀与代码库仍为你积累了前沿影响力 (Impact +4)。' };
+          if (!win) {
+            return { health: s.health - 15, cash: s.cash, impact: addImpact(s, 4), message: '熬了半个月，结果撞车了别人的工作被直接 Reject，但实验沉淀与代码库仍为你积累了前沿影响力 (Impact +4)。' };
+          }
+          // The Best-Paper jackpot ($30w bonus + $20w stock + O-1) is once per life. This event
+          // re-fires ~50-67% of years for ai_research players, so an unbounded jackpot was a
+          // money printer (audit O8). Later wins are a solid-but-normal top-tier oral.
+          if (s.story_flags?.ai_best_paper_won) {
+            return { tc: s.tc + 2, impact: addImpact(s, 8), charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2), health: s.health - 15, message: ' 又一篇顶会 Oral 落袋！虽然没有再现 Best Paper 的轰动，但你在前沿圈子的声望持续累积 (Impact +8)，老板在 Calibration 上给你加了一档 Refresher。' };
+          }
+          return { tc: s.tc + 5, cash: s.cash + 30, stocks: (s.stocks || 0) + 20, impact: addImpact(s, 15), visa: (s.visa === '绿卡' || s.visa === '公民') ? s.visa : 'O1 (杰出人才)', charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 4), health: s.health - 15, story_flags: { ...(s.story_flags || {}), ai_best_paper_won: true }, message: ' 论文斩获 NeurIPS Best Paper！你提出的推理大模型架构震惊学术界与工业界，行业影响力飙升 (Impact +15)！公司立刻发了 $30w Retention Bonus、加配了 $20w 核心股票，并协助加急批复了 O1 签证！' };
         },
         nextEventId: h1ToH2Router,
       },

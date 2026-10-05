@@ -1,5 +1,5 @@
 import type { GameState } from '../types';
-import { HOUSING_NAMES, isOwnedHousing } from '../constants/gameConstants';
+import { HOUSING_NAMES, isOwnedHousing, getFireNetWorth } from '../constants/gameConstants';
 
 export type EndingTone = 'triumph' | 'content' | 'tragedy';
 export type EndingRarity = 'UR' | 'SSR' | 'SR' | 'R' | 'N';
@@ -14,7 +14,8 @@ export interface EndingResult {
   rarity: EndingRarity;
 }
 
-const totalAssets = (s: GameState): number => (s.cash || 0) + (s.stocks || 0);
+// 结局判定与 FIRE 门禁同口径:流动资产 + 房产权益 (买房不该把人从「富足」结局里挤出去)。
+const totalAssets = (s: GameState): number => getFireNetWorth(s);
 
 /**
  * Classifies a finished game into a distinct ending archetype based on the final

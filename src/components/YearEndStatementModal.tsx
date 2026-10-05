@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import type { GameState } from '../types';
-import { getAnnualCompensation, previewAnnualPerfReview, getVisaDisplayInfo } from '../utils/gameStateSelectors';
-import { HOUSING_NAMES, isOwnedHousing } from '../constants/gameConstants';
+import { getAnnualCompensation, previewAnnualPerfReview, getVisaDisplayInfo, computeAnnualExpenses } from '../utils/gameStateSelectors';
+import { isOwnedHousing } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface YearEndStatementModalProps {
@@ -32,33 +32,20 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
     ? (gameState.partner_type === 'vc' ? 15 : gameState.partner_type === 'founder' ? 12 : gameState.partner_type === 'engineer' ? 10 : gameState.partner_type === 'artist' ? 3 : 6)
     : 0;
 
-  // Expenses — MUST mirror settlement.ts totalExpense exactly, or the预测 is systematically
-  // too optimistic (it previously omitted property maintenance, inflation, and CPT tuition).
-  const housingRentNum = gameState.rent !== undefined 
-    ? gameState.rent 
-    : (isHomeowner ? (gameState.housing_name === HOUSING_NAMES.ATHERTON ? 5.0 : 2.0) : 4.0);
-  // Owned-home maintenance / HOA / property-tax reserves — settlement charges this on top of rent(=0).
-  let propertyMaintenanceNum = 0;
-  if (isHomeowner) {
-    if (gameState.housing_name === HOUSING_NAMES.ATHERTON) propertyMaintenanceNum = 2.5;
-    else if (gameState.housing_name === HOUSING_NAMES.FREMONT || gameState.housing_name === HOUSING_NAMES.FREMONT_10_DISTRICT) propertyMaintenanceNum = 1.2;
-    else propertyMaintenanceNum = 0.8;
-  }
-  // Housing row shown to the player: rent for renters, maintenance/HOA/tax for owners.
-  const housingExpense = (isHomeowner ? propertyMaintenanceNum : housingRentNum).toFixed(1);
-  const carExpenseNum = gameState.car === 'porsche' ? 2.5 : gameState.car === 'cybertruck' ? 2.0 : gameState.car === 'model_y' ? 1.0 : 0.3;
-  const carExpense = carExpenseNum.toFixed(1);
-  const livingExpenseNum = 3.0;
-  const livingExpense = livingExpenseNum.toFixed(1);
-  const petCount = (gameState.has_dog ? 1 : 0) + (gameState.has_cat ? 1 : 0) || (gameState.has_pet ? 1 : 0);
-  const petExpenseNum = parseFloat((petCount * 0.3).toFixed(1));
+  // Expenses — the SAME ledger settlement.ts deducts (computeAnnualExpenses), itemised below.
+  // Every row shown here is a term of `total`, so 分项之和 == 合计 by construction.
+  const expenses = computeAnnualExpenses(gameState);
+  const housingRentNum = expenses.housingRent;
+  const propertyMaintenanceNum = expenses.propertyMaintenance;
+  const carExpense = expenses.car.toFixed(1);
+  const livingExpense = expenses.living.toFixed(1);
+  const petExpenseNum = expenses.pet;
   const petExpense = petExpenseNum.toFixed(1);
-  // Bay Area cost-of-living inflation (2%/yr compounding off 2018, capped +80%) and Day 1 CPT tuition.
-  const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (gameState.year || 2018) - 2018)));
-  const day1CptTuitionNum = gameState.visa === 'Day 1 CPT' ? 1.2 : 0;
-  const baseExpenseNum = housingRentNum + propertyMaintenanceNum + carExpenseNum + livingExpenseNum + petExpenseNum;
-  const inflationSurchargeNum = baseExpenseNum * (inflationFactor - 1);
-  const totalExpense = parseFloat((baseExpenseNum * inflationFactor + day1CptTuitionNum).toFixed(2));
+  const childExpenseNum = expenses.child;
+  const inflationFactor = expenses.inflationFactor;
+  const day1CptTuitionNum = expenses.day1CptTuition;
+  const inflationSurchargeNum = expenses.inflationSurcharge;
+  const totalExpense = expenses.total;
   const estNetChange = (postTaxIncomeNum + rentalIncomeNum + spouseIncomeNum - totalExpense).toFixed(1);
   const isNetPositive = parseFloat(estNetChange) >= 0;
 
@@ -226,13 +213,25 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
             </div>
           )}
 
-          <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
-            <span className="text-zinc-400 flex items-center gap-2.5">
-              <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              {isHomeowner ? `自购房产维保/HOA/物业税 (${gameState.housing_name})` : `租房房租 (${gameState.housing_name || '租房'})`}
-            </span>
-            <span className="font-bold text-rose-400 tabular-nums">-${housingExpense}w</span>
-          </div>
+          {(housingRentNum > 0 || !isHomeowner) && (
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                {isHomeowner ? `房贷月供/地税 (${gameState.housing_name})` : `租房房租 (${gameState.housing_name || '租房'})`}
+              </span>
+              <span className="font-bold text-rose-400 tabular-nums">-${housingRentNum.toFixed(1)}w</span>
+            </div>
+          )}
+
+          {isHomeowner && propertyMaintenanceNum > 0 && (
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                自购房产维保/HOA/储备金
+              </span>
+              <span className="font-bold text-rose-400 tabular-nums">-${propertyMaintenanceNum.toFixed(1)}w</span>
+            </div>
+          )}
 
           <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
             <span className="text-zinc-400 flex items-center gap-2.5">
@@ -257,6 +256,16 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
                 {`宠物抚养与医疗 (${gameState.pet_name || '宠物'})`}
               </span>
               <span className="font-bold text-amber-300 tabular-nums">-${petExpense}w</span>
+            </div>
+          )}
+
+          {childExpenseNum > 0 && (
+            <div className="flex justify-between items-center p-3.5 bg-zinc-950/70 rounded-2xl border border-zinc-800/80">
+              <span className="text-zinc-400 flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                育儿开销 (托管/课外班/夏令营)
+              </span>
+              <span className="font-bold text-sky-300 tabular-nums">-${childExpenseNum.toFixed(1)}w</span>
             </div>
           )}
 

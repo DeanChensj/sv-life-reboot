@@ -191,6 +191,9 @@ export interface GameState {
   transferred_to_ai?: boolean; // 是否已内部转岗至前沿大模型组
   last_limited_opp_year?: number; // 记录上一次参与湾区限时机会的年份 (防同一年度重复点击)
   last_housing_action_year?: number; // 记录上一次置业/换租的年份 (买房是资产配置, 不占用年度职场主行动; 防同年重复进入)
+  // 从商店打开置业/换租/房产管理面板时记录「来源事件」。房产操作结束后必须回到这个事件而不是
+  // 年度面板/结算 —— 否则商店成了万能跳过键 (年初白拿一年 / PIP·裁员·爆仓面板被丢弃)。
+  shop_return_event?: string;
   npcs?: Record<string, NPCState>; // 具名长线 NPC 关系网
   hop_applied_count?: number; // 当年投递面试的目标公司总数 (蒙特卡洛平衡门禁读取,用于跳槽面试通过率)
   hop_offers?: string[]; // 当年斩获的社招 Offer 列表 (['google', 'meta', etc.])

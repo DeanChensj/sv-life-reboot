@@ -1,5 +1,5 @@
 import type { GameState, TimelineRecord } from '../types';
-import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover } from '../constants/gameConstants';
+import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover, getFireNetWorth } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { getSchoolProfile } from '../data/schoolProfiles';
 import { normalizeLevel, getLevelRank, LEVEL_PROFILES } from '../data/levelProfiles';
@@ -66,7 +66,10 @@ export function applyStateTransition(
   const targetVisa = normalizedEffect.visa || currentVisa;
   const isPermanent = isPermanentVisa(currentVisa) || isPermanentVisa(targetVisa);
 
-  if (isNewJob && !isPermanent && targetVisa !== VISA_STATUS.O1 && !prevState.is_phd) {
+  // PhDs are NOT exempt: a PERM is employer-specific regardless of degree, so a PhD hopping before
+  // I-140 approval restarts the queue like everyone else (the old `!prevState.is_phd` made PhD hops
+  // PERM-proof — design decision: PhD 跳槽需重置 PERM).
+  if (isNewJob && !isPermanent && targetVisa !== VISA_STATUS.O1) {
     const isI140Approved = ['i140_approved', 'waiting_pd', 'i485_pending', 'approved'].includes(prevState.gc_stage || '');
     if (prevState.gc_stage === 'perm_processing' || prevState.gc_stage === 'perm_audit' || prevState.gc_stage === 'i140_processing' || prevState.gc_stage === 'i140_rfe') {
       normalizedEffect.gc_stage = 'perm_processing';
@@ -481,7 +484,7 @@ export function applyStateTransition(
   } else if (newState.status === 'win' || newState.status === 'retired') {
     targetEventId = 'end';
   } else if (
-    (newState.cash + (newState.stocks || 0)) >= newState.win_threshold &&
+    getFireNetWorth(newState) >= newState.win_threshold &&
     (!newState.last_fire_milestone_reached || newState.last_fire_milestone_reached < newState.win_threshold) &&
     newState.status === 'playing' &&
     context.eventId !== 'choose_trait' &&

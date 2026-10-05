@@ -1,7 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion, resolveHopVisaTransition } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion, resolveHopVisaTransition, landBigTechJob } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
-import { isPermanentVisa, liquidateStocksToCover } from '../../constants/gameConstants';
+import { isPermanentVisa, liquidateStocksToCover, isOwnedHousing } from '../../constants/gameConstants';
 import { isTopTierCSSchool } from '../schoolProfiles';
 import { meetsOrganicPromo, normalizeLevel, promoBlockerHint } from '../levelProfiles';
 
@@ -184,8 +184,20 @@ export const careerEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
+        // Always available: the panel used to leave an O-1/L-1/Day-1-CPT/无签证 player with
+        // cash < $5w nothing but game_over (audit O12). Grinding costs health + a bit of luck.
+        text: '【咬牙继续海投】白天海投 LinkedIn/内推，晚上刷题，再撑一轮招聘季',
+        effect: (s) => ({
+          leetcode: Math.min(100, s.leetcode + 12),
+          health: Math.max(0, s.health - 12),
+          network: Math.min(100, (s.network || 0) + 2),
+          message: '你把 LinkedIn 投了个遍、求遍了能求的内推，每晚刷题到凌晨。还没有 Offer，但简历与算法手感都热了起来——下一轮招聘季再战！'
+        }),
+        nextEventId: 'sv_year_end_settlement',
+      },
+      {
         text: '【墨西哥闯关重签】去 Tijuana 闯关重签签证 (高风险 Visa Run · 消耗 $1w)',
-        condition: (s) => s.cash >= 1 && (s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)'),
+        condition: (s) => s.cash >= 1 && (s.visa === 'OPT (实习)' || s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)'),
         effect: (s) => {
           const win = gameRandom() > 0.15; // 85% success
           return win
@@ -237,7 +249,9 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【读水硕维持身份】读 Day 1 CPT 水硕维持合法身份 (消耗 $5w)',
         condition: (s) => s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)' && s.cash >= 5,
-        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 5, age: s.age + 1, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
+        // No `age: s.age + 1` here — the year-end settlement that follows already ages the
+        // player, so this double-counted a year and skewed age vs. year forever (audit O13).
+        effect: (s) => ({ visa: 'Day 1 CPT', cash: s.cash - 5, leetcode: Math.min(100, s.leetcode + 25), message: '你在读 Day 1 CPT 水硕期间狂刷 250 道 Hard 题，算法功力大增！准备重回战场！' }),
         nextEventId: 'sv_year_end_settlement',
       }
     ]
@@ -545,6 +559,9 @@ export const careerEvents: Record<string, GameEvent> = {
           const pass = s.leetcode >= 45 && gameRandom() < 0.65;
           if (pass) {
             const newTC = Math.max(s.tc + 6.0, 32.0);
+            // Standard ladder level, at most +1 rung (hopTargetLevel honours the impact gates).
+            // The old '早期核心成员' title normalised to ≥L5, so an L3 jumped two levels (O14).
+            const targetLvl = hopTargetLevel(s);
             return {
               mid_year: true, season_stage: 'h1',
               last_limited_opp_year: s.year,
@@ -555,7 +572,7 @@ export const careerEvents: Record<string, GameEvent> = {
               is_new_job: true,
               company: 'startup',
               job_type: 'startup',
-              level: '早期核心成员',
+              level: targetLvl,
               story_flags: {
                 ...(s.story_flags || {}),
                 cursor_hunt_joined: true
@@ -855,10 +872,14 @@ export const careerEvents: Record<string, GameEvent> = {
          text: '【疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
-          const curLevel = s.level || (s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
           // Fall back to the all-time peak rank before hitting the L3 floor: an unmapped job
-          // title must never silently demote a senior (this path WRITES a new level).
-          const normLvl = normalizeLevel(curLevel, s) || normalizeLevel(s.max_level, s) || (s.is_phd ? 'L4' : 'L3');
+          // title must never silently demote a senior (this path WRITES a new level). The
+          // fallback MUST be tried on the raw s.level — `s.level || 'L3'` first made the
+          // max_level branch unreachable, so an L6 with a blank level got "promoted" to L4 (O9).
+          const normLvl = normalizeLevel(s.level, s)
+            || normalizeLevel(s.max_level, s)
+            || normalizeLevel(s.job_type === 'ai_research' ? 'MTS' : undefined, s)
+            || (s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
           const isKingOfRoll = s.trait_title === '卷王之王';
@@ -1034,7 +1055,12 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         hideIfUnavailable: true,
         effect: (s) => {
-          const curLevel = s.level || (s.job_type === 'ai_research' ? 'MTS' : s.is_phd ? 'L4' : 'L3');
+          // Same max_level-aware normalisation as 疯狂内卷 (O9): a blank level on a former L6
+          // must not look like an L3 and hand out a "water-to-canal" L4 promotion.
+          const curLevel = normalizeLevel(s.level, s)
+            || normalizeLevel(s.max_level, s)
+            || normalizeLevel(s.job_type === 'ai_research' ? 'MTS' : undefined, s)
+            || (s.is_phd ? 'L4' : 'L3');
           const lastPromoAge = s.last_promo_age ?? (s.age - 1);
           const yearsInGrade = s.age - lastPromoAge;
 
@@ -1120,7 +1146,7 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【置业安家】进军湾区加价抢房大乱斗 (Sunnyvale老破小/San Jose联排/Fremont学区房)',
         // 置业是资产配置,不占用当年职场主行动(买完回到本面板继续选工作重心);每年至多进入一次。
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 40 && !s.has_housing && s.last_housing_action_year !== s.year,
+        condition: (s) => (s.cash + (s.stocks || 0)) >= 40 && !isOwnedHousing(s.housing_name) && s.last_housing_action_year !== s.year,
         hideIfUnavailable: true,
         effect: () => ({ message: '你准备好了首付款支票，踏入了火热的湾区 Open House 抢房战场！' }),
         nextEventId: 'buy_house',
@@ -1419,7 +1445,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【冲击 L6 Staff 架构师】主导跨组核心架构设计 (L5 升 L6 专属高门槛)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return normalizeLevel(cur) === 'L5 (Senior)' && meetsOrganicPromo(s, 'L6 (Staff)');
+          return normalizeLevel(cur, s) === 'L5 (Senior)' && meetsOrganicPromo(s, 'L6 (Staff)');
         },
         effect: (s) => {
           // L6 Staff 非常难；impact(影响力/项目产出)是 Staff 晋升的关键杠杆 —— 躺平(低 impact)几乎升不动。
@@ -1438,7 +1464,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【角逐 L7 Senior Staff 资深架构师】统领跨部门级核心技术战略与下一代基建 (L6 升 L7 专属)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return normalizeLevel(cur) === 'L6 (Staff)' && meetsOrganicPromo(s, 'L7 (Senior Staff)');
+          return normalizeLevel(cur, s) === 'L6 (Staff)' && meetsOrganicPromo(s, 'L7 (Senior Staff)');
         },
         reqBadge: '需 L6 职级 & LeetCode >= 70 & Impact >= 45',
         costBadge: '消耗健康与高阶政治与战略心智',
@@ -1457,7 +1483,7 @@ export const careerEvents: Record<string, GameEvent> = {
         text: '【登顶 L8 Principal 首席架构师】定义行业技术范式与下一代算力/模型标准 (L7 升 L8 终极天堑)',
         condition: (s) => {
           const cur = s.level || (s.is_phd ? 'L4' : 'L3');
-          return normalizeLevel(cur) === 'L7 (Senior Staff)' && meetsOrganicPromo(s, 'L8 (Principal)');
+          return normalizeLevel(cur, s) === 'L7 (Senior Staff)' && meetsOrganicPromo(s, 'L8 (Principal)');
         },
         reqBadge: '需 L7 职级 & LeetCode >= 80 & Impact >= 80',
         costBadge: '消耗健康与终极政治心智',
@@ -1572,10 +1598,9 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)',
         effect: (s) => {
           const pass = s.leetcode >= 45 || gameRandom() < 0.55;
-          const targetLvl = hopTargetLevel(s);
-          const newTC = getLevelScaledTC(22, targetLvl);
+          const hire = landBigTechJob(s, 22);
           return pass
-            ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: `【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer (定级 ${targetLvl} · 年薪 ${newTC}w)，成功延续 OPT 身份！` }
+            ? { ...hire, cash: Math.max(0, s.cash - 1), health: Math.max(0, s.health - 15), message: `【OPT 成功上岸】利用 90 天 OPT 失业期窗口，你的算法实力征服了面试官，火速拿下支持 E-Verify 的新 Offer (定级 ${hire.level} · 年薪 ${hire.tc}w)，成功延续 OPT 身份！` }
             : { status: 'game_over', story_flags: { ...(s.story_flags || {}), deported: true }, message: '90 天 OPT 失业期耗尽，且未能及时挂靠转学，SEVIS 状态失效被迫登机回国。' };
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
@@ -1600,10 +1625,10 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => s.visa === 'H1B (工签)' || s.visa === 'L1 (外派)' || s.visa === 'O1 (杰出人才)',
         effect: (s) => {
           const pass = s.leetcode >= 55 || gameRandom() < 0.50;
-          const targetLvl = hopTargetLevel(s);
-          const newTC = getLevelScaledTC(24, targetLvl);
+          const hire = landBigTechJob(s, 24);
+          const hopVisa = resolveHopVisaTransition(s);
           return pass
-            ? { tc: newTC, level: targetLvl, job_type: 'big_tech', laid_off: false, cash: Math.max(0, s.cash - 2), health: Math.max(0, s.health - 15), visa: (s.visa === 'L1 (外派)' ? resolveHopVisaTransition(s).visa : s.visa) as GameState['visa'], message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${targetLvl} · 年薪 ${newTC}w) 并成功办理工签 Transfer 保住合法身份！` }
+            ? { ...hire, cash: Math.max(0, s.cash - 2 + hopVisa.cashDelta), health: Math.max(0, s.health - 15), visa: hopVisa.visa as GameState['visa'], message: `【工签 Transfer 成功】有惊无险！凭高超算法在 60 天限期内火速入职新公司 (定级 ${hire.level} · 年薪 ${hire.tc}w) 并成功办理工签 Transfer 保住合法身份！${hopVisa.note}` }
             : { status: 'game_over', story_flags: { ...(s.story_flags || {}), deported: true }, message: '没能在 60 天 H1B Grace Period 内找到支持 Visa Transfer 的新工作，工签身份到期被迫登机离境。' };
         },
         nextEventId: (s) => s.status === 'game_over' ? 'end' : h1ToH2Router(s),
@@ -2377,9 +2402,13 @@ export const careerEvents: Record<string, GameEvent> = {
           let winRate = 0.15;
           if (s.year >= 2020 && s.year <= 2022) winRate = 0.30;
           const win = gameRandom() < winRate; 
-          return win 
-            ? { cash: s.cash + 60, message: '稳扎稳打！公司被大厂收购了，你的期权兑现了 $60w 现金！' }
-            : { cash: Math.max(0, s.cash - 5), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸，你不得不重新进入求职市场。' };
+          if (!win) {
+            return { cash: Math.max(0, s.cash - 5), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: '风口过了，投资人撤资，公司资金链断裂倒闭。期权变废纸，你不得不重新进入求职市场。' };
+          }
+          // An acquisition ends the startup chapter: you now work for the acquirer. Staying
+          // job_type 'startup' let the SAME company get "acquired" again next year for another $60w.
+          const hire = landBigTechJob(s, 24);
+          return { ...hire, tc: Math.max(s.tc, hire.tc), is_new_job: true, cash: s.cash + 60, message: `稳扎稳打！公司被 ${(hire.company || 'Big Tech').toUpperCase()} 收购了，你的期权兑现了 $60w 现金，并随团队并入大厂 (定级 ${hire.level})！` };
         },
         nextEventId: h1ToH2Router,
       },
@@ -2390,11 +2419,27 @@ export const careerEvents: Record<string, GameEvent> = {
             return { cash: Math.max(0, s.cash - 10), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, message: `在 ${s.year} 年盲目跟风 AI 概念缺乏底层研发，产品无人问津，公司资金链断裂倒闭，你重新失业。` };
           }
           const win = gameRandom() < 0.18;
-          return win 
-            ? { cash: s.cash + 35, stocks: (s.stocks || 0) + 45, visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : '绿卡', gc_progress: 5, gc_stage: 'approved', imageUrl: 'images/ai_startup.jpg', message: '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产，顺便拿到了 EB-1 绿卡！' }
-            : { cash: Math.max(0, s.cash - 10), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜抱起铺盖重新刷题求职。' };
+          if (!win) {
+            return { cash: Math.max(0, s.cash - 10), health: s.health - 15, laid_off: true, job_type: 'unemployed', tc: 0, imageUrl: 'images/layoff_box.jpg', message: '转型太慢，被巨头连夜更新的接口直接背刺干死了...连夜抱起铺盖重新刷题求职。' };
+          }
+          // A funding round is NOT a green card. The old win handed out an instant EB-1 绿卡 —
+          // the startup path must go through the same immigration pipeline as everyone else.
+          // The company's lawyers do file an O-1 for a now-notable engineer; the jackpot is once.
+          const needsVisa = s.visa !== '公民' && s.visa !== '绿卡' && s.visa !== 'O1 (杰出人才)' && s.gc_stage !== 'i485_pending' && s.gc_stage !== 'approved';
+          if (s.story_flags?.startup_ai_pivot_won) {
+            return { cash: s.cash + 10, stocks: (s.stocks || 0) + 15, imageUrl: 'images/ai_startup.jpg', message: '又踩中一轮 AI 融资！公司估值再上台阶，你的期权继续升值 (+$10w 现金 · +$15w 股票)。' };
+          }
+          return {
+            cash: s.cash + 35, stocks: (s.stocks || 0) + 45,
+            ...(needsVisa ? { visa: 'O1 (杰出人才)' as const } : {}),
+            story_flags: { ...(s.story_flags || {}), startup_ai_pivot_won: true },
+            imageUrl: 'images/ai_startup.jpg',
+            message: needsVisa
+              ? '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产！公司律所顺势以你的核心架构贡献为由办妥了 O-1 杰出人才签证——绿卡仍要按正常流程排队。'
+              : '踩中 AI 风口！公司拿到巨额融资，你的期权大幅升值，获赠 $35w 现金与 $45w 股票资产！',
+          };
         },
-        nextEventId: (s) => (!s.laid_off && s.visa === '绿卡' ? 'post_green_card' : h1ToH2Router(s)),
+        nextEventId: h1ToH2Router,
       }
     ]
   },
@@ -2477,7 +2522,9 @@ export const careerEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【全职合伙人结算】清算团队期权股权与终局退出命运',
-        condition: (s) => !!s.story_flags?.joined_omniagent,
+        // Only while STILL at OmniAgent. joined_omniagent is never cleared, so a player who
+        // long since hopped to Google was being "laid off" by OmniAgent's bankruptcy (audit O10).
+        condition: (s) => !!s.story_flags?.joined_omniagent && s.company === 'OmniAgent AI' && s.job_type === 'startup' && !s.laid_off,
         hideIfUnavailable: true,
         effect: (s) => {
           const bullBonus = s.macro_economy === 'bull' ? 0.08 : s.macro_economy === 'bear' ? -0.06 : 0;
@@ -2523,6 +2570,36 @@ export const careerEvents: Record<string, GameEvent> = {
               message: '【算力链条断裂】大模型集群烧光了融资储备，公司进入破产清算。期权化为废纸，但你沉淀了硬核 AI 架构落地能力，在求职市场备受大厂抢夺！'
             };
           }
+        },
+        nextEventId: 'sv_year_end_settlement'
+      },
+      {
+        text: '【早期离职员工结算】清算你离开 OmniAgent 时已归属的那部分期权',
+        condition: (s) => !!s.story_flags?.joined_omniagent && !(s.company === 'OmniAgent AI' && s.job_type === 'startup' && !s.laid_off),
+        hideIfUnavailable: true,
+        effect: (s) => {
+          const bullBonus = s.macro_economy === 'bull' ? 0.08 : s.macro_economy === 'bear' ? -0.06 : 0;
+          const ipoProb = Math.max(0.05, Math.min(0.25, 0.12 + bullBonus));
+          const acquiHireProb = 0.45;
+          const rand = gameRandom();
+          if (rand < ipoProb) {
+            return {
+              cash: s.cash + 12,
+              stocks: (s.stocks || 0) + 10,
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '【纳斯达克敲钟】OmniAgent 成功上市 (代码 $OMNI)！你早已离开，但当年离职时行权的那一小部分期权仍套现了 $12w 现金与 $10w 股票——比留下的同事少得多，但也算喝到了汤。'
+            };
+          } else if (rand < ipoProb + acquiHireProb) {
+            return {
+              cash: s.cash + 4,
+              story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+              message: '【巨头收购】Google 收购了 OmniAgent 团队。你离职时行权的那点期权按收购价折算到账 $4w——不多，但 Alex 给你发了条「谢谢当年并肩」的消息。'
+            };
+          }
+          return {
+            story_flags: { ...(s.story_flags || {}), alex_ipo_done: true },
+            message: '【算力链条断裂】OmniAgent 烧光融资进入清算，你当年行权的期权化为废纸。好在你早已跳船，这次沉没与你的饭碗无关。'
+          };
         },
         nextEventId: 'sv_year_end_settlement'
       },
@@ -3071,13 +3148,16 @@ export const careerEvents: Record<string, GameEvent> = {
       {
         text: '【接下 Term Sheet 全职创业】拿 Linda 的 $150w 支票正式开启创业 (CEO 身份)',
         reqBadge: '需绿卡/公民身份',
-        condition: (s) => isPermanentVisa(s.visa),
+        condition: (s) => isPermanentVisa(s.visa) && s.job_type !== 'startup_founder',
         effect: (s) => ({
           job_type: 'startup_founder',
           company: 'stealth_startup',
+          level: 'CEO & Founder',
           founder_stage: 'seed',
           company_valuation: 800,
+          founder_equity_pct: 80,
           tc: 12,
+          laid_off: false,
           cash: s.cash + 10,
           story_flags: { ...(s.story_flags || {}), linda_deal_done: true },
           message: '【拿到 Sand Hill 支票！】Linda 基金领投 $150w 种子轮！你正式登出大厂，作为初创公司 CEO 开启硅谷创业之路！'

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { GameState } from '../types';
-import { isOwnedHousing } from '../constants/gameConstants';
+import { isOwnedHousing, getFireNetWorth } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
 import { gameRandom } from '../utils/random';
 
@@ -201,7 +201,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                   CURRENT win threshold. Do not short-circuit on has_reached_initial_fire:
                   a player who opted into a higher FIRE tier ($800w/$1500w) must actually
                   reach that tier, not win at any asset level from a past milestone. */}
-              {(totalAssets >= gameState.win_threshold) && (
+              {(getFireNetWorth(gameState) >= gameState.win_threshold) && (
                 <button
                   onClick={() => {
                     onClose();

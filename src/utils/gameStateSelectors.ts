@@ -1,5 +1,5 @@
 import type { GameState } from '../types';
-import { isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
+import { HOUSING_NAMES, isOwnedHousing, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
 import { getPdQueueInfo, getVisaBulletin, formatGameYearMonth, formatYearsDelta } from './visaBulletin';
 import { getCompanyProfile } from '../data/companyProfiles';
 import { getSchoolProfile } from '../data/schoolProfiles';
@@ -479,14 +479,19 @@ export function getAnnualCompensation(state: GameState): AnnualCompensationResul
  * Computes the current year's Performance Review rating (EE / ME / NI) and expected raise
  * BEFORE year-end settlement runs, so YearEndStatementModal displays THIS year's review
  * rather than last year's stale `story_flags.last_perf_rating`.
+ *
+ * SINGLE SOURCE OF TRUTH: settlement.ts applies exactly this result. It used to re-roll the NI
+ * check with gameRandom() and price the raise off the *rotated* (next-year) economy, so the
+ * banner and the real settlement disagreed in ~48% of PIP-flagged years (audit O5). The NI roll
+ * is a deterministic hash of seed/year/age so preview == settlement for the same state.
  */
-export function previewAnnualPerfReview(s: GameState): { rating?: 'EE' | 'ME' | 'NI'; raise?: number } {
+export function previewAnnualPerfReview(s: GameState): { rating?: 'EE' | 'ME' | 'NI'; raise?: number; updatedTC: number } {
   const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && s.company !== 'icc';
   if (!isEmployee) {
     // Reference persisted flags for story_flags hygiene check
     void s.story_flags?.last_perf_rating;
     void s.story_flags?.last_perf_raise;
-    return { rating: undefined, raise: undefined };
+    return { rating: undefined, raise: undefined, updatedTC: s.tc };
   }
 
   const action = s.story_flags?.annual_action;
@@ -519,7 +524,10 @@ export function previewAnnualPerfReview(s: GameState): { rating?: 'EE' | 'ME' | 
   const curLevelKey = norm || (s.is_phd ? 'L4' : 'L3');
   const levelCap = maxCapByLevel[curLevelKey] || 55;
   const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60);
+  // 调薪只增不减:已在/超过 level cap 的高薪玩家(如 OpenAI MTS tc=80 折算 L6 cap 78)
+  // 不应被 Math.min(cap,...) 反向倒扣 TC(那会边涨薪文案边掉薪)。
   const raiseTo = (amt: number) => Math.max(s.tc, Math.min(levelCap, parseFloat((s.tc + amt).toFixed(1))));
+  // 本年的调薪看本年的经济周期 (s.macro_economy),不看结算时轮动出的下一年周期。
   const econ = s.macro_economy || 'neutral';
 
   let updatedTC = s.tc;
@@ -534,6 +542,55 @@ export function previewAnnualPerfReview(s: GameState): { rating?: 'EE' | 'ME' | 
   return {
     rating,
     raise: parseFloat((updatedTC - s.tc).toFixed(1)),
+    updatedTC,
   };
+}
+
+export interface AnnualExpenseBreakdown {
+  housingRent: number;          // 租金 / 房贷月供 (s.rent)
+  propertyMaintenance: number;  // 自住房维保 / HOA / 地税储备
+  car: number;
+  living: number;
+  pet: number;
+  child: number;                // 育儿 (学费/托管/课外班)
+  base: number;                 // 以上合计 (通胀前)
+  inflationFactor: number;
+  inflationSurcharge: number;   // base * (inflationFactor - 1)
+  day1CptTuition: number;       // 不计通胀
+  total: number;
+}
+
+export const CHILD_ANNUAL_EXPENSE = 1.5;
+
+/**
+ * SINGLE SOURCE OF TRUTH for the year-end expense ledger. settlement.ts deducts exactly
+ * `total`; YearEndStatementModal itemises the same parts. Keeping them in one function is what
+ * guarantees "分项之和 == 合计" (the modal used to hide the mortgage line for homeowners, so its
+ * rows no longer summed to the total it displayed — audit O6).
+ */
+export function computeAnnualExpenses(s: GameState): AnnualExpenseBreakdown {
+  const isHomeowner = isOwnedHousing(s.housing_name);
+  const housingRent = s.rent !== undefined
+    ? s.rent
+    : (isHomeowner ? (s.housing_name === HOUSING_NAMES.ATHERTON ? 5.0 : 2.0) : 4.0);
+  let propertyMaintenance = 0;
+  if (isHomeowner) {
+    if (s.housing_name === HOUSING_NAMES.ATHERTON) propertyMaintenance = 2.5;
+    else if (s.housing_name === HOUSING_NAMES.FREMONT || s.housing_name === HOUSING_NAMES.FREMONT_10_DISTRICT) propertyMaintenance = 1.2;
+    else propertyMaintenance = 0.8;
+  }
+  const car = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
+  const living = 3.0;
+  const petCount = (s.has_dog ? 1 : 0) + (s.has_cat ? 1 : 0) || (s.has_pet ? 1 : 0);
+  const pet = parseFloat((petCount * 0.3).toFixed(1));
+  // 有娃就有持续开销 (托管/课外班/夏令营),否则 DINK 严格占优、鸡娃选项只是一次性扣款。
+  const child = s.has_child ? CHILD_ANNUAL_EXPENSE : 0;
+  // 湾区生活成本通胀:以 2018 为基准 ~2%/年复利、封顶 +80%。
+  const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (s.year || 2018) - 2018)));
+  const day1CptTuition = s.visa === 'Day 1 CPT' ? 1.2 : 0;
+  const base = housingRent + propertyMaintenance + car + living + pet + child;
+  const inflationSurcharge = base * (inflationFactor - 1);
+  const total = parseFloat((base * inflationFactor + day1CptTuition).toFixed(2));
+  return { housingRent, propertyMaintenance, car, living, pet, child, base, inflationFactor, inflationSurcharge, day1CptTuition, total };
 }
 

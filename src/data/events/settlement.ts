@@ -1,10 +1,9 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, h1ToH2Router, isOpportunityActiveThisYear , gameRandom } from './helpers';
 import { advanceVisaBulletin, formatGameYearMonth, formatYearsDelta, getEbCategory, getPriorityDate, pdWaitGauge, EB_CATEGORY_LABEL } from '../../utils/visaBulletin';
-import { getTCBreakdown, getAnnualCompensation } from '../../utils/gameStateSelectors';
-import { HOUSING_NAMES, isOwnedHousing, liquidateStocksToCover } from '../../constants/gameConstants';
+import { getTCBreakdown, getAnnualCompensation, computeAnnualExpenses, previewAnnualPerfReview } from '../../utils/gameStateSelectors';
+import { liquidateStocksToCover, getFireNetWorth } from '../../constants/gameConstants';
 import { getCompanyProfile } from '../companyProfiles';
-import { normalizeLevel } from '../levelProfiles';
 
 // Stepped FIRE targets. The settlement gate re-prompts only when
 // `last_fire_milestone_reached < win_threshold`, so a "keep going" option MUST record the tier
@@ -12,6 +11,12 @@ import { normalizeLevel } from '../levelProfiles';
 // value collapses them and locks the player out of ever winning again.
 const FIRE_TIERS = [500, 800, 1500, 3000, 99999];
 const nextFireTarget = (cur: number): number => FIRE_TIERS.find((t) => t > cur) ?? 99999;
+// 当前净资产已经越过的最高 FIRE 档 (至少记 500,且不低于已记录档)。
+const fireTierReached = (s: GameState, prev?: number): number => {
+  const nw = getFireNetWorth(s);
+  const reached = [...FIRE_TIERS].filter((t) => t < 99999 && t <= nw).pop() ?? 500;
+  return Math.max(prev || 0, reached);
+};
 
 export const settlementEvents: Record<string, GameEvent> = {
   'sv_year_end_settlement': {
@@ -49,41 +54,12 @@ export const settlementEvents: Record<string, GameEvent> = {
            let nextGc = s.gc_progress || 0;
            let nextStage = s.gc_stage || 'not_started';
 
-           const isHomeowner = isOwnedHousing(s.housing_name);
-           const housingExpense = s.rent !== undefined 
-             ? s.rent 
-             : (isHomeowner ? (s.housing_name === HOUSING_NAMES.ATHERTON ? 5.0 : 2.0) : 4.0);
-
-           // 自有住房维护、HOA 与地税储备金 (Property Maintenance, HOA & Property Tax Reserves)
-           let propertyMaintenanceExpense = 0;
-           
-           if (isHomeowner) {
-             if (s.housing_name === HOUSING_NAMES.ATHERTON) {
-               propertyMaintenanceExpense = 2.5;
-             } else if (s.housing_name === HOUSING_NAMES.FREMONT || s.housing_name === HOUSING_NAMES.FREMONT_10_DISTRICT) {
-               propertyMaintenanceExpense = 1.2;
-             } else if (s.housing_name === HOUSING_NAMES.NORTH_SAN_JOSE) {
-               propertyMaintenanceExpense = 0.8;
-             } else {
-               propertyMaintenanceExpense = 0.8;
-             }
-             
-           }
-
-           const carExpense = s.car === 'porsche' ? 2.5 : s.car === 'cybertruck' ? 2.0 : s.car === 'model_y' ? 1.0 : 0.3;
-           const livingExpense = 3.0;
+           // 年度开销 (房租/房贷 + 自住房维保/HOA/地税 + 车 + 基础生活 + 宠物 + 育儿) × 湾区通胀
+           // + Day 1 CPT 学费。单一事实来源 computeAnnualExpenses —— 年终账单 (YearEndStatementModal)
+           // 逐项展示的就是同一份账,保证「分项之和 == 合计」。
+           const expenses = computeAnnualExpenses(s);
            const petCount = (s.has_dog ? 1 : 0) + (s.has_cat ? 1 : 0) || (s.has_pet ? 1 : 0);
-           const petExpense = parseFloat((petCount * 0.3).toFixed(1));
-           // 湾区生活成本通胀：以 2018 为基准 ~2%/年复利、封顶 +80%。engaged 玩家靠 merit/晋升涨薪跑赢，
-           // 躺平(TC 停滞)玩家被持续上涨的物价蚕食 —— 与 impact 机制协同，制造「趁早 FIRE、别拖」的压力。
-           // 不影响 FIRE 目标与 TC 档,只作用于每年生活开销。
-           const inflationFactor = Math.min(1.8, Math.pow(1.02, Math.max(0, (s.year || 2018) - 2018)));
-           // Day 1 CPT 不是「白嫖永动机」：维持合法学生身份要每年真金白银缴学费 ($1.2w)。计入
-           // 年度开销(走 liquidateStocksToCover 自动平仓兜底,和房租同源),让长期挂靠 CPT 躺着
-           // 白嫖工作身份的玩家持续失血 —— 与下方健康扣减 + ~10% 合规抽检共同施压尽早转正/上岸。
-           // (#101) 自有住房维护/HOA/地税储备金 propertyMaintenanceExpense 也计入年度开销。
-           const day1CptTuition = s.visa === 'Day 1 CPT' ? 1.2 : 0;
-           const totalExpense = parseFloat(((housingExpense + propertyMaintenanceExpense + carExpense + livingExpense + petExpense) * inflationFactor + day1CptTuition).toFixed(2));
+           const totalExpense = expenses.total;
 
            // 宏观经济周期 (Markov 轮动) —— 单一驱动源。历史上经济只能靠 news_* 事件切换,而那些
            // 事件被 `!season_stage` 永久锁死,导致非 trader 玩家的经济恒为 neutral,整套牛熊机制
@@ -385,7 +361,10 @@ export const settlementEvents: Record<string, GameEvent> = {
             // ever re-entered within a year — do NOT assume the branches below are live.
             const alreadyDrewThisYear = s.story_flags?.last_h1b_lottery_year === s.year;
 
-            if (!alreadyDrewThisYear && (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.company !== 'cn_big_tech') {
+            // H-1B needs a petitioning EMPLOYER: a self-employed day trader / founder has none, so
+            // they cannot enter the lottery (design decision: trader 不能抽).
+            const hasH1bSponsor = !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'cn_tech' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && s.company !== 'cn_big_tech';
+            if (!alreadyDrewThisYear && (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || s.visa === 'L1 (外派)') && !s.laid_off && hasH1bSponsor) {
               newAttempts += 1;
               // This inline year-end draw is now the sole H1B lottery (the separate big_tech_work
               // event was removed as redundant). Realistic rates (~25-40%); was 0.40-0.65 base
@@ -441,57 +420,13 @@ export const settlementEvents: Record<string, GameEvent> = {
             // 60分及格基准) / NI (Needs Improvement → PIP 预警). Rating reads THIS year's annual_action
             // (set by the sv_daily_life 重心 choice; undefined/非养生 = 冲刺态). annual_action is reset
             // to undefined each settlement (below) so a stale prior action never mis-rates a later year.
-            let updatedTC = s.tc;
+            // 结算与年终账单横幅共用 previewAnnualPerfReview (单一事实来源):横幅预告的评级/调薪
+            // 就是实际落账的评级/调薪 (历史上两边各自掷骰、各看一套经济周期,48% 的 PIP 年份对不上)。
             let meritMsg = '';
-            let perfRating: 'EE' | 'ME' | 'NI' | undefined = undefined;
             const isEmployee = !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && s.company !== 'icc';
-
-            if (isEmployee) {
-              const action = s.story_flags?.annual_action;
-              const coasting = action === 'wlb' || action === 'transfer';
-              // 本年是否真有交付(impact 高于上次结算基线)。EE 要求「本年主动交付」而非仅仅
-              // 「历史 impact 高」,否则一个高 impact 玩家躺平一年(不涨 impact)也拿 EE、而勤恳
-              // 按部就班反倒只有 ME —— 考评反转。用 impact_ytd_base 精确判定本年交付。
-              const deliveredThisYear = (s.impact || 0) > (s.impact_ytd_base ?? 0) + 0.001;
-              const justPromoted = s.last_promo_age === s.age;
-              const isKingOfRoll = s.trait_title === '卷王之王';
-
-              if (justPromoted || (!coasting && deliveredThisYear && ((s.impact || 0) >= 12 || isKingOfRoll))) {
-                perfRating = 'EE'; // Exceeds Expectations (卓越)
-              } else if ((s.story_flags?.pip_warning && gameRandom() < 0.5) || (s.health < 25 && (s.impact || 0) < 6 && gameRandom() < 0.35)) {
-                perfRating = 'NI'; // Needs Improvement (待改进 → PIP)
-              } else {
-                perfRating = 'ME'; // Meets Expectations (符合预期 / 60分及格)
-              }
-
-              const maxCapByLevel: Record<string, number> = {
-                'L3': 24,
-                'L4': 34,
-                'L5 (Senior)': 52,
-                'L6 (Staff)': 78,
-                'L7 (Senior Staff)': 120,
-                'L8 (Principal)': 220,
-              };
-              const norm = normalizeLevel(s.level, s);
-              const curLevelKey = norm || (s.is_phd ? 'L4' : 'L3');
-              const levelCap = maxCapByLevel[curLevelKey] || 55;
-              const impactAmtMult = 0.5 + Math.min(1.0, (s.impact || 0) / 60); // impact 0→0.5x, 60+→1.5x
-              // 调薪只增不减:已在/超过 level cap 的高薪玩家(如 OpenAI MTS tc=80 折算 L6 cap 78)
-              // 不应被 Math.min(cap,...) 反向倒扣 TC(那会边涨薪文案边掉薪)。
-              const raiseTo = (amt: number) => Math.max(s.tc, Math.min(levelCap, parseFloat((s.tc + amt).toFixed(1))));
-
-              // Perf review is surfaced entirely in the year-end statement's dedicated
-              // banner (rating + raise below), so it no longer bloats the event-feedback
-              // text (meritMsg is left for the founder branch only).
-              if (perfRating === 'EE') {
-                const baseRefresh = newEconomy === 'bull' ? 3.0 : newEconomy === 'bear' ? 1.0 : 2.0;
-                updatedTC = raiseTo(parseFloat((baseRefresh * impactAmtMult).toFixed(1)));
-              } else if (perfRating === 'ME') {
-                const baseRefresh = newEconomy === 'bull' ? 1.5 : newEconomy === 'bear' ? 0.5 : 1.0;
-                updatedTC = raiseTo(parseFloat((baseRefresh * Math.min(1.0, impactAmtMult)).toFixed(1)));
-              }
-              // NI: no raise (updatedTC stays s.tc).
-            }
+            const perfReview = previewAnnualPerfReview(s);
+            const perfRating: 'EE' | 'ME' | 'NI' | undefined = isEmployee ? perfReview.rating : undefined;
+            let updatedTC = isEmployee ? perfReview.updatedTC : s.tc;
 
            const newNetWorth = finalCash + currentStocks;
            // Round components first, then derive the logged netWorth from them so the
@@ -714,7 +649,7 @@ export const settlementEvents: Record<string, GameEvent> = {
         },
         nextEventId: (s) => {
           if (s.status === 'win' || s.status === 'retired') return 'end';
-          if ((s.cash + (s.stocks || 0)) >= s.win_threshold && (!s.last_fire_milestone_reached || s.last_fire_milestone_reached < s.win_threshold)) {
+          if (getFireNetWorth(s) >= s.win_threshold && (!s.last_fire_milestone_reached || s.last_fire_milestone_reached < s.win_threshold)) {
             return 'fire_milestone_choice';
           }
           if ((s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') && (s.h1b_attempts || 0) >= 3) {
@@ -766,58 +701,58 @@ export const settlementEvents: Record<string, GameEvent> = {
       {
         text: '【见好就收 · 基础 FIRE 提前退休】宣布达成 $500w 基础财务自由，正式登出硅谷内卷，享受自在人生',
         costBadge: '终局胜利',
-        condition: (s) => (s.cash + (s.stocks || 0)) < 800,
+        condition: (s) => getFireNetWorth(s) < 800,
         hideIfUnavailable: true,
         effect: (s) => ({
           status: 'win',
           last_fire_milestone_reached: Math.max(s.win_threshold, 500),
           fire_tier: 'basic',
-          message: `【基础 FIRE 胜利退休】你在 ${s.age} 岁正式宣布提前退休！总资产达到 $${(s.cash + (s.stocks || 0)).toFixed(1)}w，再也不需要看任何 Manager 与排期的脸色，开启了环游世界与自由探索的璀璨余生！`
+          message: `【基础 FIRE 胜利退休】你在 ${s.age} 岁正式宣布提前退休！总资产达到 $${getFireNetWorth(s).toFixed(1)}w，再也不需要看任何 Manager 与排期的脸色，开启了环游世界与自由探索的璀璨余生！`
         }),
         nextEventId: 'end',
       },
       {
         text: '【自在人生 · 舒适 FIRE 荣耀退休】宣布达成 $800w+ 舒适财务自由，潇洒享受高品质退休生活',
         costBadge: '终局胜利',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 800 && (s.cash + (s.stocks || 0)) < 1500,
+        condition: (s) => getFireNetWorth(s) >= 800 && getFireNetWorth(s) < 1500,
         hideIfUnavailable: true,
         effect: (s) => ({
           status: 'win',
           last_fire_milestone_reached: Math.max(s.win_threshold, 800),
           fire_tier: 'comfortable',
-          message: `【舒适 FIRE 荣耀退休】你在 ${s.age} 岁坐拥 $${(s.cash + (s.stocks || 0)).toFixed(1)}w 资产达成舒适 FIRE！在湾区拥有豪宅与充沛现金流，正式开启神仙养老人生！`
+          message: `【舒适 FIRE 荣耀退休】你在 ${s.age} 岁坐拥 $${getFireNetWorth(s).toFixed(1)}w 资产达成舒适 FIRE！在湾区拥有豪宅与充沛现金流，正式开启神仙养老人生！`
         }),
         nextEventId: 'end',
       },
       {
         text: '【豪门巨擘 · 奢华 FIRE 巅峰退休】宣布达成 $1500w+ 奢华财务自由，登顶硅谷顶层人生赢家',
         costBadge: '终局胜利',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 1500 && (s.cash + (s.stocks || 0)) < 3000,
+        condition: (s) => getFireNetWorth(s) >= 1500 && getFireNetWorth(s) < 3000,
         hideIfUnavailable: true,
         effect: (s) => ({
           status: 'win',
           last_fire_milestone_reached: Math.max(s.win_threshold, 1500),
           fire_tier: 'luxury',
-          message: `【奢华 FIRE 巅峰退休】你在 ${s.age} 岁总资产突破 $${(s.cash + (s.stocks || 0)).toFixed(1)}w！名列硅谷顶层名流，享受顶级豪宅与无可动摇的财富自由！`
+          message: `【奢华 FIRE 巅峰退休】你在 ${s.age} 岁总资产突破 $${getFireNetWorth(s).toFixed(1)}w！名列硅谷顶层名流，享受顶级豪宅与无可动摇的财富自由！`
         }),
         nextEventId: 'end',
       },
       {
         text: '【登峰造极 · 硅谷传奇百亿退休】宣布达成 $3000w+ 硅谷传奇 FIRE，建立家族信托名留硅谷史册',
         costBadge: '终局胜利',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 3000,
+        condition: (s) => getFireNetWorth(s) >= 3000,
         hideIfUnavailable: true,
         effect: (s) => ({
           status: 'win',
           last_fire_milestone_reached: Math.max(s.win_threshold, 3000),
           fire_tier: 'dynasty',
-          message: `【硅谷传奇百亿终局】你在 ${s.age} 岁总资产突破 $${(s.cash + (s.stocks || 0)).toFixed(1)}w！设立家族信托与科技创投基金，书写了不可复制的硅谷传奇！`
+          message: `【硅谷传奇百亿终局】你在 ${s.age} 岁总资产突破 $${getFireNetWorth(s).toFixed(1)}w！设立家族信托与科技创投基金，书写了不可复制的硅谷传奇！`
         }),
         nextEventId: 'end',
       },
       {
         text: '【继续生活 · 探索舒适 FIRE 目标 ($800w)】留在硅谷享受生活，配置不动产与高端资产',
-        condition: (s) => (s.cash + (s.stocks || 0)) < 800 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
+        condition: (s) => getFireNetWorth(s) < 800 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
@@ -831,11 +766,11 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【登顶硅谷 · 冲刺奢华 FIRE 目标 ($1500w+)】追逐顶级独角兽与 Atherton 庄园',
-        condition: (s) => (s.cash + (s.stocks || 0)) < 1500 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
+        condition: (s) => getFireNetWorth(s) < 1500 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
-          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, (s.cash + (s.stocks || 0)) >= 800 ? 800 : 500),
+          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, getFireNetWorth(s) >= 800 ? 800 : 500),
           win_threshold: 1500,
           fire_tier: 'luxury',
           health: Math.min(100, s.health + 20),
@@ -845,7 +780,7 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【硅谷传奇 · 冲刺百亿传奇目标 ($3000w+)】建立家族信托与创投基金，书写时代传奇',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 1500 && (s.cash + (s.stocks || 0)) < 3000 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
+        condition: (s) => getFireNetWorth(s) >= 1500 && getFireNetWorth(s) < 3000 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
@@ -859,7 +794,7 @@ export const settlementEvents: Record<string, GameEvent> = {
       },
       {
         text: '【无界探索 · 漫游硅谷不设限】不设任何金钱目标，留在湾区尽情体验一切可能性',
-        condition: (s) => (s.cash + (s.stocks || 0)) >= 3000 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
+        condition: (s) => getFireNetWorth(s) >= 3000 && s.job_type !== 'startup_founder' && s.job_type !== 'trader',
         hideIfUnavailable: true,
         effect: (s) => ({
           has_reached_initial_fire: true,
@@ -885,8 +820,10 @@ export const settlementEvents: Record<string, GameEvent> = {
           ...(s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== 'O1 (杰出人才)'
             ? { visa: 'O1 (杰出人才)' as const, cash: parseFloat((s.cash - 5).toFixed(1)) }
             : {}),
-          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, s.win_threshold),
-          win_threshold: nextFireTarget(s.win_threshold),
+          // 按「当前净资产已越过的最高档」记档、再把目标抬到其上一档 (审计 O1):只抬一档会让
+          // 一次大额退出 (如估值 $2000w 的 IPO) 在随后每年反复触发本面板,每次白送 +15 健康。
+          last_fire_milestone_reached: fireTierReached(s, s.last_fire_milestone_reached),
+          win_threshold: nextFireTarget(Math.max(s.win_threshold, getFireNetWorth(s))),
           fire_tier: 'luxury',
           job_type: 'startup_founder',
           founder_stage: 'pre_seed',
@@ -898,20 +835,24 @@ export const settlementEvents: Record<string, GameEvent> = {
           health: Math.min(100, s.health + 10),
           message: '【创办独角兽】你拿着充裕的启动资金辞职创业，正式成立 AI Agent 独角兽公司，开启传奇创始人之路！'
         }),
-        nextEventId: 'founder_annual_strategy',
+        // 年中越线 (mid_year 已置位) 时本年度动作已做过:直接收束到结算,下一年再进创始人枢纽;
+        // 否则同一年会做两次年度策略 (age 不变,审计 O2)。
+        nextEventId: (s) => s.mid_year ? 'sv_year_end_settlement' : 'founder_annual_strategy',
       },
       {
         text: '【继续领航 · 冲刺 AI 独角兽上市敲钟】带领现有初创团队全力以赴，直指独角兽敲钟上市！',
         condition: (s) => s.job_type === 'startup_founder',
         effect: (s) => ({
           has_reached_initial_fire: true,
-          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, s.win_threshold),
-          win_threshold: nextFireTarget(s.win_threshold),
+          // 按「当前净资产已越过的最高档」记档、再把目标抬到其上一档 (审计 O1):只抬一档会让
+          // 一次大额退出 (如估值 $2000w 的 IPO) 在随后每年反复触发本面板,每次白送 +15 健康。
+          last_fire_milestone_reached: fireTierReached(s, s.last_fire_milestone_reached),
+          win_threshold: nextFireTarget(Math.max(s.win_threshold, getFireNetWorth(s))),
           fire_tier: 'luxury',
           health: Math.min(100, s.health + 15),
           message: '【初心不改】你没有因为账户达到财务自由而停下脚步，继续作为 CEO 带领团队向着百亿独角兽与纳斯达克敲钟全力冲刺！'
         }),
-        nextEventId: 'founder_annual_strategy',
+        nextEventId: (s) => s.mid_year ? 'sv_year_end_settlement' : 'founder_annual_strategy',
       },
       {
         // 交易员专属「继续」出口:通用继续选项已把 trader 排除,否则会被丢进打工人日常 hub。
@@ -919,13 +860,15 @@ export const settlementEvents: Record<string, GameEvent> = {
         condition: (s) => s.job_type === 'trader',
         effect: (s) => ({
           has_reached_initial_fire: true,
-          last_fire_milestone_reached: Math.max(s.last_fire_milestone_reached || 0, s.win_threshold),
-          win_threshold: nextFireTarget(s.win_threshold),
+          // 按「当前净资产已越过的最高档」记档、再把目标抬到其上一档 (审计 O1):只抬一档会让
+          // 一次大额退出 (如估值 $2000w 的 IPO) 在随后每年反复触发本面板,每次白送 +15 健康。
+          last_fire_milestone_reached: fireTierReached(s, s.last_fire_milestone_reached),
+          win_threshold: nextFireTarget(Math.max(s.win_threshold, getFireNetWorth(s))),
           fire_tier: 'luxury',
           health: Math.min(100, s.health + 15),
           message: '【初心不改】账户达到财务自由也没让你离场，你继续坐镇交易席，向着更高的净值与传奇战绩全力冲刺！'
         }),
-        nextEventId: 'trader_annual_strategy',
+        nextEventId: (s) => s.mid_year ? 'sv_year_end_settlement' : 'trader_annual_strategy',
       }
     ]
   },

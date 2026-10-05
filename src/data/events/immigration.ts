@@ -29,13 +29,14 @@ export const immigrationEvents: Record<string, GameEvent> = {
                 message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决留美身份！'
               };
             }
+            // A non-citizen spouse cannot sponsor you: marriage here only buys legal status
+            // (Day 1 CPT), NOT a free approved I-140 / locked PD. Your own employer-based
+            // PERM track continues from wherever it actually is.
             return {
               is_married: true,
               relationship_status: 'married',
-              gc_progress: Math.max(3, s.gc_progress || 0),
-              gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
               visa: (s.visa === 'OPT (实习)' || s.visa === 'F1 (学生)') ? 'Day 1 CPT' : s.visa,
-              message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。你转入 Day 1 CPT 维持合法工作身份，双方结为双职工家庭互相绑定绿卡排期，静待排期推进！'
+              message: '【双职工携手奋斗】你们正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中，无法为你担保身份。你转入 Day 1 CPT 维持合法工作身份，双职工家庭继续各自推进雇主担保的绿卡流程！'
             };
           } else {
             // 单身付费商婚博弈
@@ -194,14 +195,13 @@ export const immigrationEvents: Record<string, GameEvent> = {
           return {
             is_married: true,
             relationship_status: 'married',
-            gc_progress: Math.max(3, s.gc_progress || 0),
-            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
+            // No free I-140 / PD from a non-citizen spouse — only legal status via CPT.
             // Move OFF the OPT/F1 status onto the Day 1 CPT the message describes, so the
             // player isn't re-thrown into this same "3抽不中绝境" crisis every settlement
             // (settlement re-routes here only while visa is OPT/F1 + 3 strikes) — that was a
-            // soft-loop. They're now on the marriage/PERM track, maintaining status via CPT.
+            // soft-loop. They're now on the CPT track, continuing their own PERM from scratch.
             visa: 'Day 1 CPT',
-            message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中。你转入 Day 1 CPT 维持合法工作身份，双方结为双职工家庭互相绑定绿卡排期，静待排期推进！'
+            message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中，无法为你担保身份。你转入 Day 1 CPT 维持合法工作身份，双职工家庭继续各自推进雇主担保的绿卡流程！'
           };
         },
         // Non-citizen spouse outcome routes OUT (no infinite re-roll for a guaranteed GC).
@@ -501,6 +501,10 @@ export const immigrationEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'Day 1 CPT',
           cash: s.cash - 1.5,
+          // Leaving H-1B status: a later cap-subject H-1B petition restarts the 6-year
+          // clock. Without this reset the player would re-trigger this exact crisis the
+          // very first year after re-winning the lottery (tenure 6 → 7).
+          h1b_tenure: 0,
           message: '【无缝转 Day 1 CPT】面对 6 年工签大限，你果断注册了 Day 1 CPT 大学维持合法学生在读身份，白天继续上班，等待公司把 PERM/I-140 流程办妥！'
         }),
         nextEventId: 'sv_year_end_settlement',
@@ -520,13 +524,13 @@ export const immigrationEvents: Record<string, GameEvent> = {
               message: '【美籍配偶秒批绿卡】伴侣拥有美国公民/绿卡身份，领证后为你递交了 I-130/I-485 双递交申请，顺利获批婚姻绿卡，彻底解决在美身份危机！'
             };
           }
+          // Non-citizen spouse: legal status via CPT only, no free I-140 / PD lock.
           return {
             is_married: true,
             relationship_status: 'married',
-            gc_progress: Math.max(3, s.gc_progress || 0),
-            gc_stage: s.gc_stage === 'not_started' ? 'i140_approved' : s.gc_stage,
             visa: (s.visa === '公民' || s.visa === '绿卡') ? s.visa : 'Day 1 CPT',
-            message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！你转入 Day 1 CPT 维持合法工作身份，双方结为双职工家庭互相绑定绿卡排期，静待排期推进！'
+            h1b_tenure: 0,
+            message: '【双职工携手奋斗】你们在绝境中正式领证步入婚姻！不过伴侣同样处于 H1B/PERM 排期长征中，无法为你担保身份。你转入 Day 1 CPT 维持合法工作身份，双职工家庭继续各自推进雇主担保的绿卡流程！'
           };
         },
         nextEventId: (s: GameState) => s.visa === '绿卡' ? 'post_green_card' : 'sv_year_end_settlement',

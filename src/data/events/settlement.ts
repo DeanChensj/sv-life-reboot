@@ -217,6 +217,41 @@ export const settlementEvents: Record<string, GameEvent> = {
                 // 'big_tech'; AI labs sponsor at the same tier.
                 const isBigTech = s.job_type === 'big_tech' || s.job_type === 'ai_research';
 
+              // Post-I-140 queue (PD wait → I-485 → card). Shared by the employed AND the
+              // unemployed branch below: once the I-140 is approved the PD survives a layoff
+              // (AC21 / 180-day portability), and a pending I-485 is adjudicated by USCIS
+              // regardless of whether the applicant currently has a job. Previously this
+              // logic lived only inside the employed `else` branch, so a laid-off I-485
+              // applicant (incl. the $80w EB-5 concurrent filer) could never get approved
+              // and the "排期照常进行" message was a lie — nothing advanced.
+              const advancePdQueue = () => {
+                 if (nextStage === 'i140_approved') {
+                    // EB-1/NIW fast lane for O-1 / PhD: no multi-year backlog, ~70%/yr to be
+                    // current. Replaces the old hard calendar gate (`year >= 2024`) which made
+                    // the wait depend on the chosen start era (0–5 yrs) — `year` is an abstract
+                    // era clock here, not a real Visa Bulletin date.
+                    const fastLaneCurrent = (isO1 || isPhd) && gameRandom() < 0.7;
+                    const canFile485 = fastLaneCurrent || (nextGc >= 4);
+                    if (canFile485) {
+                       nextStage = 'i485_pending';
+                       nextGc = 4.5;
+                       gcMsg = ' 【排期大前进】排期到了！律师已火速为你递交 I-485 身份调整申请，进入最后制卡冲刺阶段！';
+                    } else {
+                       gcMsg = ' 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
+                       if (gameRandom() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
+                    }
+                 } else if (nextStage === 'i485_pending') {
+                    if (gameRandom() < 0.6) {
+                       nextStage = 'approved';
+                       nextGc = 5;
+                       gcMsg = ' 【制卡成功】制卡完成，你的 I-485 正式获批！';
+                    } else {
+                       gcMsg = ' 【制卡中】你的 I-485 正在打指纹和背景调查阶段，距离实体绿卡只有一步之遥！';
+                       nextGc = 4.8;
+                    }
+                 }
+              };
+
               if (!s.job_type || s.job_type === 'unemployed' || s.laid_off) {
                  if (nextStage === 'perm_processing' || nextStage === 'perm_audit' || nextStage === 'i140_processing' || nextStage === 'i140_rfe') {
                     nextStage = 'not_started';
@@ -225,8 +260,14 @@ export const settlementEvents: Record<string, GameEvent> = {
                  } else if (nextStage === 'not_started') {
                     gcMsg = ' 【绿卡停滞】你目前失业，无法启动任何雇主担保的绿卡申请。';
                  } else {
-                    gcMsg = ' 【绿卡排期】你虽然失业，但由于你的 I-140 已经获批，Priority Date 依然为你保留，排期照常进行。';
+                    advancePdQueue();
+                    gcMsg = ` 【PD 保留】你虽然失业，但你的 I-140 已经获批，Priority Date 依然为你保留。${gcMsg.trim()}`;
                  }
+              } else if (nextStage === 'i140_approved' || nextStage === 'i485_pending') {
+                 // PD already locked (or I-485 already filed): the queue keeps moving no
+                 // matter whether the current employer is an ICC body-shop or a startup
+                 // that won't sponsor a NEW PERM. Those gates only block starting a case.
+                 advancePdQueue();
               } else if (s.company === 'icc') {
                  gcMsg = ' 【绿卡政策】ICC 外包挂靠不提供合规绿卡担保（body-shop 的 PERM 极易被 USCIS 认定造假）——绿卡进度停滞，务必尽快跳槽到正规大厂重启排期。';
               } else if (s.difficulty_title === '困难难度' && s.job_type === 'startup') {
@@ -279,30 +320,19 @@ export const settlementEvents: Record<string, GameEvent> = {
                        gcMsg = ' 【I-140获批】大喜讯！你的 I-140 移民申请正式获批！你的 Priority Date (PD) 已永久锁定，正式进入漫长排期队列！';
                     }
                  } else if (nextStage === 'i140_rfe') {
-                    nextStage = 'i140_approved';
-                    nextGc = 3;
-                    gcMsg = ' 【RFE通过】补充材料顺利打消了移民局疑虑，你的 I-140 成功获批并锁定 PD！';
-                 } else if (nextStage === 'i140_approved') {
-                    const currentYear = s.year;
-                    const canFile485 = (currentYear >= 2024 && (isO1 || isPhd)) || (nextGc >= 4);
-                    if (canFile485) {
-                       nextStage = 'i485_pending';
-                       nextGc = 4.5;
-                       gcMsg = ' 【排期大前进】排期到了！律师已火速为你递交 I-485 身份调整申请，进入最后制卡冲刺阶段！';
+                    // RFE is no longer a guaranteed one-year delay: ~15% of RFE responses are
+                    // denied, and the employer has to refile the I-140 (back to processing,
+                    // PERM stays valid so no full reset).
+                    if (gameRandom() < 0.15) {
+                       nextStage = 'i140_processing';
+                       gcMsg = ' 【I-140 被拒】补件材料未能说服移民官，你的 I-140 遭到拒绝！好在 PERM 仍然有效，律师正在重新递交一份更扎实的 I-140。';
                     } else {
-                       gcMsg = ' 【绿卡排期】每天刷 Visa Bulletin 已经成了你的习惯，但本月排期纹丝不动。';
-                       if (gameRandom() < 0.5 && nextGc < 4) nextGc += 0.5; // Slowly increment visual progress
-                    }
-                 } else if (nextStage === 'i485_pending') {
-                    if (gameRandom() < 0.6) {
-                       nextStage = 'approved';
-                       nextGc = 5;
-                       gcMsg = ' 【制卡成功】制卡完成，你的 I-485 正式获批！';
-                    } else {
-                       gcMsg = ' 【制卡中】你的 I-485 正在打指纹和背景调查阶段，距离实体绿卡只有一步之遥！';
-                       nextGc = 4.8;
+                       nextStage = 'i140_approved';
+                       nextGc = 3;
+                       gcMsg = ' 【RFE通过】补充材料顺利打消了移民局疑虑，你的 I-140 成功获批并锁定 PD！';
                     }
                  }
+                 // i140_approved / i485_pending are handled by the shared branch above.
               }
            }
 
@@ -329,7 +359,7 @@ export const settlementEvents: Record<string, GameEvent> = {
                 h1bMsg = s.visa === 'L1 (外派)' ? ` 【H1B中签】外派/L1 转换中签！在第 ${newAttempts} 次 H1B 抽签中成功中签，顺利获得 H1B 工签！` : ` 【H1B中签】人品大爆发！在第 ${newAttempts} 年 H1B 抽签中成功中签，正式获得 H1B 身份！`;
               } else {
                 if (s.visa === 'L1 (外派)') {
-                  h1bMsg = ` 【L-1 抽签未中】第 ${newAttempts} 次 H1B 抽签未能中签！但凭借你的 L-1 跨国外派签证，你在湾区合法工作完全不受影响，公司将为你继续递交后续抽签或启动 EB-1C 绿卡！`;
+                  h1bMsg = ` 【L-1 抽签未中】第 ${newAttempts} 次 H1B 抽签未能中签！但凭借你的 L-1 跨国外派签证，你在湾区合法工作完全不受影响，公司将为你继续递交后续抽签并同步推进雇主担保绿卡！`;
                 } else if (s.visa === 'Day 1 CPT') {
                   h1bMsg = ` 【CPT 抽签未中】第 ${newAttempts} 次 H1B 抽签未能中签！好在有 Day 1 CPT 学籍维持合法全职工作，明年继续冲刺抽签！`;
                 } else {
@@ -353,7 +383,13 @@ export const settlementEvents: Record<string, GameEvent> = {
               newH1bTenure += 1;
               if (newH1bTenure >= 6) {
                 if (nextStage === 'i140_approved' || nextStage === 'i485_pending' || nextStage === 'approved' || nextGc >= 3) {
-                  h1bMsg = `${h1bMsg ? h1bMsg + '\n' : ''}【H-1B 6年大限豁免】你的 H-1B 已满 6 年！好在你的 I-140 移民申请已获批锁定 PD，成功依据 AC21 法案获得无上限 3 年延期！`.trim();
+                  // Announce the AC21 exemption once when crossing the cap, then only on each
+                  // 3-year extension cycle (6 → 9 → 12) instead of every single settlement.
+                  if (newH1bTenure === 6) {
+                    h1bMsg = `${h1bMsg ? h1bMsg + '\n' : ''}【H-1B 6年大限豁免】你的 H-1B 已满 6 年！好在你的 I-140 移民申请已获批锁定 PD，成功依据 AC21 法案获得无上限 3 年延期！`.trim();
+                  } else if ((newH1bTenure - 6) % 3 === 0) {
+                    h1bMsg = `${h1bMsg ? h1bMsg + '\n' : ''}【AC21 续签】律师凭已获批的 I-140 又为你办妥了一轮 3 年 H-1B 延期（累计第 ${newH1bTenure} 年）。`.trim();
+                  }
                 } else {
                   h1bMsg = `${h1bMsg ? h1bMsg + '\n' : ''}【H-1B 6年大限警报】你的 H-1B 达到法定 6 年上限且 I-140 尚未获批！无法继续常规续签，面临工签到期危机！`.trim();
                 }

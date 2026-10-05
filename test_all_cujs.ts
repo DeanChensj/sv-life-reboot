@@ -3971,6 +3971,122 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
   console.log('✅ CUJ 71 Passed\n');
 }
 
+// -----------------------------------------------------------------------------
+// CUJ 72: Green-card event-flow bug fixes.
+// ① A laid-off I-485 applicant is still adjudicated (was frozen forever in the unemployed
+//    branch); ② a laid-off / ICC / early-startup worker with an approved I-140 still sees the
+//    PD queue advance; ③ PhD/O-1 fast lane is state-driven, NOT a hard `year >= 2024` gate;
+// ④ marrying a NON-citizen spouse no longer grants a free approved I-140 / locked PD;
+// ⑤ the Day 1 CPT escape from the 6-year H-1B cap resets h1b_tenure (no instant re-crisis);
+// ⑥ the AC21 exemption banner fires once at tenure 6, not on every later settlement.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 72] Green-card flow fixes: unemployed I-485, PhD fast lane, spouse I-140, CPT tenure reset ---');
+  const settlementEv = events['sv_year_end_settlement'];
+  const yearEndChoice = settlementEv.choices[0];
+  const runSettlement = (s: GameState) => applyStateTransition(s, yearEndChoice.effect(s), { eventId: 'sv_year_end_settlement' }).nextState;
+
+  // ① Unemployed + I-485 pending → eventually approved.
+  const laidOff485: GameState = {
+    ...generateInitialState(nextCujSeed()),
+    age: 33, year: 2027, visa: 'H1B (工签)', h1b_tenure: 4, h1b_attempts: 1,
+    gc_stage: 'i485_pending', gc_progress: 4.5,
+    job_type: 'unemployed', laid_off: true, tc: 0, cash: 30, stocks: 10, win_threshold: 500,
+  } as GameState;
+  let approvedWhileUnemployed = false;
+  for (let i = 0; i < 40 && !approvedWhileUnemployed; i++) {
+    setGameSeed(nextCujSeed());
+    const r = runSettlement(laidOff485);
+    if (r.gc_stage === 'approved' && r.gc_progress === 5) approvedWhileUnemployed = true;
+    assert(r.gc_stage === 'approved' || r.gc_stage === 'i485_pending', 'unemployed I-485 applicant never regresses below i485_pending');
+  }
+  assert(approvedWhileUnemployed, 'unemployed I-485 applicant can still get the card approved (was frozen forever)');
+
+  // ② Unemployed + I-140 approved → PD queue still moves (gc_progress climbs / files I-485).
+  const laidOff140: GameState = { ...laidOff485, gc_stage: 'i140_approved', gc_progress: 3 } as GameState;
+  let pdMovedWhileUnemployed = false;
+  for (let i = 0; i < 40 && !pdMovedWhileUnemployed; i++) {
+    setGameSeed(nextCujSeed());
+    const r = runSettlement(laidOff140);
+    if ((r.gc_progress || 0) > 3 || r.gc_stage === 'i485_pending') pdMovedWhileUnemployed = true;
+    assert(r.gc_stage !== 'not_started', 'approved I-140 is never wiped by a layoff');
+  }
+  assert(pdMovedWhileUnemployed, 'PD queue keeps advancing while unemployed (message used to claim it did, code did not)');
+
+  // ②b ICC body-shop with an already-locked PD still advances.
+  const iccLocked: GameState = { ...laidOff140, job_type: 'startup', company: 'icc', laid_off: false, tc: 12 } as GameState;
+  let pdMovedAtIcc = false;
+  for (let i = 0; i < 40 && !pdMovedAtIcc; i++) {
+    setGameSeed(nextCujSeed());
+    const r = runSettlement(iccLocked);
+    if ((r.gc_progress || 0) > 3 || r.gc_stage === 'i485_pending') pdMovedAtIcc = true;
+  }
+  assert(pdMovedAtIcc, 'ICC only blocks starting a NEW PERM; a locked PD keeps moving');
+
+  // ③ PhD fast lane is independent of the calendar year.
+  const phdEarlyEra: GameState = {
+    ...generateInitialState(nextCujSeed()),
+    age: 30, year: 2016, visa: 'H1B (工签)', is_phd: true, h1b_tenure: 2, h1b_attempts: 1,
+    gc_stage: 'i140_approved', gc_progress: 3,
+    job_type: 'big_tech', company: 'google', tc: 40, cash: 20, stocks: 10, win_threshold: 500, laid_off: false,
+  } as GameState;
+  let phdFiled485Early = 0;
+  for (let i = 0; i < 40; i++) {
+    setGameSeed(nextCujSeed());
+    if (runSettlement(phdEarlyEra).gc_stage === 'i485_pending') phdFiled485Early++;
+  }
+  assert(phdFiled485Early >= 15, `PhD can file I-485 in a pre-2024 era (fast lane no longer gated on year>=2024): ${phdFiled485Early}/40`);
+
+  // ④ Non-citizen spouse marriage does NOT hand out an approved I-140.
+  const spouseEvents: Array<[string, string]> = [
+    ['h1b_fallback_options', '婚姻绿卡自救'],
+    ['h1b_final_crisis', '结婚'],
+    ['h1b_six_year_crisis', '结婚'],
+  ];
+  for (const [evId, needle] of spouseEvents) {
+    const ev = events[evId];
+    const marry = ev?.choices.find(c => c.text.includes(needle));
+    assert(!!marry, `${evId} has a marriage choice`);
+    if (!marry) continue;
+    const base: GameState = {
+      ...generateInitialState(nextCujSeed()),
+      age: 29, year: 2022, visa: evId === 'h1b_six_year_crisis' ? 'H1B (工签)' : 'OPT (实习)',
+      h1b_attempts: 3, h1b_tenure: evId === 'h1b_six_year_crisis' ? 6 : 0,
+      relationship_status: 'dating', gc_stage: 'not_started', gc_progress: 0,
+      job_type: 'big_tech', company: 'google', tc: 30, cash: 20, stocks: 0, win_threshold: 500, laid_off: false,
+    } as GameState;
+    let sawNonCitizen = false;
+    for (let i = 0; i < 30 && !sawNonCitizen; i++) {
+      setGameSeed(nextCujSeed());
+      const eff = marry.effect(base) as Partial<GameState>;
+      if (eff.visa === '绿卡') continue; // citizen-spouse roll — legit instant GC
+      sawNonCitizen = true;
+      assert(eff.gc_stage === undefined && eff.gc_progress === undefined, `${evId}: non-citizen spouse grants NO I-140 / PD`);
+      assert(eff.visa === 'Day 1 CPT', `${evId}: non-citizen spouse branch keeps status via Day 1 CPT`);
+    }
+    assert(sawNonCitizen, `${evId}: observed the non-citizen spouse branch`);
+  }
+
+  // ⑤ CPT escape from the 6-year cap resets the H-1B clock.
+  const sixYearEv = events['h1b_six_year_crisis'];
+  const cptEscape = sixYearEv.choices.find(c => c.text.includes('Day 1 CPT'))!;
+  const atCap: GameState = { ...phdEarlyEra, is_phd: false, h1b_tenure: 6, gc_stage: 'perm_processing', gc_progress: 1 } as GameState;
+  const cptRes = cptEscape.effect(atCap) as Partial<GameState>;
+  assert(cptRes.visa === 'Day 1 CPT' && cptRes.h1b_tenure === 0, 'Day 1 CPT escape resets h1b_tenure to 0 (no instant re-crisis after re-winning H-1B)');
+
+  // ⑥ AC21 exemption banner only at the crossing year.
+  const protectedAt8: GameState = { ...phdEarlyEra, is_phd: false, h1b_tenure: 7, gc_stage: 'i140_approved', gc_progress: 3.5 } as GameState;
+  setGameSeed(nextCujSeed());
+  const r8 = runSettlement(protectedAt8);
+  assert(r8.h1b_tenure === 8 && !r8.message.includes('6年大限豁免'), 'AC21 exemption banner does not repeat at tenure 8');
+  const protectedAt5: GameState = { ...protectedAt8, h1b_tenure: 5 } as GameState;
+  setGameSeed(nextCujSeed());
+  const r6 = runSettlement(protectedAt5);
+  assert(r6.h1b_tenure === 6 && r6.message.includes('6年大限豁免'), 'AC21 exemption banner fires once when crossing tenure 6');
+
+  console.log('✅ CUJ 72 Passed\n');
+}
+
 console.log(`\n======================================================`);
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {

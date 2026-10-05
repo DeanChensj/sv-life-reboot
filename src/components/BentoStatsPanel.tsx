@@ -174,7 +174,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
                   : gameState.visa === '绿卡' 
                     ? '100% (已获绿卡)' 
                     : (gameState.gc_progress || 0) > 0
-                      ? `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}% (${gameState.gc_progress || 0}/5 年排期)`
+                      ? `${Math.round(Math.min(100, Math.max(0, ((gameState.gc_progress || 0) / 5) * 100)))}% (${gameState.gc_progress || 0}/5 阶段)`
                       : '0% (PERM 筹备中)'}
               </div>
             </div>

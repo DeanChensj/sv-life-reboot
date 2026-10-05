@@ -5,6 +5,7 @@ import { GameState, Choice } from './src/types';
 import { HOUSING_NAMES, isOwnedHousing, STORAGE_KEYS } from './src/constants/gameConstants';
 import { getCompanyDisplayName } from './src/utils/companyDisplayName';
 import { BIG_TECH_HIRE_POOL, CHINA_SAFE_LIFE_EVENTS, MAX_CHARM_ABSOLUTE_CAP, h1ToH2Router } from './src/data/events';
+import { canRivalLandAtNewJob, canRajPipReferral, canShamBlackmail, canGoldenHandcuffs, canLayoffSurvivorOncall, canAmtShock, canBoomerangOffer } from './src/data/events';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown, getAnnualCompensation, previewAnnualPerfReview, computeAnnualExpenses } from './src/utils/gameStateSelectors';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
@@ -4916,6 +4917,302 @@ console.log(`\n======================================================`);
   }
 
   console.log('✅ CUJ 75 Passed\n');
+}
+
+// -----------------------------------------------------------------------------
+// CUJ 76: Twist events round 1 (twistEvents.ts) — 7 once-per-life 「回旋镖」 beats.
+// -----------------------------------------------------------------------------
+// Per event: ① trigger predicate true/false on crafted states; ② each choice's key effects;
+// ③ invariants (health ≥ prev−15, hops set is_new_job/laid_off:false/job_type, GC never
+//    downgraded, oncePerLife auto-stamps _seen); ④ flag causality — raj_nemesis raises the
+//    ambush odds, survivor_slacked raises PIP odds, irs_watchlist raises IRS-audit odds,
+//    golden_handcuffs_locked shrinks the boomerang retention; ⑤ the H1/H2 routers can actually
+//    return each id (seeded loop) and never once the _seen flag is set.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 76] Twist events: rival lands, Raj PIP referral, sham blackmail, golden handcuffs, survivor oncall, AMT shock, boomerang ---');
+  // Flags that silence the H1 early-returns ahead of the twist block so the seeded loops measure
+  // the twist injections themselves (Raj intro / intern mentor / Linda / level + company signature).
+  const quietH1 = {
+    raj_alignment_seen: true, intern_mentored: true, met_linda: true, level_senior_plateau_seen: true,
+    dilemma_credit_grab_mentor_seen: true, npc_raj_rival_ambush_seen: true, late_ic_vs_management_seen: true,
+    google_reorg_limbo_seen: true, microsoft_signature_seen: true,
+  };
+  const base: GameState = {
+    ...generateInitialState(nextCujSeed()),
+    age: 30, year: 2026, visa: 'H1B (工签)', gc_stage: 'i140_approved', gc_progress: 3, job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', max_level: 'L5 (Senior)',
+    tc: 50, max_tc: 50, cash: 40, stocks: 50, health: 80, leetcode: 60, impact: 20, network: 30, charm: 15, max_charm: 25, luck: 50,
+    has_housing: true, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, rent: 2, job_start_age: 26, laid_off: false,
+    is_married: false, relationship_status: 'single', partner_type: undefined, macro_economy: 'neutral', trait_title: undefined, difficulty_title: undefined,
+    season_stage: undefined, mid_year: false, year_seg: undefined, win_threshold: 500, status: 'playing', story_flags: { ...quietH1 },
+  } as GameState;
+  const withFlags = (st: GameState, flags: Record<string, unknown>): GameState => ({ ...st, story_flags: { ...(st.story_flags || {}), ...flags } });
+  const healthOk = (prev: GameState, e: Partial<GameState>): boolean => e.health === undefined || e.health >= prev.health - 15;
+  const countFires = (st: GameState, stage: 'h1' | 'h2', id: string, n: number): number => {
+    let hits = 0;
+    for (let i = 0; i < n; i++) { setGameSeed(nextCujSeed()); if (midYearEventRouter({ ...st, season_stage: stage }) === id) hits++; }
+    return hits;
+  };
+  const TWIST_IDS = ['twist_rival_lands_at_new_job', 'twist_raj_pip_referral', 'twist_sham_marriage_blackmail', 'twist_golden_handcuffs_refresher', 'twist_layoff_survivor_oncall', 'twist_amt_tax_shock', 'twist_boomerang_offer'];
+
+  // ⓪ Registration, shape, once-per-life, no dead-end: every event has ≥1 unconditional choice.
+  {
+    for (const id of TWIST_IDS) {
+      const ev = events[id];
+      assert(!!ev && ev.id === id && ev.oncePerLife === true, `${id} is registered with oncePerLife`);
+      assert(!!ev && ev.choices.length >= 2 && ev.choices.length <= 3, `${id} has 2-3 choices`);
+      assert(!!ev && ev.choices.some(c => !c.condition), `${id} has an unconditional safe choice (no dead-end)`);
+    }
+  }
+
+  // ① E1 宿敌空降 — trigger + choices
+  {
+    const e1 = events['twist_rival_lands_at_new_job'];
+    // Joined a new company in 2025 (job_start_age 29 at age 30 → first full year), met Raj in 2023 at the old shop.
+    const st = withFlags({ ...base, job_start_age: 29 }, { raj_rival: true, raj_meet_year: 2023 });
+    assert(canRivalLandAtNewJob(st), 'E1 fires in the first full year at a company joined after meeting Raj');
+    assert(!canRivalLandAtNewJob({ ...st, job_start_age: 26 }), 'E1 does NOT fire when the current job predates meeting Raj (same company)');
+    assert(!canRivalLandAtNewJob({ ...st, job_start_age: 27 }), 'E1 does NOT fire after the first year at the new company');
+    assert(!canRivalLandAtNewJob(withFlags(st, { raj_rival: false, raj_ally: true })), 'E1 needs Raj to still be a rival');
+    assert(!canRivalLandAtNewJob({ ...st, job_type: 'unemployed', laid_off: true, tc: 0 }), 'E1 needs employment');
+    const a = e1.choices[0].effect(st);
+    assert(a.story_flags?.raj_rival === false && a.story_flags?.raj_ally === true && (a.network || 0) > (st.network || 0) && (a.impact || 0) === 18 && healthOk(st, a), 'E1 和解: clears raj_rival, sets raj_ally, network up, impact −2');
+    const b = e1.choices[1].effect(st);
+    assert((b.impact || 0) === 26 && b.health === 70 && b.story_flags?.partner_strain === undefined, 'E1 较劲: impact +6, health −10, no partner → no strain');
+    const married = { ...st, is_married: true, relationship_status: 'married' as const, partner_type: 'engineer' as const };
+    const bm = e1.choices[1].effect(married);
+    assert(bm.story_flags?.partner_strain === 1 && healthOk(married, bm), 'E1 较劲 with a real partner: partner_strain +1');
+    const c = e1.choices[2].effect(st);
+    assert(c.health === 82 && (c.impact || 0) === 21 && !c.story_flags, 'E1 装不认识: small health/impact nudge, no flag changes');
+    assert(countFires(st, 'h1', 'twist_rival_lands_at_new_job', 200) > 0, 'H1 router can return twist_rival_lands_at_new_job');
+    assert(countFires(withFlags(st, { twist_rival_lands_at_new_job_seen: true }), 'h1', 'twist_rival_lands_at_new_job', 120) === 0, 'E1 never re-fires once _seen');
+    // raj_nemesis makes the ambush noticeably more likely (0.65 vs 0.45) on an L5 rival state.
+    const rivalL5 = withFlags(base, { raj_rival: true, raj_meet_year: 2023, npc_raj_rival_ambush_seen: false });
+    const plainHits = countFires(rivalL5, 'h1', 'npc_raj_rival_ambush', 600);
+    const nemesisHits = countFires(withFlags(rivalL5, { raj_nemesis: true }), 'h1', 'npc_raj_rival_ambush', 600);
+    assert(plainHits > 0 && nemesisHits > plainHits, `raj_nemesis raises npc_raj_rival_ambush odds (plain=${plainHits}, nemesis=${nemesisHits} / 600)`);
+  }
+
+  // ② E2 Raj 被 PIP 来求内推
+  {
+    const e2 = events['twist_raj_pip_referral'];
+    const st = withFlags(base, { raj_rival: true, raj_meet_year: 2023 });
+    assert(canRajPipReferral(st), 'E2 fires for an employed L5+ with raj_rival');
+    assert(!canRajPipReferral({ ...st, level: 'L4' }), 'E2 does NOT fire below L5');
+    assert(canRajPipReferral({ ...st, level: 'L6 (Staff)' }), 'E2 fires at L6');
+    assert(!canRajPipReferral(withFlags(st, { raj_rival: false })), 'E2 needs raj_rival');
+    assert(!canRajPipReferral({ ...st, job_type: 'unemployed', laid_off: true, tc: 0 }), 'E2 needs employment');
+    let flops = 0, lands = 0, bad = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const a = e2.choices[0].effect(st);
+      const okFlags = a.story_flags?.raj_rival === false && a.story_flags?.raj_ally === true && a.story_flags?.raj_nemesis === false;
+      if (okFlags && (a.network || 0) === 36 && (a.impact || 0) === 18 && healthOk(st, a)) flops++;
+      else if (okFlags && (a.network || 0) === 36 && a.impact === undefined && healthOk(st, a)) lands++;
+      else bad++;
+    }
+    assert(bad === 0 && flops > 0 && lands > 0, `E2 帮他: always flips Raj to ally + network+6; ~25% flop costs impact −2 (flops=${flops}, lands=${lands}, bad=${bad})`);
+    const mid = e2.choices[1].effect(st);
+    assert((mid.network || 0) === 32 && !mid.story_flags && mid.health === undefined, 'E2 内推不背书: small network only, relationship unchanged');
+    const no = e2.choices[2].effect(st);
+    assert(no.story_flags?.raj_nemesis === true && no.story_flags?.raj_rival === true && no.health === 83 && (no.charm || 0) === 14, 'E2 不帮: sets raj_nemesis, keeps raj_rival, health +3, charm −1');
+    assert(countFires(st, 'h1', 'twist_raj_pip_referral', 200) > 0, 'H1 router can return twist_raj_pip_referral');
+    assert(countFires(withFlags(st, { twist_raj_pip_referral_seen: true }), 'h1', 'twist_raj_pip_referral', 120) === 0, 'E2 never re-fires once _seen');
+  }
+
+  // ③ E3 商婚 USCIS 面谈敲诈
+  {
+    const e3 = events['twist_sham_marriage_blackmail'];
+    const st: GameState = withFlags({ ...base, visa: '绿卡', gc_stage: 'approved', gc_progress: 5, is_married: true, relationship_status: 'married', partner_type: 'sham' }, { sham_marriage_year: 2025 });
+    assert(canShamBlackmail(st), 'E3 fires while a sham spouse is still attached and the GC is in hand');
+    assert(!canShamBlackmail({ ...st, partner_type: 'engineer' }), 'E3 does NOT fire for a real marriage');
+    assert(!canShamBlackmail({ ...st, visa: 'H1B (工签)', gc_stage: 'perm_processing' }), 'E3 does NOT fire before the GC exists');
+    assert(!canShamBlackmail({ ...st, partner_type: undefined, is_married: false, relationship_status: 'single' }), 'E3 does NOT fire after the sham dissolved');
+    const pay = e3.choices[0].effect(st);
+    assert(pay.cash === 35 && pay.stocks === 50 && pay.health === 75 && pay.is_married === undefined, 'E3 付钱: $5w from cash, health −5, marriage untouched');
+    const payPoor = e3.choices[0].effect({ ...st, cash: 2 });
+    assert(payPoor.cash === 0 && payPoor.stocks === 47, 'E3 付钱 covers the shortfall from stocks (deductAssets)');
+    assert(e3.choices[0].condition!({ ...st, cash: 1, stocks: 2 }) === false, 'E3 付钱 is unavailable when cash+stocks < $5w');
+    let wins = 0, losses = 0, bad = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const b = e3.choices[1].effect(st);
+      const dissolved = b.is_married === false && b.relationship_status === 'single' && b.partner_type === undefined;
+      if (dissolved && b.health === 85 && b.cash === undefined) wins++;
+      else if (dissolved && b.health === 68 && b.cash === 32) losses++;
+      else bad++;
+    }
+    assert(bad === 0 && wins > 0 && losses > 0, `E3 硬刚: always dissolves the sham; win health +5, fail $8w legal + health −12 (wins=${wins}, losses=${losses}, bad=${bad})`);
+    let clean = 0, dirty = 0; bad = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const c = e3.choices[2].effect(st);
+      const dissolved = c.is_married === false && c.relationship_status === 'single' && c.partner_type === undefined;
+      if (dissolved && c.health === 77 && c.cash === undefined) clean++;
+      else if (dissolved && c.health === 70 && c.cash === 34) dirty++;
+      else bad++;
+    }
+    assert(bad === 0 && clean > 0 && dirty > 0, `E3 提前离婚: always dissolves; 50% clean (health −3) / 50% RFE ($6w + health −10) (clean=${clean}, dirty=${dirty}, bad=${bad})`);
+    // GC invariant: even the worst branch can never downgrade a green card; oncePerLife auto-stamps _seen.
+    setGameSeed(nextCujSeed());
+    const worst = applyStateTransition(st, { ...e3.choices[1].effect(st), health: 68 }, { eventId: 'twist_sham_marriage_blackmail' }).nextState;
+    assert(worst.visa === '绿卡' && worst.gc_stage === 'approved' && worst.story_flags?.twist_sham_marriage_blackmail_seen === true && worst.is_married === false, 'E3 worst case keeps the GC (global invariant) and stamps _seen');
+    assert(countFires(st, 'h2', 'twist_sham_marriage_blackmail', 120) > 0, 'H2 router can return twist_sham_marriage_blackmail');
+    assert(countFires(withFlags(st, { twist_sham_marriage_blackmail_seen: true }), 'h2', 'twist_sham_marriage_blackmail', 120) === 0, 'E3 never re-fires once _seen');
+    for (const c of e3.choices) assert(c.nextEventId === 'sv_year_end_settlement', 'E3 (H2) choices route to year-end settlement');
+  }
+
+  // ④ E5 金手铐 Refresher
+  {
+    const e5 = events['twist_golden_handcuffs_refresher'];
+    assert(canGoldenHandcuffs(base), 'E5 fires for big-tech, tc ≥ 45, stocks ≥ 30');
+    assert(!canGoldenHandcuffs({ ...base, stocks: 20 }), 'E5 needs stocks ≥ 30');
+    assert(!canGoldenHandcuffs({ ...base, tc: 40 }), 'E5 needs tc ≥ 45');
+    assert(!canGoldenHandcuffs({ ...base, job_type: 'startup', company: 'startup' }), 'E5 is big-tech only');
+    const stay = e5.choices[0].effect(base);
+    assert(stay.stocks === 62 && stay.tc === 52 && (stay.impact || 0) === 17 && stay.story_flags?.golden_handcuffs_locked === true, 'E5 留: stocks +12, tc +2, impact −3, golden_handcuffs_locked');
+    setGameSeed(nextCujSeed());
+    const go = e5.choices[1].effect(base);
+    assert(go.is_new_job === true && go.laid_off === false && go.job_type === 'big_tech' && !!go.company && go.company !== 'google' && (BIG_TECH_HIRE_POOL as readonly string[]).includes(go.company), 'E5 走: real hop to a DIFFERENT big tech (is_new_job / laid_off:false / job_type)');
+    assert(go.stocks === 35 && go.health === 85 && (go.tc || 0) >= 53, 'E5 走: forfeits $15w unvested, health +5, TC ≥ current+3');
+    assert(go.level === 'L6 (Staff)' && go.last_promo_age === 30, 'E5 走 with impact 20: standard hop lands L5→L6 and stamps last_promo_age (real level-up)');
+    setGameSeed(nextCujSeed());
+    const goLateral = e5.choices[1].effect({ ...base, impact: 5 });
+    assert(goLateral.level === 'L5 (Senior)' && goLateral.last_promo_age === base.last_promo_age, 'E5 走 without impact: lateral L5, no fake promo stamp');
+    const hopped = applyStateTransition(base, go, { eventId: 'twist_golden_handcuffs_refresher' }).nextState;
+    assert(hopped.job_start_age === 30 && hopped.gc_stage === 'i140_approved' && hopped.story_flags?.twist_golden_handcuffs_refresher_seen === true, 'E5 走 through the middleware: job_start_age reset, I-140 PD kept, _seen stamped');
+    let win = 0, lose = 0, bad = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const n = e5.choices[2].effect(base);
+      if (n.stocks === 66 && n.health === 77) win++;
+      else if (n.stocks === 56 && n.health === 75 && (n.network || 0) === 28) lose++;
+      else bad++;
+    }
+    assert(bad === 0 && win > 0 && lose > 0, `E5 谈: +16 on success / +6 consolation + network −2 on failure (win=${win}, lose=${lose}, bad=${bad})`);
+    assert(countFires(base, 'h1', 'twist_golden_handcuffs_refresher', 200) > 0, 'H1 router can return twist_golden_handcuffs_refresher');
+    assert(countFires(withFlags(base, { twist_golden_handcuffs_refresher_seen: true }), 'h1', 'twist_golden_handcuffs_refresher', 120) === 0, 'E5 never re-fires once _seen');
+  }
+
+  // ⑤ E6 裁员幸存者三人份 oncall
+  {
+    const e6 = events['twist_layoff_survivor_oncall'];
+    const st = withFlags({ ...base, stocks: 10 }, { layoff_survivor_year: 2025 });
+    assert(canLayoffSurvivorOncall(st), 'E6 fires within 2 years of surviving layoff_rumor');
+    assert(!canLayoffSurvivorOncall(withFlags(st, { layoff_survivor_year: 2022 })), 'E6 does NOT fire on a stale survivor stamp in a neutral economy');
+    assert(canLayoffSurvivorOncall({ ...base, macro_economy: 'bear' }), 'E6 also fires in a bear regime without the stamp');
+    assert(!canLayoffSurvivorOncall({ ...st, job_type: 'unemployed', laid_off: true, tc: 0 }), 'E6 needs employment');
+    // layoff_rumor's survive branch stamps the anchor flag.
+    let stamped = false;
+    for (let i = 0; i < 60 && !stamped; i++) { setGameSeed(nextCujSeed()); const r = events['layoff_rumor'].choices[0].effect({ ...base, leetcode: 90 }); if (!r.laid_off && r.story_flags?.layoff_survivor_year === 2026) stamped = true; }
+    assert(stamped, 'layoff_rumor survive branch stamps layoff_survivor_year (E6 anchor)');
+    const grind = e6.choices[0].effect(st);
+    assert((grind.impact || 0) === 28 && grind.health === 68, 'E6 扛: impact +8, health −12');
+    const slack = e6.choices[1].effect(st);
+    assert(slack.health === 84 && (slack.impact || 0) === 18 && slack.story_flags?.survivor_slacked === true && slack.story_flags?.survivor_slacked_year === 2026, 'E6 摆烂: health +4, impact −2, survivor_slacked(+year)');
+    let raise = 0, snub = 0, bad = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const n = e6.choices[2].effect(st);
+      if (n.tc === 53 && n.health === 77) raise++;
+      else if ((n.impact || 0) === 18 && n.health === 74) snub++;
+      else bad++;
+    }
+    assert(bad === 0 && raise > 0 && snub > 0, `E6 摊牌: tc +3 on success / impact −2 + health −6 on failure (raise=${raise}, snub=${snub}, bad=${bad})`);
+    // survivor_slacked is READ: it raises friday_pip odds for two years (medium-tier employer, twist beats silenced).
+    const quiet = withFlags({ ...base, company: 'microsoft', stocks: 10, max_tc: 50, tc: 50 }, { twist_layoff_survivor_oncall_seen: true, twist_golden_handcuffs_refresher_seen: true, twist_boomerang_offer_seen: true });
+    const pipPlain = countFires(quiet, 'h1', 'friday_pip', 1500);
+    const pipSlacked = countFires(withFlags(quiet, { survivor_slacked: true, survivor_slacked_year: 2026 }), 'h1', 'friday_pip', 1500);
+    const pipExpired = countFires(withFlags(quiet, { survivor_slacked: true, survivor_slacked_year: 2020 }), 'h1', 'friday_pip', 1500);
+    assert(pipSlacked > pipPlain && pipSlacked > pipExpired, `survivor_slacked raises friday_pip odds for two years, then expires (plain=${pipPlain}, slacked=${pipSlacked}, expired=${pipExpired} / 1500)`);
+    assert(countFires(st, 'h1', 'twist_layoff_survivor_oncall', 200) > 0, 'H1 router can return twist_layoff_survivor_oncall');
+    assert(countFires(withFlags(st, { twist_layoff_survivor_oncall_seen: true }), 'h1', 'twist_layoff_survivor_oncall', 120) === 0, 'E6 never re-fires once _seen');
+  }
+
+  // ⑥ E7 AMT 税季暴击
+  {
+    const e7 = events['twist_amt_tax_shock'];
+    assert(canAmtShock(base), 'E7 fires for stocks ≥ 40 and tc ≥ 45 in the US');
+    assert(!canAmtShock({ ...base, stocks: 30 }), 'E7 needs stocks ≥ 40');
+    assert(!canAmtShock({ ...base, tc: 40 }), 'E7 needs tc ≥ 45');
+    assert(!canAmtShock({ ...base, job_type: 'cn_tech', company: 'cn_big_tech', visa: '无' }), 'E7 does NOT fire in China');
+    const sell = e7.choices[0].effect(base);
+    assert(sell.stocks === 44 && sell.health === 76 && sell.cash === undefined, 'E7 卖股补税: 12% of holdings sold ($6w), health −4');
+    const plan = e7.choices[1].effect(base);
+    assert(plan.cash === 38 && plan.health === 77 && plan.story_flags?.irs_watchlist === true && plan.story_flags?.irs_watchlist_year === 2026, 'E7 分期: $2w penalty, irs_watchlist(+year)');
+    const cpa = e7.choices[2].effect(base);
+    assert(cpa.cash === 36 && cpa.health === 78, 'E7 CPA: $1w fee + half the tax ($3w)');
+    assert(e7.choices[2].condition!(base) === true && e7.choices[2].condition!({ ...base, cash: 0, stocks: 0 }) === false, 'E7 CPA needs $1w + half the tax in cash+stocks');
+    // irs_watchlist is READ: below the normal audit threshold (cash<80, tc<45) only a watchlisted player draws IRS audits.
+    const lowTax: GameState = { ...base, cash: 40, tc: 30, stocks: 10 };
+    assert(countFires(lowTax, 'h2', 'irs_tax_audit_crisis', 200) === 0, 'below the audit threshold, no IRS audit without the watchlist');
+    assert(countFires(withFlags(lowTax, { irs_watchlist: true, irs_watchlist_year: 2026 }), 'h2', 'irs_tax_audit_crisis', 300) > 0, 'irs_watchlist injects irs_tax_audit_crisis');
+    assert(countFires(withFlags(lowTax, { irs_watchlist: true, irs_watchlist_year: 2020 }), 'h2', 'irs_tax_audit_crisis', 200) === 0, 'an expired watchlist (>3y) no longer injects audits');
+    assert(countFires(base, 'h2', 'twist_amt_tax_shock', 200) > 0, 'H2 router can return twist_amt_tax_shock');
+    assert(countFires(withFlags(base, { twist_amt_tax_shock_seen: true }), 'h2', 'twist_amt_tax_shock', 120) === 0, 'E7 never re-fires once _seen');
+    for (const c of e7.choices) assert(c.nextEventId === 'sv_year_end_settlement', 'E7 (H2) choices route to year-end settlement');
+  }
+
+  // ⑦ E8 Boomerang Offer
+  {
+    const e8 = events['twist_boomerang_offer'];
+    const st: GameState = { ...base, tc: 35, max_tc: 50, stocks: 10 };
+    assert(canBoomerangOffer(st), 'E8 fires when tc < 80% of max_tc with I-140 approved');
+    assert(!canBoomerangOffer({ ...st, tc: 45 }), 'E8 does NOT fire when tc is within 80% of peak');
+    assert(!canBoomerangOffer({ ...st, gc_stage: 'perm_processing' }), 'E8 does NOT fire when the GC is not portable (PERM in flight)');
+    assert(canBoomerangOffer({ ...st, visa: '绿卡', gc_stage: 'approved' }), 'E8 fires on a permanent visa');
+    assert(!canBoomerangOffer({ ...st, age: 27 }), 'E8 needs age ≥ 28');
+    assert(!canBoomerangOffer({ ...st, max_tc: undefined }), 'E8 needs a recorded peak TC');
+    setGameSeed(nextCujSeed());
+    const back = e8.choices[0].effect(st);
+    assert(back.tc === 50 && back.is_new_job === true && back.laid_off === false && back.job_type === 'big_tech' && !!back.company && back.company !== 'google' && (back.impact || 0) === 16, 'E8 回去: TC restored to peak, real hop, impact −4');
+    const backState = applyStateTransition(st, back, { eventId: 'twist_boomerang_offer' }).nextState;
+    assert(backState.gc_stage === 'i140_approved' && backState.job_start_age === 30 && backState.tc === 50 && backState.story_flags?.twist_boomerang_offer_seen === true, 'E8 回去 through the middleware: PD kept (I-140 approved), job_start_age reset, _seen stamped');
+    const stay = e8.choices[1].effect(st);
+    assert(stay.stocks === 18 && (stay.network || 0) === 33 && stay.tc === undefined, 'E8 留: $8w retention, network +3, TC gap remains');
+    const stayLocked = e8.choices[1].effect(withFlags(st, { golden_handcuffs_locked: true }));
+    assert(stayLocked.stocks === 14, 'E8 留 after a golden-handcuffs refresher: retention halves to $4w (golden_handcuffs_locked is READ)');
+    let match = 0, burn = 0, bad = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const n = e8.choices[2].effect(st);
+      if (n.tc === 40 && n.health === 77) match++;
+      else if (n.health === 75 && (n.impact || 0) === 18) burn++;
+      else bad++;
+    }
+    assert(bad === 0 && match > 0 && burn > 0, `E8 压价: tc +5 on success / health −5 + impact −2 on failure (match=${match}, burn=${burn}, bad=${bad})`);
+    assert(countFires(st, 'h1', 'twist_boomerang_offer', 200) > 0, 'H1 router can return twist_boomerang_offer');
+    assert(countFires(withFlags(st, { twist_boomerang_offer_seen: true }), 'h1', 'twist_boomerang_offer', 120) === 0, 'E8 never re-fires once _seen');
+  }
+
+  // ⑧ Blanket invariants over every twist choice: health loss ≤ 15, numeric sanity, no NaN/undefined copy.
+  {
+    const probes: GameState[] = [
+      base,
+      withFlags({ ...base, job_start_age: 29 }, { raj_rival: true, raj_meet_year: 2023 }),
+      withFlags({ ...base, visa: '绿卡', gc_stage: 'approved', is_married: true, relationship_status: 'married', partner_type: 'sham', cash: 3, stocks: 4 }, { sham_marriage_year: 2025 }),
+      { ...base, tc: 35, max_tc: 50, cash: 0, stocks: 0, health: 12 },
+    ];
+    let violations = 0;
+    for (const id of TWIST_IDS) {
+      for (const [ci, c] of events[id].choices.entries()) {
+        for (const p of probes) {
+          if (c.condition && !c.condition(p)) continue;
+          for (let i = 0; i < 12; i++) {
+            setGameSeed(nextCujSeed());
+            const e = c.effect(p);
+            const nums = [e.cash, e.stocks, e.tc, e.health, e.impact, e.network, e.charm].filter((v): v is number => typeof v === 'number');
+            const bad = !healthOk(p, e) || nums.some(v => !Number.isFinite(v)) || (e.cash !== undefined && e.cash < 0) || (e.stocks !== undefined && e.stocks < 0)
+              || /undefined|NaN|\[object Object\]/.test(e.message || '') || (typeof e.charm === 'number' && e.charm > (p.max_charm ?? 25));
+            if (bad) { violations++; console.error(`   twist invariant violation: ${id} choice ${ci}`, e); }
+          }
+        }
+      }
+    }
+    assert(violations === 0, 'every twist choice: health loss ≤ 15, no negative cash/stocks, charm capped, no NaN/undefined copy');
+  }
+
+  console.log('✅ CUJ 76 Passed\n');
 }
 
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);

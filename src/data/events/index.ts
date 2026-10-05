@@ -15,6 +15,7 @@ import { dilemmaEvents } from './dilemmaEvents';
 import { interviewEvents } from './interviewEvents';
 import { lateGameEvents } from './lateGameEvents';
 import { midGameCrisisEvents } from './midGameCrisisEvents';
+import { twistEvents } from './twistEvents';
 
 export * from './helpers';
 
@@ -28,6 +29,7 @@ export const events: Record<string, GameEvent> = {
   ...interviewEvents,
   ...lateGameEvents,
   ...midGameCrisisEvents,
+  ...twistEvents,
   ...immigrationEvents,
   ...startupEvents,
   ...tradingEvents,

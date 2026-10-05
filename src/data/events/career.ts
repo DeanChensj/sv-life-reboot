@@ -1530,7 +1530,7 @@ export const careerEvents: Record<string, GameEvent> = {
           if (s.leetcode >= 80) surviveRate = 0.8;
           const win = gameRandom() < surviveRate;
           return win 
-            ? { health: s.health - 15, cash: s.cash, message: '你没日没夜地干活，终于在这个裁员季活了下来，但距离 Burnout 只有一步之遥。' }
+            ? { health: s.health - 15, cash: s.cash, story_flags: { ...(s.story_flags || {}), layoff_survivor_year: s.year }, message: '你没日没夜地干活，终于在这个裁员季活了下来，但距离 Burnout 只有一步之遥。' } // layoff_survivor_year: 幸存者后续 (twist_layoff_survivor_oncall) 的触发锚点
             : { health: s.health - 10, cash: s.cash, laid_off: true, tc: 0, job_type: 'unemployed', message: '不管你怎么卷，你们整个组都被端了。你被裁员了！' };
         },
         nextEventId: (s) => s.laid_off ? 'layoff_hit' : h1ToH2Router(s),

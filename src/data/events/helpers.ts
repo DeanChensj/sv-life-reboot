@@ -3,7 +3,7 @@ import { safeStorage } from '../../utils/safeStorage';
 import { STORAGE_KEYS, isOwnedHousing, VISA_STATUS, isPermanentVisa } from '../../constants/gameConstants';
 import { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed } from '../../utils/random';
 import { getCompanyProfile } from '../companyProfiles';
-import { normalizeLevel } from '../levelProfiles';
+import { normalizeLevel, getLevelRank } from '../levelProfiles';
 import { hasPdStrategyLever } from '../../utils/visaBulletin';
 
 export { gameRandom, gameRandomInt, gamePick, setGameSeed, getGameSeed };
@@ -192,6 +192,51 @@ export const CHINA_SAFE_LIFE_EVENTS: ReadonlySet<string> = new Set([
   'ai_agent_startup', 'ikea_furniture_fight', 'dual_income_wlb_burnout', 'rednote_influencer_side_hustle',
   'breakup_crisis', 'marriage_divorce_crisis',
 ]);
+
+// ── 「反转 / 回旋镖」事件 (twistEvents.ts) 的触发谓词 ───────────────────────────────────────
+// 放在这里 (而非 twistEvents.ts) 是为了让 midYearEventRouter 与 CUJ 测试共用同一份定义,且避免
+// helpers → twistEvents → helpers 的循环引用 (twistEvents 以值引用 h1ToH2Router,循环会撞 TDZ)。
+const twistEmployed = (s: GameState): boolean => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+// 当前这份工作的起始年份 (job_start_age 在每次跳槽时由 stateTransitions 重置)。
+const jobStartYear = (s: GameState): number => s.year - (s.age - (s.job_start_age ?? s.age));
+
+// E1 宿敌空降:在「认识 Raj 之后」入职的新公司的第一个完整年度,且 Raj 仍是宿敌。
+// (跳槽当年不跑 H1 —— 季度状态机把 is_new_job 的年份直接收束到结算 —— 故落在新东家的首个完整年度。)
+export const canRivalLandAtNewJob = (s: GameState): boolean =>
+  twistEmployed(s) && s.job_type === 'big_tech' && Boolean(s.story_flags?.raj_rival) &&
+  s.job_start_age !== undefined && (s.age - s.job_start_age) <= 1 &&
+  jobStartYear(s) > Number(s.story_flags?.raj_meet_year || 0);
+
+// E2 Raj 被 PIP 来求内推:Raj 仍是宿敌,且玩家已是 L5+ (内推才有分量)。
+export const canRajPipReferral = (s: GameState): boolean =>
+  twistEmployed(s) && Boolean(s.story_flags?.raj_rival) && getLevelRank(s.level, s) >= 5;
+
+// E3 商婚敲诈:名义配偶仍在册 (年终结算满 2 年自动解约) 且绿卡已到手 (商婚成功即发绿卡) ——
+// 恰是「我去举报你」有杀伤力的窗口。
+export const canShamBlackmail = (s: GameState): boolean =>
+  s.partner_type === 'sham' && s.visa === '绿卡';
+
+// E5 金手铐 Refresher:大厂在职、高总包、手里有一笔值得舍不得的未 Vest 股票。
+export const canGoldenHandcuffs = (s: GameState): boolean =>
+  twistEmployed(s) && s.job_type === 'big_tech' && s.tc >= 45 && (s.stocks || 0) >= 30;
+
+// E6 裁员幸存者 oncall:近两年从裁员谣言里活下来 (layoff_rumor 存活分支盖 layoff_survivor_year),
+// 或正处于熊市裁员周期。
+export const canLayoffSurvivorOncall = (s: GameState): boolean => {
+  if (!twistEmployed(s)) return false;
+  const y = Number(s.story_flags?.layoff_survivor_year || 0);
+  return (y > 0 && (s.year - y) <= 2) || s.macro_economy === 'bear';
+};
+
+// E7 AMT 税季暴击:持仓与收入都够得上 ISO/RSU 替代性最低税;仅限美国。
+export const canAmtShock = (s: GameState): boolean =>
+  (s.stocks || 0) >= 40 && s.tc >= 45 && !isInChina(s);
+
+// E8 Boomerang Offer:总包远低于自己的历史峰值 (裁员后降薪上岸 / 失败跳槽),绿卡进度可携带
+// (I-140 已批及以后,或永久身份),且年纪够有「老东家」可回。
+export const canBoomerangOffer = (s: GameState): boolean =>
+  twistEmployed(s) && s.job_type === 'big_tech' && s.age >= 28 && (s.max_tc || 0) > 0 && s.tc < (s.max_tc || 0) * 0.8 &&
+  (s.gc_stage === 'i140_approved' || s.gc_stage === 'waiting_pd' || s.gc_stage === 'i485_pending' || isPermanentVisa(s.visa));
 
 // ── 一生一次 (once-per-life) 事件的统一基座 ───────────────────────────────────────────────
 // 约定:事件 <id> 触发过一次 ⇔ story_flags[`${id}_seen`] === true。以下是唯一权威实现,取代此前
@@ -580,11 +625,26 @@ export const midYearEventRouter = (s: GameState): string => {
          if (isStaffPlusLvl && !sig.level_l6_poach_bidding_war_seen && gameRandom() < 0.35) return 'level_l6_poach_bidding_war';
 
          // NPC 动态后续：Raj 宿敌架构评审狙击 & 硅谷核心圈闭门私董会（人脉变现）
-         if (sig.raj_rival && (isSeniorLvl || isStaffPlusLvl) && !sig.npc_raj_rival_ambush_seen && gameRandom() < 0.45) return 'npc_raj_rival_ambush';
+         // raj_nemesis (twist_raj_pip_referral 里对他的求援已读不回) 让狙击来得更快更狠。
+         if (sig.raj_rival && (isSeniorLvl || isStaffPlusLvl) && !sig.npc_raj_rival_ambush_seen && gameRandom() < (sig.raj_nemesis ? 0.65 : 0.45)) return 'npc_raj_rival_ambush';
          if ((sig.raj_ally || sig.linda_advisor || sig.linda_fast_track || sig.omniagent_advisor || (s.network || 0) >= 45) && !sig.npc_silicon_valley_inner_circle_seen && gameRandom() < 0.35) return 'npc_silicon_valley_inner_circle';
 
          // 中后期身份抉择 (lateGameEvents.ts, T2 非破坏性)：中年 IC vs 管理，一局一次。
          if (s.age >= 34 && !sig.late_ic_vs_management_seen && gameRandom() < 0.3) return 'late_ic_vs_management';
+
+         // 「反转 / 回旋镖」职场事件 (twistEvents.ts)：把玩家早年埋下的因 (宿敌 Raj / 未 Vest 股票 /
+         // 熬过的裁员 / 跌破峰值的总包) 兑现成一局一次的反转。触发谓词与本文件上方 can* 共用;
+         // 字面量 return 便于 audit_all_flows.ts 源码扫描确定性识别可达性。
+         // E1 宿敌空降 (raj_nemesis 时更高概率:他是冲着你来的)。
+         if (canRivalLandAtNewJob(s) && !sig.twist_rival_lands_at_new_job_seen && gameRandom() < (sig.raj_nemesis ? 0.6 : 0.4)) return 'twist_rival_lands_at_new_job';
+         // E2 Raj 被 PIP 来求内推。
+         if (canRajPipReferral(s) && !sig.twist_raj_pip_referral_seen && gameRandom() < 0.35) return 'twist_raj_pip_referral';
+         // E6 裁员幸存者三人份 oncall。
+         if (canLayoffSurvivorOncall(s) && !sig.twist_layoff_survivor_oncall_seen && gameRandom() < 0.35) return 'twist_layoff_survivor_oncall';
+         // E8 Boomerang Offer (老东家回购)。
+         if (canBoomerangOffer(s) && !sig.twist_boomerang_offer_seen && gameRandom() < 0.35) return 'twist_boomerang_offer';
+         // E5 金手铐 Refresher。
+         if (canGoldenHandcuffs(s) && !sig.twist_golden_handcuffs_refresher_seen && gameRandom() < 0.3) return 'twist_golden_handcuffs_refresher';
        }
 
      const isCorporate = isWorking;
@@ -651,6 +711,11 @@ export const midYearEventRouter = (s: GameState): string => {
      } else if (pipTier === 'low') {
        if (gameRandom() < 0.15) workEvents.push('friday_pip');
      } else {
+       workEvents.push('friday_pip');
+     }
+     // 裁员幸存后选择 Quiet Quitting (twist_layoff_survivor_oncall) 的后果:两年内 PIP 概率上浮 ——
+     // 摆烂不是免费的,Manager 的 1:1 里那些「ownership」不是白说的。
+     if (s.story_flags?.survivor_slacked && (s.year - Number(s.story_flags?.survivor_slacked_year || 0)) <= 2) {
        workEvents.push('friday_pip');
      }
 
@@ -739,6 +804,12 @@ export const midYearEventRouter = (s: GameState): string => {
     if (s.has_reached_initial_fire && !sig.late_post_fire_exploration_seen && gameRandom() < 0.3) return 'late_post_fire_exploration';
     if (s.age >= 35 && !sig.late_longevity_investment_seen && gameRandom() < 0.3) return 'late_longevity_investment';
     if (s.age >= 36 && !sig.late_mentor_legacy_seen && gameRandom() < 0.3) return 'late_mentor_legacy';
+
+    // 「反转 / 回旋镖」生活 & 税务事件 (twistEvents.ts)，一局各一次,字面量 return 便于源码扫描。
+    // E3 商婚敲诈:名义配偶只在册 ≤2 个年终 (结算自动解约),窗口极窄,故给较高的年触发率。
+    if (canShamBlackmail(s) && !sig.twist_sham_marriage_blackmail_seen && gameRandom() < 0.6) return 'twist_sham_marriage_blackmail';
+    // E7 AMT 税季暴击:持仓与总包都够格被替代性最低税咬一口 (仅美国)。
+    if (canAmtShock(s) && !sig.twist_amt_tax_shock_seen && gameRandom() < 0.3) return 'twist_amt_tax_shock';
   }
 
   const lifeEvents = [
@@ -895,8 +966,11 @@ export const midYearEventRouter = (s: GameState): string => {
     }
   }
 
-  if (s.cash >= 80 || s.tc >= 45) {
+  // AMT 分期 (twist_amt_tax_shock) 把你送进了 IRS 的重点关注名单:三年内稽查信的权重 ×3。
+  const onIrsWatchlist = Boolean(s.story_flags?.irs_watchlist) && (s.year - Number(s.story_flags?.irs_watchlist_year || 0)) <= 3;
+  if (s.cash >= 80 || s.tc >= 45 || onIrsWatchlist) {
     lifeEvents.push('irs_tax_audit_crisis');
+    if (onIrsWatchlist) lifeEvents.push('irs_tax_audit_crisis', 'irs_tax_audit_crisis');
   }
 
   if (isHomeowner && s.age >= 32) {

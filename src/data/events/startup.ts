@@ -1,6 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, isOpportunityActiveThisYear , gameRandom, addImpact } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
+import { getLevelRank, normalizeLevel } from '../levelProfiles';
 
 // Market x luck modulation for a founder's yearly valuation change. A startup's valuation is
 // NOT a guaranteed +X: it rides the macro regime (bull/neutral/bear) and a good/bad-luck roll,
@@ -246,8 +247,11 @@ export const startupEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【沙丘路路演融资】前往 Sand Hill Road (沙丘路) 向顶级 VC 演示 Pitch 寻求融资',
-        reqBadge: '需丰富人脉或出众形象',
-        condition: (s) => (s.network || 0) >= 15 || (s.charm || 0) >= 14,
+        reqBadge: '需丰富人脉或出众形象 · 终局轮后不再融资',
+        // The round ladder ends at the terminal/Pre-IPO round: once founder_stage === 'exit' the
+        // raise is closed (it used to re-fire every year for +7500 valuation / +$30w cash / TC 30
+        // with no cap — a farmable loop). Post-exit founders go through founder_exit_event.
+        condition: (s) => s.founder_stage !== 'exit' && ((s.network || 0) >= 15 || (s.charm || 0) >= 14),
         effect: (s) => {
           const stage = s.founder_stage || 'pre_seed';
           const ecoBonus = s.macro_economy === 'bull' ? 0.15 : s.macro_economy === 'bear' ? -0.20 : 0;
@@ -298,7 +302,8 @@ export const startupEvents: Record<string, GameEvent> = {
                 message: `【B 轮超级融资】红杉与 A16Z 联合领投，公司估值冲上 $${newVal}w 美元！ARR 突破 $800w，准独角兽地位确立！B 轮摊薄后你的持股稀释至 ${eq}%。`
               };
             } else {
-              // series_b (or already at exit): advance to exit; never DROP valuation.
+              // series_b: advance to the terminal round; never DROP valuation. (founder_stage === 'exit'
+              // can no longer reach here — the choice condition closes the raise after this round.)
               const newVal = Math.max((s.company_valuation || 0) + 7500, 15000);
               const eq = diluteEquity(s, EQUITY_KEEP.exit);
               return {
@@ -431,7 +436,10 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【终局退场 Exit】启动并购评估 Acqui-hire 或 纳斯达克 IPO 挂牌上市',
         condition: (s) => s.job_type === 'startup_founder' && !s.story_flags?.exit_deliberated,
         hideIfUnavailable: true,
-        effect: () => ({ message: '你召开董事会紧急闭门会议，正式启动退场与并购/IPO 评估！' }),
+        // Starting the exit IS this year's strategy: stamp mid_year like every sibling hub choice,
+        // otherwise a payout that crosses the FIRE line → fire_milestone_choice → back into the hub
+        // → exit again in the SAME year (same-year re-exit cash loop).
+        effect: () => ({ mid_year: true, season_stage: 'h1', message: '你召开董事会紧急闭门会议，正式启动退场与并购/IPO 评估！' }),
         nextEventId: 'founder_exit_event',
       },
       {
@@ -489,14 +497,21 @@ export const startupEvents: Record<string, GameEvent> = {
           // Acqui-hire pays ~60% of pro-rata (liquidation preference + fire-sale discount vs IPO).
           const payout = parseFloat(Math.max(12, Math.round(val * eq / 100 * 0.6)).toFixed(1));
           const isHigh = val >= 3000;
-          const newLevel = isHigh ? 'L7 (Senior Staff)' : 'L6 (Staff)';
-          const newTc = isHigh ? 68 : 52;
+          // Scale the acquirer's offer with the founder's prior standing instead of a flat L6/L7:
+          // normalizeLevel maps the founder title by impact (L5/L6/L7) and falls back to the
+          // historical max_level. Floor L5; a $3000w+ exit lifts one rung; never below the prior
+          // rank (an ex-L8 is not demoted); cap L7 unless already higher.
+          const priorLvl = normalizeLevel(s.level, s) || normalizeLevel(s.max_level, s);
+          const priorRank = priorLvl ? getLevelRank(priorLvl, s) : 0;
+          const targetRank = Math.max(priorRank, Math.min(7, Math.max(5, priorRank + (isHigh ? 1 : 0))));
+          const newLevel = targetRank >= 8 ? 'L8 (Principal)' : targetRank === 7 ? 'L7 (Senior Staff)' : targetRank === 6 ? 'L6 (Staff)' : 'L5 (Senior)';
+          const newTc = Math.max(s.tc, getLevelScaledTC(17, newLevel)); // L5 35 / L6 52 / L7 76 (old flat 52/68)
           return {
             cash: parseFloat((s.cash + payout).toFixed(1)),
             job_type: 'big_tech',
             company: 'google',
             level: newLevel,
-            last_promo_age: s.age,
+            last_promo_age: targetRank > priorRank ? s.age : s.last_promo_age, // only stamp on a real rank-up
             tc: newTc,
             laid_off: false,
             founder_stage: undefined,
@@ -535,6 +550,8 @@ export const startupEvents: Record<string, GameEvent> = {
         text: '【暂缓退场 · 重燃斗志继续带领团队冲刺】取消退场流程，继续作为 CEO 带领团队战斗',
         condition: (s) => true,
         effect: (s) => ({
+          // Backing out hands the year's strategy pick back to the hub — release the mid_year stamp.
+          mid_year: false,
           story_flags: { ...(s.story_flags || {}), exit_deliberated: true },
           message: '你深吸一口气，决定暂缓退场计划，重新召集团队全力以赴推进业务增长！'
         }),
@@ -885,7 +902,7 @@ export const startupEvents: Record<string, GameEvent> = {
               mid_year: true, season_stage: 'h1',
               cash: parseFloat((s.cash + 12).toFixed(1)),
               company_valuation: newVal,
-              health: Math.max(0, s.health - 16),
+              health: Math.max(0, s.health - 15), // invariant: ≤15 health per choice
               message: `【拿下灯塔客户】你们如期交付了企业级私有化版本！$200w 大单落地成为标杆案例，公司估值暴涨至 $${newVal}w！`
             };
           }
@@ -893,7 +910,7 @@ export const startupEvents: Record<string, GameEvent> = {
           return {
             mid_year: true, season_stage: 'h1',
             company_valuation: newVal,
-            health: Math.max(0, s.health - 16),
+            health: Math.max(0, s.health - 15), // invariant: ≤15 health per choice
             message: `【交付延期】企业级合规与 SLA 远比预想复杂，团队累垮仍未如期交付，巨头改签了竞品，只留下宝贵的踩坑经验（估值微增至 $${newVal}w）。`
           };
         },

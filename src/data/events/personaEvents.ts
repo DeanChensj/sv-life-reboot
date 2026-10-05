@@ -179,8 +179,9 @@ export const personaEvents: Record<string, GameEvent> = {
           const hit = gameRandom() < Math.min(0.85, 0.50 + (Math.min(80, s.luck) / 100) * 0.4);
           // 命中收益由 +$65w 砍到 +$35w、失手代价加重,让这一注真正带风险,
           // 不再是"落袋为安"几乎无人问津的白送横财 (仍保留天选之子的爽感,只是不再肥到离谱)。
+          // Both branches pay the advertised $3w stake (costBadge); the hit nets +$22w cash + $10w stock.
           return hit
-            ? { cash: s.cash + 25, stocks: (s.stocks || 0) + 10, message: '【天选气运大爆发！】项目主网上线一飞冲天，你精准在高点套现 $25w 现金横财，外加分得 $10w 核心资产，朋友直呼你是天选之子！' }
+            ? { cash: s.cash - 3 + 25, stocks: (s.stocks || 0) + 10, message: '【天选气运大爆发！】项目主网上线一飞冲天，你投入的 $3w 精准在高点套现 $25w 现金横财，外加分得 $10w 核心资产，朋友直呼你是天选之子！' }
             : { cash: Math.max(0, s.cash - 3), health: Math.max(0, s.health - 8), message: '这次连气运都没兜住——项目高开低走还被套了一波，你割肉离场、元气小伤。看来天选之子偶尔也会打盹。' };
         },
         nextEventId: h1ToH2Router,

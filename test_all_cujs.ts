@@ -2,7 +2,9 @@ import { events, generateInitialState, hasSeen, markSeen, midYearEventRouter, re
 import { ACHIEVEMENTS, checkAndUnlockAchievements } from './src/data/achievements';
 import { COMPANY_PROFILES } from './src/data/companyProfiles';
 import { GameState, Choice } from './src/types';
-import { HOUSING_NAMES, isOwnedHousing } from './src/constants/gameConstants';
+import { HOUSING_NAMES, isOwnedHousing, STORAGE_KEYS } from './src/constants/gameConstants';
+import { getCompanyDisplayName } from './src/utils/companyDisplayName';
+import { BIG_TECH_HIRE_POOL, CHINA_SAFE_LIFE_EVENTS, MAX_CHARM_ABSOLUTE_CAP, h1ToH2Router } from './src/data/events';
 import { applyStateTransition } from './src/utils/stateTransitions';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo, getTCBreakdown, getAnnualCompensation, previewAnnualPerfReview, computeAnnualExpenses } from './src/utils/gameStateSelectors';
 import { migrateSaveData, CURRENT_SAVE_VERSION } from './src/utils/saveMigration';
@@ -1009,7 +1011,11 @@ console.log('--- [CUJ 8] Save Schema Migration & Deterministic PRNG ---');
   const maEff = maChoice.effect(founderState);
   const { nextState: maState } = applyStateTransition(founderState, maEff, { eventId: 'founder_exit_event' });
   assert(maState.job_type === 'big_tech', 'Founder converted to big_tech on M&A');
-  assert(maState.level === 'L7 (Senior Staff)', 'High valuation founder becomes L7 Staff');
+  // Acqui-hire level now scales with the founder's prior ladder rung (+1 for a >= $3000w valuation,
+  // clamped to L5..L7) instead of a flat L6/L7 for everyone.
+  assert(getLevelRank(maState.level) >= getLevelRank('L5 (Senior)') && getLevelRank(maState.level) <= getLevelRank('L7 (Senior Staff)'), 'Acqui-hire lands a fresh founder in the L5..L7 band');
+  const seniorFounderMa = applyStateTransition({ ...founderState, level: 'L6 (Staff)', max_level: 'L6 (Staff)' }, maChoice.effect({ ...founderState, level: 'L6 (Staff)', max_level: 'L6 (Staff)' }), { eventId: 'founder_exit_event' }).nextState;
+  assert(seniorFounderMa.level === 'L7 (Senior Staff)', 'High valuation ex-L6 founder becomes L7 Senior Staff on acqui-hire');
   assert(maState.company_valuation === 0, 'Company valuation reset to 0 on exit');
   assert(!maState.laid_off, 'Founder is not laid off on M&A');
 
@@ -2764,8 +2770,8 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
     rent: 2.0,
     charm: 15,
   } as GameState;
-  const sweRes = studentChoice.effect(employedSwe);
-  assert(sweRes.charm! < 15, '大厂高薪码农冒充学生砍价遭遇社死扣情商');
+  // The haggle is now a real-student-only option (F-1/CPT), so an employed H-1B SWE never sees it.
+  assert(!!studentChoice.condition && !studentChoice.condition(employedSwe), '大厂高薪码农看不到学生砍价选项 (仅限 F-1/CPT 学生)');
 
   // 2. 【前任独角兽暴富】
   const unicornEvent = events['ex_spouse_unicorn_exit'];
@@ -4471,6 +4477,447 @@ console.log('--- [CUJ 24] US Undergrad to US Master to Big Tech Journey ---');
 }
 
 console.log(`\n======================================================`);
+// CUJ 75A: Audit round 2 — money/housing.
+// ① stock_crash hits stocks, never tc (TC is salary; the copy only talks about RSU/stocks);
+// ② student rent haggle: real student visa only (unemployed ≠ student) + once per life via
+//    story flag; ③ ADU / spare-room rent is a single constant on both the add and the sell
+//    side (was +1.0/+1.2/+1.5 in vs −1.5 out, eating other properties' rent on sale);
+// ④ trader_drawdown_crisis copy quotes the exact cash delta the effect applies;
+// ⑥ termite GC repair is a real expense (no longer credits +3.5 stocks / clobbers deductAssets);
+// ⑦ `s.rent + x` carry financing is NaN-safe for legacy saves with undefined rent.
+// (⑤ rto_wars owner-rent and ⑧ foreclosure-deal deductAssets live in career.ts — see that CUJ.)
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 75] Audit round 2: stock_crash tc, student haggle, ADU constant, drawdown copy, termite, rent NaN ---');
+  const base: GameState = {
+    ...generateInitialState(nextCujSeed()),
+    age: 30, year: 2026, visa: 'H1B (工签)', job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', max_level: 'L5 (Senior)',
+    tc: 45, cash: 60, stocks: 40, health: 80, leetcode: 60, impact: 10, has_housing: true, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, rent: 2,
+    job_start_age: 25, season_stage: undefined, mid_year: false, year_seg: undefined, win_threshold: 500, status: 'playing',
+  } as GameState;
+  const ADU_RENT = 1.2; // mirrors ADU_RENTAL_INCOME in gameConstants (import it instead if preferred)
+
+  // ① stock_crash: stocks take the hit, tc is untouched in every branch
+  {
+    const crash = events['stock_crash'];
+    const accept = crash.choices[0];
+    const e1 = accept.effect(base);
+    assert(e1.tc === undefined, 'stock_crash「接受现实」does not touch tc (TC is salary, the copy is about RSU/stocks)');
+    assert(e1.stocks === Math.floor((base.stocks || 0) * 0.75), 'stock_crash「接受现实」cuts stocks by 25% as the copy says');
+    const lever = crash.choices[1];
+    let touchedTc = 0;
+    for (let i = 0; i < 20; i++) { setGameSeed(nextCujSeed()); const e = lever.effect({ ...base, cash: 50 }); if (e.tc !== undefined) touchedTc++; }
+    assert(touchedTc === 0, 'stock_crash「加杠杆抄底」never cuts tc on either the win or the loss branch');
+  }
+
+  // ② student rent haggle: F1 / Day 1 CPT only, once per life
+  {
+    const haggle = events['change_rental'].choices.find(c => c.text.includes('我是学生'))!;
+    assert(haggle.condition!({ ...base, visa: 'F1 (学生)', job_type: undefined, tc: 0 } as GameState) === true, 'student haggle available to an F1 student paying rent');
+    assert(haggle.condition!({ ...base, visa: 'Day 1 CPT' }) === true, 'student haggle available on Day 1 CPT');
+    assert(haggle.condition!({ ...base, visa: 'H1B (工签)', job_type: 'unemployed', tc: 0 }) === false, 'unemployed H-1B holder is NOT a student (was treated as one)');
+    assert(haggle.condition!({ ...base, visa: 'F1 (学生)', rent: 0 }) === false, 'student haggle hidden when there is no rent to haggle');
+    const student: GameState = { ...base, visa: 'F1 (学生)', job_type: undefined, tc: 0, rent: 2 } as GameState;
+    const e2 = haggle.effect(student);
+    assert(e2.rent === 1.7 && e2.cash === student.cash + 0.3, 'student haggle takes $0.3w off rent (matches the copy)');
+    assert(e2.story_flags?.student_rent_haggle_seen === true, 'student haggle writes its once-per-life flag');
+    const after = applyStateTransition(student, e2, { eventId: 'change_rental' }).nextState;
+    assert(haggle.condition!(after) === false, 'student haggle cannot be repeated once the flag is set (was farmable every year)');
+  }
+
+  // ③ ADU rent: add and remove the same constant on every path
+  {
+    const mrp = events['manage_rental_properties'];
+    const buildAdu = mrp.choices.find(c => c.text.includes('ADU'))!;
+    const owner: GameState = { ...base, housing_name: HOUSING_NAMES.SUNNYVALE, rent: 1.5, cash: 30, stocks: 10, rental_income: 2.2, investment_properties: ['Hayward 独立投资房'] };
+    const built = applyStateTransition(owner, buildAdu.effect(owner), { eventId: 'manage_rental_properties' }).nextState;
+    assert(built.has_adu_rented === true && Math.abs((built.rental_income || 0) - (2.2 + ADU_RENT)) < 1e-6, `ADU build adds exactly +$${ADU_RENT}w (matches copy)`);
+    // selling the house via mortgage_default_crisis removes ONLY the ADU portion; Hayward's 2.2 survives
+    const shortSale = events['mortgage_default_crisis'].choices[0];
+    const sold = shortSale.effect(built);
+    assert(sold.has_adu_rented === false && Math.abs((sold.rental_income || 0) - 2.2) < 1e-6, 'short sale removes exactly the ADU rent (was −1.5 vs +1.2 built → ate $0.3w of Hayward rent)');
+    // house_slave spare-room branch: both tenant outcomes add the same constant, so the sell side is exact
+    const spareRoom = events['house_slave'].choices.find(c => c.text.includes('次卧车库出租'))!;
+    const hs: GameState = { ...base, housing_name: HOUSING_NAMES.SUNNYVALE, rent: 2.2, rental_income: 0 };
+    let mismatched = 0;
+    for (let i = 0; i < 20; i++) { setGameSeed(nextCujSeed()); const e = spareRoom.effect(hs); if (Math.abs((e.rental_income || 0) - ADU_RENT) > 1e-6) mismatched++; }
+    assert(mismatched === 0, 'house_slave spare-room rent is the ADU constant on both the good- and bad-tenant branch');
+    const hsSell = events['house_slave'].choices.find(c => c.text.includes('断供卖房'))!;
+    const e3 = hsSell.effect({ ...hs, has_adu_rented: true, rental_income: ADU_RENT + 2.5, cash: 10 });
+    assert(Math.abs((e3.rental_income || 0) - 2.5) < 1e-6, 'house_slave 断供卖房 removes exactly the ADU rent and keeps other property income');
+    const garage = events['mortgage_default_crisis'].choices.find(c => c.text.includes('主卧出租'))!;
+    assert(Math.abs((garage.effect({ ...owner, has_adu_rented: false }).rental_income || 0) - (2.2 + ADU_RENT)) < 1e-6, 'mortgage_default 主卧出租 adds the same ADU constant (was +1.5)');
+  }
+
+  // ④ trader_drawdown_crisis: copy quotes the actual cash delta
+  {
+    const avg = events['trader_drawdown_crisis'].choices[0];
+    const trader: GameState = { ...base, job_type: 'trader', company: undefined, level: '全职 Trader', cash: 20, stocks: 0, story_flags: { trader_drawdown_year: 2026, trader_drawdown_loss: 10 } };
+    for (let i = 0; i < 20; i++) {
+      setGameSeed(nextCujSeed());
+      const e = avg.effect(trader);
+      const delta = parseFloat(((e.cash as number) - trader.cash).toFixed(1));
+      assert(e.message!.includes(`$${Math.abs(delta).toFixed(1)}w`), `drawdown average-down copy quotes the real cash delta (${delta})`);
+      if (delta > 0) assert(e.message!.includes('净多赚了 $1.0w'), 'rebound copy: +11.0 total = recover the $10w drawdown + $1.0w extra (was "多赚了 $11.0w")');
+    }
+    // second loss is clamped by available cash and the copy says so
+    let sawLoss = false;
+    for (let i = 0; i < 30 && !sawLoss; i++) {
+      setGameSeed(nextCujSeed());
+      const e = avg.effect({ ...trader, cash: 8, story_flags: { trader_drawdown_loss: 50 } });
+      if ((e.cash as number) < 8) { sawLoss = true; assert(e.cash === 0 && e.message!.includes('-$8.0w'), 'drawdown second-loss copy quotes the clamped amount actually deducted (cash floors at 0)'); }
+    }
+    assert(sawLoss, 'drawdown average-down loses at least once in 30 seeded rolls (58% loss odds)');
+  }
+
+  // ⑥ termite GC repair: real expense, no stocks credit, deductAssets result preserved
+  {
+    const gc = events['property_bay_area_termites_storm'].choices[0];
+    const rich = gc.effect({ ...base, cash: 20, stocks: 10 });
+    assert(rich.cash === 14.5 && rich.stocks === 10, 'termite GC repair costs $5.5w cash (was netting +3.5 stocks on top)');
+    const cashPoor = gc.effect({ ...base, cash: 2, stocks: 10 });
+    assert(cashPoor.cash === 0 && cashPoor.stocks === 6.5, 'termite GC repair liquidates stocks for the shortfall (stocks override used to erase the deduction)');
+  }
+
+  // ⑦ `s.rent + x` carry financing is NaN-safe for legacy saves
+  {
+    const legacy = { ...base, rent: undefined } as unknown as GameState;
+    const hoaFinance = events['property_hoa_special_assessment'].choices.find(c => c.text.includes('分期融资'))!;
+    assert(hoaFinance.effect(legacy).rent === 0.4, 'HOA 分期融资 does not produce NaN rent on a legacy save (rent undefined → 0.4)');
+    const tarp = events['property_bay_area_termites_storm'].choices[2];
+    assert(tarp.effect(legacy).rent === 0.5, 'termite 分期贷款 does not produce NaN rent on a legacy save (rent undefined → 0.5)');
+    assert(tarp.effect({ ...base, rent: 1.5 }).rent === 2.0, 'termite 分期贷款 adds +$0.5w to an existing rent');
+  }
+
+  console.log('✅ CUJ 75 Passed\n');
+}
+
+// CUJ 75B: Audit round 2 — career/startup.
+// -----------------------------------------------------------------------------
+// ① founder_enterprise_whale health loss ≤ 15; ② 原地 Match has a 3-year cooldown
+//    (last_match_age) + impact cost; ③ founder raise closes after the terminal round;
+// ④ 刷题跳槽 hidden from the unemployed; ⑥ Dave showdown hop uses the shared hop ladder
+//    (hopTargetLevel / hopIsPromotion), HR branch normalises the level; ⑦ l6_staff_celebration
+//    is oncePerLife and every route gates on hasSeen; ⑧ acqui-hire level scales with prior
+//    standing (floor L5, +1 on a big exit, never demotes); ⑨ TreeHacks charges the entry fee on
+//    a win too.
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 75] Audit round 2: whale hp, match cooldown, founder raise, Dave ladder, L6 once, acqui-hire, treehacks fee ---');
+  const base: GameState = {
+    ...generateInitialState(nextCujSeed()),
+    age: 30, year: 2026, visa: 'H1B (工签)', job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', max_level: 'L5 (Senior)',
+    tc: 45, cash: 60, stocks: 40, health: 80, leetcode: 60, impact: 10, has_housing: true, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, rent: 2,
+    job_start_age: 25, season_stage: undefined, mid_year: false, year_seg: undefined, win_threshold: 500, status: 'playing',
+  } as GameState;
+  const founder: GameState = { ...base, job_type: 'startup_founder', company: 'AI/科技 Startup', level: 'CEO & Founder', max_level: undefined, tc: 16, founder_stage: 'series_b', company_valuation: 8000, network: 50, charm: 20, impact: 5 };
+
+  // ① whale: both branches of both choices stay within the ≤15 health invariant
+  {
+    const whale = events['founder_enterprise_whale'];
+    let worst = 0;
+    for (let i = 0; i < 40; i++) {
+      setGameSeed(nextCujSeed());
+      for (const c of whale.choices) { const e = c.effect(founder); if (typeof e.health === 'number') worst = Math.max(worst, founder.health - e.health); }
+    }
+    assert(worst <= 15, `founder_enterprise_whale never drains more than 15 health per choice (worst=${worst})`);
+  }
+
+  // ② 原地 Match: cooldown via last_match_age (written AND read) + modest impact cost
+  {
+    const match = events['job_hop_market'].choices.find(c => c.text.includes('原地 Match'))!;
+    const withOffer: GameState = { ...base, hop_offers: ['meta'] };
+    assert(match.condition!(withOffer) === true, 'Match available with an outside offer and no prior match');
+    const me = match.effect(withOffer);
+    assert(me.story_flags?.last_match_age === withOffer.age && (me.impact ?? 99) === (withOffer.impact || 0) - 1 && me.tc === withOffer.tc + 4.5, 'Match stamps last_match_age and costs 1 impact');
+    assert(match.condition!({ ...withOffer, story_flags: { last_match_age: withOffer.age - 2 } }) === false, 'Match blocked within 3 years of the last match');
+    assert(match.condition!({ ...withOffer, story_flags: { last_match_age: withOffer.age - 3 } }) === true, 'Match re-opens after the 3-year cooldown');
+    assert(match.condition!({ ...withOffer, age: withOffer.age - 1, story_flags: { last_match_age: withOffer.age } }) === false, 'Match blocked on a same-age replay');
+  }
+
+  // ③ founder raise closes after the terminal round
+  {
+    const raise = events['founder_annual_strategy'].choices.find(c => c.text.includes('沙丘路路演融资'))!;
+    assert(raise.condition!(founder) === true, 'series_b founder with network can still raise');
+    assert(raise.condition!({ ...founder, founder_stage: 'exit' }) === false, 'no further raise once founder_stage === exit (no +7500/+$30w farming)');
+  }
+
+  // ④ 刷题跳槽 is employed-only
+  {
+    const grind = events['sv_daily_life'].choices.find(c => c.text.includes('刷题跳槽'))!;
+    assert(grind.condition!(base) === true, '刷题跳槽 visible to an employed engineer');
+    assert(grind.condition!({ ...base, job_type: 'unemployed', laid_off: false, tc: 0 }) === false, '刷题跳槽 hidden from a gap-year unemployed player (laid_off=false)');
+    assert(grind.condition!({ ...base, job_type: 'unemployed', laid_off: true, tc: 0 }) === false, '刷题跳槽 hidden from a laid-off player');
+  }
+
+  // ⑥ Dave showdown: Meta hop follows hopTargetLevel / hopIsPromotion; HR branch normalises level
+  {
+    const hop = events['dave_retaliation_showdown'].choices.find(c => c.text.includes('实力跳槽降维打击'))!;
+    const mts: GameState = { ...base, job_type: 'ai_research', company: 'openai', level: 'MTS', max_level: undefined, tc: 30, impact: 5, leetcode: 60, story_flags: { has_dave_evidence: true } };
+    const he = hop.effect(mts);
+    assert(he.level === hopTargetLevel(mts) && he.level === 'L5 (Senior)' && he.last_promo_age === mts.last_promo_age, 'MTS (→L5, impact<20) hops laterally at L5 via the shared ladder, no promo stamp');
+    const l4: GameState = { ...base, level: 'L4', max_level: 'L4', story_flags: { has_dave_evidence: true } };
+    const he4 = hop.effect(l4);
+    assert(he4.level === 'L5 (Senior)' && he4.last_promo_age === l4.age && hopIsPromotion(l4), 'L4 → L5 via the Dave hop is a real promotion');
+    const atMeta = hop.effect({ ...l4, company: 'meta' });
+    assert(atMeta.company === 'nvidia' && he4.company === 'meta', 'Dave hop never "hops" to the same employer (Meta → Nvidia)');
+    const hr = events['dave_retaliation_showdown'].choices.find(c => c.text.includes('雷霆出击'))!;
+    const hre = hr.effect(mts);
+    assert(hre.level === undefined && hre.last_promo_age === mts.last_promo_age, 'HR-evidence branch leaves a non-L3/L4 title (MTS) untouched');
+    const hre3 = hr.effect({ ...base, level: 'L3', max_level: 'L3', story_flags: { has_dave_evidence: true } });
+    assert(hre3.level === 'L4' && hre3.last_promo_age === base.age, 'HR-evidence branch still promotes L3 → L4');
+  }
+
+  // ⑦ l6_staff_celebration fires once per life
+  {
+    assert(events['l6_staff_celebration'].oncePerLife === true, 'l6_staff_celebration is oncePerLife');
+    const freshL6: GameState = { ...base, level: 'L6 (Staff)', max_level: 'L6 (Staff)', last_promo_age: base.age, story_flags: {} };
+    const stamped = applyStateTransition(freshL6, {}, { eventId: 'l6_staff_celebration' }).nextState;
+    assert(hasSeen(stamped, 'l6_staff_celebration'), 'resolving the celebration stamps l6_staff_celebration_seen');
+    const joins = events['job_hop_market'].choices.filter(c => c.text.includes('签约入职') && typeof c.nextEventId === 'function');
+    const firstTime = joins.filter(c => (c.nextEventId as (s: GameState) => string)(freshL6) === 'l6_staff_celebration').length;
+    const replay = joins.filter(c => (c.nextEventId as (s: GameState) => string)(stamped) === 'l6_staff_celebration').length;
+    assert(firstTime >= 5 && replay === 0, `hop-join routers celebrate a fresh L6 once (${firstTime} big-tech joins), never after it has been seen (same-age lateral re-hire)`);
+    const grindRoute = events['sv_daily_life'].choices.find(c => c.text.includes('疯狂内卷'))!.nextEventId as (s: GameState) => string;
+    assert(grindRoute(freshL6) === 'l6_staff_celebration' && grindRoute(stamped) !== 'l6_staff_celebration', '疯狂内卷 router also gates the L6 celebration on hasSeen');
+  }
+
+  // ⑧ acqui-hire level scales with prior standing
+  {
+    const acq = events['founder_exit_event'].choices.find(c => c.text.includes('Acqui-hire'))!;
+    const low = acq.effect({ ...founder, impact: 5, company_valuation: 500 });
+    assert(low.level === 'L5 (Senior)' && low.job_type === 'big_tech' && !!low.company, 'low-impact founder with a small exit lands at L5 (not a flat L6)');
+    const mid = acq.effect({ ...founder, impact: 25, company_valuation: 500 });
+    assert(mid.level === 'L6 (Staff)', 'impact-25 founder (normalises to L6) keeps L6 on a small exit');
+    const midBig = acq.effect({ ...founder, impact: 25, company_valuation: 5000 });
+    assert(midBig.level === 'L7 (Senior Staff)' && midBig.last_promo_age === founder.age, 'a $3000w+ exit lifts one rung (L6 → L7) and stamps the promo');
+    const exL8 = acq.effect({ ...founder, impact: 5, max_level: 'L8 (Principal)', level: undefined, company_valuation: 500 });
+    assert(exL8.level === 'L8 (Principal)' && exL8.last_promo_age === founder.last_promo_age, 'an ex-L8 founder is never demoted by the acquirer (no promo stamp either)');
+    assert((low.tc || 0) < (mid.tc || 0) && (mid.tc || 0) < (midBig.tc || 0), 'acqui-hire TC follows the level band');
+  }
+
+  // ⑨ TreeHacks entry fee is charged win or lose
+  {
+    const th = events['sv_daily_life'].choices.find(c => c.text.includes('TreeHacks'))!;
+    const hacker: GameState = { ...base, age: 26, leetcode: 100 };
+    let wins = 0, losses = 0, badWin = 0, badLoss = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const e = th.effect(hacker);
+      if ((e.cash || 0) > hacker.cash) { wins++; if (Math.abs((e.cash || 0) - (hacker.cash + 7.5)) > 1e-9) badWin++; }
+      else { losses++; if (Math.abs((e.cash || 0) - (hacker.cash - 0.5)) > 1e-9) badLoss++; }
+    }
+    assert(wins > 0 && losses > 0, 'TreeHacks sampled both outcomes');
+    assert(badWin === 0 && badLoss === 0, 'TreeHacks: win nets +$8w − $0.5w fee, loss nets −$0.5w (fee always charged)');
+  }
+
+  // ⑩ rto_wars 【回归湾区通勤】: the $4w rent floor only applies to renters, never homeowners
+  {
+    const rto = events['rto_wars'].choices.find(c => c.text.includes('回归湾区通勤'))!;
+    const renter = rto.effect({ ...base, rent: 1.5 });
+    assert(renter.rent === 4, 'remote renter moving back pays at least $4w rent');
+    const owner = rto.effect({ ...base, has_housing: true, housing_name: HOUSING_NAMES.FREMONT, rent: 0 });
+    assert(isOwnedHousing(HOUSING_NAMES.FREMONT) && owner.rent === 0, 'homeowner (mortgage, rent 0) is not slapped with a $4w rent floor');
+  }
+
+  // ⑪ 捡漏投资房 down payment never drives cash negative (spills into stocks)
+  {
+    const fc = events['sv_daily_life'].choices.find(c => c.text.includes('捡漏投资房'))!;
+    const cashPoor: GameState = { ...base, cash: 5, stocks: 30 };
+    const fe = fc.effect(cashPoor);
+    assert(fe.cash === 0 && fe.stocks === 15, 'foreclosure $20w: cash 5 → 0, stocks 30 → 15 (shortfall liquidated, no negative cash)');
+    const rich = fc.effect({ ...base, cash: 60, stocks: 40 });
+    assert(rich.cash === 40 && rich.stocks === 40, 'foreclosure $20w from cash alone leaves stocks untouched');
+  }
+
+  console.log('✅ CUJ 75 Passed\n');
+}
+
+// CUJ 75C: Audit round 2 — life/routing/UI.
+// -----------------------------------------------------------------------------
+// ① cn_work_mid P7 sprint ≤ −15 health; ② 天选之子 windfall pays the $3w stake on BOTH branches;
+// ③ ex-spouse lawsuit: $5w fee survives the stock award; ④ save migration keeps 海王 max_charm 35;
+// ⑤ toxic-boss hop lands at a DIFFERENT big-tech; ⑥ TC faucets (car meet / burnout grind /
+//    vibecoding / boardgame contract) raise TC once per life; ⑦ no_gc_fire needs a real temp visa;
+// ⑧ in-China players draw only location-agnostic H2 life events; ⑨ migration syncs
+//    is_married ⇄ relationship_status; ⑩ same-year second hop guard is a state check;
+// ⑪ in_gap_year clears on re-employment; ⑫ company display names are humanised;
+// ⑬ FIRE interrupting a founder exit marks the year consumed (no same-year re-exit loop).
+// -----------------------------------------------------------------------------
+{
+  console.log('--- [CUJ 75] Audit round 2: life faucets, China gate, migration sync, hop guard ---');
+  const base: GameState = {
+    ...generateInitialState(nextCujSeed()),
+    age: 30, year: 2026, visa: 'H1B (工签)', job_type: 'big_tech', company: 'google', level: 'L5 (Senior)', max_level: 'L5 (Senior)',
+    tc: 45, cash: 60, stocks: 40, health: 80, leetcode: 60, impact: 10, luck: 80, has_housing: true, housing_name: HOUSING_NAMES.CUPERTINO_SHARED, rent: 2,
+    job_start_age: 25, season_stage: undefined, mid_year: false, year_seg: undefined, win_threshold: 500, status: 'playing', story_flags: {},
+  } as GameState;
+
+  // ① cn_work_mid health cap (+ ⑮ dead substring rule)
+  {
+    const p7 = events['cn_work_mid'].choices.find(c => c.text.includes('冲击 P7'))!;
+    const e = p7.effect({ ...base, job_type: 'cn_tech', company: 'cn_big_tech', visa: '无', health: 80 });
+    assert(e.health === 65, 'cn_work_mid P7 sprint costs exactly 15 health (was 18, over the per-choice cap)');
+    assert(Object.values(events).every(ev => ev.choices.every(c => !c.text.includes('今年限时机会'))), 'no choice text contains 今年限时机会 (App.tsx substring hide-rule was dead and is removed)');
+  }
+
+  // ② 天选之子 windfall stake
+  {
+    const bet = events['persona_chosen_windfall'].choices[0];
+    let hits = 0, misses = 0, bad = 0;
+    for (let i = 0; i < 40; i++) {
+      setGameSeed(nextCujSeed());
+      const e = bet.effect(base);
+      if (e.cash === base.cash + 22 && (e.stocks || 0) === (base.stocks || 0) + 10) hits++;
+      else if (e.cash === base.cash - 3) misses++;
+      else bad++;
+    }
+    assert(bad === 0 && hits > 0 && misses > 0, `windfall deducts the $3w stake on BOTH branches (hits=${hits}, misses=${misses}, bad=${bad})`);
+  }
+
+  // ③ ex-spouse lawsuit fee + award
+  {
+    const sue = events['ex_spouse_unicorn_exit'].choices[1];
+    const poor: GameState = { ...base, cash: 2, stocks: 40 };
+    let wins = 0, losses = 0, bad = 0;
+    for (let i = 0; i < 80; i++) {
+      setGameSeed(nextCujSeed());
+      const e = sue.effect(poor);
+      // $5w fee: $2w cash + $3w stocks → stocks 37; a win adds 25 on TOP of the deducted balance (62, never 65).
+      if (e.cash === 0 && e.stocks === 62) wins++;
+      else if (e.cash === 0 && e.stocks === 37) losses++;
+      else bad++;
+    }
+    assert(bad === 0 && losses > 0, `lawsuit always pays the $5w fee from cash+stocks and the award stacks on the deducted balance (wins=${wins}, losses=${losses}, bad=${bad})`);
+  }
+
+  // ④ + ⑨ save migration
+  {
+    const seaKing = migrateSaveData({ version: 2, gameState: { ...base, trait_title: '湾区海王', max_charm: 35, charm: 33, seed: 7 } });
+    assert(seaKing.gameState.max_charm === 35 && seaKing.gameState.charm === 33, '海王 save keeps max_charm 35 / charm 33 across reload (was clamped to 30)');
+    assert(MAX_CHARM_ABSOLUTE_CAP === 35 && migrateSaveData({ version: 2, gameState: { ...base, max_charm: 99, seed: 7 } }).gameState.max_charm === 35, 'max_charm is clamped to the real absolute ceiling (35)');
+    const legacyMarried = migrateSaveData({ version: 2, gameState: { ...base, is_married: true, relationship_status: undefined, seed: 7 } });
+    assert(legacyMarried.gameState.relationship_status === 'married', 'legacy is_married:true save gets relationship_status married');
+    const statusOnly = migrateSaveData({ version: 2, gameState: { ...base, is_married: false, relationship_status: 'married', seed: 7 } });
+    assert(statusOnly.gameState.is_married === true, 'relationship_status married back-fills is_married');
+    const single = migrateSaveData({ version: 2, gameState: { ...base, is_married: false, relationship_status: 'dating', seed: 7 } });
+    assert(single.gameState.is_married === false && single.gameState.relationship_status === 'dating', 'unmarried saves are left alone');
+  }
+
+  // ⑤ toxic-boss hop lands elsewhere
+  {
+    const hop = events['dilemma_toxic_boss_gc_hostage'].choices[1];
+    const msft: GameState = { ...base, company: 'microsoft' };
+    let same = 0, offPool = 0;
+    for (let i = 0; i < 30; i++) {
+      setGameSeed(nextCujSeed());
+      const e = hop.effect(msft);
+      if (e.company === 'microsoft') same++;
+      if (!(BIG_TECH_HIRE_POOL as readonly string[]).includes(e.company || '')) offPool++;
+    }
+    assert(same === 0 && offPool === 0, 'toxic-boss hop never "hops" to the current employer and stays in the big-tech hire pool');
+    const e1 = hop.effect(msft);
+    assert(e1.is_new_job === true && e1.tc === undefined, 'hop still flags is_new_job (PERM reset) and does not touch TC');
+  }
+
+  // ⑥ TC faucets → once per life
+  {
+    const car = events['luxury_car_meet'].choices[0];
+    const c1 = applyStateTransition({ ...base, car: 'porsche' }, car.effect({ ...base, car: 'porsche' }), { eventId: 'luxury_car_meet' }).nextState;
+    assert(c1.tc === base.tc + 5 && c1.story_flags?.luxury_car_meet_tc_raised === true, 'car meet: first visit raises TC +5 and records the flag');
+    const c2 = applyStateTransition(c1, car.effect(c1), { eventId: 'luxury_car_meet' }).nextState;
+    assert(c2.tc === c1.tc && (c2.network || 0) > (c1.network || 0), 'car meet: second visit is networking only (no further TC)');
+
+    const grind = events['health_burnout_warning'].choices[1];
+    const old: GameState = { ...base, age: 40, health: 55 };
+    const g1 = grind.effect(old);
+    assert(g1.tc === old.tc + 5 && g1.story_flags?.burnout_grind_tc_raised === true && g1.health === 40, 'burnout grind: first time +5 TC, −15 health');
+    const g2 = grind.effect({ ...old, story_flags: { burnout_grind_tc_raised: true } });
+    assert(g2.tc === undefined && g2.cash === old.cash + 2, 'burnout grind: later years pay a one-off $2w bonus instead of TC');
+
+    const vibe = events['vibe_coding_craze'].choices[0];
+    const v1 = vibe.effect(base);
+    assert(v1.tc === base.tc + 5 && v1.story_flags?.vibe_coding_tc_raised === true, 'vibecoding: first time +5 TC');
+    const v2 = vibe.effect({ ...base, story_flags: { vibe_coding_tc_raised: true } });
+    assert(v2.tc === undefined && v2.cash === base.cash + 1.5, 'vibecoding: repeat is a $1.5w spot bonus, no TC');
+    assert(vibe.effect({ ...base, job_type: 'unemployed', laid_off: true, tc: 0 }).tc === undefined, 'vibecoding: unemployed player gets no TC');
+
+    const gig = events['boardgame_dating'].choices.find(c => c.text.includes('招全栈工程师'))!;
+    const b1 = gig.effect({ ...base, leetcode: 60 });
+    assert(b1.tc === base.tc + 3 && b1.story_flags?.boardgame_contract_tc_raised === true && b1.cash === base.cash + 3, 'boardgame contract: first win +3 TC + $3w');
+    const b2 = gig.effect({ ...base, leetcode: 60, story_flags: { boardgame_contract_tc_raised: true } });
+    assert(b2.tc === undefined && b2.cash === base.cash + 3, 'boardgame contract: later wins are cash only');
+  }
+
+  // ⑦ no_gc_fire needs a real temporary visa
+  {
+    safeStorage.removeItem(STORAGE_KEYS.ACHIEVEMENTS);
+    const cnWin: GameState = { ...base, status: 'win', visa: '无', job_type: 'cn_tech', company: 'cn_big_tech' };
+    assert(!checkAndUnlockAchievements(cnWin).includes('no_gc_fire'), 'visa 无 (no US visa at all) does NOT unlock H1B 枷锁舞者');
+    assert(checkAndUnlockAchievements({ ...base, status: 'win', visa: 'H1B (工签)' }).includes('no_gc_fire'), 'FIRE on H-1B still unlocks it');
+  }
+
+  // ⑧ in-China H2 gate
+  {
+    const cn: GameState = {
+      ...base, job_type: 'cn_tech', company: 'cn_big_tech', visa: '无', age: 38, health: 50, car: 'porsche', cash: 120, tc: 50,
+      trait_title: undefined, has_reached_initial_fire: false,
+      story_flags: { late_longevity_investment_seen: true, late_mentor_legacy_seen: true },
+    };
+    const allowed = new Set<string>([...CHINA_SAFE_LIFE_EVENTS, 'sv_year_end_settlement']);
+    const seen = new Set<string>();
+    let leaked = 0;
+    for (let i = 0; i < 80; i++) { setGameSeed(nextCujSeed()); const id = midYearEventRouter({ ...cn, season_stage: 'h2' }); seen.add(id); if (!allowed.has(id)) leaked++; }
+    assert(leaked === 0, `in-China H2 pool never yields a US-only event (leaked=${leaked}: ${[...seen].filter(s => !allowed.has(s)).join(',')})`);
+    assert(!seen.has('us_healthcare_icu_crisis') && !seen.has('luxury_car_meet') && !seen.has('health_burnout_warning') && !seen.has('tahoe_ski_blizzard'), 'ICU / Skyline car meet / Stanford Health / Tahoe do not reach a Shenzhen engineer');
+    let usOnly = 0;
+    for (let i = 0; i < 40; i++) { setGameSeed(nextCujSeed()); if (!allowed.has(midYearEventRouter({ ...cn, job_type: 'big_tech', company: 'google', visa: 'H1B (工签)', season_stage: 'h2' }))) usOnly++; }
+    assert(usOnly > 0, 'the same player in the Bay Area still draws from the full pool');
+  }
+
+  // ⑩ same-year second hop guard is a STATE check
+  {
+    const hopped: GameState = { ...base, mid_year: true, is_new_job: true, year_seg: undefined, company: 'meta' };
+    const viaHousing = resolveNextEventId({ nextEventId: 'sv_year_end_settlement' }, hopped, undefined, 'choose_housing');
+    assert(viaHousing.nextEventId === 'sv_year_end_settlement' && viaHousing.finalState.year_seg === undefined, 'a hop followed by choose_housing still closes the year (no second H1 → job_hunt → second hop)');
+    const declined = resolveNextEventId({ nextEventId: 'sv_year_end_settlement' }, { ...base, mid_year: true, is_new_job: false }, undefined, 'job_hop_market');
+    assert(declined.nextEventId === 'sv_year_end_settlement', 'a declined offer straight from job_hop_market still closes the year');
+  }
+
+  // ⑪ in_gap_year hygiene
+  {
+    const gap: GameState = { ...base, laid_off: true, job_type: 'unemployed', company: undefined, tc: 0, story_flags: { in_gap_year: true } };
+    const rehired = applyStateTransition(gap, { job_type: 'big_tech', company: 'meta', laid_off: false, tc: 30, level: 'L5 (Senior)', is_new_job: true }, { eventId: 'job_hunt' }).nextState;
+    assert(rehired.story_flags?.in_gap_year === false, 're-employment clears in_gap_year');
+    const relaid = applyStateTransition(rehired, { laid_off: true, job_type: 'unemployed', tc: 0 }, { eventId: 'layoff_hit' }).nextState;
+    assert(getJobDisplayInfo(relaid).companyLabel === '待业求职中', 'a LATER layoff shows 待业求职中, not 慢生活 Gap Year');
+    const stillGap = applyStateTransition(gap, { health: gap.health - 1 }, { eventId: 'bay_area_hiking' }).nextState;
+    assert(stillGap.story_flags?.in_gap_year === true, 'the marker survives while the player is still on the gap year');
+  }
+
+  // ⑫ company display names
+  {
+    assert(getCompanyDisplayName('google') === 'Google' && getCompanyDisplayName('cn_big_tech') === '国内一线互联网大厂' && getCompanyDisplayName('startup') === '硅谷初创公司', 'profiled + legacy keys map to display names');
+    assert(getCompanyDisplayName('some_new_co') === 'Some New Co' && getCompanyDisplayName('OmniAgent AI') === 'OmniAgent AI' && getCompanyDisplayName(undefined) === '硅谷科技企业', 'unknown keys are humanised, display strings pass through, empty → fallback');
+    const hired = applyStateTransition({ ...base, job_type: 'unemployed', laid_off: true, tc: 0, company: undefined }, { job_type: 'cn_tech', company: 'cn_big_tech', tc: 20, laid_off: false, level: '国内研发' }, { eventId: 'job_hunt' }).nextState;
+    const last = (hired.timeline || [])[(hired.timeline || []).length - 1];
+    assert(!!last && last.title.includes('国内一线互联网大厂') && !last.title.includes('CN_BIG_TECH'), 'timeline 成功入职 entry never shouts a raw company key');
+  }
+
+  // ⑬ FIRE interrupting a founder exit consumes the year
+  {
+    const founder: GameState = { ...base, job_type: 'startup_founder', company: 'AI/科技 Startup', level: 'CEO & Founder', founder_stage: 'series_a', company_valuation: 800, cash: 700, mid_year: false, season_stage: undefined };
+    const r = resolveNextEventId({ nextEventId: h1ToH2Router }, founder, 'fire_milestone_choice', 'founder_exit_event');
+    assert(r.nextEventId === 'fire_milestone_choice' && r.finalState.mid_year === true, 'FIRE panel after a year-start founder exit marks the year consumed');
+    const refound = events['fire_milestone_choice'].choices.find(c => c.text.includes('辞职创立'))!;
+    assert(typeof refound.nextEventId === 'function' && refound.nextEventId({ ...r.finalState, job_type: 'startup_founder' }) === 'sv_year_end_settlement', '「辞职创立」 after that exit closes the year instead of re-opening founder_annual_strategy (same-year re-exit loop)');
+    const other = resolveNextEventId({ nextEventId: 'sv_year_end_settlement' }, { ...base, mid_year: false }, 'fire_milestone_choice', 'sv_year_end_settlement');
+    assert(other.finalState.mid_year === false, 'FIRE crossed at year-end settlement does NOT pre-consume the new year');
+  }
+
+  console.log('✅ CUJ 75 Passed\n');
+}
+
 console.log(`📊 CUJ TEST RESULTS: ${passedAssertions}/${totalAssertions} Assertions Passed`);
 if (failedAssertions === 0) {
   console.log(`🎉 100% OF ALL CUJs (Critical User Journeys) PASSED WITH ZERO BUGS!`);

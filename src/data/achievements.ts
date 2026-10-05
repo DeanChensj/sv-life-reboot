@@ -1,6 +1,6 @@
 import type { Achievement, GameState } from '../types';
 import { safeStorage } from '../utils/safeStorage';
-import { STORAGE_KEYS, isPermanentVisa } from '../constants/gameConstants';
+import { STORAGE_KEYS, isPermanentVisa, VISA_STATUS } from '../constants/gameConstants';
 
 export const ACHIEVEMENTS: Achievement[] = [
   {
@@ -307,7 +307,9 @@ export function checkAndUnlockAchievements(state: GameState): string[] {
     if (unlockAchievement('day_trader_god')) newlyUnlocked.push('day_trader_god');
   }
 
-  if (state.status === 'win' && !isPermanentVisa(state.visa)) {
+  // "FIRE under visa pressure" requires an actual temporary US visa. visa '无' (no visa at all —
+  // e.g. the China career track) is not pressure, so it must not unlock this.
+  if (state.status === 'win' && !isPermanentVisa(state.visa) && !!state.visa && state.visa !== VISA_STATUS.NONE) {
     if (unlockAchievement('no_gc_fire')) newlyUnlocked.push('no_gc_fire');
   }
 

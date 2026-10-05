@@ -1,6 +1,7 @@
 import type { GameState, TimelineRecord } from '../types';
 import { isOwnedHousing, isPermanentVisa, VISA_STATUS, liquidateStocksToCover, getFireNetWorth } from '../constants/gameConstants';
 import { getCompanyProfile } from '../data/companyProfiles';
+import { getCompanyDisplayName } from './companyDisplayName';
 import { getSchoolProfile } from '../data/schoolProfiles';
 import { normalizeLevel, getLevelRank, LEVEL_PROFILES } from '../data/levelProfiles';
 import { events as eventRegistry } from '../data/events';
@@ -158,6 +159,15 @@ export function applyStateTransition(
     newState.job_start_age = newState.age;
   }
 
+  // 4b. Gap-year marker hygiene: `in_gap_year` is set by the post-layoff "slow life" choices and
+  //     was never cleared on re-employment, so a LATER layoff rendered the HUD as 「慢生活 Gap Year」
+  //     instead of 「待业求职中」. Clear it centrally whenever the player is employed again — via a
+  //     new job OR laid_off flipping false (re-employment paths that keep job_type/company).
+  const employedNow = !newState.laid_off && !!newState.job_type && newState.job_type !== 'unemployed';
+  if (employedNow && newState.story_flags?.in_gap_year && (isNewJob || (prevState.laid_off && !newState.laid_off))) {
+    newState.story_flags = { ...newState.story_flags, in_gap_year: false };
+  }
+
   // Unfunded companies cannot scale. A founder who has never raised (still holding 100% of the
   // equity) is hard-capped at $200w: with no outside capital there is no growth engine, so
   // raising is mandatory to build anything real. Any round dilutes below 100% and lifts the cap
@@ -298,17 +308,13 @@ export function applyStateTransition(
         statHighlight: '全职独立交易',
       });
     } else {
-      const legacyCompNames: Record<string, string> = {
-        openai: 'OpenAI',
-        cn_big_tech: '国内一线互联网大厂', icc: 'ICC 外包公司',
-      };
       const compKey = normalizedEffect.company || newState.company || prevState.company;
-      const compName = compKey
-        ? (getCompanyProfile(compKey)?.timelineName || legacyCompNames[compKey] || compKey.toUpperCase())
-        : (targetJobType === 'cn_tech' ? '国内一线互联网大厂'
-          : targetJobType === 'ai_research' ? '前沿 AI 实验室'
-          : targetJobType === 'startup' ? '硅谷高成长初创'
-          : '硅谷科技企业');
+      const jobTypeFallback = targetJobType === 'cn_tech' ? '国内一线互联网大厂'
+        : targetJobType === 'ai_research' ? '前沿 AI 实验室'
+        : targetJobType === 'startup' ? '硅谷高成长初创'
+        : '硅谷科技企业';
+      // Shared display-name map + humanised fallback (never a raw `toUpperCase()` key).
+      const compName = getCompanyDisplayName(compKey, jobTypeFallback);
       const lvl = normalizedEffect.level || newState.level || prevState.level || (targetJobType === 'cn_tech' ? '国内研发' : 'SDE');
       const tcVal = newState.tc || 0;
       const desc = targetJobType === 'cn_tech'

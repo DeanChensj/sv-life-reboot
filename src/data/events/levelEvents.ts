@@ -1,5 +1,5 @@
 import type { GameEvent, GameState } from '../../types';
-import { h1ToH2Router, gameRandom, stampSeen, addImpact , markSeen} from './helpers';
+import { h1ToH2Router, gameRandom, stampSeen, addImpact , markSeen, pickOtherBigTech, resolveHopVisaTransition } from './helpers';
 
 // 职级 (level) 阶段专属随机事件 — Career-level signature events.
 // One once-per-life SIGNATURE beat per ladder band (entry / senior / staff+),
@@ -249,13 +249,22 @@ export const levelEvents: Record<string, GameEvent> = {
         text: '【带嫡系骨干成建制转换门庭】挥师高就，带着两位老部下空降执掌核心新业务',
         reqBadge: '需深厚行业人脉',
         condition: (s) => employed(s) && (s.network || 0) >= 30,
-        effect: (s) => ({
-          cash: s.cash + 8,
-          tc: s.tc + 8,
-          impact: addImpact(s, 8),
-          health: Math.max(0, s.health - 8),
-          message: '【自立山头】你带着昔日最默契的两名技术骨干潇洒履新，不仅拿到了 $8w 高管签字费与涨幅 (+$8w TC)，更在新东家直接拥有了完整的嫡系班底！',
-        }),
+        effect: (s) => {
+          // The copy says you joined the rival — actually switch employer (level kept, lateral L6+ hire).
+          const hopVisa = resolveHopVisaTransition(s);
+          return {
+            company: pickOtherBigTech(s),
+            job_type: 'big_tech',
+            visa: hopVisa.visa as GameState['visa'],
+            cash: Math.max(0, s.cash + 8 + hopVisa.cashDelta),
+            tc: s.tc + 8,
+            impact: addImpact(s, 8),
+            health: Math.max(0, s.health - 8),
+            laid_off: false,
+            is_new_job: true,
+            message: `【自立山头】你带着昔日最默契的两名技术骨干潇洒履新，不仅拿到了 $8w 高管签字费与涨幅 (+$8w TC)，更在新东家直接拥有了完整的嫡系班底！${hopVisa.note}`,
+          };
+        },
         nextEventId: h1ToH2Router,
       },
       {

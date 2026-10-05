@@ -177,6 +177,22 @@ export const isImpactCareer = (s: GameState): boolean =>
   s.job_type === 'big_tech' || s.job_type === 'ai_research' ||
   s.job_type === 'cn_tech';
 
+// "Player is physically on the China career track". There is no explicit country field; the
+// China track is represented by job_type 'cn_tech' / company 'cn_big_tech' (the same test
+// gameStateSelectors.isDomestic uses). The H2 life pool is overwhelmingly Bay-Area-specific
+// (ICU bills, Tahoe, Costco, PG&E…), so in-China players are restricted to the allowlist below.
+export const isInChina = (s: GameState): boolean =>
+  s.job_type === 'cn_tech' || s.company === 'cn_big_tech';
+
+// H2 life events that read fine regardless of country (generic workplace / tech / relationship
+// beats with no US-specific setting). Everything else in the pool is US-only.
+export const CHINA_SAFE_LIFE_EVENTS: ReadonlySet<string> = new Set([
+  'crypto_scam', 'hair_loss_and_slouch', 'social_withdrawal_burnout', 'multi_agent_side_hustle',
+  'mac_mini_open_claw_server', 'overemployed', 'zoom_camera_off_leetcode', 'vibe_coding_craze',
+  'ai_agent_startup', 'ikea_furniture_fight', 'dual_income_wlb_burnout', 'rednote_influencer_side_hustle',
+  'breakup_crisis', 'marriage_divorce_crisis',
+]);
+
 // ── 一生一次 (once-per-life) 事件的统一基座 ───────────────────────────────────────────────
 // 约定:事件 <id> 触发过一次 ⇔ story_flags[`${id}_seen`] === true。以下是唯一权威实现,取代此前
 // 散落在 6 个事件文件里各自复制的 `const seen = ...`(去重),也是新事件应统一使用的机制。
@@ -250,12 +266,25 @@ export const getLevelScaledTC = (baseL3TC: number, level?: string): number => {
 // 历史上多处只写 job_type:'big_tech' 不写 company,留下「company='startup' + big_tech」之类
 // 的错配 (审计 O11),选择器/结算按旧公司档案发健康与文案。
 export const BIG_TECH_HIRE_POOL = ['google', 'meta', 'apple', 'microsoft', 'nvidia', 'amazon'] as const;
+// A hop/rescue must land at a DIFFERENT employer than the current one; otherwise the player
+// "hops" to the same company yet still eats the PERM reset + job_start_age reset (audit L5).
+export const pickOtherBigTech = (s: GameState): string => {
+  const pool = BIG_TECH_HIRE_POOL.filter((c) => c !== s.company);
+  return pool[Math.floor(gameRandom() * pool.length)];
+};
 export const landBigTechJob = (s: GameState, baseL3TC: number): Pick<GameState, 'tc' | 'level' | 'company' | 'job_type' | 'laid_off'> & { level: string } => {
   const level = hopTargetLevel(s);
-  const pool = BIG_TECH_HIRE_POOL.filter((c) => c !== s.company);
-  const company = pool[Math.floor(gameRandom() * pool.length)];
+  const company = pickOtherBigTech(s);
   return { tc: getLevelScaledTC(baseL3TC, level), level, company, job_type: 'big_tech', laid_off: false };
 };
+
+// Genetic charm ceiling (max_charm). The fresh-game roll is clamped to [22, MAX_CHARM_BASE_CAP];
+// the 湾区海王 trait adds MAX_CHARM_PLAYBOY_BONUS on top, so the absolute ceiling any legitimate
+// save can carry is MAX_CHARM_ABSOLUTE_CAP. Save migration must clamp to the ABSOLUTE cap, or a
+// 海王 save (35) gets silently cut to 30 on reload.
+export const MAX_CHARM_BASE_CAP = 30;
+export const MAX_CHARM_PLAYBOY_BONUS = 5;
+export const MAX_CHARM_ABSOLUTE_CAP = MAX_CHARM_BASE_CAP + MAX_CHARM_PLAYBOY_BONUS;
 
 export const generateInitialState = (customSeed?: number): GameState => {
   let savedSeed: { cash: number; charm: number; max_charm: number; luck: number; is_ssr_unlocked?: boolean; seed?: number } | null = null;
@@ -294,7 +323,7 @@ export const generateInitialState = (customSeed?: number): GameState => {
     }
     charm = gameRandomInt(1, 10); // 颜值 1-10
     // Floor at 22 so no player is genetically locked out of L7 (charm>=16) or L8 (charm>=20)
-    max_charm = Math.min(30, Math.max(22, charm + gameRandomInt(12, 16)));
+    max_charm = Math.min(MAX_CHARM_BASE_CAP, Math.max(22, charm + gameRandomInt(12, 16)));
     luck = gameRandomInt(0, 99);
 
     safeStorage.setItem(STORAGE_KEYS.INITIAL_SEED, JSON.stringify({ cash, charm, max_charm, luck, is_ssr_unlocked, seed }));
@@ -889,8 +918,12 @@ export const midYearEventRouter = (s: GameState): string => {
   } else if (s.partner_type !== 'sham' && !s.is_married && s.relationship_status !== 'married') {
       lifeEvents.push('boardgame_dating', 'dating_market');
   }
-  
-  return gamePick(lifeEvents) || 'sv_year_end_settlement';
+
+  // In-China gate: the pool above is Bay-Area-centric (ICU bills, Tahoe, Costco, PG&E blackouts…).
+  // A cn_tech / cn_big_tech player only draws from the location-agnostic allowlist; if nothing
+  // qualifies this year, the year simply closes (no US-only event leaks into a Shenzhen life).
+  const pool = isInChina(s) ? lifeEvents.filter((e) => CHINA_SAFE_LIFE_EVENTS.has(e)) : lifeEvents;
+  return gamePick(pool) || 'sv_year_end_settlement';
 };
 
 // H1 to H2 Event Router: called after resolving an H1 career/work event to transition to an H2 life/social event
@@ -937,6 +970,15 @@ export function resolveNextEventId(
   //    crossing the FIRE threshold mid-turn → 'fire_milestone_choice') always override the
   //    event's own nextEventId, exactly as App.tsx does.
   if (targetEventId) {
+    // Stopgap (surfaced once fuzz_test stopped breaking at FIRE): the founder hub's 【终局退场】
+    // choice and founder_exit_event never stamp mid_year, unlike every sibling hub action. So an
+    // exit at year start that crosses FIRE → fire_milestone_choice → 「辞职创立 AI 独角兽」 routed
+    // back to founder_annual_strategy IN THE SAME YEAR (→ exit again → payout again: fuzz seeds
+    // 6827/9071). The exit IS the year's action — mark the year consumed so the FIRE panel's
+    // continue options close the year. Proper home for this is startup.ts (owned elsewhere).
+    if (targetEventId === 'fire_milestone_choice' && sourceEventId === 'founder_exit_event' && !newState.mid_year) {
+      return { finalState: { ...newState, mid_year: true, season_stage: 'h1' }, nextEventId: targetEventId };
+    }
     return { finalState: newState, nextEventId: targetEventId };
   }
   let nextId: string | undefined =
@@ -975,13 +1017,14 @@ export function resolveNextEventId(
     // 已完成的跳槽 (job_hop_market 签约/Match/婉拒) 就是当年的重大职业事件:直接收束到年终结算,
     // 不再注入后续季度职场事件。否则机器会在同年继续注入 H1/H2 职场事件 (startup_crisis / overemployed),
     // 而它们又经 job_hunt 绕回 job_hop_market,造成「同年反复跳槽」的同回合死循环 (fuzz SEED=5532)。
-    // A hop that is ALSO a promotion detours through a promo-celebration event first, which
-    // overwrote sourceEventId and defeated this guard — so the year got an extra H1+H2, and an
-    // H1 layoff could loop back into job_hop_market (the very SEED=5532 case above). Catch the
-    // celebrations too, but only when this turn actually changed jobs (is_new_job), so an
-    // ORGANIC promotion still gets its normal quarter events.
-    const promoCelebrations = ['l6_staff_celebration', 'l7_senior_staff_celebration', 'l8_principal_celebration'];
-    if (sourceEventId === 'job_hop_market' || (!!sourceEventId && promoCelebrations.includes(sourceEventId) && newState.is_new_job)) {
+    // This used to be keyed on sourceEventId === 'job_hop_market' (+ promo celebrations), which
+    // any intermediate panel defeated: hop → choose_housing → advance signal arrived with
+    // sourceEventId 'choose_housing', the guard missed, and the machine injected another H1 that
+    // could route into a SECOND same-year hop. Pure STATE check instead: is_new_job is set by the
+    // hop effect and only cleared at year-end settlement, so "changed jobs this year" ⇒ close the
+    // year regardless of which panel delivered the advance signal. The direct source check is kept
+    // only so a DECLINED offer (no is_new_job) still closes the year as before.
+    if ((newState.is_new_job && newState.mid_year) || sourceEventId === 'job_hop_market') {
       return { finalState: { ...newState, year_seg: undefined }, nextEventId: 'sv_year_end_settlement' };
     }
     const seg = newState.year_seg || 0;

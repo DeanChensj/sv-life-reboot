@@ -1,5 +1,5 @@
 import type { GameState } from '../types';
-import { generateInitialState } from '../data/events/helpers';
+import { generateInitialState, MAX_CHARM_ABSOLUTE_CAP } from '../data/events/helpers';
 import { setGameSeed } from './random';
 import { VISA_STATUS } from '../constants/gameConstants';
 
@@ -88,7 +88,9 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
   const sanitizedHealth = typeof rawState.health === 'number' && !isNaN(rawState.health) ? Math.max(0, Math.min(100, rawState.health)) : fallbackState.health;
   const sanitizedLeetcode = typeof rawState.leetcode === 'number' && !isNaN(rawState.leetcode) ? Math.max(0, Math.min(100, rawState.leetcode)) : 0;
   // max_charm must be sanitized FIRST so it can safely serve as the charm ceiling (min 20 so L8 charm>=20 is never locked).
-  const sanitizedMaxCharm = typeof rawState.max_charm === 'number' && !isNaN(rawState.max_charm) ? Math.max(20, Math.min(30, rawState.max_charm)) : (fallbackState.max_charm || 25);
+  // Upper bound is the ABSOLUTE ceiling (base roll cap + 海王 bonus = 35), not the base roll cap (30):
+  // clamping to 30 silently stripped the 湾区海王 trait's +5 ceiling on every reload.
+  const sanitizedMaxCharm = typeof rawState.max_charm === 'number' && !isNaN(rawState.max_charm) ? Math.max(20, Math.min(MAX_CHARM_ABSOLUTE_CAP, rawState.max_charm)) : (fallbackState.max_charm || 25);
   const sanitizedCharm = typeof rawState.charm === 'number' && !isNaN(rawState.charm) ? Math.max(1, Math.min(sanitizedMaxCharm, rawState.charm)) : 10;
   const sanitizedNetwork = typeof rawState.network === 'number' && !isNaN(rawState.network) ? Math.max(0, Math.min(100, rawState.network)) : 10;
   const sanitizedTC = typeof rawState.tc === 'number' && !isNaN(rawState.tc) ? rawState.tc : 0;
@@ -99,6 +101,10 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
   const sanitizedRent = typeof rawState.rent === 'number' && !isNaN(rawState.rent) ? Math.max(0, rawState.rent) : fallbackState.rent;
   const sanitizedGcProgress = typeof rawState.gc_progress === 'number' && !isNaN(rawState.gc_progress) ? Math.max(0, Math.min(5, rawState.gc_progress)) : fallbackState.gc_progress;
   const sanitizedVisa = typeof rawState.visa === 'string' && VALID_VISAS.has(rawState.visa) ? rawState.visa : fallbackState.visa;
+  // Legacy saves predate `relationship_status`, so `is_married: true` could coexist with
+  // `relationship_status: undefined` (HUD + dating pool then treated the player as single).
+  // Reconcile both ways: if EITHER field says married, both do.
+  const isMarriedSynced = Boolean(rawState.is_married ?? fallbackState.is_married) || rawState.relationship_status === 'married';
 
   // 2. Structured Collections Polyfills
   const sanitizedTimeline = Array.isArray(rawState.timeline) ? rawState.timeline : [];
@@ -140,7 +146,8 @@ export function migrateSaveData(raw: unknown): MigratedSaveResult {
     // Coerce persisted booleans (undefined falls back to the fresh-game default).
     has_us_degree: Boolean(rawState.has_us_degree ?? fallbackState.has_us_degree),
     is_phd: Boolean(rawState.is_phd ?? fallbackState.is_phd),
-    is_married: Boolean(rawState.is_married ?? fallbackState.is_married),
+    is_married: isMarriedSynced,
+    relationship_status: isMarriedSynced ? 'married' : rawState.relationship_status,
     has_pet: Boolean(rawState.has_pet ?? fallbackState.has_pet),
     laid_off: Boolean(rawState.laid_off ?? fallbackState.laid_off),
     has_housing: Boolean(rawState.has_housing ?? fallbackState.has_housing),

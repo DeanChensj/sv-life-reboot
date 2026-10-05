@@ -1,7 +1,7 @@
 import type { GameEvent, GameState } from '../../types';
 import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, gameRandom, deductAssets } from './helpers';
 import { getTCBreakdown } from '../../utils/gameStateSelectors';
-import { isOwnedHousing, HOUSING_NAMES, getInvestmentPropertyProfile } from '../../constants/gameConstants';
+import { isOwnedHousing, HOUSING_NAMES, VISA_STATUS, ADU_RENTAL_INCOME, getInvestmentPropertyProfile } from '../../constants/gameConstants';
 
 // 置业/换租是资产配置操作,不该吞掉当年的职场主行动 (#2)。完成后回到玩家对应的年度面板
 // (founder/trader 回各自策略枢纽, 其余回 sv_daily_life),让玩家当年仍可选择工作重心;
@@ -63,26 +63,22 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: returnToAnnualPanel
       },
       {
-        text: '【我是学生，可以少算点吗？】向华人房东亮出学生身份/扮嫩砍价',
-        condition: (s) => (s.rent || 0) > 0,
+        text: '【我是学生，可以少算点吗？】向华人房东亮出学生身份砍价',
+        // Only real students (F1 / Day 1 CPT) qualify — being unemployed / jobless is NOT
+        // being a student. The landlord's sympathy is a one-off: gate via story flag
+        // (written below, read here) so it can't be farmed every year.
+        condition: (s) => (s.rent || 0) > 0
+          && (s.visa === VISA_STATUS.F1 || s.visa === VISA_STATUS.CPT)
+          && !s.story_flags?.student_rent_haggle_seen,
         effect: (s) => {
-          const isStudent = s.visa === 'F1 (学生)' || s.visa === 'Day 1 CPT' || !s.job_type || s.job_type === 'unemployed';
-          if (isStudent) {
-            const newRent = Math.max(0.5, parseFloat(((s.rent || 2) - 0.3).toFixed(1)));
-            return {
-              rent: newRent,
-              cash: s.cash + 0.3,
-              charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
-              last_housing_action_year: s.year,
-              message: '【留学生专属同情】房东叹了口气：“看在当年我也是留学生熬过来的份上，今年每月给你免 $200 房租！” 经典学生砍价大获全胜！',
-            };
-          }
+          const newRent = Math.max(0.5, parseFloat(((s.rent || 2) - 0.3).toFixed(1)));
           return {
-            charm: Math.max(0, (s.charm || 10) - 3),
-            network: Math.max(0, (s.network || 10) - 3),
-            health: Math.max(0, s.health - 2),
+            rent: newRent,
+            cash: s.cash + 0.3,
+            charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 2),
             last_housing_action_year: s.year,
-            message: '【社会性死亡】年薪数十万的大厂工程师冒充“我是学生”疯狂砍价 $50 块，被房东截图发到了小红书《湾区极品抠门房客大赏》，全网群嘲！',
+            story_flags: { ...(s.story_flags || {}), student_rent_haggle_seen: true },
+            message: '【留学生专属同情】房东叹了口气：“看在当年我也是留学生熬过来的份上，今年每月给你免 $200 房租！” 经典学生砍价大获全胜！',
           };
         },
         nextEventId: returnToAnnualPanel
@@ -155,14 +151,17 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         nextEventId: 'sv_year_end_settlement',
       },
       {
-        text: '【次卧车库出租回血】把次卧与车库出租给留学生 (每年回血 $1.5w 现金流)',
+        text: `【次卧车库出租回血】把次卧与车库出租给留学生 (每年回血 $${ADU_RENTAL_INCOME.toFixed(1)}w 现金流)`,
         effect: (s) => {
           const badTenant = gameRandom() > 0.65;
           // Renting a spare room does NOT reduce your own mortgage carry; the benefit
           // is only the rental income (was double-counted by also lowering `rent`).
+          // Both outcomes add exactly ADU_RENTAL_INCOME so the sell branches (which
+          // subtract the same constant) stay exact; the bad tenant costs health + a
+          // one-off repair bill instead of a different rent figure.
           return badTenant
-            ? { rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.0, health: Math.max(0, s.health - 15), message: '留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$1.0w/年)，但把你折腾得够呛。' }
-            : { rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: (s.rental_income || 0) + 1.5, message: '好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+1.5w/年)！' };
+            ? { rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: parseFloat(((s.rental_income || 0) + ADU_RENTAL_INCOME).toFixed(1)), cash: Math.max(0, s.cash - 0.3), health: Math.max(0, s.health - 15), message: `留学生搞加密货币挖矿弄跳闸了电闸还开派对，虽然收了租金 (+$${ADU_RENTAL_INCOME.toFixed(1)}w/年)，但你倒贴了 $0.3w 修电路，还被折腾得够呛。` }
+            : { rent: 2.2, has_housing: true, housing_name: HOUSING_NAMES.SUNNYVALE, has_adu_rented: true, rental_income: parseFloat(((s.rental_income || 0) + ADU_RENTAL_INCOME).toFixed(1)), message: `好运！留学生是 CMU 学霸，安静极少下厨还按时交租，为你带来稳定被动租金 (+$${ADU_RENTAL_INCOME.toFixed(1)}w/年)！` };
         },
         nextEventId: 'sv_year_end_settlement',
       },
@@ -172,7 +171,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         // Foreclosure recovers real buyer equity only — nothing if parents funded it
         // (closes the parents-buy → default-sell free-cash exploit). Also stop the
         // phantom ADU rent: clear has_adu_rented and remove the ADU income portion.
-        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0), health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
+        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, parseFloat(((s.rental_income || 0) - ADU_RENTAL_INCOME).toFixed(1))) : (s.rental_income || 0), health: s.health + 10, message: '你最终无力支付房贷被迫断供卖房。虽亏掉了前期本金，但你卸下了深沉包袱，重新拿回流动资金回到出租屋。' }),
         nextEventId: 'sv_year_end_settlement',
       },
       {
@@ -181,7 +180,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         condition: (s) => (s.cash + (s.stocks || 0)) >= 100 && s.job_type !== 'startup_founder',
         // Selling ADDS home equity (was subtracting $50w while keeping the house).
         // Actually liquidate the home and start the FOUNDER path (not the employee event).
-        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, tc: 6, level: undefined, company: undefined, shop_return_event: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
+        effect: (s) => ({ cash: s.cash + (s.parents_helped_house ? 0 : 35), has_housing: false, housing_name: HOUSING_NAMES.NORMAL_SHARED, rent: 2, has_adu_rented: false, rental_income: s.has_adu_rented ? Math.max(0, parseFloat(((s.rental_income || 0) - ADU_RENTAL_INCOME).toFixed(1))) : (s.rental_income || 0), job_type: 'startup_founder', founder_stage: 'pre_seed', company_valuation: 180, tc: 6, level: undefined, company: undefined, shop_return_event: undefined, message: '你受够了温水煮青蛙，卖了房子套现，拿着这笔启动资金投身创业大潮，成为了一名硅谷 Founder！' }),
         nextEventId: 'founder_annual_strategy',
       }
     ]
@@ -200,7 +199,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         effect: (s) => ({
           ...deductAssets(s, 12),
           has_adu_rented: true,
-          rental_income: (s.rental_income || 0) + 1.2,
+          rental_income: parseFloat(((s.rental_income || 0) + ADU_RENTAL_INCOME).toFixed(1)),
           message: '【ADU 改造完成】你砸下 $12w 在后院建起一套带独立卫浴的预制 ADU（含设计、许可与施工），挂在 Zillow 上第一天就被隔壁大厂实习生秒签！每年稳定产生 +$1.2w 净租金流！'
         }),
         nextEventId: returnToAnnualPanel,
@@ -345,7 +344,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         // force-bankrupted by the lump-sum assessment — finance it into the yearly carry.
         text: '【申请 HOA 分期融资】把摊派金额分摊进未来几年物业月供 (无需一次性掏现金)',
         effect: (s) => ({
-          rent: s.rent + 0.4,
+          rent: parseFloat(((s.rent || 0) + 0.4).toFixed(1)),
           health: Math.max(0, s.health - 5),
           message: '你申请把这笔专项摊派分期融资进未来几年的物业持有成本，避免了一次性掏空现金，但每年的房屋固定支出略微上升。'
         }),
@@ -438,7 +437,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
           // Selling the house must also end the ADU tenancy — both sibling sell branches do
           // this. Omitting it left phantom rent coming in from a house you no longer own.
           has_adu_rented: false,
-          rental_income: s.has_adu_rented ? Math.max(0, (s.rental_income || 0) - 1.5) : (s.rental_income || 0),
+          rental_income: s.has_adu_rented ? Math.max(0, parseFloat(((s.rental_income || 0) - ADU_RENTAL_INCOME).toFixed(1))) : (s.rental_income || 0),
           cash: s.cash + (s.parents_helped_house ? 0 : 25),
           health: Math.min(100, s.health + 8),
           message: s.parents_helped_house
@@ -461,7 +460,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         condition: (s) => !s.has_adu_rented,
         effect: (s) => ({
           has_adu_rented: true,
-          rental_income: (s.rental_income || 0) + 1.5,
+          rental_income: parseFloat(((s.rental_income || 0) + ADU_RENTAL_INCOME).toFixed(1)),
           health: Math.max(0, s.health - 8),
           message: '你把自己的主卧和次卧全部挂在小红书招租，自己带着行军床搬进了车库。每月多收租金，硬生生把房贷窟窿给补上了！',
         }),
@@ -528,8 +527,10 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
         costBadge: '花费 $5.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 5.5,
         effect: (s) => ({
+          // Repair is a real expense: deductAssets (cash first, then stocks). The old
+          // `stocks: +3.5` line both paid the player for a repair and overwrote the
+          // stocks figure deductAssets had just computed. The Redfin bump is flavor only.
           ...deductAssets(s, 5.5),
-          stocks: (s.stocks || 0) + 3.5,
           health: Math.min(100, s.health + 5),
           message: '你咬牙请来硅谷持牌 General Contractor 给整栋房子罩上彩色大帐篷熏蒸白蚁，并换上了全新抗风金属屋顶。虽然花了 $5.5w，但全新屋顶让 Redfin 房屋估值立刻反涨 $3.5w，住得无比踏实！',
         }),
@@ -549,7 +550,7 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       {
         text: '【拉蓝布防雨 + 申请灾后分期贷款】先盖塑料布救急，将修房账单摊入每年持有月供',
         effect: (s) => ({
-          rent: parseFloat((s.rent + 0.5).toFixed(1)),
+          rent: parseFloat(((s.rent || 0) + 0.5).toFixed(1)),
           health: Math.max(0, s.health - 7),
           message: '你在屋顶临时蒙上一层刺眼的蓝色防雨布，并申请了州政府低息修缮分期贷款。虽然没掏大笔现金，但每年的房屋固定月供负担上涨了 $0.5w。',
         }),

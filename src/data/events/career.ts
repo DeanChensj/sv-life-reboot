@@ -1,9 +1,10 @@
 import type { GameEvent, GameState } from '../../types';
-import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion, resolveHopVisaTransition, landBigTechJob } from './helpers';
+import { getLevelScaledTC, midYearEventRouter, h1ToH2Router, afterCareerAction, isOpportunityActiveThisYear, isTemporaryOrStudentHousing , gameRandom, o1PassProb, addImpact, hopTargetLevel, hopIsPromotion, resolveHopVisaTransition, landBigTechJob, hasSeen, deductAssets } from './helpers';
 import { getTCBreakdown, isCorporateEmployee } from '../../utils/gameStateSelectors';
 import { isPermanentVisa, liquidateStocksToCover, isOwnedHousing } from '../../constants/gameConstants';
 import { isTopTierCSSchool } from '../schoolProfiles';
 import { meetsOrganicPromo, normalizeLevel, promoBlockerHint } from '../levelProfiles';
+import { getCompanyDisplayName } from '../../utils/companyDisplayName';
 
 export const careerEvents: Record<string, GameEvent> = {
   'job_hunt': {
@@ -285,7 +286,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【成功入职 Google】顺利入职山景城 Googleplex！享受顶级养老福利与免费美食，职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！${hopVisa.note}`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 Meta】加入卷王之王，挑战高压核心架构冲刺顶格 Package',
@@ -310,7 +311,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【卷入 Meta 核心架构】手握硬核代码入职 Menlo Park！职级跃升至 ${nextLvl}，总包大幅飙升至 ${newTC}w！但新人高压 Oncall 让你身心紧绷 (健康 -15)。${hopVisa.note}`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 Nvidia】加入显卡巨头，吃满 AI 算力与芯片狂飙红利',
@@ -337,7 +338,7 @@ export const careerEvents: Record<string, GameEvent> = {
               : `【入职英伟达】成功入职芯片工程团队，职级定为 ${nextLvl}，锁定 ${newTC}w 稳健软硬件结合大包！`) + hopVisa.note
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 TikTok / 字节】接手中美跨时区核心业务，拿顶格全现金包裹',
@@ -362,7 +363,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职字节跳动】字节开出巨额全现金 Sign-on 奖金！职级定级为 ${nextLvl}，年薪总包锁定至 ${newTC}w！但深夜跨时区对齐让你睡眠严重不足 (健康 -15)。${hopVisa.note}`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 Amazon】加入电商与 AWS 云计算巨头，吃满规模与股票升值，但直面高压 PIP 文化',
@@ -387,7 +388,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职 Amazon / AWS】你拿到了西雅图电商与云计算巨头的 Offer，职级定为 ${nextLvl}，总包 ${newTC}w（RSU 四年后置兑现占大头）！但著名的 PIP 高压文化与 Frugality 节俭作风让你时刻紧绷 (健康 -12)。${hopVisa.note}`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 OpenAI / AI 实验室】加入 AGI 最前沿，拿到天价 MTS 架构师包裹',
@@ -453,7 +454,7 @@ export const careerEvents: Record<string, GameEvent> = {
             message: `【入职 Apple Park】顺利通过库比蒂诺架构团队审核！职级定级为 ${nextLvl}，锁定年薪总包 ${newTC}w！享受极佳的稳定性与员工折扣！${hopVisa.note}`
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【签约入职 Robinhood / 券商】赌上牛熊周期：牛市 Bonus 翻倍，熊市直面裁员风暴',
@@ -485,15 +486,22 @@ export const careerEvents: Record<string, GameEvent> = {
               : `【入职 Robinhood】你加入散户券商核心交易团队，定级 ${nextLvl}、锁定总包 ${newTC}w。fintech 的牛熊节奏让你既兴奋又紧绷。`) + hopVisa.note
           };
         },
-        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
+        nextEventId: (s) => (isTemporaryOrStudentHousing(s) ? 'choose_housing' : (s.last_promo_age === s.age ? (s.level === 'L8 (Principal)' ? 'l8_principal_celebration' : s.level === 'L7 (Senior Staff)' ? 'l7_senior_staff_celebration' : s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)) : h1ToH2Router(s))),
       },
       {
         text: '【拿 Competing Offer 原地 Match】拿着外部 Offer 找现任老板谈薪，就地加薪并保留原厂排期',
-        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !!s.hop_offers && s.hop_offers.length >= 1,
+        reqBadge: '同一东家每隔数年至多 Match 一次',
+        // Was a zero-cost +4.5w TC with no cooldown → farmable every single year. Counter-offers
+        // are a once-in-a-while lever: 3-year cooldown via story_flags.last_match_age (read here,
+        // written in the effect), plus a modest impact cost — your manager now knows you shopped.
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !!s.hop_offers && s.hop_offers.length >= 1
+          && (s.age - Number(s.story_flags?.last_match_age || 0)) >= 3,
         effect: (s) => ({
           tc: s.tc + 4.5,
           health: Math.min(100, s.health + 5),
-          message: '【成功 Counter-Offer】老板为了挽留你连夜向 HR 申请了特别加薪 (+4.5w TC)！你零搬迁成本、零 PERM 重置风险，继续在原厂稳步发展！'
+          impact: Math.max(0, (s.impact || 0) - 1),
+          story_flags: { ...(s.story_flags || {}), last_match_age: s.age },
+          message: '【成功 Counter-Offer】老板为了挽留你连夜向 HR 申请了特别加薪 (+4.5w TC)！你零搬迁成本、零 PERM 重置风险，继续在原厂稳步发展——只是老板心里从此记了一笔“随时会走”，下次再想原地 Match 得等上几年。'
         }),
         nextEventId: h1ToH2Router,
       },
@@ -577,7 +585,7 @@ export const careerEvents: Record<string, GameEvent> = {
                 ...(s.story_flags || {}),
                 cursor_hunt_joined: true
               },
-              message: `【斩获 AI 初创核心 Offer】你在终面架构评审中征服了创始人团队！以早期核心员工身份加入 AI 初创公司，总包调升至 $${newTC.toFixed(1)}w 并配发 $15.0w 早期期权股权！\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：`
+              message: `【斩获 AI 初创核心 Offer】你在终面架构评审中征服了创始人团队！以早期核心员工身份加入 AI 初创公司，总包调升至 $${newTC.toFixed(1)}w 并配发 $15.0w 早期期权股权！\n\n【限时奇遇已结算】这次跳槽就是你今年的职业大事，接下来直接进入年终结算。`
             };
           }
           return {
@@ -585,7 +593,7 @@ export const careerEvents: Record<string, GameEvent> = {
             last_limited_opp_year: s.year,
             health: Math.max(0, s.health - 10),
             leetcode: s.leetcode + 4,
-            message: '【初创面试折戟】初创团队对于全栈与底层系统架构要求极高，虽然遗憾未能拿下 Offer，但对前沿技术落地的理解收获颇丰。\n\n【限时奇遇已结算】接下来请在下方规划你本年度的核心职场与生活重心：'
+            message: '【初创面试折戟】初创团队对于全栈与底层系统架构要求极高，虽然遗憾未能拿下 Offer，但对前沿技术落地的理解收获颇丰。\n\n【限时奇遇已结算】这场面试已占用了你今年上半年的精力，接下来进入下半年的生活。'
           };
         },
         // A unicorn VP final-round IS your career move for the year (a real job change on
@@ -603,7 +611,7 @@ export const careerEvents: Record<string, GameEvent> = {
           return win
             ? {
                 last_limited_opp_year: s.year,
-                cash: s.cash + 8,
+                cash: s.cash - 0.5 + 8, // entry fee (costBadge) is paid win or lose; prize $8w on top
                 leetcode: s.leetcode + 10,
                 charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
                 impact: addImpact(s, 8),
@@ -765,7 +773,7 @@ export const careerEvents: Record<string, GameEvent> = {
         hideIfUnavailable: true,
         effect: (s) => ({
           last_limited_opp_year: s.year,
-          cash: s.cash - 20,
+          ...deductAssets(s, 20), // condition admits cash+stocks ≥ 20 → never drive cash negative, liquidate stocks for the shortfall
           rental_income: (s.rental_income || 0) + 2.5,
           investment_properties: [...(s.investment_properties || []), '东湾法拍翻新独立屋'],
           story_flags: {
@@ -935,7 +943,7 @@ export const careerEvents: Record<string, GameEvent> = {
           if (s.last_promo_age === s.age) {
             if (s.level === 'L8 (Principal)') return 'l8_principal_celebration';
             if (s.level === 'L7 (Senior Staff)') return 'l7_senior_staff_celebration';
-            if (s.level === 'L6 (Staff)') return 'l6_staff_celebration';
+            if (s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration')) return 'l6_staff_celebration';
             if (s.level === 'L5 (Senior)' || s.level === 'L4') return 'promo_celebration';
           }
           return h1ToH2Router(s);
@@ -943,7 +951,9 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【刷题跳槽】闭关刷题备战，海投湾区各大厂/独角兽发起社招面试',
-        condition: (s) => !s.laid_off && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
+        // Employed-only: the unemployed (laid_off / gap-year job_type 'unemployed') re-enter via
+        // job_hunt / 【结束 Gap Year：重返职场】, not the in-job hop grind.
+        condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
         effect: (s) => {
           const isKingOfRoll = s.trait_title === '卷王之王';
           const drain = isKingOfRoll ? 6 : 12;
@@ -1458,7 +1468,7 @@ export const careerEvents: Record<string, GameEvent> = {
         // Route on the ACTUAL level change, not message.includes('晋升') — the failure
         // message ("晋升委员会否决…") also contains 晋升, which wrongly triggered the
         // 职级大晋升喜报 celebration on a rejection.
-        nextEventId: (s) => (s.level === 'L6 (Staff)' ? 'l6_staff_celebration' : h1ToH2Router(s)),
+        nextEventId: (s) => (s.level === 'L6 (Staff)' && !hasSeen(s, 'l6_staff_celebration') ? 'l6_staff_celebration' : h1ToH2Router(s)),
       },
       {
         text: '【角逐 L7 Senior Staff 资深架构师】统领跨部门级核心技术战略与下一代基建 (L6 升 L7 专属)',
@@ -1832,8 +1842,8 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off,
         effect: (s) => ({
           // 只上调不下调:已在昂贵湾区(房贷/高租)的玩家不会被"重置"成更低成本,
-          // 远程/远郊搬回的玩家则要承担至少 $4w 的湾区居住成本。
-          rent: Math.max(s.rent || 0, 4),
+          // 远程/远郊搬回的玩家则要承担至少 $4w 的湾区居住成本。业主 (已购房) 走房贷,不套租金下限。
+          rent: isOwnedHousing(s.housing_name) ? s.rent : Math.max(s.rent || 0, 4),
           health: s.health - 15,
           story_flags: { ...(s.story_flags || {}), rto_wars_seen: true },
           message: '你重新安排了湾区的通勤与住处，每个月的居住成本让你心如刀割，但至少保住了工作。'
@@ -2283,6 +2293,11 @@ export const careerEvents: Record<string, GameEvent> = {
 
   'l6_staff_celebration': {
     id: 'l6_staff_celebration',
+    // One-shot: the hop-join routers key on `last_promo_age === age && level === L6`, which also
+    // matches a same-age lateral re-hire after an organic L6 promo (promo → layoff → re-hired at
+    // L6) and replayed the celebration. oncePerLife auto-stamps `l6_staff_celebration_seen`;
+    // every route into this event gates on !hasSeen(s, 'l6_staff_celebration').
+    oncePerLife: true,
     title: '【登堂入室】突破天花板！晋升 L6 Staff 架构师',
     description: '轰动全公司！你突破了 35 岁天花板与硅谷码农最大天堑，正式晋升为 L6 Staff Engineer 架构师！手握跨组技术决策权，年薪总包与期权迈入顶级行业前列。',
     choices: [
@@ -2408,7 +2423,7 @@ export const careerEvents: Record<string, GameEvent> = {
           // An acquisition ends the startup chapter: you now work for the acquirer. Staying
           // job_type 'startup' let the SAME company get "acquired" again next year for another $60w.
           const hire = landBigTechJob(s, 24);
-          return { ...hire, tc: Math.max(s.tc, hire.tc), is_new_job: true, cash: s.cash + 60, message: `稳扎稳打！公司被 ${(hire.company || 'Big Tech').toUpperCase()} 收购了，你的期权兑现了 $60w 现金，并随团队并入大厂 (定级 ${hire.level})！` };
+          return { ...hire, tc: Math.max(s.tc, hire.tc), is_new_job: true, cash: s.cash + 60, message: `稳扎稳打！公司被 ${getCompanyDisplayName(hire.company)} 收购了，你的期权兑现了 $60w 现金，并随团队并入大厂 (定级 ${hire.level})！` };
         },
         nextEventId: h1ToH2Router,
       },
@@ -2682,12 +2697,14 @@ export const careerEvents: Record<string, GameEvent> = {
         condition: (s) => !!s.story_flags?.has_dave_evidence,
         reqBadge: '需掌握证据链',
         effect: (s) => {
-          const cur = s.level || 'L4';
+          // Normalise first (MTS / 国内研发 / 早期核心成员 titles are not literal 'L3'/'L4'), and
+          // fall back to the historical max_level so a blank level never silently rewrites the title.
+          const cur = normalizeLevel(s.level, s) || normalizeLevel(s.max_level, s) || 'L4';
           const nextLvl = (cur === 'L3') ? 'L4' : (cur === 'L4') ? 'L5 (Senior)' : cur;
           const promoted = nextLvl !== cur; // L5+ 只是击溃 Dave、无实际升级 → 不算晋升
           return {
             tc: s.tc + 4.5,
-            level: nextLvl, last_promo_age: promoted ? s.age : s.last_promo_age, // only stamp on a real level-up
+            ...(promoted ? { level: nextLvl } : {}), last_promo_age: promoted ? s.age : s.last_promo_age, // only write level / stamp on a real level-up
             health: Math.min(100, s.health + 8),
             charm: Math.min(s.max_charm ?? 25, (s.charm || 10) + 3),
             npcs: {
@@ -2711,14 +2728,17 @@ export const careerEvents: Record<string, GameEvent> = {
         reqBadge: '需 LeetCode >= 45',
         condition: (s) => s.leetcode >= 45,
         effect: (s) => {
-          const cur = s.level || 'L4';
-          // L5→L6 也须 impact≥20 (与其它晋升门槛一致),否则平跳到 Meta 仍是 L5。
-          const targetLvl = (cur === 'L3') ? 'L4' : (cur === 'L4' || !s.level) ? 'L5 (Senior)' : (cur === 'L5 (Senior)') ? ((s.impact || 0) >= 20 ? 'L6 (Staff)' : 'L5 (Senior)') : cur;
+          // Same ladder as every other hop: hopTargetLevel normalises non-standard titles (MTS /
+          // 国内研发 / 早期核心成员) via normalizeLevel → max_level fallback, steps +1 rung and honours
+          // the L6/L7/L8 impact gates; hopIsPromotion stamps last_promo_age only on a real level-up.
+          const targetLvl = hopTargetLevel(s);
           const baseBand = targetLvl === 'L8 (Principal)' ? 135 : targetLvl === 'L7 (Senior Staff)' ? 92 : targetLvl === 'L6 (Staff)' ? 65 : targetLvl === 'L5 (Senior)' ? 46 : 34;
           const newTC = Math.max(s.tc + 6, baseBand);
-          const promoted = targetLvl !== cur;
+          const promoted = hopIsPromotion(s);
+          const dest = s.company === 'meta' ? 'nvidia' : 'meta'; // the copy offers Meta/Nvidia — never "hop" to the same employer
+          const destName = dest === 'meta' ? 'Meta' : 'Nvidia';
           return {
-            company: 'meta',
+            company: dest,
             job_type: 'big_tech',
             level: targetLvl,
             tc: newTC,
@@ -2733,7 +2753,7 @@ export const careerEvents: Record<string, GameEvent> = {
               dave_defeated: true,
               dave_defeated_year: s.year
             },
-            message: `【优雅离场】你当场甩出 2 周离职信，带走核心上下文跳槽 Meta 核心组 (定级 ${targetLvl} · 年薪 $${newTC}w)！Dave 的烂摊子彻底无人收拾，在部门大会上狼狈不堪！`
+            message: `【优雅离场】你当场甩出 2 周离职信，带走核心上下文跳槽 ${destName} 核心组 (定级 ${targetLvl} · 年薪 $${newTC}w)！Dave 的烂摊子彻底无人收拾，在部门大会上狼狈不堪！`
           };
         },
         nextEventId: 'sv_year_end_settlement'

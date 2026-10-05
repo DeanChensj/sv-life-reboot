@@ -1398,7 +1398,8 @@ export const initializationEvents: Record<string, GameEvent> = {
       {
         text: '【冲击 P7 核心研发晋升】带团队攻坚高并发大模型业务 (耗时 2 年，净攒 $7w)',
         effect: (s) => ({
-          health: Math.max(10, s.health - 18),
+          // Per-choice health loss is capped at 15 project-wide (AGENTS.md), even for a 2-year sprint.
+          health: Math.max(10, s.health - 15),
           cash: s.cash + 7,
           age: s.age + 2,
           year: s.year + 2,

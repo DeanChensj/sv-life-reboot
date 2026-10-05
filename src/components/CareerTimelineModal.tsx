@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { GameState } from '../types';
 import { useFocusTrap } from '../utils/useFocusTrap';
-import { getCompanyProfile } from '../data/companyProfiles';
+import { getCompanyDisplayName } from '../utils/companyDisplayName';
 import { isOwnedHousing, getFireNetWorth, getPropertyEquity } from '../constants/gameConstants';
 import { getVisaDisplayInfo } from '../utils/gameStateSelectors';
 
@@ -831,7 +831,7 @@ export const CareerTimelineModal: React.FC<CareerTimelineModalProps> = ({
                     ? '独立交易员 @ 美股与衍生品市场'
                     : gameState.job_type === 'unemployed' || gameState.laid_off
                     ? '待业与求职期 @ 硅谷'
-                    : `${gameState.level || 'SDE'} @ ${gameState.company ? (getCompanyProfile(gameState.company)?.timelineName || gameState.company.toUpperCase()) : '硅谷科技企业'}`}
+                    : `${gameState.level || 'SDE'} @ ${getCompanyDisplayName(gameState.company)}`}
                 </div>
                 <div className="text-xs text-zinc-400">
                   {gameState.job_type === 'startup_founder'

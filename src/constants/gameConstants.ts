@@ -70,6 +70,11 @@ export const INVESTMENT_PROPERTY_PROFILES: Readonly<Record<string, InvestmentPro
 export const getInvestmentPropertyProfile = (name: string): InvestmentPropertyProfile =>
   INVESTMENT_PROPERTY_PROFILES[name] || { downPayment: 25, rentalIncome: 1.2 };
 
+// 自住房 ADU / 次卧出租的年净租金 (单一事实来源)。所有置位 has_adu_rented 的分支 (+) 与
+// 卖房清退分支 (-) 都必须用同一个数, 否则「+1.2 建 / -1.5 卖」会凭空吞掉别的投资房租金。
+// ShopModal 的 ADU 按钮也按 +1.2 定价。
+export const ADU_RENTAL_INCOME = 1.2;
+
 // 房产权益合计 (自住房首付 + 投资房首付)。父母出资的自住房不算玩家权益 (parents_helped_house)。
 export const getPropertyEquity = (s: { housing_name?: string; investment_properties?: string[]; parents_helped_house?: boolean }): number => {
   const home = s.housing_name && !s.parents_helped_house ? (OWNED_HOME_EQUITY[s.housing_name] || 0) : 0;

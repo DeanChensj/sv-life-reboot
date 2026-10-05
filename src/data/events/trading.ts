@@ -168,11 +168,13 @@ export const tradingEvents: Record<string, GameEvent> = {
     id: 'stock_crash',
     title: '【宏观海啸】美联储加息与市场寒冬',
     description: '美股大盘全线暴跌，纳斯达克惨不忍睹。你的公司股价腰斩，导致你今年的 RSU 价值大幅缩水！',
+    // A crash hits the RSU/stock pile, NOT base salary: `tc` is the annual pay rate and a
+    // permanent 20% cut compounded for the rest of the run while the copy only talks about
+    // stocks losing value. Keep the damage on `stocks` (and cash for the leveraged bet).
     choices: [
       {
-        text: '【心在滴血接受现实】心在滴血但也只能承受，接受资产与薪酬缩水的残酷现实',
+        text: '【心在滴血接受现实】心在滴血但也只能承受，接受股票资产缩水的残酷现实',
         effect: (s) => ({
-          tc: Math.floor(s.tc * 0.8),
           stocks: Math.floor((s.stocks || 0) * 0.75),
           macro_economy: 'bear',
           health: s.health - 15,
@@ -188,8 +190,8 @@ export const tradingEvents: Record<string, GameEvent> = {
            const winRate = 0.2 + (s.luck / 100) * 0.4; // 抄底成功率 20% - 60%
            const win = gameRandom() < winRate;
            return win 
-             ? { tc: Math.floor(s.tc * 0.9), stocks: Math.floor((s.stocks || 0) * 1.15), cash: s.cash + 35, message: '虽然宏观大盘熊市让基本薪酬受压，但你精准在最低点抄底了 AI 龙头，逆势吃到反弹波段大赚 $35w，股票市值也有所增值！' }
-             : { tc: Math.floor(s.tc * 0.8), stocks: Math.floor((s.stocks || 0) * 0.70), cash: s.cash - 25, health: s.health - 15, message: '抄底抄在半山腰，现金和股票惨遭双杀，市场继续在深度熊市中煎熬。' };
+             ? { stocks: Math.floor((s.stocks || 0) * 1.15), cash: s.cash + 35, message: '宏观大盘深陷熊市，但你精准在最低点抄底了 AI 龙头，逆势吃到反弹波段大赚 $35w，股票市值也有所增值！' }
+             : { stocks: Math.floor((s.stocks || 0) * 0.70), cash: s.cash - 25, health: s.health - 15, message: '抄底抄在半山腰，现金和股票惨遭双杀，市场继续在深度熊市中煎熬。' };
         },
         nextEventId: 'sv_year_end_settlement'
       }
@@ -503,18 +505,24 @@ export const tradingEvents: Record<string, GameEvent> = {
           // Averaging down is genuinely double-or-nothing: it can erase the drawdown, or double it.
           const rebound = gameRandom() < 0.42;
           const flags = { ...(s.story_flags || {}), trader_drawdown_resolved: true };
+          // Copy must quote the SAME numbers the effect applies: the rebound credits
+          // loss*1.1 in total (= the drawdown back + 10% on top, not "+110% profit"), and the
+          // second loss is whatever actually leaves the account (cash floors at 0).
+          const reboundGain = parseFloat((loss * 1.1).toFixed(1));
+          const reboundExtra = parseFloat((loss * 0.1).toFixed(1));
+          const secondLoss = parseFloat(Math.min(s.cash, loss * 0.8).toFixed(1));
           return rebound
             ? {
-                cash: parseFloat((s.cash + loss * 1.1).toFixed(1)),
+                cash: parseFloat((s.cash + reboundGain).toFixed(1)),
                 health: Math.max(0, s.health - 8),
                 story_flags: { ...flags, trader_averaged_down_win: true },
-                message: `【抄在了底部】你顶着浮亏一路加仓，市场在你弹药耗尽的前一周掉头向上——不仅回本，还多赚了 $${(loss * 1.1).toFixed(1)}w。你长舒一口气，后背全是冷汗。`
+                message: `【抄在了底部】你顶着浮亏一路加仓，市场在你弹药耗尽的前一周掉头向上——账户回血 +$${reboundGain.toFixed(1)}w：不仅填平了 $${loss.toFixed(1)}w 的回撤，还净多赚了 $${reboundExtra.toFixed(1)}w。你长舒一口气，后背全是冷汗。`
               }
             : {
-                cash: parseFloat(Math.max(0, s.cash - loss * 0.8).toFixed(1)),
+                cash: parseFloat(Math.max(0, s.cash - secondLoss).toFixed(1)),
                 health: Math.max(0, s.health - 14),
                 story_flags: flags,
-                message: `【越摊越深】你把子弹全打了出去，行情却继续阴跌。第二笔亏损 -$${(loss * 0.8).toFixed(1)}w 落袋，你终于明白什么叫「不要接下落的刀」。`
+                message: `【越摊越深】你把子弹全打了出去，行情却继续阴跌。第二笔亏损 -$${secondLoss.toFixed(1)}w 落袋，你终于明白什么叫「不要接下落的刀」。`
               };
         },
         nextEventId: h1ToH2Router,

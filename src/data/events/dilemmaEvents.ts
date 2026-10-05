@@ -1,5 +1,5 @@
 import type { GameEvent, GameState, NPCState } from '../../types';
-import { h1ToH2Router, addImpact } from './helpers';
+import { h1ToH2Router, addImpact, pickOtherBigTech } from './helpers';
 import { normalizeLevel } from '../levelProfiles';
 
 // 有牙的两难抉择 — Dilemma events where BOTH options genuinely hurt, binding
@@ -35,7 +35,10 @@ export const dilemmaEvents: Record<string, GameEvent> = {
         text: '【愤而跳槽逃离毒环境】愤而跳槽逃离毒环境 (未获批绿卡进度清零重来)',
         condition: employed,
         effect: (s) => ({
-          company: 'microsoft',
+          // Must be a DIFFERENT employer (was hardcoded 'microsoft' → a Microsoft employee "hopped"
+          // in place yet still ate the PERM reset). TC/level intentionally unchanged: this is an
+          // escape, not a leveling hop.
+          company: pickOtherBigTech(s),
           job_type: 'big_tech',
           is_new_job: true,
           health: Math.min(100, s.health + 15),

@@ -304,7 +304,7 @@ export default function App() {
           const choiceIndex = parseInt(e.key, 10) - 1;
           const availableChoices = currentEvent.choices.filter((choice) => {
             const isAvail = !choice.condition || choice.condition(gameState);
-            if (!isAvail && (choice.hideIfUnavailable || choice.text.includes('今年限时机会'))) {
+            if (!isAvail && choice.hideIfUnavailable) {
               return false;
             }
             return true;
@@ -589,6 +589,7 @@ export default function App() {
     setShowAchievementCodex(false);
     setShowCareerTimeline(false);
     setHasUnlockedShopToast(false);
+    setHasSeenBuyHouseToast(false);
     setHasOpenedShop(false);
   };
 
@@ -992,7 +993,7 @@ export default function App() {
                     {currentEvent.choices
                       .filter((choice) => {
                         const isAvailable = !choice.condition || choice.condition(gameState);
-                        if (!isAvailable && (choice.hideIfUnavailable || choice.text.includes('今年限时机会'))) {
+                        if (!isAvailable && choice.hideIfUnavailable) {
                           return false;
                         }
                         return true;

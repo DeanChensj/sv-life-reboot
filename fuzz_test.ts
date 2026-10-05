@@ -26,9 +26,13 @@ function validateStateInvariants(prevState: GameState, newState: GameState, even
     ok = false;
   }
 
-  // 2. Job & TC Invariant
+  // 2. Job & TC Invariant (AGENTS.md: job_type==='unemployed' 或 laid_off===true 时 tc 必须为 0)
   if (newState.job_type === 'unemployed' && newState.tc > 0) {
     console.error(`❌ [状态冲突断言失败] 事件 '${eventId}' 执行后失业 (job_type='unemployed') 但仍领 TC (${newState.tc}w)！`);
+    ok = false;
+  }
+  if (newState.laid_off && newState.tc > 0) {
+    console.error(`❌ [状态冲突断言失败] 事件 '${eventId}' 执行后被裁 (laid_off=true) 但仍领 TC (${newState.tc}w)！`);
     ok = false;
   }
 
@@ -198,8 +202,11 @@ function runFuzzTest(iterations: number, baseSeed: number, singleSeed?: number) 
 
         currentState = newState;
 
-        // 模拟 Game Over / Win 判断
-        if (currentState.status === 'game_over' || currentState.status === 'win' || currentState.health <= 0 || currentState.cash < -0.001 || (currentState.cash + (currentState.stocks || 0)) >= currentState.win_threshold) {
+        // 模拟 Game Over / Win 判断。注意【不】在触达 FIRE 目标 (净资产 >= win_threshold) 时停下:
+        // 真实游戏会路由到 fire_milestone_choice,玩家可选「继续探索」—— 那整段 post-FIRE 人生
+        // (更高阶目标、退休结算、late_post_fire_exploration 等) 过去从未被 fuzz 过。只有终局状态
+        // (win / retired / game_over)、猝死或破产才终止;上限由 maxSteps 兜底。
+        if (currentState.status !== 'playing' || currentState.health <= 0 || currentState.cash < -0.001) {
           break;
         }
 
@@ -267,5 +274,7 @@ if (envSeed !== undefined && envSeed !== '') {
   console.log(`🔁 单局回放模式:seed=${s}`);
   runFuzzTest(1, 0, s);
 } else {
-  runFuzzTest(10000, 1);
+  // FUZZ_ITERATIONS=<n> 可缩短本地快速回归;CI 默认 10,000 局。
+  const iters = Number(process.env.FUZZ_ITERATIONS) > 0 ? Number(process.env.FUZZ_ITERATIONS) : 10000;
+  runFuzzTest(iters, 1);
 }

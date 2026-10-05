@@ -331,9 +331,13 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         effect: (s) => {
           const win = s.leetcode >= 50;
           const isEmployed = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
-          return win
-            ? { tc: isEmployed ? s.tc + 3 : 0, cash: s.cash + 3, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板塞给你一份兼职外包合同与现金，赚了点外快！' }
-            : { message: '你和老板聊了半天，发现对方只是想白嫖你写个订餐小程序，你礼貌地拒绝了。' };
+          if (!win) return { message: '你和老板聊了半天，发现对方只是想白嫖你写个订餐小程序，你礼貌地拒绝了。' };
+          // A permanent TC raise from a repeatable pool event is a faucet: grant it once per life,
+          // every later win is a one-off cash gig (same $3w, no TC).
+          const raisedBefore = !!s.story_flags?.boardgame_contract_tc_raised;
+          return isEmployed && !raisedBefore
+            ? { tc: s.tc + 3, cash: s.cash + 3, story_flags: { ...(s.story_flags || {}), boardgame_contract_tc_raised: true }, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板塞给你一份长期兼职外包合同与现金，赚了点外快！' }
+            : { cash: s.cash + 3, message: '你没去相亲，反而帮老板解决了一个支付系统的 Bug！老板当场塞了 $3w 现金酬谢，赚了笔一次性外快！' };
         },
         nextEventId: 'sv_year_end_settlement'
       }
@@ -1191,12 +1195,19 @@ export const lifestyleEvents: Record<string, GameEvent> = {
         text: '【Vibecoding 狂魔】开启 Cursor Pro + Claude 3.5 Sonnet，一个人顶一个 5 人团队',
         // No longer a pure-upside no-brainer: heavy AI reliance burns you out and
         // slightly atrophies raw fundamentals — a real trade vs the risky "push to prod" gamble.
-        effect: (s) => ({
-          leetcode: Math.min(100, s.leetcode + 12),
-          health: Math.max(0, s.health - 5),
-          tc: s.tc > 0 ? s.tc + 5 : s.tc,
-          message: '你成为了组里的 Vibecoding 大师！别人用两周写的功能你半天提交 PR，经理惊呼你一个人就是一支队伍！但连轴转的 Agent 协作让你身心俱疲。'
-        }),
+        effect: (s) => {
+          // Permanent TC raise once per life (repeatable pool event = TC faucet otherwise);
+          // later years pay a one-off $1.5w spot bonus instead.
+          const employed = s.tc > 0 && !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+          const raisedBefore = !!s.story_flags?.vibe_coding_tc_raised;
+          const base = { leetcode: Math.min(100, s.leetcode + 12), health: Math.max(0, s.health - 5) };
+          if (employed && !raisedBefore) {
+            return { ...base, tc: s.tc + 5, story_flags: { ...(s.story_flags || {}), vibe_coding_tc_raised: true }, message: '你成为了组里的 Vibecoding 大师！别人用两周写的功能你半天提交 PR，经理惊呼你一个人就是一支队伍，年中直接给你调薪！但连轴转的 Agent 协作让你身心俱疲。' };
+          }
+          return { ...base, cash: employed ? s.cash + 1.5 : s.cash, message: employed
+            ? '你又用 Vibecoding 提前交付了一个季度的 Roadmap，经理发了一笔 Spot Bonus 以示嘉奖。但连轴转的 Agent 协作让你身心俱疲。'
+            : '你成为了 Vibecoding 大师！半天搓出一个全栈 Side Project，但连轴转的 Agent 协作让你身心俱疲。' };
+        },
         nextEventId: 'sv_year_end_settlement'
       },
       {
@@ -1404,15 +1415,18 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【与高管投资人交流】和 VC / 大厂 Director 交流豪车心得与独角兽投资',
         // Only raise TC if actually employed (middleware zeroes tc for unemployed,
-        // silently voiding the promised raise); otherwise it's a networking gain.
+        // silently voiding the promised raise), and only ONCE per life — the car meet is a
+        // repeatable pool event, so an unconditional +5 TC was a permanent-TC faucet.
+        // Repeat visits are pure networking gains.
         effect: (s) => {
           const employed = !!s.job_type && s.job_type !== 'unemployed' && !s.laid_off;
+          const raise = employed && !s.story_flags?.luxury_car_meet_tc_raised;
           return {
-            tc: employed ? s.tc + 5 : s.tc,
+            ...(raise ? { tc: s.tc + 5, story_flags: { ...(s.story_flags || {}), luxury_car_meet_tc_raised: true } } : {}),
             network: Math.min(100, (s.network || 10) + 5),
             charm: Math.min(s.max_charm ?? 25, s.charm + 3),
             health: Math.min(100, s.health + 10),
-            message: employed
+            message: raise
               ? '车友会里藏龙卧虎！你结识了一位科技基金合伙人，帮你争取到了一笔加薪，TC 再次提升！'
               : '车友会里藏龙卧虎！你结识了一位科技基金合伙人，拓展了宝贵的高端人脉资源！'
           };
@@ -1532,11 +1546,21 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         text: '【轻伤不下火线】吃降压药硬抗，继续为下一个 Promotable Project 拼命',
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed',
-        effect: (s) => ({
-          health: Math.max(0, s.health - 15),
-          tc: (s.job_type === 'unemployed' || s.laid_off) ? 0 : s.tc + 5,
-          message: '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
-        }),
+        effect: (s) => {
+          // The condition already guarantees employment. The raise is PERMANENT TC from a
+          // repeatable (age>=35 && health<=60) pool event → once per life; later years pay a
+          // one-off $2w Q4 bonus so grinding through pain is still rewarded without compounding.
+          const raise = !s.story_flags?.burnout_grind_tc_raised;
+          return {
+            health: Math.max(0, s.health - 15),
+            ...(raise
+              ? { tc: s.tc + 5, story_flags: { ...(s.story_flags || {}), burnout_grind_tc_raised: true } }
+              : { cash: s.cash + 2 }),
+            message: raise
+              ? '你靠吃药硬撑过了 Q4 冲刺！虽然顺利拿到了加薪，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
+              : '你又靠吃药硬撑过了一个 Q4 冲刺！这次换来一笔 $2w 的年终 Spot Bonus，但腰椎间盘的剧痛让你每天只能躺在地上看代码。'
+          };
+        },
         nextEventId: 'sv_year_end_settlement'
       }
     ]
@@ -2044,15 +2068,18 @@ export const lifestyleEvents: Record<string, GameEvent> = {
           // ~15% 翻案:律师翻出当年出资的关键流水,争到一笔追加补偿。其余情形驳回,烧掉律师费。
           // 给一个真实(虽小)的上行,让它区别于"必输的纯发泄",不再是被隐藏的确定性损失。
           const win = gameRandom() < 0.15;
+          // Pay the $5w legal fee first (cash, then stocks), THEN add the award on top of the
+          // deducted balance — an explicit `stocks:` after the spread used to silently undo the fee.
+          const paid = deductAssets(s, 5);
           return win
             ? {
-                ...deductAssets(s, 5),
-                stocks: (s.stocks || 0) + 25,
+                ...paid,
+                stocks: paid.stocks + 25,
                 health: Math.max(0, s.health - 8),
                 message: '奇迹发生！律师翻出了当年你出资的关键银行流水，法庭判前任追加一笔可观的股权对价补偿。多年的意难平，终于兑现了一部分！',
               }
             : {
-                ...deductAssets(s, 5),
+                ...paid,
                 health: Math.max(0, s.health - 12),
                 message: '加州家庭法庭无情驳回了你的诉求，判定当年的 50/50 分割协议具备终局效力。你白白烧掉了 $5w 律师费，气得胃疼！',
               };

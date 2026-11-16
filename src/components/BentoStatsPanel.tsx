@@ -1,6 +1,7 @@
 import React from 'react';
 import type { GameState } from '../types';
 import { getJobDisplayInfo, getVisaDisplayInfo, getHousingDisplayInfo } from '../utils/gameStateSelectors';
+import { getFireNetWorth, getPropertyEquity } from '../constants/gameConstants';
 import { impactTier } from '../data/events/helpers';
 
 interface BentoStatsPanelProps {
@@ -27,6 +28,9 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
   const { companyHeaderLabel, companyLabel, companyClassName, levelHeaderLabel, levelLabel, levelClassName, tcHeaderLabel } = getJobDisplayInfo(gameState);
   const { visaLabel, visaClassName, gcStation, bulletin } = getVisaDisplayInfo(gameState);
   const { housingLabel, carLabel, hasCar } = getHousingDisplayInfo(gameState);
+  const propertyEquity = getPropertyEquity(gameState);
+  const fireNetWorth = getFireNetWorth(gameState);
+  const showFireProgress = !['choose_trait', 'choose_year', 'choose_school'].includes(currentEventId) && (gameState.win_threshold || 500) > 0;
 
   return (
     <div id="bento-stats-panel" className="w-full flex flex-col font-sans">
@@ -137,7 +141,7 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
           <div className="relative z-10 flex-1">
             <div className="text-zinc-400 group-hover:text-emerald-300 text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 transition-colors">
               <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              <span>总资产 (Net Worth)</span>
+              <span>流动总资产 (Liquid)</span>
               <span className="text-[9px] text-emerald-400/70 border border-emerald-500/30 px-1 py-0.2 rounded font-normal lowercase tracking-normal">走势图 ➔</span>
             </div>
             <div className="text-3xl sm:text-4xl lg:text-5xl font-black font-mono tabular-nums tracking-tight text-emerald-400 drop-shadow-md group-hover:scale-[1.01] transition-transform origin-left">
@@ -146,6 +150,17 @@ const BentoStatsPanelComponent: React.FC<BentoStatsPanelProps> = ({
             {(gameState.stocks !== undefined && gameState.stocks > 0) && (
               <div className="mt-1.5 text-[10px] sm:text-xs font-mono font-bold text-zinc-500 tracking-wider">
                 现金: <span className="text-emerald-500/80">${gameState.cash.toFixed(1)}w</span> <span className="mx-1 opacity-50">|</span> 股票: <span className="text-emerald-500/80">${gameState.stocks.toFixed(1)}w</span>
+              </div>
+            )}
+            {showFireProgress && (
+              <div className="mt-1.5 text-[10px] sm:text-xs font-mono font-bold text-zinc-400 tracking-wide flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span>
+                  FIRE 净值{propertyEquity > 0 ? ` (含房产权益 $${propertyEquity.toFixed(0)}w)` : ''}:{' '}
+                  <span className={fireNetWorth >= gameState.win_threshold ? 'text-amber-300' : 'text-teal-300'}>
+                    ${fireNetWorth.toFixed(1)}w
+                  </span>
+                  <span className="text-zinc-500"> / ${gameState.win_threshold}w</span>
+                </span>
               </div>
             )}
           </div>

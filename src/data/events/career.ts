@@ -833,6 +833,7 @@ export const careerEvents: Record<string, GameEvent> = {
       // 资产 ≥ $500w 时结局分类器自动判定为 triumph。仅设 status:'retired',复用既有结局系统。
       {
         text: '【提前上岸 · 主动退休】已上岸且攒够 $150w+，宣布告别内卷、提前退休安享余生',
+        reqBadge: '需永久身份 + 流动资产 >= $150w',
         condition: (s) => isPermanentVisa(s.visa) && (s.cash + (s.stocks || 0)) >= 150 && s.status === 'playing',
         effect: (s) => ({
           status: 'retired',
@@ -864,6 +865,7 @@ export const careerEvents: Record<string, GameEvent> = {
        // (65-80) 不因此降低,故买不来 L6+ 晋升——它只是资深"政治线"的差异化打法,而非速升捷径。
        {
          text: '【向上管理 · 攒政治资本】少写代码，多做 1:1 与汇报，经营向上管理与跨组关系',
+         reqBadge: '限北美大厂在职',
          condition: (s) => s.job_type === 'big_tech' && !s.laid_off,
          effect: (s) => ({
            mid_year: true, season_stage: 'h1',
@@ -878,6 +880,7 @@ export const careerEvents: Record<string, GameEvent> = {
        // 3. 【常规年度重心】 (点击后进入年中/年底结算)
        {
          text: '【疯狂内卷】拼命加班冲 Perf，争取加薪与升职',
+         reqBadge: '需在职状态',
         condition: (s) => !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.laid_off,
         effect: (s) => {
           // Fall back to the all-time peak rank before hitting the L3 floor: an unmapped job
@@ -951,6 +954,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【刷题跳槽】闭关刷题备战，海投湾区各大厂/独角兽发起社招面试',
+        reqBadge: '需在职状态',
         // Employed-only: the unemployed (laid_off / gap-year job_type 'unemployed') re-enter via
         // job_hunt / 【结束 Gap Year：重返职场】, not the in-job hop grind.
         condition: (s) => !s.laid_off && !!s.job_type && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder',
@@ -1118,6 +1122,7 @@ export const careerEvents: Record<string, GameEvent> = {
       },
       {
         text: '【拓展副业】探索第二曲线 (微型SaaS/专家顾问/自媒体/实体合伙)',
+        reqBadge: '需在职状态',
         condition: (s) => !s.laid_off && s.job_type !== 'unemployed' && s.job_type !== 'trader' && s.job_type !== 'startup_founder' && !s.story_flags?.side_hustle_canceled,
         effect: () => ({ message: '你梳理了自己的核心技能与业余时间，准备在硅谷拓展属于自己的第二曲线副业！' }),
         nextEventId: 'side_hustle_hub',

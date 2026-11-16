@@ -42,6 +42,8 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【升级豪华 1B1B】泳池健身房与全职门卫，提振社交生活 (年租金 $4w)',
+        costBadge: '年租金 $4w',
+        reqBadge: '需现金 >= $4w 或 TC >= $18w',
         condition: (s) => s.cash >= 4 || s.tc >= 18,
         effect: (s) => ({ rent: 4, charm: Math.min(s.max_charm ?? 25, s.charm + 3), health: Math.min(100, s.health + 15), housing_name: HOUSING_NAMES.SAN_JOSE_LUXURY, last_housing_action_year: s.year, message: '你搬进了带无边泳池的高级公寓！生活质量飙升！' }),
         nextEventId: returnToAnnualPanel
@@ -58,12 +60,14 @@ export const housingFinanceEvents: Record<string, GameEvent> = {
       },
       {
         text: '【终极挂壁睡车顶】连夜退租！搬进特斯拉/露营车里睡车顶 (房租归零 $0/年)',
+        reqBadge: '需拥有座驾',
         condition: (s) => !!(s.car && s.car !== 'none'),
         effect: (s) => ({ rent: 0, housing_name: HOUSING_NAMES.TESLA_ROOF, health: Math.max(0, s.health - 15), last_housing_action_year: s.year, message: '你把睡袋卡式炉扔进车后备箱，正式开启硬核湾区车顶睡袋生活！房租彻底归零！' }),
         nextEventId: returnToAnnualPanel
       },
       {
         text: '【我是学生，可以少算点吗？】向华人房东亮出学生身份砍价',
+        reqBadge: '限 F-1 / Day 1 CPT (限 1 次)',
         // Only real students (F1 / Day 1 CPT) qualify — being unemployed / jobless is NOT
         // being a student. The landlord's sympathy is a one-off: gate via story flag
         // (written below, read here) so it can't be farmed every year.

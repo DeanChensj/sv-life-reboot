@@ -21,7 +21,7 @@ const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ defau
 const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const CareerTimelineModal = lazy(() => import('./components/CareerTimelineModal').then(m => ({ default: m.CareerTimelineModal })));
 
-import { STORAGE_KEYS, isOwnedHousing } from './constants/gameConstants';
+import { STORAGE_KEYS, isOwnedHousing, getFireNetWorth } from './constants/gameConstants';
 
 const loadInitialGameData = (): {
   gameState: GameState;
@@ -98,6 +98,24 @@ export default function App() {
   const screenEffectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pillsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = (msg: string, durationMs = 4500) => {
+    setAchievementToast(msg);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => {
+      setAchievementToast(null);
+      toastTimerRef.current = null;
+    }, durationMs);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (pillsTimerRef.current) clearTimeout(pillsTimerRef.current);
+      if (screenEffectTimerRef.current) clearTimeout(screenEffectTimerRef.current);
+    };
+  }, []);
 
   const triggerDopamineFeedback = (newPills: DopaminePill[], effect: ScreenEffectType = 'none') => {
     if (newPills.length > 0) {
@@ -174,9 +192,7 @@ export default function App() {
   // and recovered to a fresh game instead of silently discarding progress.
   useEffect(() => {
     if (initialGameData.loadError) {
-      setAchievementToast('[存档修复] 检测到存档损坏，已备份原存档 (.bak) 并开启新的人生。');
-      const t = setTimeout(() => setAchievementToast(null), 6000);
-      return () => clearTimeout(t);
+      showToast('[存档修复] 检测到存档损坏，已备份原存档 (.bak) 并开启新的人生。', 6000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -206,8 +222,7 @@ export default function App() {
     if (gameState.job_type !== undefined && !hasUnlockedShopToast) {
       setHasUnlockedShopToast(true);
       sound.play('achievement');
-      setAchievementToast('[商城解锁] 恭喜步入职场！点右上角 [S] 商城:买房 / 换租改善居住 / 理疗回血 / 买车都在这里，别忽略了！');
-      setTimeout(() => setAchievementToast(null), 6000);
+      showToast('[商城解锁] 恭喜步入职场！点右上角 [S] 商城:买房 / 换租改善居住 / 理疗回血 / 买车都在这里，别忽略了！', 6000);
     }
   }, [gameState.job_type, hasUnlockedShopToast]);
 
@@ -219,8 +234,7 @@ export default function App() {
     if (isPlaying && totalAssets >= 40 && !owned && !hasSeenBuyHouseToast) {
       setHasSeenBuyHouseToast(true);
       sound.play('achievement');
-      setAchievementToast('[置业提醒] 首付已够 ($40w+)！可在年度面板选『置业安家』，或点右上角 [S] 商城参与抢房大战上车！');
-      setTimeout(() => setAchievementToast(null), 6000);
+      showToast('[置业提醒] 首付已够 ($40w+)！可在年度面板选『置业安家』，或点右上角 [S] 商城参与抢房大战上车！', 6000);
     }
   }, [gameState.cash, gameState.stocks, gameState.housing_name, gameState.status, hasSeenBuyHouseToast]);
 
@@ -232,8 +246,7 @@ export default function App() {
         .filter(Boolean);
       if (titles.length > 0) {
         sound.play('achievement');
-        setAchievementToast(`[成就解锁] 恭喜获得隐藏成就：${titles.join('、')}`);
-        setTimeout(() => setAchievementToast(null), 4500);
+        showToast(`[成就解锁] 恭喜获得隐藏成就：${titles.join('、')}`, 4500);
       }
     }
   }, [gameState]);
@@ -291,7 +304,7 @@ export default function App() {
           else if (showWarReport) setShowWarReport(false);
           else if (showWelcome) {
             setShowWelcome(false);
-            safeStorage.setItem('sv_life_welcome_seen', 'true');
+            safeStorage.setItem(STORAGE_KEYS.WELCOME_SEEN, 'true');
           }
           // NOTE: the settlement modal is deliberately NOT escapable — it must be resolved.
         }
@@ -870,7 +883,7 @@ export default function App() {
             {/* Sound Toggle Mobile Button */}
             <button
               onClick={handleToggleSound}
-              className={`p-1.5 rounded-md border text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center ${
+              className={`p-2 rounded-lg border text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center ${
                 isMuted
                   ? 'bg-zinc-900 text-zinc-500 border-zinc-800'
                   : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
@@ -888,9 +901,9 @@ export default function App() {
             {gameState.job_type !== undefined && (
               <button
                 onClick={handleOpenShop}
-                className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
               >
-                <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span>商城</span>
               </button>
             )}
@@ -898,18 +911,18 @@ export default function App() {
             {/* Achievement Codex Mobile Button */}
             <button
               onClick={handleOpenCodex}
-              className="px-2 py-1 rounded-md bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+              className="px-2.5 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
             >
-              <svg className="w-3 h-3 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
+              <svg className="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34M18 4H6v7a6 6 0 0 0 12 0V4z"/></svg>
               <span>图鉴</span>
             </button>
 
             {/* Timeline Mobile Button */}
             <button
               onClick={() => handleOpenTimeline('timeline')}
-              className="px-2 py-1 rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+              className="px-2.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
             >
-              <svg className="w-3 h-3 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <svg className="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span>大事记</span>
             </button>
           </div>
@@ -918,8 +931,8 @@ export default function App() {
 
       {/* Mobile Slide-Down Drawer Overlay */}
       {isMobileStatsOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[76px] bottom-0 z-50 bg-zinc-950/98 backdrop-blur-3xl p-4 overflow-y-auto animate-in fade-in slide-in-from-top-3 duration-200 shadow-2xl">
-          <div className="flex justify-between items-center mb-4 pb-2.5 border-b border-zinc-800/80 sticky top-0 bg-zinc-950/90 backdrop-blur-xl z-10 py-1">
+        <div className="lg:hidden fixed inset-0 z-50 bg-zinc-950/98 backdrop-blur-3xl p-4 overflow-y-auto animate-in fade-in slide-in-from-top-3 duration-200 shadow-2xl">
+          <div className="flex justify-between items-center mb-4 pb-2.5 border-b border-zinc-800/80 sticky top-0 bg-zinc-950/95 backdrop-blur-xl z-10 py-2">
             <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               全量角色属性与 Bento 仪表盘
@@ -1192,10 +1205,10 @@ export default function App() {
                     </div>
 
                     {/* Stats Summary Table */}
-                    <div className="grid grid-cols-4 gap-2 bg-zinc-900/60 p-4 rounded-2xl text-center text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-zinc-900/60 p-4 rounded-2xl text-center text-xs">
                       <div>
-                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">最终现金</div>
-                        <div className="font-bold font-mono tabular-nums text-emerald-400 text-base">${gameState.cash.toFixed(1)}w</div>
+                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">FIRE 净资产</div>
+                        <div className="font-bold font-mono tabular-nums text-emerald-400 text-base">${getFireNetWorth(gameState).toFixed(1)}w</div>
                       </div>
                       <div>
                         <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">峰值总包</div>
@@ -1205,7 +1218,10 @@ export default function App() {
                         <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">LeetCode</div>
                         <div className="font-bold font-mono tabular-nums text-amber-300 text-base">{gameState.leetcode} 题</div>
                       </div>
-                      {/* Charm stat removed to keep it a hidden attribute */}
+                      <div>
+                        <div className="text-zinc-500 font-mono text-[10px] uppercase tracking-wider mb-1">核心影响力</div>
+                        <div className="font-bold font-mono tabular-nums text-violet-300 text-base">{Math.round(gameState.impact || 0)}</div>
+                      </div>
                     </div>
                   </div>
 

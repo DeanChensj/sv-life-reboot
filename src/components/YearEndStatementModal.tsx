@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import type { GameState } from '../types';
 import { getAnnualCompensation, previewAnnualPerfReview, getVisaDisplayInfo, computeAnnualExpenses } from '../utils/gameStateSelectors';
-import { isOwnedHousing } from '../constants/gameConstants';
+import { isOwnedHousing, getFireNetWorth, getPropertyEquity } from '../constants/gameConstants';
 import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface YearEndStatementModalProps {
@@ -136,17 +136,21 @@ export const YearEndStatementModal: React.FC<YearEndStatementModalProps> = ({ ga
             </div>
           </div>
 
-          {(gameState.stocks !== undefined && gameState.stocks > 0) && (
-            <div className="p-4 rounded-2xl border bg-indigo-500/10 border-indigo-500/30 text-indigo-300 flex justify-between items-center">
+          {((gameState.stocks !== undefined && gameState.stocks > 0) || getPropertyEquity(gameState) > 0) && (
+            <div className="p-4 rounded-2xl border bg-indigo-500/10 border-indigo-500/30 text-indigo-300 flex justify-between items-center gap-3">
               <div>
-                <div className="text-xs font-mono uppercase tracking-wider opacity-80">股票/投资组合现值</div>
+                <div className="text-xs font-mono uppercase tracking-wider opacity-80">
+                  {(gameState.stocks !== undefined && gameState.stocks > 0) ? '股票/投资组合现值' : '房产权益 (首付资产)'}
+                </div>
                 <div className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums mt-0.5">
-                  ${gameState.stocks.toFixed(1)}w
+                  ${((gameState.stocks !== undefined && gameState.stocks > 0) ? gameState.stocks : getPropertyEquity(gameState)).toFixed(1)}w
                 </div>
               </div>
               <div className="text-right font-mono flex flex-col justify-end">
-                <div className="text-[10px] text-zinc-400 uppercase">个人净资产</div>
-                <div className="text-xl font-bold text-emerald-400">${(gameState.cash + gameState.stocks).toFixed(1)}w</div>
+                <div className="text-[10px] text-zinc-400 uppercase">
+                  {getPropertyEquity(gameState) > 0 ? 'FIRE 净资产 (含房产)' : '个人净资产'}
+                </div>
+                <div className="text-xl font-bold text-emerald-400">${getFireNetWorth(gameState).toFixed(1)}w</div>
               </div>
             </div>
           )}

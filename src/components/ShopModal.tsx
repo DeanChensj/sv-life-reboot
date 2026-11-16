@@ -71,7 +71,13 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-amber-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative overflow-hidden"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">【抢房大战】参加抢房大战 (首付 $40w+ · 可用股票)</div>
-                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已拥有一套自住房产' : '进入买房事件流，挑选湾区房产 (支持股票自动变现)'}</div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {isHomeowner
+                    ? '已拥有一套自住房产'
+                    : totalAssets < 40
+                      ? '可用总资产不足 $40w（需首付 $40w+ · 支持股票变现）'
+                      : '进入买房事件流，挑选湾区房产 (支持股票自动变现)'}
+                </div>
               </button>
               
               <button
@@ -80,7 +86,15 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 className="flex flex-col text-left p-4 rounded-2xl border border-zinc-700/50 bg-zinc-800/30 hover:bg-zinc-800 hover:border-emerald-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
               >
                 <div className="font-bold text-zinc-200 group-hover:text-emerald-400 transition-colors">【搬家换租】重新挑选租房居住环境</div>
-                <div className="text-xs text-zinc-500 mt-1">{isHomeowner ? '已买房，无法换租' : '改变你的租房环境'}</div>
+                <div className="text-xs text-zinc-500 mt-1">
+                  {isHomeowner
+                    ? '已买房，无法换租'
+                    : !gameState.has_housing
+                      ? '尚未租房，暂无需换租'
+                      : gameState.last_housing_action_year === gameState.year
+                        ? '本年度已调整过居住/置业，明年可再次换租'
+                        : '改变你的租房环境'}
+                </div>
               </button>
 
               <button
@@ -326,9 +340,12 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
               </button>
 
               <button
-                disabled={totalAssets < 5 || gameState.charm < 8 || gameState.last_yacht_year === gameState.year}
+                disabled={totalAssets < 5 || gameState.last_yacht_year === gameState.year}
                 onClick={() => {
-                  const success = gameRandom() > 0.5; // seeded PRNG for reproducibility (was Math.random)
+                  // Soft-gate on hidden charm instead of hard-disabling the button (keeps charm hidden
+                  // while eliminating an unexplained greyed-out button when the player has $5w+).
+                  const passThreshold = gameState.charm >= 8 ? 0.5 : 0.72;
+                  const success = gameRandom() > passThreshold; // seeded PRNG for reproducibility (was Math.random)
                   if (success) {
                     if (gameState.laid_off || gameState.job_type === 'unemployed') {
                       onBuy({ 
@@ -376,7 +393,9 @@ export const ShopModal: React.FC<ShopModalProps> = ({ gameState, onClose, onBuy,
                 <div className="text-xs text-zinc-500 mt-1">
                   {gameState.last_yacht_year === gameState.year
                     ? '本年度已参加游艇派对 (每年限 1 次)'
-                    : '入场费: $5w (每年限 1 次) | 可能结识大佬涨 TC/估值/人脉，也可能白扔钱扣健康。'}
+                    : totalAssets < 5
+                      ? '入场费: $5w（当前可用总资产不足）'
+                      : '入场费: $5w (每年限 1 次) | 可能结识大佬涨 TC/估值/人脉，也可能白扔钱扣健康。'}
                 </div>
               </button>
 

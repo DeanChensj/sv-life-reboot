@@ -33,7 +33,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onStart }) => {
             <div>
               <h3 className="text-emerald-300 font-bold text-base sm:text-lg mb-0.5 sm:mb-1">终极目标：财务自由 (FIRE)</h3>
               <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-                努力工作、投资或创业，不断积累你的现金财富。当你的资产达到所在阶层的门槛时，即可宣告通关，提前退休！
+                努力工作、投资或创业，不断积累你的流动资产与房产权益。当你的 FIRE 净资产达到目标门槛时，即可宣告通关，提前退休！
               </p>
             </div>
           </div>
@@ -45,7 +45,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onStart }) => {
             <div>
               <h3 className="text-rose-300 font-bold text-base sm:text-lg mb-0.5 sm:mb-1">生存危机：过劳与破产</h3>
               <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
-                你的精力是有限的，<strong className="text-zinc-200">健康值降为 0 会导致过劳猝死</strong>；而硅谷高昂的物价也是无形的杀手，<strong className="text-zinc-200">现金为负将面临破产驱逐</strong>。
+                你的精力是有限的，<strong className="text-zinc-200">健康值降为 0 会导致过劳猝死</strong>；而硅谷高昂的物价也是无形的杀手，<strong className="text-zinc-200">现金不足时会自动变现股票抵扣，流动资金耗尽将面临破产驱逐</strong>。
               </p>
             </div>
           </div>

@@ -12,6 +12,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【老友组局 · 校友饭局】办后院 BBQ、约前同事与校友，维系圈子 (花费 $0.3w)',
+        costBadge: '花费 $0.3w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 0.3,
         effect: (s) => ({
           cash: Math.max(0, s.cash - 0.3),
@@ -35,6 +36,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【陪伴伴侣 / 家人】推掉无谓应酬，把周末还给家人：一起下厨、短途旅行',
+        reqBadge: '需非单身',
         condition: (s) => s.is_married || s.relationship_status === 'married' || s.relationship_status === 'dating' || s.relationship_status === 'matched',
         effect: (s) => ({
           health: Math.min(100, s.health + 8),
@@ -47,12 +49,14 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       {
         // 未婚 (单身 / matched / dating) 专属:进入交友主线 dating_market，找对象或推进现有关系。
         text: '【相亲 · 推进感情】打开 CMB 认真找对象，或推进与 TA 的关系',
+        reqBadge: '限未婚状态',
         condition: (s) => !s.is_married && s.relationship_status !== 'married',
         effect: (_s) => ({}),
         nextEventId: 'dating_market',
       },
       {
         text: '【德扑私局 · 创投博弈】受邀参加 Palo Alto 创投圈德州扑克局，在牌桌上切磋算力与心理博弈',
+        reqBadge: '需流动资产 >= $0.5w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 0.5 || (s.network || 0) >= 20,
         effect: (_s) => ({}),
         nextEventId: 'poker_home_game',
@@ -841,6 +845,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【手写并发脚本】用 Python 配合代理池手搓自动化抢票脚本，原价抢下前排 VIP 内场票 ($0.4w)',
+        costBadge: '花费 $0.4w',
+        reqBadge: '需 LeetCode >= 30',
         condition: (s) => s.leetcode >= 30 && s.cash >= 0.4,
         effect: (s) => ({
           cash: s.cash - 0.4,
@@ -852,6 +858,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【黄牛高溢价买单】不想费脑子，直接在 StubHub 豪掷千金买下内场票 ($0.8w)',
+        costBadge: '花费 $0.8w',
         condition: (s) => s.cash >= 0.8,
         // Same concert experience as the scripted route (charm+3, health+15); the
         // ONLY downside is the higher ticket price — a real convenience premium, not
@@ -866,6 +873,8 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【做黄牛转手套利】用脚本抢下 4 张内场票后直接挂在二手群加价转手，狠赚一笔',
+        costBadge: '垫资 $1.0w',
+        reqBadge: '需 LeetCode >= 25',
         condition: (s) => s.leetcode >= 25 && s.cash >= 1.0,
         effect: (s) => ({
           cash: s.cash + 2.5,
@@ -983,6 +992,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【买细胞级精华尝鲜】买一杯“细胞级精华” ($500) 尝尝鲜',
+        costBadge: '花费 $0.05w',
         effect: (s) => ({ 
           cash: s.cash - 0.05, 
           health: Math.min(100, s.health + 5),
@@ -1004,6 +1014,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
       },
       {
         text: '【跟他探讨脑机接口】跟他探讨脑机接口，看能不能弄点融资',
+        reqBadge: '需一定社交气场',
         // Trimmed from a free +$10w to a plausible small pre-seed check.
         effect: (s) => ({ 
           charm: Math.min(s.max_charm ?? 25, s.charm + 3),
@@ -1140,6 +1151,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【回国过年 · 阖家团圆】飞回老家陪爸妈过年 (机票 $0.3w)',
+        costBadge: '机票 $0.3w',
         condition: (s) => (s.cash + (s.stocks || 0)) >= 0.3,
         effect: (s) => {
           const isTempVisa = s.visa !== '绿卡' && s.visa !== '公民' && s.visa !== '无';
@@ -1261,6 +1273,7 @@ export const lifestyleEvents: Record<string, GameEvent> = {
     choices: [
       {
         text: '【辞职 All-in 独角兽】All-in！辞职加入 Hayes Valley 团队，这波必成独角兽',
+        reqBadge: '需在职且现金 >= $5w',
         effect: (s) => ({ 
           cash: s.cash - 5, 
           tc: 0, 

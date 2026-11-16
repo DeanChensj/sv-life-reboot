@@ -1,5 +1,6 @@
 # 🚀 硅谷人生重开模拟器 | Silicon Valley Life Reboot Simulator
 
+[![Play Online](https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E8%AF%95%E7%8E%A9-Play_Now-brightgreen)](https://deanchen.me/sv-life-reboot/)
 [![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -13,6 +14,10 @@
 > **“刷题、抽签、裁员、升职、买房、收租、定投、FIRE...”**  
 > 《硅谷人生重开模拟器》是一款基于 React 19 + TypeScript + Vite 构建的沉浸式硬核职场/生活模拟文字养成游戏。  
 > 玩家将扮演一名在硅谷拼搏的华人工程师或留学生，在严苛的移民身份、大厂职级内卷、高房价房产投资、被动现金流构建与财富自由 (FIRE) 之间做出关键抉择，体验最真实而精彩的硅谷生存法则！
+
+### 🎮 在线试玩 (Play Online)
+
+无需配置本地环境，打开网页即可直接开玩：**👉 [https://deanchen.me/sv-life-reboot/](https://deanchen.me/sv-life-reboot/)**
 
 ---
 
@@ -151,6 +156,9 @@ sv-life-reboot/
 ---
 
 ## 📦 快速开始 (Quick Start)
+
+### 在线畅玩
+直接访问 **[https://deanchen.me/sv-life-reboot/](https://deanchen.me/sv-life-reboot/)** 即可免安装体验。
 
 ### 环境要求
 - [Node.js](https://nodejs.org/) (`>= 18.0`)
